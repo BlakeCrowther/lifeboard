@@ -294,8 +294,8 @@ const U = {
   timer: { len: 2, end: null, msg: '' }, quote: (diffDays('2026-01-01', TODAY) % 7 + 7) % 7, sheet: null,
 };
 /* which folds are open and how lists sort: remembered per device */
-let UI = { fold: {}, sort: {} };
-try { const r = JSON.parse(localStorage.getItem('lb-ui') || 'null'); if (r) UI = { fold: r.fold && typeof r.fold === 'object' ? r.fold : {}, sort: r.sort && typeof r.sort === 'object' ? r.sort : {} }; } catch (e) { /* defaults */ }
+let UI = { fold: {}, sort: {}, labs: false };
+try { const r = JSON.parse(localStorage.getItem('lb-ui') || 'null'); if (r) UI = { fold: r.fold && typeof r.fold === 'object' ? r.fold : {}, sort: r.sort && typeof r.sort === 'object' ? r.sort : {}, labs: r.labs === true }; } catch (e) { /* defaults */ }
 const saveUI = () => { try { localStorage.setItem('lb-ui', JSON.stringify(UI)); } catch (e) { /* private mode: keep in memory */ } };
 const SORTS = { groceries: [['aisle', 'Aisle'], ['az', 'A-Z'], ['new', 'Newest']], wish: [['ready', 'Ready first'], ['tag', 'Tag'], ['price', 'Price'], ['new', 'Newest']], recipes: [['az', 'A-Z'], ['new', 'Newest']], gifts: [['person', 'Person'], ['new', 'Newest']] };
 const sortOpts = (k) => SORTS[k] || [['new', 'Newest'], ['az', 'A-Z']];
@@ -517,7 +517,7 @@ function viewToday() {
   if (wed) sumBits.push(`wedding ${wd}d`);
   const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow }) : '';
   return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}, there. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}, there.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
-    <div class="today"><div class="col a">${weekRings()}${habitRings(hs, hDone, hTot, daysLeft)}${schedule}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
+    <div class="today"><div class="col a">${weekRings()}${labsOn() ? '<div class="labs-slot" data-labs="habitat"></div>' : ''}${habitRings(hs, hDone, hTot, daysLeft)}${schedule}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
 }
 /* Habit rings: one per habit, filling toward the weekly target. The dot on each ring is the floor that keeps the streak alive. */
 const habitLast = {}; /* sessions this week per habit at the last render: a ring sweeps only when it grows */
@@ -864,7 +864,7 @@ function habitReview() {
 function viewGrow() {
   let body = '';
   if (U.grow === 'habits') {
-    body = S.habits.length ? habitReview() + weekCheckCard() : `<div class="card pad" style="margin-top:14px"><p class="empty" style="padding:0 4px 10px">No habits yet. Give one a weekly target and a lower floor that keeps the streak alive.</p><button class="btn primary" data-act="new-habit">${ic('plus', 18)}Add a habit</button></div>`;
+    body = S.habits.length ? labsGardenHTML() + habitReview() + weekCheckCard() : `<div class="card pad" style="margin-top:14px"><p class="empty" style="padding:0 4px 10px">No habits yet. Give one a weekly target and a lower floor that keeps the streak alive.</p><button class="btn primary" data-act="new-habit">${ic('plus', 18)}Add a habit</button></div>`;
   } else {
     const years = [...new Set(S.goals.map((g) => +g.year))].sort((a, b) => b - a);
     const curQ = Math.ceil(+TODAY.slice(5, 7) / 3), curY = +TODAY.slice(0, 4);
@@ -1126,7 +1126,8 @@ function renderPop() {
   const t = document.documentElement.dataset.theme || 'auto';
   const grp = (label, act, opts, cur) => `<p class="pop-l">${label}</p><div class="kinds" style="grid-template-columns:repeat(${opts.length},1fr)" role="group" aria-label="${label}">${opts.map(([v, l, i]) => `<button type="button" data-act="${act}" data-val="${v}" aria-pressed="${cur === v}">${i ? ic(i, 16) + ' ' : ''}${l}</button>`).join('')}</div>`;
   pop.innerHTML = grp('Theme', 'set-theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']], t)
-;
+    + grp('Labs: habitat &amp; garden preview', 'set-labs', [['off', 'Off'], ['on', 'On']], labsOn() ? 'on' : 'off')
+    + (LABS.forced && !UI.labs ? '<p class="pop-n">On for this visit (link).</p>' : '');
 }
 function setPop(open, btn) {
   ['themeBtn', 'barTheme'].forEach((id) => document.getElementById(id).setAttribute('aria-expanded', String(open && btn && btn.id === id)));
@@ -1174,6 +1175,7 @@ function render() {
   const lt = document.getElementById('ltitle'); const subName = U.tab === 'lists' ? (listDefs().find((l) => l.key === U.list) || BASE_LISTS[0]).title : U.tab === 'life' ? LIFE.find((x) => x[0] === U.life)[1] : U.tab === 'grow' ? GROW.find((x) => x[0] === U.grow)[1] : ''; document.getElementById('barT').innerHTML = !ready ? '' : U.tab === 'today' ? sumHTML(daySummary()) : esc(lt ? lt.textContent : '') + (subName ? ' · ' + esc(subName) : '');
   if (fk) { const sel = `[data-act="${fk[0]}"]` + (fk[1] ? `[data-id="${CSS.escape(fk[1])}"],[data-act="${fk[0]}"][data-val="${CSS.escape(fk[1])}"],[data-act="${fk[0]}"][data-key="${CSS.escape(fk[1])}"],[data-act="${fk[0]}"][data-d="${CSS.escape(fk[1])}"]` : ''); const el = document.querySelector(sel); if (el && el !== document.activeElement) el.focus({ preventScroll: true }); }
   onScroll();
+  labsAfterRender();
 }
 function go(tab, anchor) {
   const [t, sub] = tab.split('/');
@@ -1192,6 +1194,7 @@ function toggleTask(id, btn) {
   const go = () => {
     if (t.done) { act((rec) => W.patch('tasks', id, { status: 'open', completed_at: null }, rec), 'Marked not done'); return; }
     const next = d.recurrence_rule && !d.recurrence_spawned ? nextDueOf(d) : null;
+    labsFeed();
     act((rec) => Promise.all([W.patch('tasks', id, { status: 'done', completed_at: Date.now() }, rec), next ? spawnSuccessor(d, TODAY, rec) : null]),
       next ? `Done. Next one ${relDate(next)}` : 'Done. Nice.');
   };
@@ -1287,6 +1290,7 @@ document.addEventListener('click', (e) => {
       try { localStorage.setItem('lb-theme', val); } catch (er) { /* ignore */ }
       render(); break;
     }
+    case 'set-labs': UI.labs = val === 'on'; LABS.forced = false; saveUI(); if (labsOn()) loadLabs(); render(); break;
     case 'fold': UI.fold[b.dataset.key] = b.getAttribute('aria-expanded') !== 'true'; saveUI(); render(); break;
     case 'fab': if (LBDB.state.status === 'ready') openSheet(fabConfig().sheet); break;
     case 'new-habit': openSheet({ kind: 'habit' }); break;
@@ -1428,8 +1432,65 @@ addEventListener('scroll', () => { if (!pop.hidden && popFrom && popFrom.id === 
 addEventListener('resize', () => setPop(false));
 setInterval(() => { if (!U.sheet && !drag && document.visibilityState === 'visible' && U.tab === 'today' && !document.activeElement.matches('input,textarea')) render(); }, 60000);
 
+/* ---------- Labs: habitat & garden preview (off by default; per-viewer in lb-ui) ----------
+   Off: nothing below loads or runs (no three.js, no game derivation). #labs or a visitor test link
+   (?visitor=<id>, #visitor=<id>, #labs-visitor-<id>) turns it on for one visit. */
+const LABS = { forced: false, loading: null, ready: false, game: null, gameKey: null, metSeen: null };
+function labsFromUrl(href) { try { const u = new URL(href), h = u.hash.slice(1); return h === 'labs' || /^labs-visitor-[\w-]+$/.test(h) || /(^|[&/])visitor=/.test(h) || u.searchParams.has('visitor'); } catch (e) { return false; } }
+const labsOn = () => UI.labs === true || LABS.forced;
+function loadLabs() {
+  if (LABS.loading) return LABS.loading;
+  const one = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  LABS.loading = Promise.all([one('garden.js'), one('habitat.js')])
+    .then(() => { LABS.ready = true; schedule(); })
+    .catch((e) => { console.warn('[labs] load failed', e); LABS.loading = null; });
+  return LABS.loading;
+}
+/* pure inputs for LBGarden.deriveGame, recomputed when the data changes */
+function labsGame() {
+  if (!LABS.ready || LBDB.state.status !== 'ready') return null;
+  const key = S;
+  if (LABS.gameKey === key && LABS.game && LABS.game.today === TODAY) return LABS.game;
+  const tasks = S.tasks.map((t) => ({ eff: eff(t), done: t.done, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null }));
+  const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target }));
+  const sessions = S.sessions.map((x) => { const h = S.habits.find((k) => k.key === x.h || k.id === x.h); return { h: h ? h.key : x.h, date: x.date }; });
+  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
+  LABS.gameKey = key;
+  return LABS.game;
+}
+function labsGardenHTML() { if (!labsOn()) return ''; const g = labsGame(); return g ? LBGarden.gardenCard(g) : ''; }
+function labsAfterRender() {
+  if (!labsOn() || !LABS.ready || !window.Habitat) return;
+  const slot = document.querySelector('.labs-slot[data-labs="habitat"]');
+  if (slot) Habitat.mount(slot);
+  const g = labsGame();
+  if (g) { Habitat.setState(g); labsVisitor(g); }
+}
+const labsFeed = () => { if (labsOn() && window.Habitat) Habitat.feed(6); };
+/* hook for the lesson flow when it lands in app.js: call this when a lesson is answered/completed */
+window.LBLabs = { feed: labsFeed, lessonDone: labsFeed, game: () => LABS.game };
+/* "a visitor arrived": one visitors_met doc per creature per week, written only with Labs on.
+   Talks to the db directly so the collection stays out of store.js's always-on listeners. */
+async function labsVisitor(g) {
+  if (!g.visitor || LABS.metSeen === g.visitorWeek) return;
+  const who = Habitat.visitor;
+  if (!who) return;
+  LABS.metSeen = g.visitorWeek;
+  try {
+    const db = await window.claude.use('db'); if (!db) return;
+    const id = (who + '-' + g.visitorWeek).replace(/[^\w-]/g, '_'), body = { creature: who, met_at: Date.now(), biome: g.reef.biome, week: g.visitorWeek, rarity: g.visitor };
+    if (LBS.validate('visitors_met', body)) return;
+    const col = db.collection('visitors_met');
+    const seen = await new Promise((res) => { let off = null; off = col.onSnapshot((snap) => { res(snap.docs.some((d) => d.id === id)); off && off(); }, () => res(true)); });
+    if (!seen) { await col.doc(id).set(body); toast(`A visitor arrived on your reef: ${who}`); }
+  } catch (e) { /* preview only: never block the board */ }
+}
+
 /* ---------- boot ---------- */
 try { const th = localStorage.getItem('lb-theme'); if (th === 'dark' || th === 'light') document.documentElement.dataset.theme = th; } catch (e) { /* ignore */ }
+LABS.forced = labsFromUrl(location.href);
+window.LB_LABS_HREF = location.href;
 readHash();
+if (labsOn()) loadLabs();
 LBDB.start(() => { derive(); if (LBDB.state.status === 'ready') ensureRecurring(); schedule(); });
 render();

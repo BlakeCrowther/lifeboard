@@ -56,7 +56,11 @@
     checks: { value: [T.any], updated_at: [T.num], week: [T.date] },
     snapshots: { fetched_at: [T.num], weather: [T.obj], surf: [T.obj], tides: [T.arr], events: [T.arr], quote: [T.obj] },
     countdowns: { kind: [T.str, 1], title: [T.str, 1], date: [T.date, 1], detail: [T.str], when: [T.str], gift: [T.str], links: [T.arr], match: [T.arr] },
+    /* Labs (optional): one doc per creature per week when a reef visitor arrives. Written only with Labs on;
+       not in COLLECTIONS, so store.js never listens to it. */
+    visitors_met: { creature: [T.str, 1], met_at: [T.num, 1], biome: [T.num], week: [T.date], rarity: [oneOf('common', 'rare', 'legendary')] },
   };
+  const OPTIONAL = ['visitors_met'];
 
   function validate(col, doc) {
     const sch = S[col];
@@ -69,5 +73,5 @@
     }
     return null;
   }
-  G.LBS = { validate, ruleError, COLLECTIONS: Object.keys(S), RULE_KINDS };
+  G.LBS = { validate, ruleError, COLLECTIONS: Object.keys(S).filter((c) => !OPTIONAL.includes(c)), OPTIONAL, RULE_KINDS };
 })(typeof window !== 'undefined' ? window : globalThis);
