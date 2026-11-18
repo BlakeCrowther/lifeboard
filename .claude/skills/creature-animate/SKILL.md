@@ -24,6 +24,7 @@ Write keys with Python on pose bones; Bezier interpolation, auto-clamped handles
 - Follow-through: each bone down a chain lags its parent by `chain_lag_frames` (phase φ += lag) and amplitude grows ~1.3× per bone toward the tip.
 - Peak rotation ≤ 30°, but readable: some vertex must move ≥ 4% body length from frame 0 (G3). Add one slow, low-amplitude secondary motion (breathing, gill, bell pulse, hover bob) with k = 1.
 - Personality from spec decides the mix (lazy = slow spine sway; busy = quick appendage flutter).
+- No self-intersection: fins, arms, tentacles and tails must never pass through the body or each other at any frame (check the extremes of every swing; cut amplitude or add a counter-rotation on the parent before going over). The feed strike must not drive the head through the body's own appendages.
 - Key the first and last frame identically, then add a Cycles F-modifier to every curve.
 
 **feed**: `spec.motion.feed.frames`, starts and ends on idle frame-0 pose:

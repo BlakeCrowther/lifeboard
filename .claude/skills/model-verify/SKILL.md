@@ -28,7 +28,7 @@ One judge is noisy (the same model scored 3.2–4.0 across judges), so G5 = **3 
 {"species_read":1-5,"anatomy":1-5,"style_match":1-5,"artifacts":1-5,"idle_readable":1-5,"feed_readable":1-5,"mouth_correct":true,"notes":["..."],"fix":["..."]}
 ```
 - `species_read`: would someone recognise the reference animal?
-- `artifacts`: 5 = no holes, stretching, flipped normals, floating parts, texture seams or z-fighting.
+- `artifacts`: 5 = no holes, stretching, flipped normals, floating parts, texture seams or z-fighting, and no part passing through another part in any idle/feed frame (fin through body, arm through arm).
 - Aggregate: per criterion the **median** of the 3 judges; `mouth_correct` = true in ≥ 2 of 3.
 - PASS rule: every median ≥ 3, mean of the 6 medians ≥ 4, `mouth_correct` true in ≥ 2 of 3. Novel archetypes need every median ≥ 4.
 - `report.json.judge` holds the medians plus `judges: [{agent_id, scores}, ×3]`; fix notes come from notes ≥ 2 judges agree on.
@@ -41,6 +41,7 @@ One judge is noisy (the same model scored 3.2–4.0 across judges), so G5 = **3 
    - the creature is visible, at a sane size, and nose-first while moving;
    - `idle` plays;
    - triggering a lesson ("feed") plays `feed` aimed at the food and returns to `idle` without a pop;
+   - over ~30 s of watching, the creature never passes through rocks, coral, the ground, the surface or other creatures (runtime steering owns this, not the clip; a clipping failure routes to runtime);
    - the frame rate stays above 40 fps.
 4. Save screenshots `out/<id>/qa/runtime_*.png`.
 
