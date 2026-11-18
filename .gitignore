@@ -2,3 +2,5 @@
 mockdata.js
 test.html
 .DS_Store
+models/out/
+models/**/__pycache__/

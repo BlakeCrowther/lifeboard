@@ -1,0 +1,12 @@
+{
+  "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded.",
+  "biomes": [
+    { "id": 0, "name": "Coral shallows", "medium": "water", "light": "bright, caustics", "locomotion": ["swim", "drift", "crawl", "rooted"], "examples": ["clownfish", "tang", "sea turtle", "anemone", "cleaner shrimp"] },
+    { "id": 1, "name": "Kelp forest", "medium": "water", "light": "green-gold shafts", "locomotion": ["swim", "drift", "crawl", "rooted"], "examples": ["garibaldi", "sea otter", "sea urchin", "octopus", "leafy seadragon"] },
+    { "id": 2, "name": "Tide pools", "medium": "water", "light": "shallow, sparkly", "locomotion": ["swim", "crawl", "rooted", "walk"], "examples": ["hermit crab", "sea star", "nudibranch", "sculpin", "sea anemone"] },
+    { "id": 3, "name": "Mangrove edge", "medium": "water", "light": "dappled, murky", "locomotion": ["swim", "walk", "crawl", "fly"], "examples": ["mudskipper", "archerfish", "fiddler crab", "kingfisher", "seahorse"] },
+    { "id": 4, "name": "Twilight deep", "medium": "water", "light": "dark, bioluminescent", "locomotion": ["swim", "drift"], "examples": ["anglerfish", "comb jelly", "vampire squid", "lanternfish", "siphonophore"] },
+    { "id": 5, "name": "Wildflower meadow", "medium": "land", "light": "warm sun", "locomotion": ["walk", "fly", "crawl", "rooted"], "examples": ["bumblebee", "ladybug", "hare", "monarch butterfly", "foxglove"] },
+    { "id": 6, "name": "Cloud canopy", "medium": "air", "light": "soft fog", "locomotion": ["fly", "walk", "crawl", "rooted"], "examples": ["hummingbird", "tree frog", "sloth", "orchid", "quetzal"] }
+  ]
+}

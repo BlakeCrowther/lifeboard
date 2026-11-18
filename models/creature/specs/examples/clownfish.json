@@ -1,0 +1,72 @@
+{
+  "kind": "creature",
+  "id": "clownfish",
+  "name": "Clownfish",
+  "lore": "Never strays far from its anemone.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "streamlined_swimmer",
+  "locomotion": "swim",
+  "reference": "Amphiprion ocellaris: orange body, three white bands edged black, rounded fins with black rims",
+  "size": {
+    "length_m": 0.22,
+    "height_ratio": 0.44,
+    "width_ratio": 0.62
+  },
+  "palette": {
+    "main": [
+      "#e0420f",
+      "#f2f2ea"
+    ],
+    "accent": "#050505",
+    "fins": "#e0420f"
+  },
+  "pattern": {
+    "type": "bands",
+    "bands": [
+      {
+        "u": 0.2,
+        "w": 0.075
+      },
+      {
+        "u": 0.5,
+        "w": 0.095
+      },
+      {
+        "u": 0.78,
+        "w": 0.045
+      }
+    ],
+    "edge": "accent",
+    "edge_w": 0.008
+  },
+  "parts": {
+    "dorsal": "rounded",
+    "tail": "rounded",
+    "pectoral": "paddle",
+    "anal": "rounded"
+  },
+  "motion": {
+    "idle": {
+      "frames": 60,
+      "cycles": 3,
+      "amp_deg": 10,
+      "chain_lag_frames": 3,
+      "personality": "busy hover, quick fin flutter"
+    },
+    "feed": {
+      "frames": 48,
+      "technique": "dart forward, snap bite, two quick chews, settle",
+      "reach_ratio": 0.25
+    }
+  },
+  "habitat": {
+    "depth": "mid",
+    "anchor": "anemone",
+    "schooling": false
+  },
+  "budget": {
+    "tris": 8000,
+    "texture": 1024
+  }
+}

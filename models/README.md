@@ -1,0 +1,84 @@
+# Model pipeline (creatures + plants)
+
+Autonomous pipelines that design, build, animate, verify and ship 3D models for lifeboard, with no human in the loop. Two **kinds** share one toolchain: **creatures** (weekly reef/habitat visitors) and **plants** (garden seed species, per season; contract drafted, no generator yet). A model ships only after every gate passes; otherwise the run falls back to a safe variant or ships nothing.
+
+```
+models/
+  README.md  STYLE.md (shared style lock)  biomes.json  roster.json (every shipped model, with kind)
+  assets/    shipped <id>.glb + <id>-glb.js            out/  local work dir (gitignored): builds, QA, runs/, quarantine
+  shared/blender/  lib.py  build.py  qa_structural.py (shared gates)  qa_render.py
+  shared/tools/    doctor.sh  verify.sh  check_spec.py  optimize.sh  ledger.py
+  creature/  CONTRACT.md  archetypes/  specs/  qa.py (creature gates)  qa_calibration.json (golden judge scores)
+  plant/     CONTRACT.md (draft)  archetypes/README.md  specs/  qa.py (plant gates, draft)
+```
+
+Every spec has `kind` (`creature` default | `plant`). Shared code dispatches on it: `build.py` loads `models/<kind>/archetypes/<archetype>.py`; `qa_structural.py` runs the shared gates (tris, materials, texture, NaN, armature, weights, eye meta, rest-pose bbox) and then `models/<kind>/qa.py` (creature: body-plan axes/symmetry, mouth, idle/feed/reach; plant: soil origin, stage nodes, sway/tend); `check_spec.py` and `verify.sh` likewise.
+
+Skills (`.claude/skills/`), shared steps reused by every kind, kind steps isolated:
+```
+shared:   lifeboard-setup · model-build · model-verify · model-ship
+creature: weekly-visitor (orchestrator) → creature-brief → model-build → creature-animate → model-verify → model-ship
+plant:    season-seeds (orchestrator) → plant-brief → model-build → plant-grow → model-verify → model-ship   (outline only)
+```
+Each step is its own skill, so steps can be re-run alone (e.g. re-animate without re-modeling).
+
+## Docs
+- `creature/CONTRACT.md`, `plant/CONTRACT.md`: what each kind's file must contain so the runtime can use it (axes, scale, node names, animation names, loop rules, budgets). Shared rules live in the creature contract + `STYLE.md`; the plant contract refers to them.
+- `STYLE.md`: the art-direction lock: what is fixed vs. what is free to vary (all kinds).
+- `roster.json`: shipped models, `{"models": [{id, kind, spec, glb, js, ...}]}` (the runtime reads this; paths relative to `models/`).
+- `biomes.json`: the habitats a run can target (medium, ecology, examples).
+- `<kind>/specs/`: one design spec per model (`specs/examples/` = reference specs) (input to build/animate, also the judge's reference).
+
+Creature pipeline detail follows.
+
+## Blender stages (expert order, all scripted, `blender -b` headless)
+| # | Stage | What happens | Script |
+|---|---|---|---|
+| 1 | Reference | Brief names real-world species/traits, silhouette notes, palette | spec JSON |
+| 2 | Blockout | Optional: if the archetype defines `blockout(spec)`, build.py renders `blockout_side.png` / `blockout_top.png` silhouettes; otherwise skipped | `creature/archetypes/<a>.py: blockout()` |
+| 3 | Model | Cage mesh with clean edge loops + Subdivision Surface; appendages (fins, wings, legs, tentacles) as separate parts then joined | `model()` |
+| 4 | Optimize topology | Apply subdiv at export level, decimate to tri budget, merge by distance, recalc normals | `shared/blender/lib.py` |
+| 5 | UV | Smart UV project (seams for tubes/tentacles) with margin | lib |
+| 6 | Material / look-dev | Procedural Principled BSDF from spec palette + pattern nodes | `material()` |
+| 7 | Bake | Bake base color (+ roughness) to one 1024 texture; replace with single glTF-friendly PBR material | lib |
+| 8 | Rig | Armature chains by archetype (spine, tail, fin/wing, tentacle, leg, neck); automatic weights; ≤4 influences, normalized | `rig()` |
+| 9 | Animate | `idle` loop and `feed` action; cyclic F-curves; secondary motion (follow-through) on chains | `animate()` |
+| 10 | QA lighting + renders | Fixed three-point + water-world rig, turntable + animation strips + side-by-side with golden refs | `shared/blender/qa_render.py` + `shared/tools/verify.sh` (contact sheet: turntable, idle/feed strips, onion-skin motion panels, each view framed to the silhouette +15%; golden side-by-side at true scale, plus a "magnified to same length" panel when the new creature is < 50% of the golden's length) |
+| 11 | Export | glTF binary, actions as animations, +Y up, WEBP texture | lib |
+| 12 | Validate | Structural, animation, export, visual (judge), runtime gates | `shared/tools/verify.sh` |
+
+Runtime lighting belongs to each habitat page (e.g. the reef's caustics, fog, absorption). Blender lighting exists only to make QA renders comparable week to week.
+
+## Archetypes
+Builders are parametric generators per body plan in `creature/archetypes/` (start: `streamlined_swimmer`). The brief picks an existing archetype + parameters (safe path) or asks for a new archetype (novel path: the agent writes a new generator; same gates, plus a stricter judge pass and one extra retry). Proven archetypes accumulate, so the library grows and the safe path gets richer.
+
+Archetypes are named by **body plan**, not species or biome, so one generator serves many habitats. Planned:
+
+| Archetype | Examples |
+|---|---|
+| `streamlined_swimmer` | clownfish, tuna, dolphin, squid mantle, tadpole |
+| `flat_disc_swimmer` | tang, angelfish, butterflyfish |
+| `undulating_flat` | ray, flounder, cuttlefish fin |
+| `serpentine` | eel, snake, worm |
+| `many_armed` | octopus, starfish, brittle star |
+| `radial_drifter` | jellyfish, comb jelly, dandelion seed |
+| `legged_crawler` | crab, beetle, lizard, spider |
+| `shelled_paddler` | turtle, tortoise |
+| `winged_flyer` | bird, butterfly, bat, flying fish |
+| `rooted` | anemone, coral polyp, flower, mushroom |
+| `soft_glider` | nudibranch, slug, snail |
+
+## Lessons → feed
+Doing a lesson drops food into the habitat. Every creature within range plays `feed` aimed at the food (runtime steers the root toward the food, `feed` supplies the body action). That's why every creature must have a `feed` action and a `mouth` node, whatever its body plan (swimmer lunge-bite, octopus arm curl-to-mouth, jelly tentacle wrap, crab claw-to-mouth, anemone tentacle close, bird peck, bee land-and-sip).
+
+## Run ledger (budget)
+`shared/tools/ledger.py` is the only budget counter: `start <run> --builds 6 --minutes 90`, every build is `build.py ... --run <run>` (exits 4 `BUDGET EXHAUSTED`; pre-build G1 failures don't count), every G5 judge is `ledger.py judge <run> <id> <agent_id>` (a reused agent id is refused), `status <run>`. State: `out/runs/<run>.json`.
+
+## Failure policy
+- Each gate failure returns machine-readable reasons; the failing step retries with them (max 2 retries, 3 for novel archetypes).
+- Still failing → fall back to a safe-path variant (proven archetype, new params/palette) and re-verify.
+- Still failing → no visitor this week; work is moved to `out/quarantine/<id>/` (dry runs: `out/dryrun/quarantine/<id>/`) with the report. Never ship unverified.
+- Every run writes `out/<id>/report.json` and a contact sheet, so a human can audit later without being needed now.
+
+## Where it runs
+Locally on the Mac via the desktop app's scheduled task (Blender is a local app). Headless CLI only (`blender -b`); the Blender MCP is for interactive development, not the weekly run. The Mac must be awake at run time.

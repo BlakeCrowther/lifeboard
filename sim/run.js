@@ -1,10 +1,13 @@
 /* Simulation: runs game.js against made-up personas for WEEKS weeks over SEEDS seeds and prints averages.
-   node sim/run.js [seeds] [weeks]      No Claude in the loop: Claude's jobs never change numbers. */
+   node sim/run.js [seeds] [weeks]      No Claude in the loop: Claude's jobs never change numbers.
+   node sim/run.js --visitors[=persona[:seed]]   also print one run's week-by-week visitor events as JSON
+   (the weekly-visitor skill's --dry-run picks an event from this list). */
 'use strict';
 const path = require('path');
 const G = require(path.join(__dirname, '..', 'game.js'));
 
-const args = process.argv.slice(2), sets = args.filter((a) => a.includes('=')), nums = args.filter((a) => !a.includes('='));
+const argv0 = process.argv.slice(2), visArg = argv0.find((a) => a.startsWith('--visitors'));
+const args = argv0.filter((a) => !a.startsWith('--')), sets = args.filter((a) => a.includes('=')), nums = args.filter((a) => !a.includes('='));
 const SEEDS = +nums[0] || 200, WEEKS = +nums[1] || 28;
 /* overrides: garden.replant=true lessons.deck=5 lessons.intervals=[3,7,21] */
 for (const kv of sets) { const [k, v] = kv.split('='), ks = k.split('.'); let o = G.RULES; ks.slice(0, -1).forEach((x) => (o = o[x])); o[ks.at(-1)] = JSON.parse(v); }
@@ -54,10 +57,11 @@ function habitMode(rng, weekMode) {
   return weekMode;
 }
 
+const RANK = { none: 0, common: 1, rare: 2, legendary: 3 };
 function runOne(P, seed, opts = {}) {
   const rng = mulberry32(seed), st = { off: 0 };
   const M = { deaths: 0, blooms: 0, plantSeasons: 0, deadPlotWeeks: 0, plotWeeks: 0, rarity: { common: 0, heirloom: 0, exotic: 0 }, hybrids: 0,
-    biomeDays: [], rare: 0, rareOd: 0, pileEnd: 0, algaeDays: 0, pileSum: 0, legendary: 0, bleach: 0, bleachDays: 0, cloudyDays: 0, ringSum: 0, ringDays: 0, fullDays: 0, neutral: 0,
+    visitors: [], biomeDays: [], rare: 0, rareOd: 0, pileEnd: 0, algaeDays: 0, pileSum: 0, legendary: 0, bleach: 0, bleachDays: 0, cloudyDays: 0, ringSum: 0, ringDays: 0, fullDays: 0, neutral: 0,
     lessonsShown: 0, backlogEnd: 0, backlogMax: 0, bookDays: [], booksStarted: 0, booksDone: 0 };
 
   /* garden */
@@ -78,7 +82,7 @@ function runOne(P, seed, opts = {}) {
   };
 
   for (let w = 0; w < WEEKS; w++) {
-    reef.weekDrops = 0; const weekDist = P.mode(w, st, rng), weekMode = pick(rng, weekDist), tides = [];
+    reef.weekDrops = 0; let weekDrop = null; const weekDist = P.mode(w, st, rng), weekMode = pick(rng, weekDist), tides = [];
     /* ingest spread over the month */
     if (w % 4 === 0) for (let b = 0; b < booksPerMonth; b++) ingest(w * 7 + Math.floor(b * 28 / Math.max(1, booksPerMonth)) % 28, 'book');
     for (let d = 0; d < 7; d++) {
@@ -96,7 +100,7 @@ function runOne(P, seed, opts = {}) {
       if (pile.length && rng() < P.pull) {
         const k = randInt(rng, 0, pile.length - 1), t = pile[k];
         committed++;
-        if (rng() < q) { done++; pile.splice(k, 1); const drop = G.overdueReward(reef, day - t.since); if (drop === 'rare') M.rareOd++; if (drop === 'legendary') M.legendary++; }
+        if (rng() < q) { done++; pile.splice(k, 1); const drop = G.overdueReward(reef, day - t.since); if (drop === 'rare') M.rareOd++; if (drop === 'legendary') M.legendary++; if (drop && RANK[drop] > RANK[weekDrop || 'none']) weekDrop = drop; }
       }
       if (P.tiny) { committed += P.tiny; done += P.tiny; }
       const tide = G.dayTide(committed, done);
@@ -125,6 +129,11 @@ function runOne(P, seed, opts = {}) {
       M.backlogMax = Math.max(M.backlogMax, backlog); M.backlogEnd = backlog;
     }
     if (G.weekVisitor(tides) === 'rare') M.rare++;
+    /* visitor event for this week: best of tide streak (rare) and overdue drop (rare/legendary); common otherwise; none while bleached.
+       ASSUMPTION: a common visitor arrives every non-bleached week. game.js only defines rare/legendary triggers. */
+    { const wv = G.weekVisitor(tides), cand = [wv, weekDrop].filter(Boolean).sort((a, b) => RANK[b] - RANK[a])[0];
+      const rarity = reef.bleached ? null : cand || 'common';
+      M.visitors.push({ week: w, biome: reef.biome, rarity, reason: reef.bleached ? 'bleached' : cand === weekDrop && weekDrop ? 'overdue task finished' : wv ? 'full-tide streak' : 'weekly' }); }
     /* habits */
     P.habits.forEach((h, i) => {
       const r = G.weekResult(habitCount(rng, habitMode(rng, weekMode), h), h.f, h.t);
@@ -168,6 +177,7 @@ function summarize(name, P, opts) {
     'rare od/mo': (avg((r) => r.rareOd) / months).toFixed(2),
     'pile end': avg((r) => r.pileEnd).toFixed(0),
     'legend/mo': (avg((r) => r.legendary) / months).toFixed(2),
+    'visitors c/r/l per mo': ['common', 'rare', 'legendary'].map((k) => (avg((r) => r.visitors.filter((v) => v.rarity === k).length) / months).toFixed(1)).join('/'),
     'bleach': avg((r) => r.bleach).toFixed(2),
     'murk50 %': (100 * avg((r) => r.cloudyDays) / (WEEKS * 7)).toFixed(0),
     'algae50 %': (100 * avg((r) => r.algaeDays) / (WEEKS * 7)).toFixed(0),
@@ -182,3 +192,10 @@ console.log(`\n${SEEDS} seeds x ${WEEKS} weeks, 1 book + 2 posts a month\n`);
 console.table(Object.entries(PERSONAS).map(([k, P]) => summarize(k, P)));
 console.log('\nLesson load (steady persona), books per month:\n');
 console.table([1, 2, 4].map((b) => { const s = summarize('steady', PERSONAS.steady, { booksPerMonth: b }); return { 'books/mo': b, 'backlog end': s['backlog end'], 'book days': s['book days'], 'books done %': s['books done %'] }; }));
+
+if (visArg) {
+  const [pn, sd] = (visArg.split('=')[1] || 'steady').split(':');
+  const r = runOne(PERSONAS[pn], +sd || 1000);
+  console.log('\nVisitor events (' + pn + ', seed ' + (+sd || 1000) + '):');
+  console.log(JSON.stringify(r.visitors));
+}

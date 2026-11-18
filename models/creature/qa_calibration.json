@@ -1,0 +1,382 @@
+{
+ "golden": "clownfish",
+ "contact": "out/clownfish/qa/contact.png",
+ "date": "2026-11-18",
+ "judge": {
+  "species_read": 5,
+  "anatomy": 4,
+  "style_match": 4,
+  "artifacts": 4,
+  "idle_readable": 3,
+  "feed_readable": 4,
+  "mouth_correct": true
+ },
+ "passes_g5": false,
+ "status": "Anchor = run-3 single-judge scores (kept until a golden passes median-of-3). Current build (lib.mouth + jaw bites): median-of-3 mean 3.5 -> FAILS G5; assets/clownfish.* left at the previously shipped version.",
+ "known_judge_errors": [
+  "estimates eye at ~6% of body height; measured 10.0% (build_meta.json) - trust G2 over judge for eye size"
+ ],
+ "history": [
+  {
+   "run": 1,
+   "note": "contact.png missing at judge time (verify bug, fixed); onion panels side-view only",
+   "scores": {
+    "species_read": 4,
+    "anatomy": 3,
+    "style_match": 4,
+    "artifacts": 4,
+    "idle_readable": 2,
+    "feed_readable": 3,
+    "mouth_correct": true
+   }
+  },
+  {
+   "run": 2,
+   "note": "pectoral flutter 22->28 deg, onion panels 3/4 above",
+   "scores": {
+    "species_read": 5,
+    "anatomy": 3,
+    "style_match": 4,
+    "artifacts": 3,
+    "idle_readable": 2,
+    "feed_readable": 4,
+    "mouth_correct": true
+   }
+  },
+  {
+   "run": 3,
+   "note": "strengthened idle + fin rims + thicker peduncle (coordinator decision A, iteration 1)",
+   "scores": {
+    "species_read": 5,
+    "anatomy": 4,
+    "style_match": 4,
+    "artifacts": 4,
+    "idle_readable": 3,
+    "feed_readable": 4,
+    "mouth_correct": true
+   }
+  },
+  {
+   "run": 4,
+   "date": "2026-11-18",
+   "note": "lib.mouth part (protruding), silhouette-fit QA framing, rest-pose G2",
+   "scores": {
+    "species_read": 5,
+    "anatomy": 3,
+    "style_match": 3,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 2,
+    "mouth_correct": true
+   }
+  },
+  {
+   "run": 5,
+   "date": "2026-11-18",
+   "note": "mouth flush (protrude 0), jaw held open across strip samples",
+   "scores": {
+    "species_read": 5,
+    "anatomy": 3,
+    "style_match": 3,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 2,
+    "mouth_correct": true
+   }
+  },
+  {
+   "run": 6,
+   "date": "2026-11-18",
+   "note": "mouth moved inside nose silhouette",
+   "scores": {
+    "species_read": 4,
+    "anatomy": 3,
+    "style_match": 3,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 2,
+    "mouth_correct": true
+   }
+  },
+  {
+   "run": 7,
+   "note": "pre-mouth-fix calibration (scores previously in 'judge')",
+   "scores": {
+    "species_read": 5,
+    "anatomy": 4,
+    "style_match": 4,
+    "artifacts": 4,
+    "idle_readable": 3,
+    "feed_readable": 4,
+    "mouth_correct": true
+   }
+  },
+  {
+   "run": 7,
+   "date": "2026-11-18",
+   "method": "median-of-3",
+   "note": "A/B legacy framing, same glb",
+   "medians": {
+    "species_read": 4,
+    "anatomy": 3,
+    "style_match": 4,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 2
+   },
+   "mean": 3.17,
+   "mouth_correct": "3/3",
+   "judges": [
+    {
+     "species_read": 4,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 3
+    },
+    {
+     "species_read": 4,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 2
+    },
+    {
+     "species_read": 4,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 2
+    }
+   ]
+  },
+  {
+   "run": 8,
+   "date": "2026-11-18",
+   "method": "median-of-3",
+   "note": "A/B new silhouette framing, same glb",
+   "medians": {
+    "species_read": 4,
+    "anatomy": 3,
+    "style_match": 4,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 2
+   },
+   "mean": 3.17,
+   "mouth_correct": "3/3",
+   "judges": [
+    {
+     "species_read": 4,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 2
+    },
+    {
+     "species_read": 4,
+     "anatomy": 3,
+     "style_match": 3,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 2
+    },
+    {
+     "species_read": 4,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 2
+    }
+   ]
+  },
+  {
+   "run": 9,
+   "date": "2026-11-18",
+   "method": "median-of-3",
+   "note": "feed v2: pull-back S-curve, faster strike, jaw bites, pectoral_scale 1.5, lip line removed",
+   "medians": {
+    "species_read": 5,
+    "anatomy": 4,
+    "style_match": 4,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 3
+   },
+   "mean": 3.67,
+   "mouth_correct": "3/3",
+   "judges": [
+    {
+     "species_read": 5,
+     "anatomy": 4,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 3
+    },
+    {
+     "species_read": 5,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 2
+    },
+    {
+     "species_read": 5,
+     "anatomy": 4,
+     "style_match": 4,
+     "artifacts": 4,
+     "idle_readable": 3,
+     "feed_readable": 3
+    }
+   ]
+  },
+  {
+   "run": 10,
+   "date": "2026-11-18",
+   "method": "median-of-3",
+   "note": "+ root nose-up tuck, jaw gape 2.4x",
+   "medians": {
+    "species_read": 4,
+    "anatomy": 3,
+    "style_match": 4,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 3
+   },
+   "mean": 3.33,
+   "mouth_correct": "3/3",
+   "judges": [
+    {
+     "species_read": 4,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 2
+    },
+    {
+     "species_read": 4,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 4,
+     "feed_readable": 3
+    },
+    {
+     "species_read": 4,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 3
+    }
+   ]
+  },
+  {
+   "run": 11,
+   "date": "2026-11-18",
+   "method": "median-of-3",
+   "note": "+ spec height_ratio 0.5->0.44, bigger mouth",
+   "medians": {
+    "species_read": 5,
+    "anatomy": 4,
+    "style_match": 4,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 3
+   },
+   "mean": 3.67,
+   "mouth_correct": "3/3",
+   "judges": [
+    {
+     "species_read": 5,
+     "anatomy": 3,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 3
+    },
+    {
+     "species_read": 5,
+     "anatomy": 4,
+     "style_match": 4,
+     "artifacts": 4,
+     "idle_readable": 3,
+     "feed_readable": 3
+    },
+    {
+     "species_read": 5,
+     "anatomy": 4,
+     "style_match": 4,
+     "artifacts": 3,
+     "idle_readable": 3,
+     "feed_readable": 3
+    }
+   ]
+  }
+ ],
+ "remaining_notes": [
+  "taper snout/defined head + lower jaw",
+  "rounded dorsal fin, bigger orange pectorals",
+  "consistent stripe edging, tail-base seam",
+  "busier idle",
+  "distinct anticipation/strike/settle in feed"
+ ],
+ "status_2026-11-18": "FAILS G5 (median-of-3): best mean of medians 3.67 (iter 1 and 3). Anchor scores kept from run 3 (single judge) until a golden passes; assets/clownfish.* NOT re-shipped.",
+ "judges": [
+  {
+   "agent_id": "a8e8362194ae048d3",
+   "scores": {
+    "species_read": 4,
+    "anatomy": 3,
+    "style_match": 4,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 3,
+    "mouth_correct": true
+   }
+  },
+  {
+   "agent_id": "a8264ea7884f6da29",
+   "scores": {
+    "species_read": 5,
+    "anatomy": 4,
+    "style_match": 4,
+    "artifacts": 3,
+    "idle_readable": 3,
+    "feed_readable": 3,
+    "mouth_correct": true
+   }
+  },
+  {
+   "agent_id": "ae1a6f72b24f8cfcf",
+   "scores": {
+    "species_read": 5,
+    "anatomy": 3,
+    "style_match": 4,
+    "artifacts": 3,
+    "idle_readable": 4,
+    "feed_readable": 3,
+    "mouth_correct": true
+   }
+  }
+ ],
+ "current_medians": {
+  "species_read": 5,
+  "anatomy": 3,
+  "style_match": 4,
+  "artifacts": 3,
+  "idle_readable": 3,
+  "feed_readable": 3,
+  "mouth_correct": true
+ },
+ "current_mean": 3.5,
+ "mean": 4.0
+}
