@@ -208,7 +208,13 @@ attribute float aTip; varying float vTip;
     const groundTex = (base, speck) => canvasTex(256, (ctx, N) => { ctx.fillStyle = base; ctx.fillRect(0, 0, N, N); for (let i = 0; i < 9000; i++) { const g = R(0.75, 1.15); ctx.fillStyle = speck(g); ctx.fillRect(rnd() * N, rnd() * N, R(1, 2.2), R(1, 2.2)); } }, 9);
 
     /* ===== world: everything in `world` is rebuilt when the biome's medium changes ===== */
-    let colliders = []; /* rock ellipsoids {p, r} creatures must stay outside */
+    let colliders = []; /* solid scenery as ellipsoids {kind, p, r, obj}; creatures stay outside */
+    /* Every scenery piece registers with a kind; all kinds are solid unless the biome's `pass_through` lists it
+       (biomes.json, e.g. kelp). Thin dressing (grass blades, light rays, particles) is never registered. */
+    const solid = (kind, obj, pad = 1) => {
+      obj.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(obj), p = bb.getCenter(new V()), r = bb.getSize(new V()).multiplyScalar(0.5 * pad);
+      colliders.push({ kind, p, r, obj }); return obj;
+    };
     let world = null, medium = null, growth = [], coralMats = [], algaeInst = null, rays = [], rockMat = null, snowMat = null;
     function buildWorld(med) {
       if (world) { scene.remove(world); world.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
@@ -229,7 +235,7 @@ attribute float aTip; varying float vTip;
           const top = smooth(-0.1, 0.7, v.y); c.copy(base).lerp(dark, smooth(0.1, -0.6, n * 4)); if (Math.sin(v.x * 4 + k) * Math.sin(v.z * 3.7 + v.y * 2) > 0.25) c.lerp(pink, 0.55 * top); c.lerp(moss, top * (water ? 0.25 : 0.5)); col.push(c.r, c.g, c.b);
         }
         g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
-        const m = new THREE.Mesh(g, rockMat); m.scale.set(s, s * sy, s); m.position.set(x, H(x, z) + s * sy * 0.25, z); m.rotation.y = R(0, 6); m.castShadow = m.receiveShadow = true; world.add(m); rocks.push(m); colliders.push({ p: m.position.clone(), r: new V(s, s * sy, s).multiplyScalar(1.25) }); /* 1.25 covers the vertex noise */
+        const m = new THREE.Mesh(g, rockMat); m.scale.set(s, s * sy, s); m.position.set(x, H(x, z) + s * sy * 0.25, z); m.rotation.y = R(0, 6); m.castShadow = m.receiveShadow = true; world.add(m); rocks.push(m); solid('rock', m);
       };
       rock(1.9, -1.4, 1.3, 0.7); rock(-2.9, -2.6, 1.7, 0.75); rock(3.9, 0.5, 0.85, 0.6); rock(-0.4, -4.4, 2.3, 0.85); rock(-4.6, 0.6, 0.8, 0.55);
       const tipAttr = (g, maxY) => { const p = g.attributes.position, a = new Float32Array(p.count); for (let i = 0; i < p.count; i++) a[i] = p.getY(i) / maxY; g.setAttribute('aTip', new THREE.BufferAttribute(a, 1)); return a; };
@@ -246,13 +252,13 @@ attribute float aTip; varying float vTip;
         };
         for (let i = 0; i < (opt.trunks ?? 1); i++) br(new V(R(-0.15, 0.15), 0, R(-0.15, 0.15)), new V(R(-0.3, 0.3), 1, R(-0.3, 0.3)).normalize(), opt.len ?? 0.7, opt.rad ?? 0.09, opt.depth ?? 3);
         const g = BU.mergeGeometries(geos); g.computeVertexNormals(); colorByTip(g, tipAttr(g, maxY), c1, c2);
-        const m = new THREE.Mesh(g, coralMat(c2)); m.position.set(x, H(x, z) - 0.03, z); m.scale.setScalar(s); m.castShadow = m.receiveShadow = true; world.add(m); growth.push(m); return m;
+        const m = new THREE.Mesh(g, coralMat(c2)); m.position.set(x, H(x, z) - 0.03, z); m.scale.setScalar(s); m.castShadow = m.receiveShadow = true; world.add(m); growth.push(m); solid(water ? 'coral' : 'shrub', m, 0.8); return m; /* 0.8: branches are airy */
       };
       const brain = (x, z, r, c1, c2) => {
         const g = new THREE.SphereGeometry(r, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2), p = g.attributes.position, col = [], a = new THREE.Color(c1), b = new THREE.Color(c2), c = new THREE.Color(), tip = new Float32Array(p.count);
         for (let i = 0; i < p.count; i++) { const v = new V().fromBufferAttribute(p, i), n = v.clone().normalize(), k = Math.sin((v.x / r) * 16 + Math.sin((v.z / r) * 8) * 2.4 + Math.cos((v.y / r) * 6)); v.addScaledVector(n, k * r * 0.035); p.setXYZ(i, v.x, v.y, v.z); c.copy(a).lerp(b, k * 0.5 + 0.5); col.push(c.r, c.g, c.b); tip[i] = k > 0.6 ? 1 : 0; }
         g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('aTip', new THREE.BufferAttribute(tip, 1)); g.computeVertexNormals();
-        const m = new THREE.Mesh(g, coralMat(c2)); m.scale.y = 0.8; m.position.set(x, H(x, z) - 0.06, z); m.castShadow = m.receiveShadow = true; world.add(m); growth.push(m);
+        const m = new THREE.Mesh(g, coralMat(c2)); m.scale.y = 0.8; m.position.set(x, H(x, z) - 0.06, z); m.castShadow = m.receiveShadow = true; world.add(m); growth.push(m); solid('coral', m);
       };
       const bush = (x, z, s, c1, c2) => { /* land/air: a flowering shrub from the same branch generator, tips as blossoms */
         const m = branchy(x, z, s, c1, c2, { spread: 0.9, depth: 3, len: 0.5, rad: 0.05, kids: 3 }); return m;
@@ -268,7 +274,7 @@ attribute float aTip; varying float vTip;
         const mat = new THREE.MeshPhysicalMaterial({ color: 0xd59ae8, roughness: 0.45, sheen: 1, sheenColor: new THREE.Color(0xffe0ff) }); mat.defines = { SWAY: '', GLOW: '' }; patch(mat, { uSwayAmp: { value: 0.35 } }); coralMats.push(mat);
         const inst = new THREE.InstancedMesh(g, mat, N), o = new THREE.Object3D();
         for (let i = 0; i < N; i++) { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * 0.48; o.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); o.rotation.set(Math.sin(a) * r * 1.3, 0, -Math.cos(a) * r * 1.3); o.scale.setScalar(R(0.75, 1.15)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
-        inst.position.set(1.6, H(1.6, 1.5) + 0.02, 1.5); inst.castShadow = true; world.add(inst); growth.splice(1, 0, inst);
+        inst.position.set(1.6, H(1.6, 1.5) + 0.02, 1.5); inst.castShadow = true; world.add(inst); growth.splice(1, 0, inst); solid('anemone', inst);
       } else {
         bush(-1.4, 0.5, 1.4, 0x3f6b2a, 0xffd23f); bush(0.6, 1.0, 1.0, 0x4a7d3a, 0xf28fb0); bush(2.5, -2.7, 1.6, 0x3a6a30, 0xffffff, { trunks: 2 });
         bush(-3.6, -0.7, 1.2, 0x4a7d3a, 0xb98cff); bush(-2.2, -3.8, 1.3, 0x355f2a, 0xff9a52); bush(0.2, -2.4, 1.1, 0x4a7d3a, 0xfff07a);
@@ -378,7 +384,9 @@ attribute float aTip; varying float vTip;
     /* no passing through rocks, the ground or each other: project the body back outside after each move */
     function keepClear(c) {
       const pad = c.len * 0.55, q = new V();
+      const pass = biomeOf(sceneBiomeId()).pass_through || [];
       for (const o of colliders) {
+        if (pass.includes(o.kind) || !o.obj.visible) continue; /* hidden growth (not yet grown) isn't there */
         q.set((c.pos.x - o.p.x) / (o.r.x + pad), (c.pos.y - o.p.y) / (o.r.y + pad), (c.pos.z - o.p.z) / (o.r.z + pad));
         const L = q.length(); if (L >= 1) continue; if (L < 1e-4) q.set(0, 1, 0); else q.divideScalar(L);
         c.pos.set(o.p.x + q.x * (o.r.x + pad), o.p.y + q.y * (o.r.y + pad), o.p.z + q.z * (o.r.z + pad));

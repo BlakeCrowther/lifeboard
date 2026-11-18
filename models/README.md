@@ -82,3 +82,6 @@ Doing a lesson drops food into the habitat. Every creature within range plays `f
 
 ## Where it runs
 Locally on the Mac via the desktop app's scheduled task (Blender is a local app). Headless CLI only (`blender -b`); the Blender MCP is for interactive development, not the weekly run. The Mac must be awake at run time.
+
+## Solid scenery (runtime)
+Creatures never pass through the ground, each other, or solid scenery. In `habitat.js` every scenery piece registers with `solid(kind, mesh)`; all kinds are solid by default. A biome opts specific kinds out with `pass_through` in `biomes.json` (e.g. kelp forest: `["kelp"]`, cloud canopy: `["cloud"]`). New scenery: register it with a kind, and only add the kind to `pass_through` where swimming/flying through it looks natural. Thin dressing (grass blades, rays, particles) is not registered. Clips themselves must not self-intersect (creature-animate).

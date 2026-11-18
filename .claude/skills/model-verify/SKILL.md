@@ -41,7 +41,7 @@ One judge is noisy (the same model scored 3.2–4.0 across judges), so G5 = **3 
    - the creature is visible, at a sane size, and nose-first while moving;
    - `idle` plays;
    - triggering a lesson ("feed") plays `feed` aimed at the food and returns to `idle` without a pop;
-   - over ~30 s of watching, the creature never passes through rocks, coral, the ground, the surface or other creatures (runtime steering owns this, not the clip; a clipping failure routes to runtime);
+   - over ~30 s of watching, the creature never passes through the ground, other creatures or any solid scenery (every registered scenery kind not listed in the biome's `pass_through` in `biomes.json`); it may pass through listed kinds. Runtime steering (`keepClear` in habitat.js) owns this, not the clip; a failure routes to runtime;
    - the frame rate stays above 40 fps.
 4. Save screenshots `out/<id>/qa/runtime_*.png`.
 
