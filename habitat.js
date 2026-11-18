@@ -208,6 +208,7 @@ attribute float aTip; varying float vTip;
     const groundTex = (base, speck) => canvasTex(256, (ctx, N) => { ctx.fillStyle = base; ctx.fillRect(0, 0, N, N); for (let i = 0; i < 9000; i++) { const g = R(0.75, 1.15); ctx.fillStyle = speck(g); ctx.fillRect(rnd() * N, rnd() * N, R(1, 2.2), R(1, 2.2)); } }, 9);
 
     /* ===== world: everything in `world` is rebuilt when the biome's medium changes ===== */
+    let colliders = []; /* rock ellipsoids {p, r} creatures must stay outside */
     let world = null, medium = null, growth = [], coralMats = [], algaeInst = null, rays = [], rockMat = null, snowMat = null;
     function buildWorld(med) {
       if (world) { scene.remove(world); world.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
@@ -218,7 +219,7 @@ attribute float aTip; varying float vTip;
       const map = water ? groundTex('#d8c290', (g) => `rgba(${(220 * g) | 0},${(198 * g) | 0},${(150 * g) | 0},.6)`) : groundTex('#6f9a48', (g) => `rgba(${(90 * g) | 0},${(140 * g) | 0},${(60 * g) | 0},.7)`);
       const sand = new THREE.Mesh(sandGeo, patch(new THREE.MeshStandardMaterial({ map, roughness: 0.95 }))); sand.receiveShadow = true; world.add(sand);
       rockMat = patch(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92 }));
-      const rocks = [];
+      const rocks = []; colliders = [];
       const rock = (x, z, s, sy) => {
         let g = new THREE.IcosahedronGeometry(1, 4); g.deleteAttribute('normal'); g.deleteAttribute('uv'); g = BU.mergeVertices(g);
         const p = g.attributes.position, k = R(0, 10), col = [], c = new THREE.Color(), base = new THREE.Color(0x7a7166), dark = new THREE.Color(0x4c463f), pink = new THREE.Color(water ? 0xc77a95 : 0x8a8a70), moss = new THREE.Color(0x6f8a45);
@@ -228,7 +229,7 @@ attribute float aTip; varying float vTip;
           const top = smooth(-0.1, 0.7, v.y); c.copy(base).lerp(dark, smooth(0.1, -0.6, n * 4)); if (Math.sin(v.x * 4 + k) * Math.sin(v.z * 3.7 + v.y * 2) > 0.25) c.lerp(pink, 0.55 * top); c.lerp(moss, top * (water ? 0.25 : 0.5)); col.push(c.r, c.g, c.b);
         }
         g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
-        const m = new THREE.Mesh(g, rockMat); m.scale.set(s, s * sy, s); m.position.set(x, H(x, z) + s * sy * 0.25, z); m.rotation.y = R(0, 6); m.castShadow = m.receiveShadow = true; world.add(m); rocks.push(m);
+        const m = new THREE.Mesh(g, rockMat); m.scale.set(s, s * sy, s); m.position.set(x, H(x, z) + s * sy * 0.25, z); m.rotation.y = R(0, 6); m.castShadow = m.receiveShadow = true; world.add(m); rocks.push(m); colliders.push({ p: m.position.clone(), r: new V(s, s * sy, s).multiplyScalar(1.25) }); /* 1.25 covers the vertex noise */
       };
       rock(1.9, -1.4, 1.3, 0.7); rock(-2.9, -2.6, 1.7, 0.75); rock(3.9, 0.5, 0.85, 0.6); rock(-0.4, -4.4, 2.3, 0.85); rock(-4.6, 0.6, 0.8, 0.55);
       const tipAttr = (g, maxY) => { const p = g.attributes.position, a = new Float32Array(p.count); for (let i = 0; i < p.count; i++) a[i] = p.getY(i) / maxY; g.setAttribute('aTip', new THREE.BufferAttribute(a, 1)); return a; };
@@ -374,6 +375,21 @@ attribute float aTip; varying float vTip;
       kick();
     }
     function removeFood(f) { scene.remove(f); const i = food.indexOf(f); if (i >= 0) food.splice(i, 1); }
+    /* no passing through rocks, the ground or each other: project the body back outside after each move */
+    function keepClear(c) {
+      const pad = c.len * 0.55, q = new V();
+      for (const o of colliders) {
+        q.set((c.pos.x - o.p.x) / (o.r.x + pad), (c.pos.y - o.p.y) / (o.r.y + pad), (c.pos.z - o.p.z) / (o.r.z + pad));
+        const L = q.length(); if (L >= 1) continue; if (L < 1e-4) q.set(0, 1, 0); else q.divideScalar(L);
+        c.pos.set(o.p.x + q.x * (o.r.x + pad), o.p.y + q.y * (o.r.y + pad), o.p.z + q.z * (o.r.z + pad));
+      }
+      for (const b of creatures) {
+        if (b === c) continue; const min = (c.len + b.len) * 0.5; q.copy(c.pos).sub(b.pos); const d = q.length();
+        if (d < min && d > 1e-4) c.pos.addScaledVector(q, (min - d) / d * 0.5);
+      }
+      const floor = H(c.pos.x, c.pos.z) + (c.loco === 'walk' || c.loco === 'crawl' ? c.footY : c.len * 0.35);
+      if (c.pos.y < floor) c.pos.y = floor;
+    }
     function stepCreatures(dt, t, m) {
       for (const c of creatures) {
         c.mixer.update(dt * m);
@@ -403,6 +419,7 @@ attribute float aTip; varying float vTip;
         const k = c.state === 'seek' ? 1 - Math.exp(-dt * 2.2) : 1 - Math.exp(-dt * 3);
         c.prev.copy(c.pos); c.pos.lerp(desired, k * m || (m ? 0 : 1));
         if (c.state === 'seek') { const v = desired.clone().sub(c.pos), d = v.length(), sp = 1.4 * dt; if (d > sp) c.pos.addScaledVector(v, sp / d); }
+        if (c.loco !== 'rooted') keepClear(c);
         const vel = tmpV.copy(c.pos).sub(c.prev);
         const face = c.state !== 'roam' && c.target ? tmpV2.copy(c.target.position).sub(c.pos) : vel;
         if (face.lengthSq() > 1e-8 && c.loco !== 'rooted') {
