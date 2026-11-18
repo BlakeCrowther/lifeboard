@@ -1436,7 +1436,7 @@ setInterval(() => { if (!U.sheet && !drag && document.visibilityState === 'visib
    Off: nothing below loads or runs (no three.js, no game derivation). #labs or a visitor test link
    (?visitor=<id>, #visitor=<id>, #labs-visitor-<id>) turns it on for one visit. */
 const LABS = { forced: false, loading: null, ready: false, game: null, gameKey: null, metSeen: null };
-function labsFromUrl(href) { try { const u = new URL(href), h = u.hash.slice(1); return h === 'labs' || /^labs-visitor-[\w-]+$/.test(h) || /(^|[&/])visitor=/.test(h) || u.searchParams.has('visitor'); } catch (e) { return false; } }
+function labsFromUrl(href) { try { const u = new URL(href), h = u.hash.slice(1); return h === 'labs' || h === 'labs-preview' || /^labs-visitor-[\w-]+$/.test(h) || /(^|[&/])visitor=/.test(h) || u.searchParams.has('visitor'); } catch (e) { return false; } }
 const labsOn = () => UI.labs === true || LABS.forced;
 function loadLabs() {
   if (LABS.loading) return LABS.loading;

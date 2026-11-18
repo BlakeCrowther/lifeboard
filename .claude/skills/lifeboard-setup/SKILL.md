@@ -50,6 +50,9 @@ The display-settings popover (sliders icon) has a **Labs** toggle (off by defaul
 - Never publish `mock.js`, `mockdata.js`, `test.html` or anything under `models/out/`.
 - Someone cloning the repo publishes to an artifact of their own (first publish creates it; reuse that URL afterwards).
 
+## Preview the rewards
+Open the page with `#labs-preview` (or `test.html#labs-preview` locally). A row of buttons under the habitat jumps to Phase 1–5, sets 0/5/15 overdue (cloudy water, algae), toggles bleaching, cycles biomes and drops food. View-only: nothing is saved and the real game state is untouched.
+
 ## Runtime test hook
 `habitat.js` supports `?visitor=<id>`, `#visitor=<id>` and `#labs-visitor-<id>` (use the last one in the published artifact, which only passes plain `#name` hashes); any of them turns Labs on for that visit only. It it injects a candidate creature (from `window.LB_CREATURES[<id>]`, e.g. a wrapped `models/out/<id>/<id>-glb.js`) into the habitat so G6 (model-verify) can check it in the real page before it ships.
 
