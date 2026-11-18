@@ -55,12 +55,15 @@
     const todayTide = tides[tides.length - 1];
     /* ---- garden ---- */
     const sw = LBG.RULES.garden.seasonWeeks;
-    const firstWeek = sessions.length ? monday(Math.min(...sessions.map((s) => dn(s.date)))) : wk;
-    const weeksDone = Math.max(0, Math.round((wk - firstWeek) / 7));
+    /* garden weeks run Mon..Sun: with a start date the garden opens the first Monday on/after it; until then every plot is a seed */
+    const gStart = start == null ? null : monday(start) === start ? start : monday(start) + 7, waiting = gStart != null && today < gStart;
+    const gSessions = gStart == null ? sessions : sessions.filter((s) => dn(s.date) >= gStart);
+    const firstWeek = gStart != null ? gStart : gSessions.length ? monday(Math.min(...gSessions.map((s) => dn(s.date)))) : wk;
+    const weeksDone = waiting ? 0 : Math.max(0, Math.round((wk - firstWeek) / 7));
     const daysLeft = 7 - (today - wk);
     const plots = habits.map((h) => {
       const counts = {};
-      sessions.forEach((s) => { if (s.h === h.key) { const m = monday(dn(s.date)); counts[m] = (counts[m] || 0) + 1; } });
+      gSessions.forEach((s) => { if (s.h === h.key) { const m = monday(dn(s.date)); counts[m] = (counts[m] || 0) + 1; } });
       const rng = mulberry(hash(h.key));
       let p = LBG.newPlant({ rarity: 'common' }, false), seasons = 0;
       for (let w = 0; w < weeksDone; w++) {
@@ -69,7 +72,7 @@
       }
       const week = counts[wk] || 0, need = Math.max(1, h.floor) - week;
       return { key: h.key, name: h.name, stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], alive: p.alive, wilted: !!p.wilted,
-        thirsty: p.alive && p.stage > 0 && need > 0 && daysLeft <= need + 2, week, floor: h.floor, target: h.target, seed: p.seed, seasons, plant: p };
+        thirsty: !waiting && p.alive && p.stage > 0 && need > 0 && daysLeft <= need + 2, week, floor: h.floor, target: h.target, seed: p.seed, seasons, plant: p };
     });
     return {
       day: today - first, today: input.today,
@@ -77,7 +80,7 @@
       todayTide, weekTides, events,
       overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), algae: LBG.algae(overdueAges),
       visitor: reef.bleached ? null : wv || 'common', visitorWeek: ds(wk),
-      season: { week: (weeksDone % sw) + 1, of: sw, index: Math.floor(weeksDone / sw) },
+      season: { week: (weeksDone % sw) + 1, of: sw, index: Math.floor(weeksDone / sw), opens: waiting ? ds(gStart) : null },
       plots,
     };
   }
@@ -134,7 +137,7 @@
       const warn = st === 'wilt' || st === 'dead';
       return `<li class="grow-row">${plotSVG(pl)}<div class="gmeta"><p class="gname">${esc(pl.name)}</p><p class="gsub">${esc(sub)}</p></div><span class="chip${warn ? ' gwarn' : ' gok'}">${LABEL[st]}</span></li>`;
     }).join('');
-    return `<section class="sec labs-garden" aria-label="Garden"><div class="sec-h"><h3 class="sec-t">Garden <span class="ct num">Labs</span></h3><span class="gseason">Season week ${game.season.week} of ${game.season.of}</span></div><div class="card"><ul class="glist">${rows}</ul></div></section>`;
+    return `<section class="sec labs-garden" aria-label="Garden"><div class="sec-h"><h3 class="sec-t">Garden <span class="ct num">Labs</span></h3><span class="gseason">${game.season.opens ? `Seeds plant Mon ${game.season.opens.slice(5).replace('-', '/')}` : `Season week ${game.season.week} of ${game.season.of}`}</span></div><div class="card"><ul class="glist">${rows}</ul></div></section>`;
   }
   API.renderPlant = renderPlant;
   API.gardenCard = gardenCard;
