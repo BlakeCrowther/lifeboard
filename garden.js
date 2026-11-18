@@ -164,7 +164,8 @@
   const plotSVG = (pl, w) => { const st = visual(pl); return specimen(st, pl.seed, w, `${pl.name}: ${LABEL[st].toLowerCase()} plant`); };
 
   /* ---- preview (#labs-preview or ?preview): restyle every plot, try seed rarities, fill the shelf with samples. View-only, never saved. ---- */
-  const PV = { on: false, stage: null, rarity: null, mutated: false, sample: false };
+  /* the local mock board (test.html) has no history, so it shows sample keepsakes by default */
+  const PV = { on: false, stage: null, rarity: null, mutated: false, sample: !!G.MOCK };
   try { const u = new URL(G.LB_LABS_HREF || G.location.href); PV.on = u.hash === '#labs-preview' || u.searchParams.has('preview'); } catch (e) { /* off */ }
   function view(pl) {
     if (!PV.on || (!PV.stage && !PV.rarity && !PV.mutated)) return pl;
@@ -204,12 +205,17 @@
   }
   function dioramaSVG(biome, w = 96) {
     const p = 'gd' + uid++ + '-', land = biome.medium === 'air' || biome.medium === 'land';
-    const [a, b] = land ? ['#cfeaf7', '#8cc8a0'] : ['#7fd3e6', '#1f6f9a'];
+    const TINT = { 0: ['#7fd3e6', '#1f6f9a'], 1: ['#6fc0b0', '#14505a'], 2: ['#a6e4ec', '#3a8fb0'], 3: ['#a8d4b4', '#3d6b5a'], 4: ['#3a4a8a', '#0d1530'], 5: ['#cfeaf7', '#8cc8a0'], 6: ['#eef7ff', '#9fc4ea'] };
+    const [a, b] = TINT[biome.id] || (land ? TINT[5] : TINT[0]);
+    const extra = biome.id === 1 ? '<path d="M24 61 q-4 -12 1 -24 M31 61 q4 -14 -1 -27 M58 61 q-3 -10 1 -20" stroke="#3f8f4a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
+      : biome.id === 4 ? '<circle cx="30" cy="40" r="1.4" fill="#9ff3ff"/><circle cx="50" cy="36" r="1.1" fill="#9ff3ff"/><circle cx="44" cy="46" r=".9" fill="#ffd36b"/>'
+      : biome.id === 6 ? '<ellipse cx="30" cy="42" rx="7" ry="3.5" fill="#fff" opacity=".9"/><ellipse cx="50" cy="38" rx="6" ry="3" fill="#fff" opacity=".85"/>' : '';
     const life = land
       ? `<path d="M18 61 q22 -8 44 0z" fill="#6fae4f"/><circle cx="30" cy="52" r="5" fill="#4f8f3a"/><circle cx="48" cy="50" r="6.5" fill="#3f7f34"/><circle cx="27" cy="57" r="1.6" fill="#f5c73e"/><circle cx="52" cy="58" r="1.6" fill="#e57e9d"/><circle cx="40" cy="58" r="1.4" fill="#fff"/>`
       : `<path d="M18 61 q22 -6 44 0z" fill="#e9d3a6"/><path d="M28 61 q-3 -9 1 -14 M28 55 q4 -4 6 -9" stroke="#ff7f6b" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="47" cy="57" r="4.5" fill="#c9a0e8"/><path d="M53 61 q0 -8 3 -12 M56 61 q1 -6 4 -9" stroke="#5fb86b" stroke-width="1.6" fill="none"/><path d="M36 44 q3 -2 6 0 q-3 2 -6 0z M42 44 l2 -1.5 v3z" fill="#ff9a3c"/><circle cx="33" cy="37" r="1" fill="#fff" opacity=".7"/><circle cx="36" cy="33" r=".7" fill="#fff" opacity=".7"/>`;
+    const lifeX = life + extra;
     return `<svg class="gdio" viewBox="0 0 80 80" width="${w}" height="${w}" role="img" aria-label="${esc(biome.name)} diorama"><defs><linearGradient id="${p}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient><linearGradient id="${p}b" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8723f"/><stop offset="1" stop-color="#6a401c"/></linearGradient></defs>
-      <ellipse cx="40" cy="73" rx="31" ry="4" fill="#000" opacity=".18"/><path d="M14 61 A26 26 0 0 1 66 61z" fill="url(#${p}w)" opacity=".9"/>${life}<path d="M14 61 A26 26 0 0 1 66 61" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/><path d="M22 47 A19 19 0 0 1 33 37" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/><rect x="10" y="60" width="60" height="11" rx="3" fill="url(#${p}b)"/><rect x="10" y="60" width="60" height="2.5" rx="1.2" fill="#f0c48e" opacity=".7"/></svg>`;
+      <ellipse cx="40" cy="73" rx="31" ry="4" fill="#000" opacity=".18"/><path d="M14 61 A26 26 0 0 1 66 61z" fill="url(#${p}w)" opacity=".9"/>${lifeX}<path d="M14 61 A26 26 0 0 1 66 61" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/><path d="M22 47 A19 19 0 0 1 33 37" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/><rect x="10" y="60" width="60" height="11" rx="3" fill="url(#${p}b)"/><rect x="10" y="60" width="60" height="2.5" rx="1.2" fill="#f0c48e" opacity=".7"/></svg>`;
   }
   function samples(game) {
     const out = [];
@@ -217,12 +223,12 @@
       out.push({ id: `sample-${pl.key}-a`, kind: 'plant', key: pl.key, name: pl.name, season: 1, from: '2026-10-26', to: '2026-11-22', stageName: 'bloom', bloomed: true, died: false, score: 5 + i, sessions: 4 * pl.target, seed: { rarity: Object.keys(RAR)[i % 3], mutated: i === 2 }, earned: { rarity: i % 2 ? 'exotic' : 'heirloom', mutated: false } });
       if (i % 2) out.push({ id: `sample-${pl.key}-b`, kind: 'plant', key: pl.key, name: pl.name, season: 0, from: '2026-09-28', to: '2026-10-25', stageName: 'leafy', bloomed: false, died: true, score: 1, sessions: 3, seed: { rarity: 'common' }, earned: { rarity: 'common', mutated: false } });
     });
-    out.push({ id: 'sample-reef-0', kind: 'reef', biome: 0, days: 41 }, { id: 'sample-reef-1', kind: 'reef', biome: 3, days: 36 });
+    [[0, 41], [1, 33], [4, 52], [5, 29], [6, 38]].forEach(([b, d], i) => out.push({ id: `sample-reef-${i}`, kind: 'reef', biome: b, days: d }));
     return out;
   }
   function keepsakes(game) {
     const real = [...game.reef.dioramas.map((d, i) => ({ id: `reef-${i}`, kind: 'reef', biome: d.biome, days: d.days })).reverse(), ...game.history.filter((h) => h.bloomed || h.died || h.stage > 0).slice().reverse()];
-    return PV.on && PV.sample ? [...samples(game), ...real] : real;
+    return PV.sample && (PV.on || G.MOCK) ? [...samples(game), ...real] : real;
   }
   function keepTitle(k) {
     if (k.kind === 'reef') return `${biomeOf(k.biome).name} diorama`;
