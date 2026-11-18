@@ -28,7 +28,11 @@
   function deriveGame(input, LBG) {
     LBG = LBG || G.LBG;
     const today = dn(input.today), goal = Math.max(1, input.ringGoal || 3);
-    const tasks = input.tasks || [], habits = input.habits || [], sessions = (input.sessions || []).filter((s) => s.date && s.date <= input.today);
+    /* input.start ('YYYY-MM-DD', optional): the game begins that day at 0; history before it is ignored and
+       tasks already overdue then count as overdue from the start date. */
+    const start = input.start ? dn(input.start) : null, from = (d) => (start != null ? Math.max(d, start) : d);
+    const tasks = (input.tasks || []).filter((t) => start == null || !(t.done && t.doneDate && dn(t.doneDate) < start)).map((t) => (t.eff && start != null && !t.done && dn(t.eff) < start ? { ...t, eff: ds(start) } : t));
+    const habits = input.habits || [], sessions = (input.sessions || []).filter((s) => s.date && s.date <= input.today && (start == null || dn(s.date) >= start));
     /* ---- reef ---- */
     const doneOn = {}, dueOn = {};
     let first = today;
@@ -37,7 +41,7 @@
       if (t.eff) { const d = dn(t.eff); dueOn[d] = (dueOn[d] || 0) + 1; if (d <= today) first = Math.min(first, d); }
     });
     sessions.forEach((s) => { first = Math.min(first, dn(s.date)); });
-    first = Math.max(first, today - 365);
+    first = Math.max(from(first), today - 365);
     const reef = LBG.newReef(), events = [], tides = [];
     for (let d = first; d <= today; d++) {
       const done = doneOn[d] || 0, tide = done || dueOn[d] ? LBG.dayTide(goal, done) : null;

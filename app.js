@@ -1449,14 +1449,31 @@ function loadLabs() {
 /* pure inputs for LBGarden.deriveGame, recomputed when the data changes */
 function labsGame() {
   if (!LABS.ready || LBDB.state.status !== 'ready') return null;
+  if (LABS.start === undefined) { labsStart(); return null; }
   const key = S;
   if (LABS.gameKey === key && LABS.game && LABS.game.today === TODAY) return LABS.game;
   const tasks = S.tasks.map((t) => ({ eff: eff(t), done: t.done, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null }));
   const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target }));
   const sessions = S.sessions.map((x) => { const h = S.habits.find((k) => k.key === x.h || k.id === x.h); return { h: h ? h.key : x.h, date: x.date }; });
-  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
+  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions, start: LABS.start }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
   LABS.gameKey = key;
   return LABS.game;
+}
+/* the game starts at 0 on the day Labs is first turned on: labs_state/game.started, written once, shared across devices */
+let labsStartP = null;
+function labsStart() {
+  if (labsStartP) return labsStartP;
+  labsStartP = (async () => {
+    try {
+      const db = await window.claude.use('db'); if (!db) throw new Error('no db');
+      const col = db.collection('labs_state');
+      const got = await new Promise((res) => { let off = null; off = col.onSnapshot((snap) => { const d = snap.docs.find((x) => x.id === 'game'); res(d ? (d.data ? d.data() : d) : null); off && off(); }, () => res(null)); });
+      if (got && got.started) LABS.start = got.started;
+      else { const body = { started: TODAY, created_at: Date.now() }; if (!LBS.validate('labs_state', body)) await col.doc('game').set(body); LABS.start = TODAY; }
+    } catch (e) { LABS.start = TODAY; /* no db: start today for this page */ }
+    LABS.gameKey = null; schedule();
+  })();
+  return labsStartP;
 }
 function labsGardenHTML() { if (!labsOn()) return ''; const g = labsGame(); return g ? LBGarden.gardenCard(g) : ''; }
 function labsAfterRender() {

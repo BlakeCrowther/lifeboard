@@ -42,6 +42,7 @@ models/shared/tools/doctor.sh --fix    # install what brew can install
 - `doctor.sh` checks that `.claude/launch.json` exists and reports `mockdata.js` as optional.
 
 ## Labs flag
+The game (reef points, garden, visitors) starts at 0 on the day Labs is first turned on: that date is written once to db `labs_state/game.started` and earlier history is ignored. Delete that doc to restart from 0.
 The display-settings popover (sliders icon) has a **Labs** toggle (off by default, saved per viewer as `lb-ui.labs`) that shows the experimental habitat (creatures) and garden (plants) cards. Turn it on to see models in the page; the rest of lifeboard works without it.
 
 ## Publishing
