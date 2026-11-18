@@ -244,9 +244,12 @@ attribute float aTip; varying float vTip;
       colliders.push({ kind, p, r, obj }); return obj;
     };
     let world = null, medium = null, growth = [], ambient = [], coralMats = [], algaeInst = null, rays = [], rockMat = null, snowMat = null;
-    function buildWorld(med) {
+    /* scene key: biomes.json `scene`, else by medium. Each key has its own scenery + water/air look (LOOKS). */
+    const sceneOf = (b) => b.scene || ({ water: 'reef', land: 'meadow', air: 'canopy' })[b.medium || 'water'] || 'reef';
+    let sk = null;
+    function buildWorld(med, key) {
       if (world) { scene.remove(world); world.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
-      world = new THREE.Group(); scene.add(world); medium = med; growth = []; ambient = []; coralMats = []; rays = []; seed = 7;
+      world = new THREE.Group(); scene.add(world); medium = med; sk = key || (med === 'water' ? 'reef' : med === 'air' ? 'canopy' : 'meadow'); growth = []; ambient = []; coralMats = []; rays = []; seed = 7;
       const water = med === 'water';
       const sandGeo = new THREE.PlaneGeometry(80, 80, 120, 120); sandGeo.rotateX(-Math.PI / 2);
       { const p = sandGeo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, H(p.getX(i), p.getZ(i))); sandGeo.computeVertexNormals(); }
@@ -286,30 +289,33 @@ attribute float aTip; varying float vTip;
         const g = new THREE.SphereGeometry(r, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2), p = g.attributes.position, col = [], a = new THREE.Color(c1), b = new THREE.Color(c2), c = new THREE.Color(), tip = new Float32Array(p.count);
         for (let i = 0; i < p.count; i++) { const v = new V().fromBufferAttribute(p, i), n = v.clone().normalize(), k = Math.sin((v.x / r) * 16 + Math.sin((v.z / r) * 8) * 2.4 + Math.cos((v.y / r) * 6)); v.addScaledVector(n, k * r * 0.035); p.setXYZ(i, v.x, v.y, v.z); c.copy(a).lerp(b, k * 0.5 + 0.5); col.push(c.r, c.g, c.b); tip[i] = k > 0.6 ? 1 : 0; }
         g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('aTip', new THREE.BufferAttribute(tip, 1)); g.computeVertexNormals();
-        const m = new THREE.Mesh(g, coralMat(c2)); m.scale.y = 0.8; m.position.set(x, H(x, z) - 0.06, z); m.castShadow = m.receiveShadow = true; world.add(m); growth.push(m); solid('coral', m);
+        const m = new THREE.Mesh(g, coralMat(c2)); m.scale.y = 0.8; m.position.set(x, H(x, z) - 0.06, z); m.castShadow = m.receiveShadow = true; world.add(m); growth.push(m); solid('coral', m); return m;
       };
       const bush = (x, z, s, c1, c2) => { /* land/air: a flowering shrub from the same branch generator, tips as blossoms */
         const m = branchy(x, z, s, c1, c2, { spread: 0.9, depth: 3, len: 0.5, rad: 0.05, kids: 3 }); return m;
       };
       /* growth order = what appears first as phases rise */
-      if (water) {
+      const anem = (x, z, col, sheen, n = 120) => {
+        const g = new THREE.CylinderGeometry(0.011, 0.03, 0.55, 6, 8); g.translate(0, 0.275, 0); tipAttr(g, 0.55);
+        const mat = new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.45, sheen: 1, sheenColor: new THREE.Color(sheen) }); mat.defines = { SWAY: '', GLOW: '' }; patch(mat, { uSwayAmp: { value: 0.35 } }); coralMats.push(mat);
+        const inst = new THREE.InstancedMesh(g, mat, n), o = new THREE.Object3D();
+        for (let i = 0; i < n; i++) { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * 0.48; o.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); o.rotation.set(Math.sin(a) * r * 1.3, 0, -Math.cos(a) * r * 1.3); o.scale.setScalar(R(0.75, 1.15)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
+        inst.position.set(x, H(x, z) + 0.02, z); inst.castShadow = true; world.add(inst); solid('anemone', inst); return inst;
+      };
+      const reefish = sk === 'reef' || sk === 'deep';
+      if (reefish) {
         branchy(-1.4, 0.5, 1.1, 0xc2384f, 0xffb3bf); brain(0.5, 1.2, 0.72, 0x8a5a1e, 0xf2b866);
         branchy(2.5, -2.7, 1.3, 0x6b2fa8, 0xd7a8ff, { trunks: 2 }); branchy(-3.6, -0.7, 0.95, 0xd3533c, 0xffc9a3, { spread: 0.55 });
         brain(-2.2, -3.8, 0.55, 0x3f6b2a, 0xb8de7a); branchy(0.2, -2.4, 0.8, 0x2a8f86, 0x9ff5df, { trunks: 3, depth: 2, len: 0.55 });
         branchy(3.3, -1.6, 0.9, 0xb4471f, 0xffa35a, { spread: 0.5 }); brain(-0.8, -1.2, 0.45, 0x6a3a7a, 0xe0a8f0);
-        /* anemone: instanced swaying tentacles, glowing tips at night */
-        const N = 120, g = new THREE.CylinderGeometry(0.011, 0.03, 0.55, 6, 8); g.translate(0, 0.275, 0); tipAttr(g, 0.55);
-        const mat = new THREE.MeshPhysicalMaterial({ color: 0xd59ae8, roughness: 0.45, sheen: 1, sheenColor: new THREE.Color(0xffe0ff) }); mat.defines = { SWAY: '', GLOW: '' }; patch(mat, { uSwayAmp: { value: 0.35 } }); coralMats.push(mat);
-        const inst = new THREE.InstancedMesh(g, mat, N), o = new THREE.Object3D();
-        for (let i = 0; i < N; i++) { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * 0.48; o.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); o.rotation.set(Math.sin(a) * r * 1.3, 0, -Math.cos(a) * r * 1.3); o.scale.setScalar(R(0.75, 1.15)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
-        inst.position.set(1.6, H(1.6, 1.5) + 0.02, 1.5); inst.castShadow = true; world.add(inst); growth.splice(1, 0, inst); solid('anemone', inst);
-      } else {
+        growth.splice(1, 0, anem(1.6, 1.5, 0xd59ae8, 0xffe0ff));
+      } else if (!water) {
         bush(-1.4, 0.5, 1.4, 0x3f6b2a, 0xffd23f); bush(0.6, 1.0, 1.0, 0x4a7d3a, 0xf28fb0); bush(2.5, -2.7, 1.6, 0x3a6a30, 0xffffff, { trunks: 2 });
         bush(-3.6, -0.7, 1.2, 0x4a7d3a, 0xb98cff); bush(-2.2, -3.8, 1.3, 0x355f2a, 0xff9a52); bush(0.2, -2.4, 1.1, 0x4a7d3a, 0xfff07a);
         bush(3.3, -1.6, 1.2, 0x3f6b2a, 0xff6a6a); bush(-0.8, -1.2, 0.9, 0x4a7d3a, 0x8fd0ff);
       }
       /* ---- phase tiers: every growth piece gets userData.ph (0 = phase 1); apply() shows ph <= reef.phase ---- */
-      [0, 0, 0, 1, 1, 2, 2, 3, 3].forEach((ph, i) => { if (growth[i]) growth[i].userData.ph = ph; });
+      [0, 0, 0, 1, 1, 2, 2, 3, 3].forEach((ph, i) => { if (growth[i]) growth[i].userData.ph = ph; }); /* reef corals or land bushes */
       const tier = (o, ph) => { o.userData.ph = ph; growth.push(o); return o; };
       const mesh = (g, mat, x, z, dy = 0) => { const m = new THREE.Mesh(g, mat); m.position.set(x, H(x, z) + dy, z); m.castShadow = m.receiveShadow = true; world.add(m); return m; };
       const tinted = (g, c1, c2) => { g.computeBoundingBox(); colorByTip(g, tipAttr(g, Math.max(0.01, g.boundingBox.max.y)), c1, c2); return g; };
@@ -326,9 +332,9 @@ attribute float aTip; varying float vTip;
       const table = (x, z, s, c1, c2) => { const top = new THREE.CylinderGeometry(0.9, 0.55, 0.12, 28, 2); top.translate(0, 0.62, 0); const stem = new THREE.CylinderGeometry(0.12, 0.2, 0.6, 10); stem.translate(0, 0.3, 0);
         const g = BU.mergeGeometries([top.toNonIndexed(), stem.toNonIndexed()]); g.scale(s, s, s); g.computeVertexNormals(); return solid('coral', mesh(tinted(g, c1, c2), coralMat(c2), x, z, -0.03)); };
       /* a small school / swarm: instanced bodies circling an anchor (decor, no collisions, above the rocks) */
-      const swarm = (n, cx, cy, cz, rad, col, kind) => {
+      const swarm = (n, cx, cy, cz, rad, col, kind, glow) => {
         let g; if (kind === 'butterfly') { g = new THREE.PlaneGeometry(0.16, 0.1); g.rotateX(-Math.PI / 2); } else { const b = new THREE.SphereGeometry(0.05, 8, 6); b.scale(1.6, 0.8, 0.45); const t = new THREE.ConeGeometry(0.035, 0.06, 4); t.rotateZ(Math.PI / 2); t.translate(-0.1, 0, 0); g = BU.mergeGeometries([b.toNonIndexed(), t.toNonIndexed()]); }
-        const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.5, side: THREE.DoubleSide }), inst = new THREE.InstancedMesh(g, mat, n), o = new THREE.Object3D(), seeds = Array.from({ length: n }, () => [R(0, 6.28), R(-0.5, 0.5), R(-0.35, 0.35), R(0.8, 1.2)]);
+        const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.5, side: THREE.DoubleSide, emissive: glow ? col : 0x000000, emissiveIntensity: glow ? 2.2 : 0 }), inst = new THREE.InstancedMesh(g, mat, n), o = new THREE.Object3D(), seeds = Array.from({ length: n }, () => [R(0, 6.28), R(-0.5, 0.5), R(-0.35, 0.35), R(0.8, 1.2)]);
         inst.userData.tick = (s) => { for (let i = 0; i < n; i++) { const [p, dr, dy, sp] = seeds[i], a = s * 0.35 * sp + p, r = rad + dr; o.position.set(cx + Math.cos(a) * r, cy + dy + Math.sin(s * 1.3 + p) * 0.1, cz + Math.sin(a) * r * 0.6); o.rotation.set(0, -a - Math.PI / 2, 0);
           o.scale.set(1, kind === 'butterfly' ? 0.2 + Math.abs(Math.sin(s * 12 + p)) : 1, 1); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); } inst.instanceMatrix.needsUpdate = true; };
         inst.userData.tick(0); inst.frustumCulled = false; world.add(inst); ambient.push(inst); return inst; };
@@ -339,18 +345,74 @@ attribute float aTip; varying float vTip;
         const inst = new THREE.InstancedMesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 }), n), o = new THREE.Object3D();
         for (let i = 0; i < n; i++) { const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 0.6, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; o.position.set(px, H(px, pz) - 0.01, pz); o.scale.setScalar(R(0.7, 1.3)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
         inst.castShadow = true; world.add(inst); return inst; };
-      if (water) {
+      /* kelp: tall swaying ribbons in a cluster (kind 'kelp': biomes can let creatures pass through) */
+      const kelp = (x, z, n, h) => { const g = new THREE.PlaneGeometry(0.2, h, 1, 16); g.translate(0, h / 2, 0); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (0.6 + Math.sin(p.getY(i) * 3) * 0.4));
+        const mat = new THREE.MeshStandardMaterial({ color: 0x8a7a2a, roughness: 0.6, side: THREE.DoubleSide }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: 0.035 } });
+        const inst = new THREE.InstancedMesh(g, mat, n), o = new THREE.Object3D(); for (let i = 0; i < n; i++) { const px = x + R(-0.5, 0.5), pz = z + R(-0.5, 0.5); o.position.set(px, H(px, pz) - 0.05, pz); o.rotation.set(0, R(0, 6), 0); o.scale.set(1, R(0.75, 1.2), 1); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
+        inst.castShadow = true; world.add(inst); return solid('kelp', inst, 0.5); };
+      /* sea urchin: dark spiky ball on the sand */
+      const urchin = (x, z, s, col) => { const geos = [new THREE.SphereGeometry(0.12, 10, 8).toNonIndexed()]; for (let i = 0; i < 40; i++) { const c = new THREE.ConeGeometry(0.008, 0.2, 3); c.translate(0, 0.16, 0); c.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new V(0, 1, 0), new V(R(-1, 1), R(-0.2, 1), R(-1, 1)).normalize())); geos.push(c.toNonIndexed()); }
+        const g = BU.mergeGeometries(geos); g.scale(s, s, s); return mesh(g, new THREE.MeshStandardMaterial({ color: col, roughness: 0.4 }), x, z, 0.08 * s); };
+      /* mangrove: a trunk rising out of view with arching prop roots (solid) */
+      const mangrove = (x, z, s) => { const geos = [], top = new V(x, 4.5, z), mat = new THREE.MeshStandardMaterial({ color: 0x5a4632, roughness: 0.95 });
+        const t = new THREE.CylinderGeometry(0.16, 0.22, 4, 10); t.translate(x, H(x, z) + 2.6, z); geos.push(t.toNonIndexed());
+        for (let i = 0; i < 7; i++) { const a = (i / 7) * 6.28 + R(-0.3, 0.3), r = R(0.9, 1.5) * s, ex = x + Math.cos(a) * r, ez = z + Math.sin(a) * r, y0 = H(x, z) + R(1.0, 1.6);
+          const c = new THREE.CatmullRomCurve3([new V(x, y0, z), new V(x + Math.cos(a) * r * 0.5, y0 + 0.25, z + Math.sin(a) * r * 0.5), new V(ex, H(ex, ez) - 0.1, ez)]); geos.push(new THREE.TubeGeometry(c, 14, 0.06 * s, 6).toNonIndexed()); }
+        const m = new THREE.Mesh(BU.mergeGeometries(geos), mat); m.castShadow = m.receiveShadow = true; world.add(m); return solid('root', m, 0.85); };
+      /* clouds: soft puff clusters for the canopy */
+      const cloud = (x, y, z, s) => { const geos = []; for (let i = 0; i < 6; i++) { const g = new THREE.SphereGeometry(R(0.35, 0.6), 12, 10); g.translate(R(-0.6, 0.6), R(-0.1, 0.2), R(-0.3, 0.3)); geos.push(g.toNonIndexed()); }
+        const g = BU.mergeGeometries(geos); g.scale(s, s * 0.6, s); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, transparent: true, opacity: 0.85 })); m.position.set(x, y, z); world.add(m); return solid('cloud', m); };
+      const tiers = {
+        reef: () => {
         tier(star(0.9, 2.3, 0.09, 0xd9542c, 0xffa070), 0); tier(star(-2.4, 2.0, 0.07, 0x7a3fb0, 0xd0a0ff), 0);
         tier(sponge(-4.2, -1.9, 1, 0x9b4f1d, 0xffa64a), 1); tier(star(2.9, 1.6, 0.08, 0x2c6fd9, 0x9fd0ff), 1); tier(swarm(6, 0.5, 2.6, -1.5, 2.2, 0x3aa6ff), 1);
         tier(fan(-1.9, -4.6, 1.2, 0xa8326b, 0xff8fc0), 2); tier(fan(4.4, -2.9, 1.0, 0xc4802a, 0xffd27a), 2); tier(sponge(2.0, -4.1, 0.9, 0x5a2f8a, 0xc79bff), 2);
         tier(table(-3.2, 1.6, 0.8, 0x6b8a3a, 0xd6f08a), 3); tier(swarm(14, -0.8, 3.1, -1.8, 2.8, 0xffd23f), 3); tier(star(-0.2, 2.6, 0.1, 0xe0b030, 0xfff0a0), 3);
         tier(table(3.4, 2.0, 0.65, 0x2a7a8f, 0x9ff0f5), 4); tier(fan(-5.2, -3.4, 1.4, 0x7a2fb0, 0xe0a8ff), 4); tier(sponge(4.8, 1.8, 0.8, 0xb03a3a, 0xff9a8a), 4); tier(swarm(20, 1.2, 3.5, -2.4, 3.3, 0xff7a2a), 4);
-      } else {
+        },
+        meadow: () => {
         tier(patchOf(1.0, 2.2, 18, 0xffd23f, 'flower'), 0); tier(patchOf(-2.6, 1.9, 14, 0xf28fb0, 'flower'), 1); tier(patchOf(2.8, 1.2, 10, 0xc0462a, 'mushroom'), 1);
         tier(swarm(5, 0, 2.2, -1, 2.4, 0xffb13d, 'butterfly'), 2); tier(patchOf(-4.0, -1.8, 22, 0xb98cff, 'flower'), 2);
         tier(patchOf(4.2, -2.2, 12, 0xe8e0d0, 'mushroom'), 3); tier(swarm(9, -1, 2.6, -1.5, 3, 0x8fd0ff, 'butterfly'), 3); tier(patchOf(0.2, 2.8, 26, 0xffffff, 'flower'), 3);
         tier(bush(-5.0, -3.5, 2.0, 0x2f5a24, 0xff9a52), 4); tier(patchOf(3.4, 2.4, 30, 0xff6a6a, 'flower'), 4); tier(swarm(12, 1, 3, -2, 3.4, 0xffe066, 'butterfly'), 4);
-      }
+        },
+        kelp: () => {
+          tier(kelp(-2.0, -1.2, 9, 4.2), 0); tier(kelp(2.6, -2.2, 8, 4.6), 0); tier(anem(0.8, 1.6, 0xe0703a, 0xffd0a0, 80), 0); tier(urchin(0.2, 2.2, 1, 0x3a1f5a), 0);
+          tier(kelp(-4.2, -3.2, 10, 5), 1); tier(urchin(-1.4, 2.4, 0.8, 0x5a1f3a), 1); tier(star(2.1, 2.3, 0.08, 0xd9542c, 0xffa070), 1); tier(swarm(6, 0, 2.4, -1.4, 2.2, 0xff8a2a), 1);
+          tier(kelp(4.4, -0.4, 8, 4.4), 2); tier(kelp(0.4, -4.4, 10, 5.2), 2); tier(sponge(-3.0, 1.2, 0.9, 0x8a6a2a, 0xffd27a), 2);
+          tier(kelp(-5.4, 0.8, 9, 4.8), 3); tier(swarm(12, -0.8, 3.0, -1.8, 2.8, 0xd0d8e0), 3); tier(urchin(3.4, 1.7, 1.1, 0x2a1f4a), 3);
+          tier(kelp(5.6, -3.6, 12, 5.6), 4); tier(kelp(-1.0, -6.0, 12, 5.8), 4); tier(swarm(18, 1, 3.6, -2.4, 3.3, 0xffb040), 4); tier(anem(-2.6, 2.4, 0x8ad0a0, 0xe0ffe0, 80), 4);
+        },
+        tidepool: () => {
+          [[-1.0, 1.6, 0.35, 0.6], [1.2, 2.3, 0.3, 0.55], [-3.6, 1.0, 0.45, 0.6], [2.8, -0.4, 0.4, 0.6]].forEach(([x, z, s2, sy]) => rock(x, z, s2, sy));
+          tier(anem(0.2, 2.0, 0x4ab06a, 0xd0ffd0, 90), 0); tier(star(-1.8, 2.4, 0.08, 0xe0407a, 0xffa0c0), 0); tier(star(1.8, 1.6, 0.07, 0xe08a2a, 0xffd0a0), 0);
+          tier(anem(-2.6, 0.2, 0xd05a8a, 0xffd0e8, 70), 1); tier(urchin(0.9, 2.6, 0.7, 0x5a2a8a), 1); tier(swarm(5, 0, 1.6, 0.4, 1.4, 0x6ab0ff), 1);
+          tier(star(-0.6, 2.8, 0.09, 0x7a3fb0, 0xd0a0ff), 2); tier(sponge(2.4, -2.0, 0.6, 0xc06a2a, 0xffb060), 2); tier(anem(3.0, 1.0, 0x4ab06a, 0xd0ffd0, 60), 2);
+          tier(brain(-3.0, -1.8, 0.4, 0x6a8a3a, 0xd6f08a), 3); tier(swarm(10, -0.5, 2, -0.5, 2, 0xffe040), 3); tier(urchin(-2.2, 2.8, 0.8, 0x3a1f5a), 3);
+          tier(anem(-0.6, -2.4, 0xff8a5a, 0xffe0c0, 100), 4); tier(star(3.2, 2.4, 0.1, 0x2c6fd9, 0x9fd0ff), 4); tier(swarm(16, 0.8, 2.4, -1.4, 2.6, 0xff6aa0), 4);
+        },
+        mangrove: () => {
+          tier(mangrove(-2.6, -1.6, 1), 0); tier(swarm(8, 0.6, 1.8, 0.2, 1.8, 0xc0c8a0), 0); tier(urchin(0.6, 2.2, 0.8, 0x4a3a2a), 0);
+          tier(mangrove(2.8, -2.8, 1.2), 1); tier(anem(1.0, 1.4, 0xb0a070, 0xfff0c0, 70), 1);
+          tier(sponge(-0.4, -1.4, 0.8, 0x8a5a2a, 0xffb060), 2); tier(swarm(12, -0.6, 2.4, -1.4, 2.6, 0xe0e0c0), 2); tier(star(-1.6, 2.4, 0.08, 0xd9542c, 0xffa070), 2);
+          tier(mangrove(-5.2, 1.0, 0.9), 3); tier(anem(-1.4, 2.0, 0xd0a0d0, 0xffe0ff, 60), 3);
+          tier(mangrove(4.8, 0.6, 1.0), 4); tier(swarm(20, 0.6, 2.8, -1.8, 3.2, 0xffd060), 4);
+        },
+        deep: () => {
+          tier(swarm(5, 0, 2.6, -1.4, 2.2, 0x6af0ff, 'fish', true), 0); tier(swarm(4, -1, 3.4, -2, 2.8, 0xff6af0, 'fish', true), 1); tier(sponge(-4.2, -1.9, 1, 0x2a3a6a, 0x6ab0ff), 1);
+          tier(fan(-1.9, -4.6, 1.2, 0x3a2a6a, 0x9a8aff), 2); tier(swarm(10, 1, 3, -2, 3, 0x8affb0, 'fish', true), 2);
+          tier(fan(4.4, -2.9, 1.0, 0x2a5a6a, 0x8af0ff), 3); tier(swarm(14, -0.8, 3.4, -1.8, 3.2, 0x6af0ff, 'fish', true), 3);
+          tier(sponge(4.8, 1.8, 0.8, 0x4a2a6a, 0xc08aff), 4); tier(swarm(20, 1, 2.8, -2.4, 3.4, 0xffd06a, 'fish', true), 4);
+        },
+        canopy: () => {
+          tier(cloud(-3, 1.2, -2, 1.4), 0); tier(cloud(3.2, 0.8, -3.2, 1.6), 0); tier(swarm(4, 0, 2.6, -1, 2.4, 0xffffff, 'butterfly'), 0);
+          tier(cloud(-0.5, 2.6, -4.5, 2), 1); tier(patchOf(1.0, 2.2, 18, 0xfff07a, 'flower'), 1); tier(swarm(6, -1, 3, -1.5, 3, 0x8fd0ff, 'butterfly'), 1);
+          tier(cloud(4.8, 2.2, -1, 1.2), 2); tier(cloud(-5, 2.8, 0, 1.3), 2); tier(patchOf(-2.6, 1.9, 14, 0xf28fb0, 'flower'), 2);
+          tier(swarm(10, 1, 3.4, -2, 3.4, 0xffb13d, 'butterfly'), 3); tier(cloud(1.5, 0.5, 1.2, 0.8), 3);
+          tier(cloud(-2, 3.4, -6, 2.4), 4); tier(swarm(14, -1, 2.2, -1, 2.8, 0xffe066, 'butterfly'), 4); tier(patchOf(3.4, 2.4, 30, 0xb98cff, 'flower'), 4);
+        },
+      };
+      (tiers[sk] || (water ? tiers.reef : tiers.meadow))();
       /* grass: seagrass under water, meadow grass on land */
       { const g = new THREE.PlaneGeometry(0.045, 0.55, 1, 6); g.translate(0, 0.275, 0); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 - (p.getY(i) / 0.55) * 0.75));
         const mat = new THREE.MeshStandardMaterial({ color: water ? 0x6f9a3c : 0x86b84a, roughness: 0.75, side: THREE.DoubleSide }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: water ? 0.28 : 0.12 } });
@@ -435,8 +497,8 @@ attribute float aTip; varying float vTip;
     let visitorName = null;
     async function loadCreatures() {
       creatures.splice(0).forEach((c) => scene.remove(c.holder)); visitorName = null;
-      const bid = sceneBiomeId(), med = biomeOf(bid).medium || 'water';
-      if (med !== medium) buildWorld(med);
+      const bid = sceneBiomeId(), b = biomeOf(bid), med = b.medium || 'water';
+      if (med !== medium || sceneOf(b) !== sk) { buildWorld(med, sceneOf(b)); }
       const list = (roster.creatures || []).filter((c) => (forced ? c.id === forced : c.biome === bid || (c.biome == null && med === 'water')));
       if (forced && !list.length) console.warn('[habitat] visitor not in roster:', forced);
       for (const entry of list.slice(0, 3)) {
@@ -516,6 +578,9 @@ attribute float aTip; varying float vTip;
 
     /* ===== state -> look ===== */
     const C = (h) => new THREE.Color(h);
+    /* per-scene colors: s = shallow/sky, d = deep/horizon; dens = fog, light = sun/caustics, glow = constant bioluminescence */
+    const LOOKS = { reef: { s: 0x3fd0e4, d: 0x0a5a86 }, kelp: { s: 0x5fb89a, d: 0x0d4a3a, dens: 1.15 }, tidepool: { s: 0x8ff0f5, d: 0x3a9fc0, dens: 0.55, light: 1.15 },
+      mangrove: { s: 0x9ab87a, d: 0x2c4a30, dens: 1.5, light: 0.8 }, deep: { s: 0x1a3f6a, d: 0x020a1a, dens: 1.25, light: 0.3, glow: 0.85 }, meadow: { s: 0x9fd4f2, d: 0xf2e2bc }, canopy: { s: 0xbfe2f7, d: 0xeef3f6, dens: 1.2 } };
     const MURK_S = C(0x6f8f4a), MURK_D = C(0x23361c), NIGHT_S = C(0x0a2a48), NIGHT_D = C(0x01070f), DUSK = C(0xd9906a), ALGAE = C(0x8fb04a);
     let envDirty = true;
     function apply() {
@@ -524,15 +589,14 @@ attribute float aTip; varying float vTip;
       const now = new Date(), h = now.getHours() + now.getMinutes() / 60;
       const elev = Math.sin(((h - 6) / 12) * Math.PI), day = Math.max(0, elev), night = 1 - smooth(-0.1, 0.25, elev), dusk = Math.max(0, 1 - Math.abs(elev) / 0.3) * (1 - night * 0.6);
       const nightK = water ? 0.9 : 0.75;
-      if (water) { U.uShallow.value.set(0x3fd0e4); U.uDeep.value.set(0x0a5a86); }
-      else { U.uShallow.value.set(0x9fd4f2); U.uDeep.value.set(medium === 'air' ? 0xdfe8ee : 0xf2e2bc); }
+      const lk = LOOKS[sk] || LOOKS.reef; U.uShallow.value.set(lk.s); U.uDeep.value.set(lk.d);
       U.uShallow.value.lerp(MURK_S, o * 0.65).lerp(ALGAE, al * 0.35).lerp(DUSK, dusk * 0.3).lerp(NIGHT_S, night * nightK);
       U.uDeep.value.lerp(MURK_D, o * 0.6).lerp(NIGHT_D, night * nightK);
-      U.uDens.value = (water ? 0.042 : medium === 'air' ? 0.05 : 0.018) * (1 + o * 1.4) * (1 + night * 0.25);
+      U.uDens.value = (water ? 0.042 : medium === 'air' ? 0.05 : 0.018) * (lk.dens || 1) * (1 + o * 1.4) * (1 + night * 0.25);
       U.uAbsorb.value.set(...(water ? [0.035, 0.012, 0.01] : [0, 0, 0])).multiplyScalar(1 + o * 0.5);
-      const lightK = 1 - o * 0.45;
+      const lightK = (1 - o * 0.45) * (lk.light || 1);
       U.uCaus.value = water ? 3.2 * Math.pow(day, 0.7) * (1 - o * 0.75) : 0;
-      U.uCausCol.value.set(dusk > 0.4 ? 0xffd6b0 : 0xf4fdff); U.uGlow.value = night * 0.9;
+      U.uCausCol.value.set(dusk > 0.4 ? 0xffd6b0 : 0xf4fdff); U.uGlow.value = Math.max(night * 0.9, lk.glow || 0);
       const az = ((h - 6) / 12) * Math.PI, sd = new V(Math.cos(az) * 0.55, Math.max(0.35, elev) + 0.5, -0.35).normalize();
       sun.position.copy(sd).multiplyScalar(18); sun.target.position.set(0, 0, -1);
       sun.color.set(night > 0.5 ? 0x8fb8ff : dusk > 0.4 ? 0xffc79a : 0xfff6e8);
@@ -600,7 +664,7 @@ attribute float aTip; varying float vTip;
       game = g; paintInfo();
       if (!engine) return;
       const b = sceneBiomeId();
-      if (lastBiome !== null && b !== lastBiome) engine.loadCreatures().then(() => engine.apply());
+      if (lastBiome !== null && b !== lastBiome) engine.loadCreatures().then(() => { engine.apply(); paintInfo(); });
       lastBiome = b; engine.apply();
     },
     feed(n = 6) { if (engine) engine.dropFood(n); else pendingFood += n; },

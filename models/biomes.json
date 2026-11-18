@@ -1,5 +1,5 @@
 {
-  "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded. `pass_through`: scenery kinds creatures may swim/fly through in this biome (default none: everything registered is solid). Kinds: rock, coral, anemone, shrub, plus any new scenery's kind.",
+  "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded. `pass_through`: scenery kinds creatures may swim/fly through in this biome (default none: everything registered is solid). Kinds: rock, coral, anemone, shrub, plus any new scenery's kind. `scene`: which scenery set habitat.js builds (reef, kelp, tidepool, mangrove, deep, meadow, canopy; default by medium). A new scene needs its builder in habitat.js `tiers` and colors in `LOOKS`.",
   "biomes": [
     {
       "id": 0,
@@ -18,7 +18,8 @@
         "sea turtle",
         "anemone",
         "cleaner shrimp"
-      ]
+      ],
+      "scene": "reef"
     },
     {
       "id": 1,
@@ -40,7 +41,8 @@
       ],
       "pass_through": [
         "kelp"
-      ]
+      ],
+      "scene": "kelp"
     },
     {
       "id": 2,
@@ -59,7 +61,8 @@
         "nudibranch",
         "sculpin",
         "sea anemone"
-      ]
+      ],
+      "scene": "tidepool"
     },
     {
       "id": 3,
@@ -78,7 +81,8 @@
         "fiddler crab",
         "kingfisher",
         "seahorse"
-      ]
+      ],
+      "scene": "mangrove"
     },
     {
       "id": 4,
@@ -95,7 +99,8 @@
         "vampire squid",
         "lanternfish",
         "siphonophore"
-      ]
+      ],
+      "scene": "deep"
     },
     {
       "id": 5,
@@ -114,7 +119,8 @@
         "hare",
         "monarch butterfly",
         "foxglove"
-      ]
+      ],
+      "scene": "meadow"
     },
     {
       "id": 6,
@@ -136,7 +142,8 @@
       ],
       "pass_through": [
         "cloud"
-      ]
+      ],
+      "scene": "canopy"
     }
   ]
 }
