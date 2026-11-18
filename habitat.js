@@ -40,16 +40,18 @@
   /* preview: #labs-preview (or ?preview) adds a panel to try phases, overdue, bleaching, biomes and feeding
      on top of the real state. View-only: nothing is saved. */
   const PREVIEW = (() => { try { const u = new URL(G.LB_LABS_HREF || location.href); return u.hash === '#labs-preview' || u.searchParams.has('preview'); } catch (e) { return false; } })();
-  const pv = { phase: null, overdue: null, bleached: null, biome: null };
+  const pv = { phase: null, overdue: null, bleached: null, biome: null, pf: null, pf0: null };
   if (PREVIEW) {
     const bar = document.createElement('div'); bar.className = 'hab-pv';
     const btn = (label, fn) => `<button type="button" class="chip" data-pv="${fn}">${label}</button>`;
     bar.innerHTML = '<span>Preview</span>' + [1, 2, 3, 4, 5].map((n) => btn('Phase ' + n, 'phase:' + (n - 1))).join('')
-      + btn('Overdue 0', 'overdue:0') + btn('Overdue 5', 'overdue:5') + btn('Overdue 15', 'overdue:15') + btn('Bleach', 'bleach') + btn('Next biome', 'biome') + btn('Feed', 'feed') + btn('Reset', 'reset');
+      + btn('+1 day', 'day') + btn('+1 week', 'week') + btn('Overdue 0', 'overdue:0') + btn('Overdue 5', 'overdue:5') + btn('Overdue 15', 'overdue:15') + btn('Bleach', 'bleach') + btn('Next biome', 'biome') + btn('Feed', 'feed') + btn('Reset', 'reset');
     card.appendChild(bar);
     bar.addEventListener('click', (e) => {
       const b = e.target.closest('[data-pv]'); if (!b) return; const [k, v] = b.dataset.pv.split(':');
-      if (k === 'phase') pv.phase = +v; else if (k === 'overdue') pv.overdue = +v; else if (k === 'bleach') pv.bleached = !(view() && view().reef.bleached);
+      const day = 1 / 31.5; /* targetWeeks 4.5 × 7 days per biome */
+      if (k === 'phase') { pv.phase = +v; pv.pf = null; }
+      else if (k === 'day' || k === 'week') { const v0 = view(); const fe = pv.pf ?? (engine ? engine.progress(v0) : 0); pv.pf0 = fe; pv.pf = Math.min(1, fe + (k === 'week' ? 7 : 1) * day); pv.phase = Math.min(4, Math.floor(pv.pf * 5)); } else if (k === 'overdue') pv.overdue = +v; else if (k === 'bleach') pv.bleached = !(view() && view().reef.bleached);
       else if (k === 'biome') pv.biome = ((pv.biome ?? (game ? game.reef.biome : 0)) + 1) % ((biomes && biomes.biomes.length) || 1);
       else if (k === 'feed') return Habitat.feed(6); else Object.keys(pv).forEach((x) => { pv[x] = null; });
       Habitat.setState(game);
@@ -59,7 +61,8 @@
   function view() {
     if (!game || !PREVIEW) return game;
     const L = G.LBG, g = { ...game, reef: { ...game.reef } };
-    if (pv.phase != null) g.reef.phase = pv.phase;
+    if (pv.phase != null) { g.reef.phase = pv.phase; if (pv.pf == null) g.pvPhase = true; }
+    if (pv.pf != null) { g.pf = pv.pf; g.pf0 = pv.pf0; }
     if (pv.bleached != null) g.reef.bleached = pv.bleached;
     if (pv.biome != null) g.reef.biome = pv.biome;
     if (pv.overdue != null && L) { g.overdue = pv.overdue; g.cloudiness = L.cloudiness(pv.overdue); g.algae = L.algae(Array(pv.overdue).fill(14)); }
@@ -85,12 +88,16 @@
     $('phase').textContent = `Phase ${Math.min(r.phase + 1, r.phases)} of ${r.phases}${r.bleached ? ' · bleached' : ''}`;
     const span = (r.next ?? r.pts) - r.prev, f = span > 0 ? (r.pts - r.prev) / span : 1;
     $('bar').style.width = Math.round(Math.max(0, Math.min(1, f)) * 100) + '%';
-    const t = gm.todayTide, bits = [`${Math.round(r.pts)} / ${r.next ?? '–'} tide points`];
+    const t = gm.todayTide, bits = [gm.pf != null ? `preview: day ${Math.round(gm.pf * 31.5)} of ~32` : `${Math.round(r.pts)} / ${r.next ?? '–'} tide points`];
     bits.push(t ? `today ${Math.round(t.pct * 100)}%${t.full ? ', full tide' : ''}` : 'today neutral');
+    if (engine && engine.newToday.length) bits.push(`new today: ${engine.newToday.join(', ')}`);
+    else if (engine && engine.nextUp) bits.push(`next: ${engine.nextUp}`);
     if (gm.overdue) bits.push(`${gm.overdue} overdue clouding the water`);
     $('line').textContent = bits.join(' · ');
     const v = $('visitor'); const who = forced || (engine && engine.visitorName);
-    v.hidden = !who; if (who) v.textContent = forced ? `Visitor: ${forced} (test)` : `Visitor: ${who}`;
+    v.hidden = !who; const vi = engine && engine.visitorInfo, RR = { rare: 'rare', legendary: 'legendary' };
+    if (who) v.textContent = forced ? `Visitor: ${forced} (test)` : `${vi && vi.count > 1 ? vi.count + ' visitors · newest ' : 'Visitor: '}${who}${vi && RR[vi.rarity] ? ' · ' + RR[vi.rarity] : ''}`;
+    v.dataset.rarity = (vi && vi.rarity) || '';
   }
 
   /* ---------- data: roster + biomes (models/ first, then creatures/) ---------- */
@@ -241,7 +248,7 @@ attribute float aTip; varying float vTip;
        (biomes.json, e.g. kelp). Thin dressing (grass blades, light rays, particles) is never registered. */
     const solid = (kind, obj, pad = 1) => {
       obj.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(obj), p = bb.getCenter(new V()), r = bb.getSize(new V()).multiplyScalar(0.5 * pad);
-      colliders.push({ kind, p, r, obj }); return obj;
+      colliders.push({ kind, p, r, obj }); obj.userData.kind = obj.userData.kind || kind; return obj;
     };
     let world = null, medium = null, growth = [], ambient = [], coralMats = [], algaeInst = null, rays = [], rockMat = null, snowMat = null;
     /* scene key: biomes.json `scene`, else by medium. Each key has its own scenery + water/air look (LOOKS). */
@@ -289,7 +296,7 @@ attribute float aTip; varying float vTip;
         const g = new THREE.SphereGeometry(r, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2), p = g.attributes.position, col = [], a = new THREE.Color(c1), b = new THREE.Color(c2), c = new THREE.Color(), tip = new Float32Array(p.count);
         for (let i = 0; i < p.count; i++) { const v = new V().fromBufferAttribute(p, i), n = v.clone().normalize(), k = Math.sin((v.x / r) * 16 + Math.sin((v.z / r) * 8) * 2.4 + Math.cos((v.y / r) * 6)); v.addScaledVector(n, k * r * 0.035); p.setXYZ(i, v.x, v.y, v.z); c.copy(a).lerp(b, k * 0.5 + 0.5); col.push(c.r, c.g, c.b); tip[i] = k > 0.6 ? 1 : 0; }
         g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('aTip', new THREE.BufferAttribute(tip, 1)); g.computeVertexNormals();
-        const m = new THREE.Mesh(g, coralMat(c2)); m.scale.y = 0.8; m.position.set(x, H(x, z) - 0.06, z); m.castShadow = m.receiveShadow = true; world.add(m); growth.push(m); solid('coral', m); return m;
+        const m = new THREE.Mesh(g, coralMat(c2)); m.scale.y = 0.8; m.position.set(x, H(x, z) - 0.06, z); m.castShadow = m.receiveShadow = true; world.add(m); growth.push(m); solid('coral', m); m.userData.nm = 'brain coral'; return m;
       };
       const bush = (x, z, s, c1, c2) => { /* land/air: a flowering shrub from the same branch generator, tips as blossoms */
         const m = branchy(x, z, s, c1, c2, { spread: 0.9, depth: 3, len: 0.5, rad: 0.05, kids: 3 }); return m;
@@ -322,29 +329,30 @@ attribute float aTip; varying float vTip;
       /* starfish: flat 5-point star lying on the sand (thin dressing, not solid) */
       const star = (x, z, s, c1, c2) => { const sh = new THREE.Shape(); for (let i = 0; i <= 10; i++) { const a = (i / 10) * Math.PI * 2, r = i % 2 ? 0.42 : 1; sh[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r); }
         const g = new THREE.ExtrudeGeometry(sh, { depth: 0.18, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0.12, bevelSegments: 2 }); g.rotateX(-Math.PI / 2); g.scale(s, s, s);
-        const m = mesh(tinted(g, c1, c2), coralMat(c2), x, z, 0.01); m.rotation.y = R(0, 6); return m; };
+        const m = mesh(tinted(g, c1, c2), coralMat(c2), x, z, 0.01); m.rotation.y = R(0, 6); m.userData.nm = 'starfish'; return m; };
       /* tube sponges: a cluster of open tubes */
       const sponge = (x, z, s, c1, c2) => { const geos = []; for (let i = 0; i < 5; i++) { const h = R(0.35, 0.8), r = R(0.07, 0.12), g = new THREE.CylinderGeometry(r, r * 0.8, h, 14, 4, true); g.translate(R(-0.18, 0.18), h / 2, R(-0.18, 0.18)); geos.push(g.toNonIndexed()); }
         const g = BU.mergeGeometries(geos); g.scale(s, s, s); g.computeVertexNormals(); const mat = coralMat(c2); mat.side = THREE.DoubleSide; return solid('sponge', mesh(tinted(g, c1, c2), mat, x, z, -0.02)); };
       /* sea fan: a flattened branching coral */
-      const fan = (x, z, s, c1, c2) => { const m = branchy(x, z, s, c1, c2, { spread: 1.1, depth: 4, len: 0.42, rad: 0.035, kids: 2 }); growth.pop(); m.scale.z *= 0.12; m.rotation.y = R(-0.5, 0.5); return m; };
+      const fan = (x, z, s, c1, c2) => { const m = branchy(x, z, s, c1, c2, { spread: 1.1, depth: 4, len: 0.42, rad: 0.035, kids: 2 }); growth.pop(); m.scale.z *= 0.12; m.rotation.y = R(-0.5, 0.5); m.userData.nm = 'sea fan'; return m; };
       /* table coral: a wide plate on a short stem */
       const table = (x, z, s, c1, c2) => { const top = new THREE.CylinderGeometry(0.9, 0.55, 0.12, 28, 2); top.translate(0, 0.62, 0); const stem = new THREE.CylinderGeometry(0.12, 0.2, 0.6, 10); stem.translate(0, 0.3, 0);
-        const g = BU.mergeGeometries([top.toNonIndexed(), stem.toNonIndexed()]); g.scale(s, s, s); g.computeVertexNormals(); return solid('coral', mesh(tinted(g, c1, c2), coralMat(c2), x, z, -0.03)); };
+        const g = BU.mergeGeometries([top.toNonIndexed(), stem.toNonIndexed()]); g.scale(s, s, s); g.computeVertexNormals(); const t = solid('coral', mesh(tinted(g, c1, c2), coralMat(c2), x, z, -0.03)); t.userData.nm = 'table coral'; return t; };
       /* a small school / swarm: instanced bodies circling an anchor (decor, no collisions, above the rocks) */
       const swarm = (n, cx, cy, cz, rad, col, kind, glow) => {
-        let g; if (kind === 'butterfly') { g = new THREE.PlaneGeometry(0.16, 0.1); g.rotateX(-Math.PI / 2); } else { const b = new THREE.SphereGeometry(0.05, 8, 6); b.scale(1.6, 0.8, 0.45); const t = new THREE.ConeGeometry(0.035, 0.06, 4); t.rotateZ(Math.PI / 2); t.translate(-0.1, 0, 0); g = BU.mergeGeometries([b.toNonIndexed(), t.toNonIndexed()]); }
+        let g; if (kind === 'butterfly') { const w = new THREE.Shape(); w.moveTo(0, 0); w.bezierCurveTo(0.05, 0.02, 0.09, 0.12, 0.03, 0.13); w.bezierCurveTo(-0.01, 0.12, -0.02, 0.06, 0, 0); w.bezierCurveTo(-0.03, -0.02, -0.06, -0.08, -0.02, -0.09); w.lineTo(0, 0);
+          const L = new THREE.ShapeGeometry(w); L.rotateX(-Math.PI / 2); L.rotateX(-0.5); const Rw = L.clone(); Rw.scale(1, 1, -1); g = BU.mergeGeometries([L.toNonIndexed(), Rw.toNonIndexed()]); g.scale(1.4, 1.4, 1.4); } else { const b = new THREE.SphereGeometry(0.05, 8, 6); b.scale(1.6, 0.8, 0.45); const t = new THREE.ConeGeometry(0.035, 0.06, 4); t.rotateZ(Math.PI / 2); t.translate(-0.1, 0, 0); g = BU.mergeGeometries([b.toNonIndexed(), t.toNonIndexed()]); }
         const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.5, side: THREE.DoubleSide, emissive: glow ? col : 0x000000, emissiveIntensity: glow ? 2.2 : 0 }), inst = new THREE.InstancedMesh(g, mat, n), o = new THREE.Object3D(), seeds = Array.from({ length: n }, () => [R(0, 6.28), R(-0.5, 0.5), R(-0.35, 0.35), R(0.8, 1.2)]);
         inst.userData.tick = (s) => { for (let i = 0; i < n; i++) { const [p, dr, dy, sp] = seeds[i], a = s * 0.35 * sp + p, r = rad + dr; o.position.set(cx + Math.cos(a) * r, cy + dy + Math.sin(s * 1.3 + p) * 0.1, cz + Math.sin(a) * r * 0.6); o.rotation.set(0, -a - Math.PI / 2, 0);
-          o.scale.set(1, kind === 'butterfly' ? 0.2 + Math.abs(Math.sin(s * 12 + p)) : 1, 1); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); } inst.instanceMatrix.needsUpdate = true; };
-        inst.userData.tick(0); inst.frustumCulled = false; world.add(inst); ambient.push(inst); return inst; };
+          o.scale.set(1, 1, kind === 'butterfly' ? 0.15 + 0.85 * Math.abs(Math.sin(s * 11 + p * 3)) : 1); if (kind === 'butterfly') o.position.y += Math.abs(Math.sin(s * 5.5 + p)) * 0.12; o.updateMatrix(); inst.setMatrixAt(i, o.matrix); } inst.instanceMatrix.needsUpdate = true; };
+        inst.userData.tick(0); inst.frustumCulled = false; world.add(inst); ambient.push(inst); inst.userData.nm = kind === 'butterfly' ? 'butterflies' : glow ? 'glowing fish' : 'fish school'; return inst; };
       /* flowers / mushrooms: small instanced patches for land */
       const patchOf = (x, z, n, col, kind) => { const head = kind === 'mushroom' ? new THREE.SphereGeometry(0.09, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2) : new THREE.SphereGeometry(0.05, 8, 6); head.translate(0, kind === 'mushroom' ? 0.12 : 0.3, 0);
         const stem = new THREE.CylinderGeometry(0.012, 0.016, kind === 'mushroom' ? 0.13 : 0.3, 5); stem.translate(0, kind === 'mushroom' ? 0.065 : 0.15, 0); const g = BU.mergeGeometries([head.toNonIndexed(), stem.toNonIndexed()]);
         const ca = new THREE.Color(col), cs = new THREE.Color(kind === 'mushroom' ? 0xf3ead8 : 0x4f8a3a), cols = []; const hp = head.toNonIndexed().attributes.position.count, sp2 = stem.toNonIndexed().attributes.position.count; for (let i = 0; i < hp; i++) cols.push(ca.r, ca.g, ca.b); for (let i = 0; i < sp2; i++) cols.push(cs.r, cs.g, cs.b); g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
         const inst = new THREE.InstancedMesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 }), n), o = new THREE.Object3D();
         for (let i = 0; i < n; i++) { const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 0.6, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; o.position.set(px, H(px, pz) - 0.01, pz); o.scale.setScalar(R(0.7, 1.3)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
-        inst.castShadow = true; world.add(inst); return inst; };
+        inst.castShadow = true; world.add(inst); inst.userData.nm = kind === 'mushroom' ? 'mushrooms' : 'wildflowers'; return inst; };
       /* kelp: tall swaying ribbons in a cluster (kind 'kelp': biomes can let creatures pass through) */
       const kelp = (x, z, n, h) => { const g = new THREE.PlaneGeometry(0.2, h, 1, 16); g.translate(0, h / 2, 0); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (0.6 + Math.sin(p.getY(i) * 3) * 0.4));
         const mat = new THREE.MeshStandardMaterial({ color: 0x8a7a2a, roughness: 0.6, side: THREE.DoubleSide }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: 0.035 } });
@@ -352,7 +360,7 @@ attribute float aTip; varying float vTip;
         inst.castShadow = true; world.add(inst); return solid('kelp', inst, 0.5); };
       /* sea urchin: dark spiky ball on the sand */
       const urchin = (x, z, s, col) => { const geos = [new THREE.SphereGeometry(0.12, 10, 8).toNonIndexed()]; for (let i = 0; i < 40; i++) { const c = new THREE.ConeGeometry(0.008, 0.2, 3); c.translate(0, 0.16, 0); c.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new V(0, 1, 0), new V(R(-1, 1), R(-0.2, 1), R(-1, 1)).normalize())); geos.push(c.toNonIndexed()); }
-        const g = BU.mergeGeometries(geos); g.scale(s, s, s); return mesh(g, new THREE.MeshStandardMaterial({ color: col, roughness: 0.4 }), x, z, 0.08 * s); };
+        const g = BU.mergeGeometries(geos); g.scale(s, s, s); const m = mesh(g, new THREE.MeshStandardMaterial({ color: col, roughness: 0.4 }), x, z, 0.08 * s); m.userData.nm = 'sea urchin'; return m; };
       /* mangrove: a trunk rising out of view with arching prop roots (solid) */
       const mangrove = (x, z, s) => { const geos = [], top = new V(x, 4.5, z), mat = new THREE.MeshStandardMaterial({ color: 0x5a4632, roughness: 0.95 });
         const t = new THREE.CylinderGeometry(0.16, 0.22, 4, 10); t.translate(x, H(x, z) + 2.6, z); geos.push(t.toNonIndexed());
@@ -413,6 +421,18 @@ attribute float aTip; varying float vTip;
         },
       };
       (tiers[sk] || (water ? tiers.reef : tiers.meadow))();
+      /* daily growth: each piece unlocks at its own share u of the biome's points (0..1). Pieces of phase k spread
+         across that phase; the last one of each phase is the landmark, a bigger piece that lands as the phase completes. */
+      { const P = 5, by = {}; growth.forEach((g) => { const k = g.userData.ph ?? 0; (by[k] = by[k] || []).push(g); });
+        /* landmark = a swarm if the phase has one (a school/swarm arriving reads as an event), else its biggest piece */
+        const size = (g) => { if (g.isInstancedMesh) return 0; const b = new THREE.Box3().setFromObject(g).getSize(new V()); return b.x * b.y * b.z; };
+        Object.values(by).forEach((list) => { const sw = list.find((g) => ambient.includes(g)), big = sw || list.slice().sort((a, b) => size(b) - size(a))[0]; list.splice(list.indexOf(big), 1); list.push(big); });
+        Object.entries(by).forEach(([k, list]) => list.forEach((g, i) => {
+          const last = i === list.length - 1 && list.length > 1;
+          g.userData.u = last ? (+k + 1) / P - 1e-4 : (+k + i / list.length) / P;
+          if (last) { g.userData.landmark = true; if (!g.isInstancedMesh) g.scale.multiplyScalar(1.35); }
+          g.userData.base = g.scale.clone(); g.visible = false;
+        })); }
       /* grass: seagrass under water, meadow grass on land */
       { const g = new THREE.PlaneGeometry(0.045, 0.55, 1, 6); g.translate(0, 0.275, 0); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 - (p.getY(i) / 0.55) * 0.75));
         const mat = new THREE.MeshStandardMaterial({ color: water ? 0x6f9a3c : 0x86b84a, roughness: 0.75, side: THREE.DoubleSide }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: water ? 0.28 : 0.12 } });
@@ -467,7 +487,7 @@ attribute float aTip; varying float vTip;
     }
     async function specOf(entry) { if (!entry.spec) return {}; try { const r = await fetch(base + entry.spec); return r.ok ? await r.json() : {}; } catch (e) { return {}; } }
     let pathSeed = 0;
-    function spawn(gltf, entry, spec, k) {
+    function spawn(gltf, entry, spec, k, enter) {
       const root = K.SU.clone(gltf.scene), holder = new THREE.Group(); holder.add(root);
       root.scale.setScalar(DISPLAY_SCALE);
       if (entry.forward === '-X') root.rotation.y = Math.PI;
@@ -484,7 +504,10 @@ attribute float aTip; varying float vTip;
       const loco = (entry.locomotion || spec.locomotion || 'swim').toLowerCase(), i = pathSeed++;
       const P = { c: [[1.4, 1.2], [-0.6, 0.4], [0.8, -0.6], [-1.8, 1.0]][i % 4], r: [R(1.1, 1.7), R(0.6, 1.0)], y: R(0.7, 1.4), sp: R(0.28, 0.4) * (loco === 'drift' ? 0.4 : loco === 'walk' || loco === 'crawl' ? 0.35 : 1), ph: R(0, 6.28), dir: i % 2 ? -1 : 1 };
       const c = { id: entry.id, holder, root, mouth, mixer, idle, feed, loco, P, a: P.ph, len, footY: -bb.min.y, pos: new V(), prev: new V(), yaw: 0, pitch: 0, state: 'roam', target: null, eatEnd: 0, eaten: 0 };
-      c.pos.copy(pathPos(c, c.a)); c.prev.copy(c.pos); holder.position.copy(c.pos);
+      c.pos.copy(pathPos(c, c.a));
+      if (enter && loco !== 'rooted') { c.state = 'enter'; c.pos.x = (k % 2 ? -1 : 1) * 9; c.pos.y += 0.6; } /* swims/flies in from the edge */
+      if (entry.rarity === 'legendary') { const gl = new THREE.PointLight(0xffd36a, 1.2, 1.6 + len * 2); holder.add(gl); } /* legendary: a soft golden glow */
+      c.prev.copy(c.pos); holder.position.copy(c.pos);
       scene.add(holder); creatures.push(c);
     }
     function pathPos(c, a) {
@@ -494,15 +517,18 @@ attribute float aTip; varying float vTip;
       if (c.loco === 'fly') return new V(x, g + 1.6 + P.y + Math.abs(Math.sin(a * 1.5)) * 0.9, z);
       return new V(x, g + P.y + Math.sin(a * 2) * 0.18, z);
     }
-    let visitorName = null;
+    let visitorName = null, visitorInfo = { count: 0, rarity: null };
     async function loadCreatures() {
       creatures.splice(0).forEach((c) => scene.remove(c.holder)); visitorName = null;
       const bid = sceneBiomeId(), b = biomeOf(bid), med = b.medium || 'water';
       if (med !== medium || sceneOf(b) !== sk) { buildWorld(med, sceneOf(b)); }
       const list = (roster.creatures || []).filter((c) => (forced ? c.id === forced : c.biome === bid || (c.biome == null && med === 'water')));
       if (forced && !list.length) console.warn('[habitat] visitor not in roster:', forced);
-      for (const entry of list.slice(0, 3)) {
-        try { const [gltf, spec] = await Promise.all([decode(entry), specOf(entry)]); const n = forced ? 2 : entry.rarity === 'common' ? 2 : 1; for (let k = 0; k < n; k++) spawn(gltf, entry, spec, k); visitorName = spec.name || entry.id; }
+      const seen = (() => { try { return JSON.parse(localStorage.getItem('lb-hab-seen') || '[]'); } catch (e) { return []; } })();
+      visitorInfo = { count: 0, rarity: null };
+      for (const entry of list.slice(-6)) {
+        try { const [gltf, spec] = await Promise.all([decode(entry), specOf(entry)]); const n = forced ? 2 : entry.rarity === 'common' ? 2 : 1; const isNew = forced || !seen.includes(entry.id); for (let k = 0; k < n; k++) spawn(gltf, entry, spec, k, isNew); visitorName = spec.name || entry.id; visitorInfo = { count: visitorInfo.count + 1, rarity: entry.rarity || 'common' };
+          if (!forced && isNew) { seen.push(entry.id); try { localStorage.setItem('lb-hab-seen', JSON.stringify(seen)); } catch (e) { /* ignore */ } } }
         catch (e) { console.warn('[habitat] creature failed', entry.id, e); }
       }
       stats.creatures = creatures.length;
@@ -553,11 +579,14 @@ attribute float aTip; varying float vTip;
         } else if (c.state === 'eat') {
           desired = c.pos.clone();
           if (t >= c.eatEnd) { if (c.feed && c.idle) { c.idle.reset().play(); c.feed.crossFadeTo(c.idle, 0.3, false); } c.state = 'roam'; }
+        } else if (c.state === 'enter') {
+          c.a += dt * m * c.P.sp; const goal = pathPos(c, c.a), v = goal.clone().sub(c.pos), d = v.length();
+          desired = d < 0.25 ? goal : c.pos.clone().addScaledVector(v, Math.min(1, (1.3 * dt * m) / d)); if (d < 0.25) c.state = 'roam';
         } else {
           c.a += dt * m * c.P.sp; desired = pathPos(c, c.a);
           if (!food.length) c.eaten = 0;
         }
-        const k = c.state === 'seek' ? 1 - Math.exp(-dt * 2.2) : 1 - Math.exp(-dt * 3);
+        const k = c.state === 'enter' ? 1 : c.state === 'seek' ? 1 - Math.exp(-dt * 2.2) : 1 - Math.exp(-dt * 3);
         c.prev.copy(c.pos); c.pos.lerp(desired, k * m || (m ? 0 : 1));
         if (c.state === 'seek') { const v = desired.clone().sub(c.pos), d = v.length(), sp = 1.4 * dt; if (d > sp) c.pos.addScaledVector(v, sp / d); }
         if (c.loco !== 'rooted') keepClear(c);
@@ -583,6 +612,26 @@ attribute float aTip; varying float vTip;
       mangrove: { s: 0x9ab87a, d: 0x2c4a30, dens: 1.5, light: 0.8 }, deep: { s: 0x1a3f6a, d: 0x020a1a, dens: 1.25, light: 0.3, glow: 0.85 }, meadow: { s: 0x9fd4f2, d: 0xf2e2bc }, canopy: { s: 0xbfe2f7, d: 0xeef3f6, dens: 1.2 } };
     const MURK_S = C(0x6f8f4a), MURK_D = C(0x23361c), NIGHT_S = C(0x0a2a48), NIGHT_D = C(0x01070f), DUSK = C(0xd9906a), ALGAE = C(0x8fb04a);
     let envDirty = true;
+    /* biome progress 0..1 from reef points (thresholds are evenly spaced); preview overrides pin it */
+    let newToday = [], nextUp = null;
+    function progressOf(st) {
+      if (st.pf != null) return st.pf;
+      const r = st.reef, P = r.phases || 5;
+      if (st.pvPhase) return (r.phase + 1) / P - 1e-5;
+      const per = r.next != null ? r.next / (r.phase + 1) : r.prev / Math.max(1, P - 1);
+      return per > 0 ? Math.min(1, r.pts / (per * P)) : 0;
+    }
+    /* progress at the start of today, remembered per viewer, so "new today" and the grow-in survive reloads */
+    function dayStart(st, f) {
+      if (st.pf != null || st.pvPhase) return st.pf0 ?? f;
+      const key = 'lb-hab-day', today = new Date().toISOString().slice(0, 10), bid = st.reef.biome;
+      let v = null; try { v = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { /* none */ }
+      if (!v || v.d !== today || v.b !== bid || v.f > f) { v = { d: today, b: bid, f: v && v.b === bid && v.d !== today ? Math.min(v.fEnd ?? f, f) : f }; }
+      v.fEnd = f; try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* ignore */ }
+      return v.f;
+    }
+    const NAMES = { coral: 'coral', shrub: 'flowering bush', anemone: 'anemone', kelp: 'kelp', root: 'mangrove tree', cloud: 'cloud', sponge: 'tube sponges', rock: 'rock' };
+    const nameOf = (g) => g.userData.nm || (g.userData.kind === 'coral' && medium !== 'water' ? 'bush' : NAMES[g.userData.kind]) || 'something new';
     function apply() {
       const st = view() || { reef: { phase: 2, phases: 5, bleached: false }, cloudiness: 0, algae: 0 }, water = medium === 'water';
       const o = st.cloudiness, al = st.algae, bleached = st.reef.bleached;
@@ -609,7 +658,16 @@ attribute float aTip; varying float vTip;
       if (rockMat) rockMat.color.set(0xffffff).lerp(C(0x9aa060), Math.max(o, al) * 0.6);
       if (algaeInst) algaeInst.count = Math.round(al * 270);
       /* phase -> which tiers of coral/plant life are in (userData.ph) */
-      growth.forEach((g) => { g.visible = (g.userData.ph ?? 0) <= st.reef.phase; });
+      const f = progressOf(st), f0 = dayStart(st, f), pnow = performance.now();
+      const fresh = [];
+      growth.forEach((g) => {
+        const on = g.userData.u <= f + 1e-9;
+        if (on && g.userData.u > f0 + 1e-9) { fresh.push(g); if (!g.visible && !g.userData.t0 && g.position.lengthSq() > 0) g.userData.t0 = pnow; }
+        g.visible = on;
+      });
+      newToday = [...new Set(fresh.map(nameOf))];
+      const nxt = growth.filter((g) => g.userData.u > f + 1e-9).sort((a, b) => a.userData.u - b.userData.u)[0];
+      nextUp = nxt ? nameOf(nxt) + (nxt.userData.landmark ? ' (landmark)' : '') : null;
       coralMats.forEach((m) => { m.emissive = m.emissive || new THREE.Color(); m.emissive.set(bleached ? 0x5a5a58 : 0x000000); });
       grade.uniforms.sat.value = bleached ? 0.35 : 1.15;
       grade.uniforms.tint.value.set(1, 1, 1).lerp(C(0xd8f0b0), al * 0.5);
@@ -637,6 +695,8 @@ attribute float aTip; varying float vTip;
       camera.position.set(Math.sin(a0) * 7.4, 2.1 + m * Math.sin(s * 0.3) * 0.08, Math.cos(a0) * 7.4); camera.lookAt(0, 1.0, -0.6);
       dome.position.copy(camera.position);
       ambient.forEach((a) => { if (a.visible) a.userData.tick(m ? s : 3); });
+      growth.forEach((g) => { const t0 = g.userData.t0; if (!t0) return; const k = Math.min(1, (t - t0) / 1600), e = k < 1 ? 1 - Math.pow(1 - k, 3) * (1 - Math.sin(k * 9) * 0.15) : 1;
+        g.scale.copy(g.userData.base).multiplyScalar(Math.max(0.01, e)); if (k >= 1) g.userData.t0 = 0; });
       rays.forEach((r, i) => { r.lookAt(camera.position.x, r.position.y, camera.position.z); r.rotateZ(r.userData.slant + m * Math.sin(s * 0.2 + i) * 0.04); });
       stepCreatures(reduce ? 0.016 : dt, s, reduce ? (food.length ? 1 : 0) : 1);
       composer.render(dt);
@@ -648,7 +708,7 @@ attribute float aTip; varying float vTip;
     function kick() { if (!raf && running()) { last = 0; raf = requestAnimationFrame(frame); } }
     document.addEventListener('visibilitychange', kick);
     reduceMQ.addEventListener('change', kick);
-    return { apply, kick, loadCreatures, dropFood, get visitorName() { return visitorName; }, debug: () => ({ food: food.length, creatures: creatures.map((c) => ({ id: c.id, state: c.state, eaten: c.eaten, loco: c.loco, pos: c.pos.toArray().map((x) => +x.toFixed(2)), feeding: !!(c.feed && c.feed.isRunning()) })) }) };
+    return { apply, kick, loadCreatures, dropFood, get visitorName() { return visitorName; }, get newToday() { return newToday; }, progress: (st) => progressOf(st), get nextUp() { return nextUp; }, get visitorInfo() { return visitorInfo; }, debug: () => ({ food: food.length, creatures: creatures.map((c) => ({ id: c.id, state: c.state, eaten: c.eaten, loco: c.loco, pos: c.pos.toArray().map((x) => +x.toFixed(2)), feeding: !!(c.feed && c.feed.isRunning()) })) }) };
   }
 
   /* ---------- visibility: lazy start + pause off-screen ---------- */
@@ -665,7 +725,7 @@ attribute float aTip; varying float vTip;
       if (!engine) return;
       const b = sceneBiomeId();
       if (lastBiome !== null && b !== lastBiome) engine.loadCreatures().then(() => { engine.apply(); paintInfo(); });
-      lastBiome = b; engine.apply();
+      lastBiome = b; engine.apply(); paintInfo();
     },
     feed(n = 6) { if (engine) engine.dropFood(n); else pendingFood += n; },
     visitorOverride,

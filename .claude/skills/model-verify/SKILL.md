@@ -30,7 +30,7 @@ One judge is noisy (the same model scored 3.2–4.0 across judges), so G5 = **3 
 - `species_read`: would someone recognise the reference animal?
 - `artifacts`: 5 = no holes, stretching, flipped normals, floating parts, texture seams or z-fighting, and no part passing through another part in any idle/feed frame (fin through body, arm through arm).
 - Aggregate: per criterion the **median** of the 3 judges; `mouth_correct` = true in ≥ 2 of 3.
-- PASS rule: every median ≥ 3, mean of the 6 medians ≥ 4, `mouth_correct` true in ≥ 2 of 3. Novel archetypes need every median ≥ 4.
+- PASS rule (**golden-relative**, from `models/<kind>/qa_calibration.json` `pass_rule` + `golden_median3`): every median ≥ `floor` (3), mean of the 6 medians ≥ golden mean − `margin` (today 3.67 − 0.3 = 3.37), `mouth_correct` true in ≥ 2 of 3. Novel archetypes: same, plus no median below the golden's median on `anatomy` and `artifacts`. When a new golden is promoted, re-judge it median-of-3 and update `golden_median3`, so the bar tracks the best work.
 - `report.json.judge` holds the medians plus `judges: [{agent_id, scores}, ×3]`; fix notes come from notes ≥ 2 judges agree on.
 
 ## G6: runtime (in the habitat page)

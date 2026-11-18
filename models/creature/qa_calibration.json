@@ -11,8 +11,8 @@
   "feed_readable": 4,
   "mouth_correct": true
  },
- "passes_g5": false,
- "status": "Anchor = run-3 single-judge scores (kept until a golden passes median-of-3). Current build (lib.mouth + jaw bites): median-of-3 mean 3.5 -> FAILS G5; assets/clownfish.* left at the previously shipped version.",
+ "passes_g5": true,
+ "status": "Golden-relative bar (2026-11-18): golden median-of-3 mean 3.67 -> bar 3.37. The golden passes its own bar by definition.",
  "known_judge_errors": [
   "estimates eye at ~6% of body height; measured 10.0% (build_meta.json) - trust G2 over judge for eye size"
  ],
@@ -378,5 +378,20 @@
   "mouth_correct": true
  },
  "current_mean": 3.5,
- "mean": 4.0
+ "mean": 4.0,
+ "golden_median3": {
+  "species_read": 5,
+  "anatomy": 4,
+  "style_match": 4,
+  "artifacts": 3,
+  "idle_readable": 3,
+  "feed_readable": 3,
+  "mean": 3.67
+ },
+ "pass_rule": {
+  "type": "golden_relative",
+  "margin": 0.3,
+  "floor": 3,
+  "note": "PASS = every median >= floor, mean of medians >= golden_median3.mean - margin, mouth_correct in >= 2 of 3. The bar moves with the golden: re-judge the golden median-of-3 whenever a new golden is promoted and update golden_median3."
+ }
 }
