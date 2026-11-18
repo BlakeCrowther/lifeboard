@@ -290,7 +290,7 @@ function eventsOn(evs, d) {
 const U = {
   tab: 'today', life: 'health', grow: 'habits', list: 'groceries',
   open: null, adjust: null, adjBusy: null, exp: {}, showDone: false, showTomorrow: false, wishFilter: 'all', petFilter: 'all', script: false,
-  calSel: TODAY, calMonth: TODAY.slice(0, 7) + '-01', editQ: null,
+  calSel: TODAY, calMonth: TODAY.slice(0, 7) + '-01', editQ: null, editKeep: null,
   timer: { len: 2, end: null, msg: '' }, quote: (diffDays('2026-01-01', TODAY) % 7 + 7) % 7, sheet: null,
 };
 /* which folds are open and how lists sort: remembered per device */
@@ -515,9 +515,10 @@ function viewToday() {
   if (sf && sf.wave_ft != null) sumBits.push(`surf <b>${vv(sf.wave_ft)} ft</b>`);
   if (nextTide) sumBits.push(`${esc(nextTide.type.toLowerCase())} tide ${esc(nextTide.time)}`);
   if (wed) sumBits.push(`wedding ${wd}d`);
+  const gw = labsHabits(hs, hDone, hTot, daysLeft);
   const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow }) : '';
   return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}, there. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}, there.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
-    <div class="today"><div class="col a">${weekRings()}${labsOn() ? '<div class="labs-slot" data-labs="habitat"></div>' : ''}${habitRings(hs, hDone, hTot, daysLeft)}${schedule}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
+    <div class="today">${gw}<div class="col a">${weekRings()}${labsOn() ? '<div class="labs-slot" data-labs="habitat"></div>' : ''}${gw ? '' : habitRings(hs, hDone, hTot, daysLeft)}${schedule}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
 }
 /* Habit rings: one per habit, filling toward the weekly target. The dot on each ring is the floor that keeps the streak alive. */
 const habitLast = {}; /* sessions this week per habit at the last render: a ring sweeps only when it grows */
@@ -543,6 +544,36 @@ function habitRings(hs, done, tot, daysLeft) {
   return `<section class="sec z-now habitsec">${secH('Habits', goLink('All', 'grow/habits'), 2, `${done}/${tot}`)}
     <div class="card hsc"><div class="hscore${f >= 1 ? ' full' : ''}" role="img" aria-label="Week score ${Math.round(f * 100)} percent, ${done} of ${tot} sessions"><svg viewBox="0 0 88 88" aria-hidden="true"><circle class="ht" cx="44" cy="44" r="38"/><circle class="ha" cx="44" cy="44" r="38" stroke-dasharray="${C}" stroke-dashoffset="${(C - C * f).toFixed(1)}" transform="rotate(-90 44 44)"/></svg><b class="num">${Math.round(f * 100)}%<small>this week</small></b></div>
     <ul class="pgrid">${tiles}</ul></div><p class="wmsg">${esc(checkMsg + msg)}</p></section>`;
+}
+/* Labs: the habits card as a garden. One plot per habit, full width above both columns; tap the plant (or +) to log,
+   − to undo. Falls back to the rings card until the game state is ready. */
+function labsHabits(hs, done, tot, daysLeft) {
+  if (!labsOn() || !hs.length) return '';
+  const g = labsGame(); if (!g) return '';
+  const GD = LBGarden, by = Object.fromEntries(g.plots.map((p) => [p.key, p]));
+  const tiles = hs.map(({ h, st, met, low }) => {
+    const pl0 = by[h.key]; if (!pl0) return '';
+    const pl = GD.view(pl0), vis = GD.visual(pl);
+    let p = '';
+    for (let i = 0; i < h.target; i++) p += `<i class="${i < st.week ? 'on' : ''}${i < h.floor ? ' fl' : ''}"></i>`;
+    for (let i = h.target; i < st.week; i++) p += '<i class="bonus"></i>';
+    const status = pl.waiting ? `Plants Mon ${GD.fmt(g.season.opens)}`
+      : !pl.alive ? 'Withered · new seed next season'
+      : vis === 'wilt' ? `Thirsty · ${pl.need} more by Sunday`
+      : pl.grows ? (pl.stage >= 4 ? (met ? 'In full bloom' : 'Blooming') : `Grows to ${GD.LABEL[pl.next].toLowerCase()} Monday`)
+      : pl.stage === 0 ? `${plural(pl.need, 'session')} to sprout` : `${pl.need} more to grow`;
+    const cls = !pl.alive || vis === 'wilt' ? ' warn' : pl.grows ? ' good' : '';
+    const label = `Log a ${h.name} session today. ${st.week} of ${h.target} this week. Plant: ${GD.LABEL[vis].toLowerCase()}. ${status}.`;
+    return `<li class="gt${met ? ' met' : ''}${low ? ' low' : ''}"><button class="gtp" data-act="log" data-id="${h.id}" aria-label="${esc(label)}">${GD.plotSVG(pl, 84)}</button>
+      <div class="gtm"><span class="ptt"><span class="ptn">${esc(h.name)}</span>${flameBadge(st, low)}</span><span class="ptp" aria-hidden="true">${p}</span><span class="gts${cls}">${esc(status)}</span></div>
+      <div class="gtb"><button class="hminus" data-act="unlog" data-id="${h.id}" aria-label="Remove a ${esc(h.name)} session from this week"${st.week ? '' : ' disabled'}>${ic('minus', 13)}</button><button class="btn sm gtl" data-act="log" data-id="${h.id}" aria-hidden="true" tabindex="-1">${ic('plus', 16)}${st.week}/${h.target}</button></div></li>`;
+  }).join('');
+  const lowN = hs.filter((x) => x.low).length;
+  const msg = g.season.opens ? `Seeds go in Monday ${GD.fmt(g.season.opens)}. Sessions this week still count for streaks.` : hs.every((x) => x.met) ? 'Perfect week. Every plant is drinking its fill.' : hs.every((x) => x.st.week >= x.h.floor) ? 'Every plant grows on Monday. The rest is bonus.'
+    : lowN ? `${plural(lowN, 'plant')} need${lowN === 1 ? 's' : ''} water in the next ${plural(daysLeft, 'day')}.` : 'Tap a plant to log a session. Meet the floor and it grows a stage on Monday.';
+  const sea = g.season.opens ? `Seeds plant Mon ${GD.fmt(g.season.opens)}` : `Season ${g.season.index + 1} · week ${g.season.week} of ${g.season.of}`;
+  return `<section class="sec z-now habitsec gwide">${secH('Habits', goLink('History', 'grow/habits'), 2, `${done}/${tot}`)}
+    <div class="card"><p class="gwh"><span>${esc(sea)}</span>${g.season.opens ? '' : `<span class="muted">ends ${GD.fmt(g.season.ends)}</span>`}</p><ul class="gtiles">${tiles}</ul>${GD.plantLab()}</div><p class="wmsg">${esc(msg)}</p></section>`;
 }
 /* streak badge: solid = safe this week, outlined = still needs the floor, red = at risk */
 function flameBadge(st, low) {
@@ -864,7 +895,7 @@ function habitReview() {
 function viewGrow() {
   let body = '';
   if (U.grow === 'habits') {
-    body = S.habits.length ? labsGardenHTML() + habitReview() + weekCheckCard() : `<div class="card pad" style="margin-top:14px"><p class="empty" style="padding:0 4px 10px">No habits yet. Give one a weekly target and a lower floor that keeps the streak alive.</p><button class="btn primary" data-act="new-habit">${ic('plus', 18)}Add a habit</button></div>`;
+    body = S.habits.length ? labsGrowHTML() + habitReview() + weekCheckCard() : `<div class="card pad" style="margin-top:14px"><p class="empty" style="padding:0 4px 10px">No habits yet. Give one a weekly target and a lower floor that keeps the streak alive.</p><button class="btn primary" data-act="new-habit">${ic('plus', 18)}Add a habit</button></div>`;
   } else {
     const years = [...new Set(S.goals.map((g) => +g.year))].sort((a, b) => b - a);
     const curQ = Math.ceil(+TODAY.slice(5, 7) / 3), curY = +TODAY.slice(0, 4);
@@ -1355,6 +1386,8 @@ document.addEventListener('click', (e) => {
     case 'pet': U.petFilter = val; render(); break;
     case 'q-edit': U.editQ = id; render(); { const ta = document.querySelector('[data-form="q"] textarea'); ta && ta.focus(); } break;
     case 'q-cancel': U.editQ = null; render(); break;
+    case 'keep-edit': U.editKeep = id; render(); { const i = document.querySelector('[data-form="keep"] input'); i && i.focus(); } break;
+    case 'keep-cancel': U.editKeep = null; render(); break;
     case 'goal-done': { const g = S.goals.find((x) => x.id === id); if (g) act((rec) => W.patch('goals', id, { status: g.done ? 'active' : 'completed' }, rec)); break; }
     case 'goal-del': { const g = S.goals.find((x) => x.id === id); if (g) delDoc('goals', id, `Deleted “${g.title}”`); break; }
     case 'quote': U.quote++; render(); break;
@@ -1367,6 +1400,7 @@ document.addEventListener('submit', (e) => {
   if (kind === 'sheet') submitSheet(f);
   else if (kind === 'groc') { const v = f.name.value.trim(); if (!v) return; f.name.value = ''; act((rec) => W.create('groceries', { name: v, group_name: guessSec(v), checked: false, sort_order: 9999 }, rec), `Added ${v}`); const i = document.getElementById('qaG'); i && i.focus(); }
   else if (kind === 'adj') { const v = f.v.value.trim(); if (v) adjustSuggestion(f.dataset.id, v); }
+  else if (kind === 'keep') labsKeepSave(f.dataset.id, f.dataset.kind, f.querySelector('[name=title]').value.trim(), f.querySelector('[name=note]').value.trim());
   else if (kind === 'q') { const v = f.querySelector('textarea').value.trim(); const id = f.dataset.id, q = +f.dataset.q; U.editQ = null; act((rec) => W.patch('goals', id, { ['progress_q' + q]: v }, rec), `Q${q} note saved`); render(); }
 });
 document.addEventListener('input', (e) => {
@@ -1435,7 +1469,7 @@ setInterval(() => { if (!U.sheet && !drag && document.visibilityState === 'visib
 /* ---------- Labs: habitat & garden preview (off by default; per-viewer in lb-ui) ----------
    Off: nothing below loads or runs (no three.js, no game derivation). #labs or a visitor test link
    (?visitor=<id>, #visitor=<id>, #labs-visitor-<id>) turns it on for one visit. */
-const LABS = { forced: false, loading: null, ready: false, game: null, gameKey: null, metSeen: null };
+const LABS = { forced: false, loading: null, ready: false, game: null, gameKey: null, metSeen: null, keeps: {}, localKeeps: {} };
 function labsFromUrl(href) { try { const u = new URL(href), h = u.hash.slice(1); return h === 'labs' || h === 'labs-preview' || /^labs-visitor-[\w-]+$/.test(h) || /(^|[&/])visitor=/.test(h) || u.searchParams.has('visitor'); } catch (e) { return false; } }
 const labsOn = () => UI.labs === true || LABS.forced;
 function loadLabs() {
@@ -1475,7 +1509,26 @@ function labsStart() {
   })();
   return labsStartP;
 }
-function labsGardenHTML() { if (!labsOn()) return ''; const g = labsGame(); return g ? LBGarden.gardenCard(g) : ''; }
+function labsGrowHTML() { if (!labsOn()) return ''; const g = labsGame(); if (!g) return ''; labsKeeps(); return LBGarden.growHTML(g, LABS.keeps, U.editKeep); }
+/* shelf titles and notes: labs_keepsakes/<keepsake id> = { kind, title, note, updated_at }. Listens only with Labs on. */
+let labsKeepsP = null;
+function labsKeeps() {
+  if (labsKeepsP) return labsKeepsP;
+  labsKeepsP = (async () => {
+    try {
+      const db = await window.claude.use('db'); if (!db) return;
+      db.collection('labs_keepsakes').onSnapshot((snap) => { const o = {}; snap.docs.forEach((d) => { o[d.id] = d.data ? d.data() : d; }); LABS.keeps = { ...o, ...LABS.localKeeps }; schedule(); }, () => {});
+    } catch (e) { /* no db: titles stay local to this page */ }
+  })();
+  return labsKeepsP;
+}
+async function labsKeepSave(id, kind, title, note) {
+  const body = { kind, title, note, updated_at: Date.now() };
+  U.editKeep = null;
+  if (id.startsWith('sample-')) { LABS.localKeeps[id] = body; LABS.keeps = { ...LABS.keeps, [id]: body }; render(); toast('Saved for this preview only'); return; }
+  LABS.keeps = { ...LABS.keeps, [id]: body }; render();
+  try { if (LBS.validate('labs_keepsakes', body)) throw new Error(LBS.validate('labs_keepsakes', body)); const db = await window.claude.use('db'); await db.collection('labs_keepsakes').doc(id).set(body); toast('Saved to the shelf'); } catch (e) { toast('Could not save that note'); }
+}
 function labsAfterRender() {
   if (!labsOn() || !LABS.ready || !window.Habitat) return;
   const slot = document.querySelector('.labs-slot[data-labs="habitat"]');
@@ -1485,7 +1538,7 @@ function labsAfterRender() {
 }
 const labsFeed = () => { if (labsOn() && window.Habitat) Habitat.feed(6); };
 /* hook for the lesson flow when it lands in app.js: call this when a lesson is answered/completed */
-window.LBLabs = { feed: labsFeed, lessonDone: labsFeed, game: () => LABS.game };
+window.LBLabs = { feed: labsFeed, lessonDone: labsFeed, game: () => LABS.game, render: () => render() };
 /* "a visitor arrived": one visitors_met doc per creature per week, written only with Labs on.
    Talks to the db directly so the collection stays out of store.js's always-on listeners. */
 async function labsVisitor(g) {

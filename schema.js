@@ -59,9 +59,10 @@
     /* Labs (optional): one doc per creature per week when a reef visitor arrives. Written only with Labs on;
        not in COLLECTIONS, so store.js never listens to it. */
     labs_state: { started: [T.date, 1], created_at: [T.num] },
+    labs_keepsakes: { kind: [oneOf('plant', 'reef'), 1], title: [T.str], note: [T.str], updated_at: [T.num] },
     visitors_met: { creature: [T.str, 1], met_at: [T.num, 1], biome: [T.num], week: [T.date], rarity: [oneOf('common', 'rare', 'legendary')] },
   };
-  const OPTIONAL = ['visitors_met', 'labs_state'];
+  const OPTIONAL = ['visitors_met', 'labs_state', 'labs_keepsakes'];
 
   function validate(col, doc) {
     const sch = S[col];

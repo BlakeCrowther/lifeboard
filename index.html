@@ -819,7 +819,7 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .sgfr input{flex:1;min-width:0;min-height:44px}
 .sgfr .btn{flex:none}
 .sga .btn.on{background:var(--text);color:var(--bg)}
-.labs-habitat .hab-ph,.labs-garden .gseason{font-size:13px;color:var(--muted)}
+.labs-habitat .hab-ph,.labs-shelf .gseason{font-size:13px;color:var(--muted)}
 .hab{position:relative;aspect-ratio:4/3;max-height:420px;width:100%;border-radius:var(--r);overflow:hidden;background:#0b3a5c;box-shadow:var(--shadow)}
 .hab canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .hab-chips{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;gap:6px;pointer-events:none}
@@ -829,11 +829,51 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .hab-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.25)}.hab-bar>div{height:6px;border-radius:3px;background:#8fe3f5;width:0}
 .hab-msg{position:absolute;inset:auto 12px 50% 12px;margin:0;text-align:center;color:#fff;font-size:13px}
 .hab-pv{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}.hab-pv span{font-size:12px;color:var(--muted);margin-right:4px}.hab-pv .chip{cursor:pointer;border:1px solid var(--line);background:transparent;font:inherit;font-size:12px;padding:4px 10px;border-radius:999px;color:inherit}
-.glist{list-style:none;margin:0;padding:0}
-.grow-row{display:flex;align-items:center;gap:12px;padding:6px 0;border-top:1px solid var(--line)}.grow-row:first-child{border-top:0}
 .gplot{flex:none;overflow:visible}
-.gmeta{flex:1;min-width:0}.gname{margin:0;font-weight:600;font-size:16px}.gsub{margin:2px 0 0;font-size:13px;color:var(--muted)}
-@media (min-width:700px){.glist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}.grow-row:nth-child(2){border-top:0}}
+/* Labs Today: habits as a garden, full width above both columns */
+#main>.today>.gwide{grid-column:1/-1}
+.gwh{display:flex;justify-content:space-between;gap:8px;margin:0 2px 8px;font-size:13px;font-weight:600}
+.gtiles{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.gt{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:6px 8px 8px;border-radius:14px;background:var(--sunk);min-width:0}
+.gtp{display:grid;place-items:center;padding:2px 0 0;border-radius:12px}
+.gtp:hover{background:color-mix(in srgb,var(--surface) 60%,transparent)}
+.gtp svg{transition:transform .25s}.gtp:active svg{transform:scale(.94)}
+.gtm{display:flex;flex-direction:column;gap:5px;min-width:0}
+.gts{font-size:12px;color:var(--muted);line-height:1.3}.gts.good{color:var(--good)}.gts.warn{color:var(--bad)}
+.gt.low .ptn{color:var(--bad)}.gt.low .ptp i.fl{box-shadow:inset 0 0 0 1.5px var(--bad)}.gt.met .ptp i.on{background:var(--good)}
+.gtb{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto}
+.gtl{gap:4px;font-variant-numeric:tabular-nums}
+/* Plant lab (preview) */
+.plab{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.card>.plab:first-child{margin-top:0;padding-top:0;border-top:0}
+.plab-t{margin:0 0 4px;font-weight:600;font-size:14px}.plab-t small{font-weight:400;color:var(--muted);margin-left:6px}
+.hab-pv .chip.on{background:var(--fill);color:var(--on);border-color:transparent}
+.plab-strip{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px}
+.plab-strip figure{margin:0;flex:none;display:flex;flex-direction:column;align-items:center;gap:2px}
+.plab-strip figcaption{font-size:11px;color:var(--muted);white-space:nowrap}
+/* Labs Grow: shelf, stats, logbook */
+.gal{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px}
+.gal-i{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 12px 8px;min-width:0}
+.gal-i.gone .gal-a{filter:saturate(.6)}
+.gal-a{flex:none;width:92px;display:grid;place-items:center;background:var(--sunk);border-radius:12px;padding:4px 0}
+.gal-b{flex:1;min-width:0}
+.gal-t{margin:2px 0 0;font:600 16px/1.25 var(--display);text-wrap:balance}
+.gal-s{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+.gal-c{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 0}
+.gal-n{margin:8px 0 0;font-size:14px;line-height:1.45;white-space:pre-wrap}
+.gal-e{margin-top:6px;padding:0}
+.chip.r-heirloom{background:color-mix(in srgb,#ff8a6b 18%,transparent);color:#c9452e}
+.chip.r-exotic{background:color-mix(in srgb,#a77bf0 18%,transparent);color:#7a4fd0}
+.gal-f{display:flex;flex-direction:column;gap:6px}
+.gal-f input,.gal-f textarea{font:inherit;font-size:16px;padding:7px 9px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:inherit}
+.gal-f textarea{min-height:72px;resize:vertical}
+.gsts{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px 10px}
+.gst{display:flex;flex-direction:column;gap:1px}.gst b{font:600 26px/1.1 var(--display)}.gst span{font-size:13px;font-weight:600}.gst small{font-size:12px;color:var(--muted)}
+.lbk{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.lbk li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}.lbk li:first-child{border-top:0}
+.lbk li>span:first-child{color:var(--muted);font-size:12.5px;padding-top:1px}
+.lbk li.good>span:last-child::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
+.lbk li.bad>span:last-child::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--bad);margin-right:7px;vertical-align:1px}
 .chip.gok{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}.chip.gwarn{background:color-mix(in srgb,var(--bad) 13%,transparent);color:var(--bad)}
 </style>
 </head>
