@@ -22,22 +22,22 @@ const STEADY_W = { great: 0.15, good: 0.6, meh: 0.2, gap: 0.05 };
 /* Each persona: habits, weekMode(week, st, rng) -> great|good|meh|gap (shared mood for the week),
    per-habit mode drawn around it, tasks per day (lambda), finish prob by mode, overdue pulls, lesson habits. */
 const PERSONAS = {
-  steady: { habits: HABITS, mode: () => STEADY_W, lam: 3, q: { great: 0.95, good: 0.88, meh: 0.7, gap: 0.3 }, pull: 0.5, deck: 0.85 },
+  steady: { habits: HABITS, mode: () => STEADY_W, lam: 3, q: { great: 0.95, good: 0.88, meh: 0.7, gap: 0.3 }, pull: 0.5, deck: 0.85, tidy: 0.08 },
   bursty: {
-    habits: HABITS, lam: 3, q: { great: 0.95, good: 0.85, meh: 0.6, gap: 0.2 }, pull: 0.4, deck: 0.75,
+    habits: HABITS, lam: 3, q: { great: 0.95, good: 0.85, meh: 0.6, gap: 0.2 }, pull: 0.4, deck: 0.75, tidy: 0.05,
     mode: (w, st, rng) => {
       if (st.off > 0) { st.off--; return { gap: 0.8, meh: 0.2 }; }
       if (rng() < 0.2) { st.off = randInt(rng, 0, 1); return { gap: 0.8, meh: 0.2 }; }
       return { great: 0.35, good: 0.45, meh: 0.2 };
     },
   },
-  slump: { habits: HABITS, lam: 3, q: { great: 0.95, good: 0.88, meh: 0.7, gap: 0.25 }, pull: 0.5, deck: 0.85,
+  slump: { habits: HABITS, lam: 3, q: { great: 0.95, good: 0.88, meh: 0.7, gap: 0.25 }, pull: 0.5, deck: 0.85, tidy: 0.08,
     mode: (w) => (w >= 9 && w <= 11 ? { gap: 0.7, meh: 0.3 } : STEADY_W) },
-  over: { habits: HABITS, lam: 2.5, q: { great: 0.99, good: 0.97, meh: 0.9, gap: 0.6 }, pull: 0.8, deck: 0.95,
+  over: { habits: HABITS, lam: 2.5, q: { great: 0.99, good: 0.97, meh: 0.9, gap: 0.6 }, pull: 0.8, deck: 0.95, tidy: 0.2,
     mode: () => ({ great: 0.7, good: 0.3 }) },
-  light: { habits: [{ f: 1, t: 2 }, { f: 1, t: 1 }], lam: 1.2, q: { great: 0.8, good: 0.65, meh: 0.5, gap: 0.2 }, pull: 0.15, deck: 0.5,
+  light: { habits: [{ f: 1, t: 2 }, { f: 1, t: 1 }], lam: 1.2, q: { great: 0.8, good: 0.65, meh: 0.5, gap: 0.2 }, pull: 0.15, deck: 0.5, tidy: 0.03,
     mode: () => ({ good: 0.5, meh: 0.3, gap: 0.2 }) },
-  gamer: { habits: HABITS, lam: 3, q: { great: 0.8, good: 0.7, meh: 0.5, gap: 0.3 }, pull: 0.3, deck: 0.8, tiny: 3, mode: () => STEADY_W },
+  gamer: { habits: HABITS, lam: 3, q: { great: 0.8, good: 0.7, meh: 0.5, gap: 0.3 }, pull: 0.3, deck: 0.8, tidy: 0.05, tiny: 3, mode: () => STEADY_W },
 };
 
 function habitCount(rng, mode, h) {
@@ -57,7 +57,7 @@ function habitMode(rng, weekMode) {
 function runOne(P, seed, opts = {}) {
   const rng = mulberry32(seed), st = { off: 0 };
   const M = { deaths: 0, blooms: 0, plantSeasons: 0, deadPlotWeeks: 0, plotWeeks: 0, rarity: { common: 0, heirloom: 0, exotic: 0 }, hybrids: 0,
-    biomeDays: [], rare: 0, rareOd: 0, pileEnd: 0, legendary: 0, bleach: 0, bleachDays: 0, cloudyDays: 0, ringSum: 0, ringDays: 0, fullDays: 0, neutral: 0,
+    biomeDays: [], rare: 0, rareOd: 0, pileEnd: 0, algaeDays: 0, pileSum: 0, legendary: 0, bleach: 0, bleachDays: 0, cloudyDays: 0, ringSum: 0, ringDays: 0, fullDays: 0, neutral: 0,
     lessonsShown: 0, backlogEnd: 0, backlogMax: 0, bookDays: [], booksStarted: 0, booksDone: 0 };
 
   /* garden */
@@ -65,6 +65,7 @@ function runOne(P, seed, opts = {}) {
   /* reef */
   const reef = G.newReef();
   let pile = []; /* overdue tasks: { since } */
+  const resched = {}; /* day -> tasks rescheduled to come due that day */
   /* lessons */
   const lessons = [], sources = [];
   let lid = 0;
@@ -83,7 +84,13 @@ function runOne(P, seed, opts = {}) {
     for (let d = 0; d < 7; d++) {
       const day = w * 7 + d, dayMode = rng() < 0.7 ? weekMode : pick(rng, weekDist), q = P.q[dayMode];
       /* tasks */
-      const due = poisson(rng, P.lam);
+      /* cleanup: each overdue task may get rescheduled (60%, due again in 2-7 days) or deleted (40%); less on gap days */
+      pile = pile.filter(() => {
+        if (rng() >= P.tidy * (dayMode === 'gap' ? 0.3 : 1)) return true;
+        if (rng() < 0.6) { const d2 = day + randInt(rng, 2, 7); resched[d2] = (resched[d2] || 0) + 1; }
+        return false;
+      });
+      const due = poisson(rng, P.lam) + (resched[day] || 0);
       let committed = due, done = bin(rng, due, q);
       for (let i = 0; i < due - done; i++) pile.push({ since: day });
       if (pile.length && rng() < P.pull) {
@@ -99,6 +106,8 @@ function runOne(P, seed, opts = {}) {
       if (ev.includes('bleach')) M.bleach++;
       if (reef.bleached) M.bleachDays++;
       if (G.cloudiness(pile.length) >= 0.5) M.cloudyDays++;
+      if (G.algae(pile.map((t) => day - t.since)) >= 0.5) M.algaeDays++;
+      M.pileSum += pile.length;
       /* lessons */
       if (rng() < P.deck * (dayMode === 'gap' ? 0.4 : 1)) {
         for (const l of G.buildDeck(lessons, day)) {
@@ -160,7 +169,9 @@ function summarize(name, P, opts) {
     'pile end': avg((r) => r.pileEnd).toFixed(0),
     'legend/mo': (avg((r) => r.legendary) / months).toFixed(2),
     'bleach': avg((r) => r.bleach).toFixed(2),
-    'cloudy %': (100 * avg((r) => r.cloudyDays) / (WEEKS * 7)).toFixed(0),
+    'murk50 %': (100 * avg((r) => r.cloudyDays) / (WEEKS * 7)).toFixed(0),
+    'algae50 %': (100 * avg((r) => r.algaeDays) / (WEEKS * 7)).toFixed(0),
+    'pile avg': avg((r) => r.pileSum / (WEEKS * 7)).toFixed(1),
     'backlog end': avg((r) => r.backlogEnd).toFixed(0),
     'book days': mean(book).toFixed(0),
     'books done %': (100 * avg((r) => r.booksDone) / Math.max(1e-9, avg((r) => r.booksStarted))).toFixed(0),
