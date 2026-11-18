@@ -165,7 +165,7 @@
 
   /* ---- preview (#labs-preview or ?preview): restyle every plot, try seed rarities, fill the shelf with samples. View-only, never saved. ---- */
   /* the local mock board (test.html) has no history, so it shows sample keepsakes by default */
-  const PV = { on: false, stage: null, rarity: null, mutated: false, sample: !!G.MOCK };
+  const PV = { on: false, stage: null, rarity: null, mutated: false, sample: !!G.MOCK, all: false };
   try { const u = new URL(G.LB_LABS_HREF || G.location.href); PV.on = u.hash === '#labs-preview' || u.searchParams.has('preview'); } catch (e) { /* off */ }
   function view(pl) {
     if (!PV.on || (!PV.stage && !PV.rarity && !PV.mutated)) return pl;
@@ -192,7 +192,7 @@
   if (typeof document !== 'undefined') document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-gpv]'); if (!b) return;
     const [k, v] = b.dataset.gpv.split(':');
-    if (k === 'stage') PV.stage = v || null; else if (k === 'rarity') PV.rarity = v || null; else if (k === 'mutated') PV.mutated = v === '1'; else if (k === 'sample') PV.sample = v === '1';
+    if (k === 'stage') PV.stage = v || null; else if (k === 'rarity') PV.rarity = v || null; else if (k === 'mutated') PV.mutated = v === '1'; else if (k === 'sample') PV.sample = v === '1'; else if (k === 'all') PV.all = v === '1';
     if (G.LBLabs && G.LBLabs.render) G.LBLabs.render();
   });
 
@@ -237,7 +237,7 @@
   function keepCard(k, notes, editing) {
     const n = notes[k.id] || {}, title = n.title || keepTitle(k);
     const art = k.kind === 'reef' ? dioramaSVG(biomeOf(k.biome)) : specimen(k.died ? 'dead' : k.stageName, k.seed, 84, title);
-    const sub = k.kind === 'reef' ? `Reef biome finished in ${k.days} days`
+    const sub = k.kind === 'reef' ? `Biome finished in ${k.days} days`
       : `Season ${k.season + 1} · ${fmt(k.from)}–${fmt(k.to)} · ${k.sessions} session${k.sessions === 1 ? '' : 's'}`;
     const tag = k.kind === 'reef' ? '<span class="chip gok">Diorama</span>'
       : k.bloomed ? `<span class="chip gok">Bloomed</span><span class="chip r-${k.earned.rarity}">${RAR[k.earned.rarity]} seed${k.earned.mutated ? ' · mutant' : ''}</span>`
@@ -247,25 +247,37 @@
       : `<p class="gal-t">${esc(title)}</p><p class="gal-s">${esc(sub)}</p><p class="gal-c">${tag}</p>${n.note ? `<p class="gal-n">${esc(n.note)}</p>` : ''}<button class="link gal-e" data-act="keep-edit" data-id="${esc(k.id)}">${n.title || n.note ? 'Edit' : 'Name it'}</button>`;
     return `<li class="gal-i${k.died ? ' gone' : ''}"><div class="gal-a">${art}</div><div class="gal-b">${body}</div></li>`;
   }
-  const EVL = { phase: 'Reef reached a new phase', biome: 'Reef biome finished: a diorama joined the shelf', bleach: 'Reef bleached: too few full days', recover: 'Reef recovered' };
-  function growHTML(game, notes = {}, editing = null) {
+  const EVL = { phase: 'Habitat reached a new phase', biome: 'Habitat biome finished: a diorama joined the shelf', bleach: 'Habitat bleached: too few full days', recover: 'Habitat recovered' };
+  /* Grow → Garden pieces; app.js lays them out next to its own habit and ring records */
+  function shelfHTML(game, notes = {}, editing = null) {
     if (!game) return '';
-    const ks = keepsakes(game), s = game.gardenStats;
-    const shelf = ks.length ? `<ul class="gal">${ks.map((k) => keepCard(k, notes, editing)).join('')}</ul>`
-      : `<div class="card pad"><p class="empty" style="padding:0 4px">Nothing on the shelf yet. ${game.season.opens ? `Seeds plant ${fmt(game.season.opens)}; ` : ''}each season runs ${game.season.of} weeks, and when season ${game.season.index + 1} ends ${fmt(game.season.ends)}, every plant lands here, bloomed or withered, for you to name and caption. Finished reef biomes join as dioramas.</p></div>`;
-    const t = (n, l, sub) => `<div class="gst"><b class="num">${n}</b><span>${l}</span>${sub ? `<small>${sub}</small>` : ''}</div>`;
-    const stats = `<div class="gsts">${t(s.blooms, 'Blooms')}${t(s.withered, 'Withered')}${t(s.heirloom + s.exotic, 'Rare seeds', `${s.heirloom} heirloom · ${s.exotic} exotic`)}${t(game.reef.dioramas.length, 'Dioramas')}${t(s.sessions, 'Sessions', game.start ? `since ${fmt(game.start)}` : '')}${t(game.season.opens ? 0 : game.season.index + 1, 'Season', game.season.opens ? `opens ${fmt(game.season.opens)}` : `week ${game.season.week} of ${game.season.of}`)}</div>`;
+    const ks = keepsakes(game), sea = game.season;
+    const head = sea.opens ? `Seeds plant ${fmt(sea.opens)}` : `Season ${sea.index + 1} · week ${sea.week} of ${sea.of} · ends ${fmt(sea.ends)}`;
+    const cap = PV.all || ks.length <= 6 ? ks.length : 6;
+    const shelf = ks.length ? `<ul class="gal">${ks.slice(0, cap).map((k) => keepCard(k, notes, editing)).join('')}</ul>${ks.length > 6 ? `<button class="link gal-more" data-gpv="all:${PV.all ? '0' : '1'}">${PV.all ? 'Show fewer' : `Show all ${ks.length}`}</button>` : ''}`
+      : `<div class="card pad"><p class="empty" style="padding:0 4px">Nothing on the shelf yet. Each season runs ${sea.of} weeks; when season ${sea.index + 1} ends ${fmt(sea.ends)}, every plant lands here, bloomed or withered, for you to name and caption. Finished habitat biomes join as dioramas.</p></div>`;
+    return `${PV.on ? `<div class="card pad" style="margin-top:14px">${plantLab()}</div>` : ''}<section class="sec labs-shelf"><div class="sec-h"><h3 class="sec-t">Shelf <span class="ct num">${ks.length}</span></h3><span class="gseason">${esc(head)}</span></div>${shelf}</section>`;
+  }
+  /* stat tiles for the band: counted from what the shelf shows, so samples and stats agree */
+  function gardenTiles(game) {
+    if (!game) return [];
+    const ks = keepsakes(game), pl = ks.filter((k) => k.kind === 'plant'), rare = pl.filter((k) => k.bloomed && k.earned.rarity !== 'common');
+    return [
+      { n: pl.filter((k) => k.bloomed).length, l: 'Blooms', s: `${pl.filter((k) => k.died).length} withered` },
+      { n: rare.length, l: 'Rare seeds', s: `${rare.filter((k) => k.earned.rarity === 'heirloom').length} heirloom · ${rare.filter((k) => k.earned.rarity === 'exotic').length} exotic` },
+      { n: ks.filter((k) => k.kind === 'reef').length, l: 'Dioramas', s: `habitat phase ${game.reef.phase + 1} of ${game.reef.phases}` },
+      game.season.opens ? { n: '–', l: 'Season', s: `opens ${fmt(game.season.opens)}` } : { n: game.season.index + 1, l: 'Season', s: `week ${game.season.week} of ${game.season.of}` },
+    ];
+  }
+  function logbookItems(game) {
     const log = [];
     game.history.forEach((h) => log.push({ d: h.to, t: h.bloomed ? `${h.name} bloomed · ${RAR[h.earned.rarity].toLowerCase()} seed${h.earned.mutated ? ', mutant' : ''}` : h.died ? `${h.name} withered` : `${h.name} ended at ${LABEL[h.stageName].toLowerCase()}`, c: h.bloomed ? 'good' : h.died ? 'bad' : '' }));
     game.events.forEach((e) => e.ev.forEach((x) => log.push({ d: e.date, t: EVL[x] || x, c: x === 'bleach' ? 'bad' : x === 'phase' || x === 'biome' ? 'good' : '' })));
     if (game.season.opens) log.push({ d: game.season.opens, t: 'Garden opens: seeds go in', c: '' });
     if (game.start) log.push({ d: game.start, t: 'Labs started: everything at zero', c: '' });
-    log.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
-    const book = `<ol class="lbk">${log.slice(0, 20).map((x) => `<li class="${x.c}"><span class="num">${fmt(x.d)}</span><span>${esc(x.t)}</span></li>`).join('')}</ol>`;
-    return `${PV.on ? `<div class="card pad" style="margin-top:14px">${plantLab()}</div>` : ''}<section class="sec labs-shelf"><div class="sec-h"><h3 class="sec-t">Shelf <span class="ct num">${ks.length}</span></h3><span class="gseason">Plants &amp; dioramas you finished</span></div>${shelf}</section>
-      <section class="sec"><div class="sec-h"><h3 class="sec-t">Garden stats <span class="ct">Labs</span></h3></div><div class="card pad">${stats}</div></section>
-      <section class="sec"><div class="sec-h"><h3 class="sec-t">Logbook</h3></div><div class="card pad">${book}</div></section>`;
+    return log.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
   }
-  Object.assign(API, { renderPlant, specimen, plotSVG, view, visual, plantLab, growHTML, LABEL, preview: PV, fmt });
+  const logbookHTML = (items) => `<ol class="lbk">${items.map((x) => `<li class="${x.c}"><span class="num">${fmt(x.d)}</span><span>${esc(x.t)}</span></li>`).join('')}</ol>`;
+  Object.assign(API, { renderPlant, specimen, plotSVG, view, visual, plantLab, shelfHTML, gardenTiles, logbookItems, logbookHTML, LABEL, preview: PV, fmt });
   G.LBGarden = API;
 })(typeof window !== 'undefined' ? window : globalThis);

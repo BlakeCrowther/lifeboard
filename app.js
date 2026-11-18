@@ -290,7 +290,7 @@ function eventsOn(evs, d) {
 const U = {
   tab: 'today', life: 'health', grow: 'habits', list: 'groceries',
   open: null, adjust: null, adjBusy: null, exp: {}, showDone: false, showTomorrow: false, wishFilter: 'all', petFilter: 'all', script: false,
-  calSel: TODAY, calMonth: TODAY.slice(0, 7) + '-01', editQ: null, editKeep: null,
+  calSel: TODAY, calMonth: TODAY.slice(0, 7) + '-01', editQ: null, editKeep: null, rec: 'habits',
   timer: { len: 2, end: null, msg: '' }, quote: (diffDays('2026-01-01', TODAY) % 7 + 7) % 7, sheet: null,
 };
 /* which folds are open and how lists sort: remembered per device */
@@ -569,11 +569,12 @@ function labsHabits(hs, done, tot, daysLeft) {
       <div class="gtb"><button class="hminus" data-act="unlog" data-id="${h.id}" aria-label="Remove a ${esc(h.name)} session from this week"${st.week ? '' : ' disabled'}>${ic('minus', 13)}</button><button class="btn sm gtl" data-act="log" data-id="${h.id}" aria-hidden="true" tabindex="-1">${ic('plus', 16)}${st.week}/${h.target}</button></div></li>`;
   }).join('');
   const lowN = hs.filter((x) => x.low).length;
-  const msg = g.season.opens ? `Seeds go in Monday ${GD.fmt(g.season.opens)}. Sessions this week still count for streaks.` : hs.every((x) => x.met) ? 'Perfect week. Every plant is drinking its fill.' : hs.every((x) => x.st.week >= x.h.floor) ? 'Every plant grows on Monday. The rest is bonus.'
+  const wc = dow(TODAY) === 1 || dow(TODAY) === 2 ? weekCheck() : null, last = wc && wc.rows.length ? `Last week: ${wc.kept} of ${wc.rows.length} streaks kept${wc.reset ? `, ${wc.reset} reset` : ''}. ` : '';
+  const msg0 = g.season.opens ? `Seeds go in Monday ${GD.fmt(g.season.opens)}. Sessions this week still count for streaks.` : hs.every((x) => x.met) ? 'Perfect week. Every plant is drinking its fill.' : hs.every((x) => x.st.week >= x.h.floor) ? 'Every plant grows on Monday. The rest is bonus.'
     : lowN ? `${plural(lowN, 'plant')} need${lowN === 1 ? 's' : ''} water in the next ${plural(daysLeft, 'day')}.` : 'Tap a plant to log a session. Meet the floor and it grows a stage on Monday.';
   const sea = g.season.opens ? `Seeds plant Mon ${GD.fmt(g.season.opens)}` : `Season ${g.season.index + 1} · week ${g.season.week} of ${g.season.of}`;
   return `<section class="sec z-now habitsec gwide">${secH('Habits', goLink('History', 'grow/habits'), 2, `${done}/${tot}`)}
-    <div class="card"><p class="gwh"><span>${esc(sea)}</span>${g.season.opens ? '' : `<span class="muted">ends ${GD.fmt(g.season.ends)}</span>`}</p><ul class="gtiles">${tiles}</ul>${GD.plantLab()}</div><p class="wmsg">${esc(msg)}</p></section>`;
+    <div class="card"><p class="gwh"><span>${esc(sea)}</span>${g.season.opens ? '' : `<span class="muted">ends ${GD.fmt(g.season.ends)}</span>`}</p><ul class="gtiles">${tiles}</ul>${GD.plantLab()}</div><p class="wmsg">${esc(last + msg0)}</p></section>`;
 }
 /* streak badge: solid = safe this week, outlined = still needs the floor, red = at risk */
 function flameBadge(st, low) {
@@ -824,33 +825,6 @@ function weekCheck() {
   });
   return { lw, rows, kept: rows.filter((r) => r.kept).length, reset: rows.filter((r) => r.status === 'reset').length, late: S.voidSessions.length };
 }
-function weekCheckCard() {
-  if (!S.habits.length) return '';
-  const w = weekCheck(), end = addDays(w.lw, 6);
-  const lab = { hit: 'Target hit', kept: 'Streak kept', reset: 'Streak reset', miss: 'Missed' };
-  return `<section class="sec wcheck"><div class="sec-h"><h3 class="sec-t">Weekly check <span class="ct">${MON3[toD(w.lw).getMonth()]} ${toD(w.lw).getDate()}–${toD(end).getDate()} · closed</span></h3></div>
-    <div class="card"><ul class="list">${w.rows.map((r) => `<li class="wcr ${r.status}"><span class="wci">${ic(r.kept ? 'check' : 'x', 16)}</span><span class="wcn">${esc(r.h.name)}<small class="num">${r.got} of ${r.h.floor} floor${r.ex ? ` · ${plural(r.ex, 'exception')}` : ''}</small></span>
-      <span class="wcs">${lab[r.status]}${r.status === 'reset' ? `<small class="num">was ${r.before} wk</small>` : r.kept ? `<small class="num">now ${r.after} wk</small>` : ''}</span></li>`).join('')}</ul>
-    <p class="wcnote">Weeks close Sunday night. Late logs don't count unless you add a reason and evidence${w.late ? `; ${plural(w.late, 'late log')} ${w.late === 1 ? 'was' : 'were'} left out` : ''}.</p></div></section>`;
-}
-function growSummary() {
-  const stats = S.habits.map((h) => ({ h, st: habitStats(h, S.sessions) }));
-  const wk = mondayOf(TODAY);
-  const allFloor = (m) => stats.every(({ h, st }) => { const w = st.weeks.find((x) => x.m === m); return w && w.n >= h.floor; });
-  let run = allFloor(wk) ? 1 : 0;
-  for (let m = addDays(wk, -7); m >= addDays(wk, -77) && allFloor(m); m = addDays(m, -7)) run++;
-  const done = stats.reduce((n, x) => n + Math.min(x.st.week, x.h.target), 0), tot = stats.reduce((n, x) => n + x.h.target, 0);
-  const safe = stats.filter(({ h, st }) => st.week >= h.floor).length;
-  const top = stats.slice().sort((a, b) => b.st.streak - a.st.streak)[0];
-  const C = 213.6, f = tot ? Math.min(done / tot, 1) : 0;
-  return `<div class="card gsum">
-    <span class="gring"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="ht" cx="40" cy="40" r="34"/><circle class="ha" cx="40" cy="40" r="34" stroke-dasharray="${C}" stroke-dashoffset="${(C - C * f).toFixed(1)}" transform="rotate(-90 40 40)"/></svg><b class="num">${done}<small>/${tot}</small></b></span>
-    <div class="gstats">
-      <p><b class="num">${safe}/${stats.length}</b> streaks safe this week</p>
-      <p><b class="num">${run}</b> ${run === 1 ? 'week' : 'weeks'} with every floor met</p>
-      ${top && top.st.streak ? `<p>${ic('flame', 15)} Longest going: <b>${esc(top.h.name)}</b>, ${plural(top.st.streak, 'week')}</p>` : '<p>Hit any floor this week to start a streak.</p>'}
-    </div></div>`;
-}
 /* habit review: 12 weeks per habit, plus a verdict on whether the target needs adjusting.
    Verdicts use the closed weeks since the habit's first session (needs 4+). Raise: target hit in 80%+ of weeks while
    averaging 30%+ above it. Lower: floor met in under half. Slipping / needs work: target hit in under half. */
@@ -870,32 +844,73 @@ function habitVerdict(h, st) {
   else if (hit < 0.5) { v = 'work'; vt = 'Needs work'; why = `Floor is holding, but the target was hit in only ${pc(hit)} of weeks.`; }
   return { v, vt, n, hit, flr, avg, tr, why };
 }
-function habitReview() {
-  const R = S.habits.map((h) => { const st = habitStats(h, S.sessions); return { h, st, ...habitVerdict(h, st) }; });
-  const ord = { work: 0, lower: 1, raise: 2 };
-  const attn = R.filter((r) => ord[r.v] != null).sort((a, b) => ord[a.v] - ord[b.v]);
-  const icn = { work: 'flame', lower: 'down', raise: 'up' };
-  const lvl = (h, n) => (n <= 0 ? 0 : n < h.floor ? 1 : n < h.target ? 2 : n === h.target ? 3 : 4);
-  const arrow = (r) => (r.n < 8 ? '<span class="trf">–</span>' : r.tr > 0.4 ? '<span class="tru" title="Trending up">↑</span>' : r.tr < -0.4 ? '<span class="trd" title="Trending down">↓</span>' : '<span class="trf" title="Steady">→</span>');
-  const pc = (x) => (x == null ? '–' : Math.round(x * 100) + '%');
-  const wk0 = R[0].st.weeks;
-  return `<section class="sec"><div class="sec-h"><h3 class="sec-t">Needs adjusting <span class="ct">last ${plural(11, 'week')}</span></h3></div>
-    ${attn.length ? `<div class="attn">${attn.map((r) => `<div class="at ${r.v}"><span class="aic">${ic(icn[r.v], 16)}</span><span class="atx"><b>${esc(r.h.name)}</b><small>${esc(r.why)}</small></span><span class="vchip">${esc(r.vt)}</span></div>`).join('')}</div>` : '<div class="card pad"><p class="empty" style="padding:0 4px">Every habit is on track. Nothing to adjust.</p></div>'}</section>
-  <section class="sec"><div class="sec-h"><h3 class="sec-t">12 weeks</h3></div>
-    <div class="card tgc"><div class="tg" role="table" aria-label="Sessions per week, last 12 weeks">
+/* Grow → Garden: one stats band, one Records card (habits | rings), and with Labs on the shelf and logbook.
+   Rings: completed = tasks finished that day; committed = tasks whose current due/deadline date is that day
+   (a rescheduled task only keeps its latest date, so older weeks are approximate). */
+function ringHistory(weeks = 12) {
+  const done = {}, due = {};
+  S.tasks.forEach((t) => { if (t.done && t.doneAt) { const d = LB.laDateOf(t.doneAt); done[d] = (done[d] || 0) + 1; } const e = eff(t); if (e) due[e] = (due[e] || 0) + 1; });
+  const wk = mondayOf(TODAY), rows = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const m = addDays(wk, -7 * i), days = [];
+    for (let k = 0; k < 7; k++) { const d = addDays(m, k); days.push({ d, n: done[d] || 0, due: due[d] || 0, future: d > TODAY, today: d === TODAY }); }
+    const past = days.filter((x) => !x.future);
+    rows.push({ m, cur: i === 0, days, closed: past.filter((x) => x.n >= RING_GOAL).length, done: past.reduce((n, x) => n + x.n, 0), due: past.reduce((n, x) => n + x.due, 0) });
+  }
+  return rows;
+}
+function growBand(g) {
+  const hs = S.habits.map((h) => ({ h, st: habitStats(h, S.sessions) }));
+  const hDone = hs.reduce((n, x) => n + Math.min(x.st.week, x.h.target), 0), hTot = hs.reduce((n, x) => n + x.h.target, 0), safe = hs.filter((x) => x.st.week >= x.h.floor).length;
+  const R = ringHistory(12), cur = R[R.length - 1], past = R.slice(0, -1);
+  const avg = (f) => (past.reduce((n, r) => n + f(r), 0) / past.length).toFixed(1);
+  const dueT = S.tasks.filter((t) => { const e = eff(t); return e && e >= R[0].m && e <= TODAY; }), met = dueT.filter((t) => t.done).length;
+  const tiles = [
+    { n: `${hDone}<small>/${hTot}</small>`, l: 'Habit sessions', s: `${safe} of ${hs.length} streaks safe` },
+    { n: cur.closed, l: 'Rings closed', s: `this week · avg ${avg((r) => r.closed)}` },
+    { n: `${cur.done}<small>/${cur.due}</small>`, l: 'Done / due', s: `this week · avg ${avg((r) => r.done)} done` },
+    { n: dueT.length ? Math.round((met / dueT.length) * 100) + '<small>%</small>' : '–', l: 'Due tasks done', s: `${met} of ${dueT.length}, 12 weeks` },
+    ...(g ? LBGarden.gardenTiles(g).map((t) => ({ ...t, n: t.n, s: esc(t.s) })) : []),
+  ];
+  return `<section class="sec"><div class="card pad"><div class="gsts">${tiles.map((t) => `<div class="gst"><b class="num">${t.n}</b><span>${t.l}</span><small>${t.s}</small></div>`).join('')}</div></div></section>`;
+}
+function recordsCard() {
+  const mode = U.rec === 'rings' ? 'rings' : 'habits';
+  const seg = `<div class="seg" role="tablist" aria-label="Records">${[['habits', 'Habits'], ['rings', 'Rings']].map(([k, l]) => `<button role="tab" data-act="rec" data-val="${k}" aria-selected="${mode === k}">${l}</button>`).join('')}</div>`;
+  let body;
+  if (mode === 'habits') {
+    const R = S.habits.map((h) => { const st = habitStats(h, S.sessions); return { h, st, ...habitVerdict(h, st) }; });
+    const ord = { work: 0, lower: 1, raise: 2 }, attn = R.filter((r) => ord[r.v] != null).sort((a, b) => ord[a.v] - ord[b.v]);
+    const lvl = (h, n) => (n <= 0 ? 0 : n < h.floor ? 1 : n < h.target ? 2 : n === h.target ? 3 : 4);
+    const arrow = (r) => (r.n < 8 ? '<span class="trf">–</span>' : r.tr > 0.4 ? '<span class="tru" title="Trending up">↑</span>' : r.tr < -0.4 ? '<span class="trd" title="Trending down">↓</span>' : '<span class="trf" title="Steady">→</span>');
+    const pc = (x) => (x == null ? '–' : Math.round(x * 100) + '%');
+    const wk0 = R[0].st.weeks;
+    body = `<div class="tg" role="table" aria-label="Sessions per week, last 12 weeks">
       <span></span>${wk0.map((w, i) => `<span class="h">${w.cur ? 'now' : (11 - i) % 4 === 0 ? `${MON3[toD(w.m).getMonth()]} ${toD(w.m).getDate()}` : ''}</span>`).join('')}<span class="h">hit</span><span class="h">trend</span>
-      ${R.map((r) => `<span class="nm">${esc(r.h.name)}</span>${r.st.weeks.map((w) => `<span class="c l${lvl(r.h, w.n)}${w.cur ? ' cur' : ''}" title="Week of ${MON3[toD(w.m).getMonth()]} ${toD(w.m).getDate()}: ${w.n} of ${r.h.target}">${w.n || ''}</span>`).join('')}<span class="s${r.hit == null ? '' : r.hit >= 0.7 ? ' good' : r.hit < 0.4 ? ' bad' : ''}">${pc(r.hit)}</span><span class="tr">${arrow(r)}</span>`).join('')}
+      ${R.map((r) => `<span class="nm" title="${esc(r.h.name)}: target ${r.h.target}, floor ${r.h.floor}${r.st.streak ? `, ${r.st.streak}-week streak (best ${r.st.best})` : ''}">${esc(r.h.name)}</span>${r.st.weeks.map((w) => `<span class="c l${lvl(r.h, w.n)}${w.cur ? ' cur' : ''}" title="Week of ${MON3[toD(w.m).getMonth()]} ${toD(w.m).getDate()}: ${w.n} of ${r.h.target}">${w.n || ''}</span>`).join('')}<span class="s${r.hit == null ? '' : r.hit >= 0.7 ? ' good' : r.hit < 0.4 ? ' bad' : ''}">${pc(r.hit)}</span><span class="tr">${arrow(r)}</span>`).join('')}
     </div>
-    <div class="legend" style="margin-top:10px"><span><i></i>None</span><span><i class="l1"></i>Below floor</span><span><i class="floor"></i>Floor</span><span><i class="hit"></i>Target</span><span><i class="l4"></i>Above target</span></div></div></section>
-  <section class="sec"><div class="sec-h"><h3 class="sec-t">Stats</h3></div>
-    <div class="card"><table class="hstats"><thead><tr><th>Habit</th><th>Target</th><th>Avg/wk</th><th>Floor met</th><th>Streak</th><th>Best</th><th><span class="sr">Verdict</span></th></tr></thead><tbody>
-    ${R.map((r) => `<tr><td>${esc(r.h.name)}</td><td class="num">${r.h.target}<small>/${r.h.floor}</small></td><td class="num${r.avg == null ? '' : r.avg >= r.h.target ? ' good' : r.avg < r.h.floor ? ' bad' : ''}">${r.avg == null ? '–' : r.avg.toFixed(1)}</td><td class="num">${pc(r.flr)}</td><td>${r.st.streak ? flameBadge(r.st, false) : '–'}</td><td class="num">${r.st.best || '–'}</td><td>${r.v === 'ok' || r.v === 'new' ? `<span class="vq">${r.vt.toLowerCase()}</span>` : `<span class="vchip ${r.v}">${esc(r.vt)}</span>`}</td></tr>`).join('')}
-    </tbody></table><p class="wcnote">Target / floor per week. Hit % and verdicts use closed weeks since each habit's first session.</p></div></section>`;
+    <div class="legend" style="margin-top:10px"><span><i></i>None</span><span><i class="l1"></i>Below floor</span><span><i class="floor"></i>Floor</span><span><i class="hit"></i>Target</span><span><i class="l4"></i>Above target</span></div>
+    ${attn.length ? `<ul class="recn">${attn.map((r) => `<li><span class="vchip ${r.v}">${esc(r.vt)}</span><span><b>${esc(r.h.name)}</b> ${esc(r.why)}</span></li>`).join('')}</ul>` : ''}
+    <p class="wcnote">Hit % and suggestions use closed weeks since each habit's first session. Weeks close Sunday night.</p>`;
+  } else {
+    const R = ringHistory(12), lv = (x) => (x.future ? ' fut' : x.n <= 0 ? '' : x.n < RING_GOAL ? ' l1' : x.n <= RING_GOAL + 1 ? ' l3' : ' l4');
+    body = `<div class="tg rg" role="table" aria-label="Tasks finished per day, last 12 weeks">
+      <span></span>${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => `<span class="h">${d}</span>`).join('')}<span class="h">rings</span><span class="h">done/due</span>
+      ${R.map((r) => `<span class="nm">${r.cur ? 'This week' : `${MON3[toD(r.m).getMonth()]} ${toD(r.m).getDate()}`}</span>${r.days.map((x) => `<span class="c${lv(x)}${x.today ? ' cur' : ''}" title="${x.d}: ${x.n} done, ${x.due} due">${x.future ? '' : x.n || ''}</span>`).join('')}<span class="s">${r.closed}</span><span class="s${r.done >= r.due ? ' good' : ''}">${r.done}/${r.due}</span>`).join('')}
+    </div>
+    <div class="legend" style="margin-top:10px"><span><i></i>None</span><span><i class="l1"></i>Under ${RING_GOAL}</span><span><i class="hit"></i>Ring closed</span><span><i class="l4"></i>${RING_GOAL + 2}+</span></div>
+    <p class="wcnote">A ring closes at ${RING_GOAL} tasks finished in a day. Due counts each task on its current due or deadline date, so older weeks are approximate.</p>`;
+  }
+  return `<section class="sec"><div class="sec-h"><h3 class="sec-t">Records <span class="ct">12 weeks</span></h3>${seg}</div><div class="card tgc">${body}</div></section>`;
+}
+function labsLogbook(g) {
+  const items = LBGarden.logbookItems(g);
+  return fold('logbook', 'Logbook', { def: false, ct: items.length, sum: items[0] ? `${LBGarden.fmt(items[0].d)} · ${esc(items[0].t)}` : '', body: `<div class="card pad">${LBGarden.logbookHTML(items.slice(0, 40))}</div>` });
 }
 function viewGrow() {
   let body = '';
   if (U.grow === 'habits') {
-    body = S.habits.length ? labsGrowHTML() + habitReview() + weekCheckCard() : `<div class="card pad" style="margin-top:14px"><p class="empty" style="padding:0 4px 10px">No habits yet. Give one a weekly target and a lower floor that keeps the streak alive.</p><button class="btn primary" data-act="new-habit">${ic('plus', 18)}Add a habit</button></div>`;
+    body = S.habits.length ? labsGrowHTML() : `<div class="card pad" style="margin-top:14px"><p class="empty" style="padding:0 4px 10px">No habits yet. Give one a weekly target and a lower floor that keeps the streak alive.</p><button class="btn primary" data-act="new-habit">${ic('plus', 18)}Add a habit</button></div>`;
   } else {
     const years = [...new Set(S.goals.map((g) => +g.year))].sort((a, b) => b - a);
     const curQ = Math.ceil(+TODAY.slice(5, 7) / 3), curY = +TODAY.slice(0, 4);
@@ -1185,6 +1200,7 @@ function schedule() {
 }
 main.addEventListener('focusout', () => setTimeout(() => { if (pendingRender && !busy()) render(); }, 0));
 function render() {
+  GROW[0][1] = labsOn() ? 'Garden' : 'Habits'; /* with Labs on, Grow's first view is the garden */
   pendingRender = false;
   if (LB.todayStr() !== TODAY) TODAY = LB.todayStr();
   const a = document.activeElement, fk = a && a.dataset && a.dataset.act ? [a.dataset.act, a.dataset.id || a.dataset.val || a.dataset.key || a.dataset.d || ''] : null;
@@ -1388,6 +1404,7 @@ document.addEventListener('click', (e) => {
     case 'q-cancel': U.editQ = null; render(); break;
     case 'keep-edit': U.editKeep = id; render(); { const i = document.querySelector('[data-form="keep"] input'); i && i.focus(); } break;
     case 'keep-cancel': U.editKeep = null; render(); break;
+    case 'rec': U.rec = val; render(); break;
     case 'goal-done': { const g = S.goals.find((x) => x.id === id); if (g) act((rec) => W.patch('goals', id, { status: g.done ? 'active' : 'completed' }, rec)); break; }
     case 'goal-del': { const g = S.goals.find((x) => x.id === id); if (g) delDoc('goals', id, `Deleted “${g.title}”`); break; }
     case 'quote': U.quote++; render(); break;
@@ -1509,7 +1526,11 @@ function labsStart() {
   })();
   return labsStartP;
 }
-function labsGrowHTML() { if (!labsOn()) return ''; const g = labsGame(); if (!g) return ''; labsKeeps(); return LBGarden.growHTML(g, LABS.keeps, U.editKeep); }
+function labsGrowHTML() {
+  const g = labsOn() ? labsGame() : null;
+  if (g) labsKeeps();
+  return (g ? LBGarden.shelfHTML(g, LABS.keeps, U.editKeep) : '') + growBand(g) + recordsCard() + (g ? labsLogbook(g) : '');
+}
 /* shelf titles and notes: labs_keepsakes/<keepsake id> = { kind, title, note, updated_at }. Listens only with Labs on. */
 let labsKeepsP = null;
 function labsKeeps() {

@@ -122,7 +122,6 @@ svg.i{width:var(--s,22px);height:var(--s,22px);flex:none;fill:none;stroke:curren
 .daystrip .hotc.late{color:var(--bad)}
 .greet{display:none;font:italic 500 18px/1.2 var(--display);color:var(--text)}
 .phead{display:flex;align-items:center;gap:10px;margin:2px 0 8px;min-height:40px}
-.aico{width:34px;height:34px;border-radius:11px;background:var(--t);color:var(--a);display:grid;place-items:center;flex:none}
 .ltitle{font:600 25px/1.1 var(--display);letter-spacing:-.015em;margin:0}
 .psub{display:none;color:var(--muted);font-size:14px;margin:0}
 
@@ -641,16 +640,6 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .hstreak.on b{font:600 19px/1 var(--display)}
 .hstreak.pend{color:var(--soft)}
 .hbest{margin-left:6px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--hot);color:var(--ink)}
-.gsum{margin-top:14px;display:flex;align-items:center;gap:16px;padding:14px 16px}
-.gring{position:relative;width:84px;height:84px;flex:none}
-.gring svg{width:100%;height:100%}
-.gring .ht,.gring .ha{stroke-width:8}
-.gring b{position:absolute;inset:0;display:grid;place-items:center;font:600 24px/1 var(--display)}
-.gring b small{font-size:14px;color:var(--muted)}
-.gstats{min-width:0;display:flex;flex-direction:column;gap:4px;font-size:14.5px;color:var(--soft)}
-.gstats p{margin:0;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.gstats b{color:var(--text)}
-.gstats svg.i{--s:15px;color:var(--ink)}
 @media (min-width:900px){.hrow{grid-template-columns:repeat(8,minmax(0,1fr))}}
 /* habits on Today: week score + session pips. One pip per session toward the target; outlined pips = floor; dots = bonus past target */
 .hsc{display:grid;grid-template-columns:88px minmax(0,1fr);gap:10px 14px;align-items:center;padding:12px 10px 10px 14px}
@@ -684,12 +673,6 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .flb.pend{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--accent)}
 .flb.risk{background:transparent;color:var(--bad);box-shadow:inset 0 0 0 1.5px var(--bad)}
 /* Grow: needs adjusting, 12-week grid, stats */
-.attn{display:grid;gap:8px}
-.at{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:10px 12px 10px 14px}
-.aic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center}
-.at.work .aic{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
-.at.lower .aic{background:var(--hot);color:var(--ink)}
-.at.raise .aic{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}
 .atx{display:flex;flex-direction:column;min-width:0;line-height:1.3}
 .atx small{color:var(--muted);font-size:13px}
 .vchip{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;background:var(--sunk);color:var(--soft)}
@@ -715,11 +698,6 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .legend i.l4{background:var(--good);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--on) 50%,transparent)}
 .legend i.floor{background:var(--accent);box-shadow:none}
 .legend i.hit{background:var(--good)}
-.hstats{width:100%;border-collapse:collapse;font-size:14px}
-.hstats th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:8px 4px 6px;font-weight:700}
-.hstats td{padding:8px 4px;border-top:1px solid var(--line);text-align:right}
-.hstats th:first-child,.hstats td:first-child{text-align:left;font-weight:600}
-.hstats td small{color:var(--muted);font-size:12px}
 @media (max-width:520px){.hstats th:nth-child(6),.hstats td:nth-child(6),.hstats th:nth-child(4),.hstats td:nth-child(4){display:none}.tg{grid-template-columns:minmax(56px,80px) repeat(12,minmax(0,1fr)) 32px 18px;gap:2px}.tg .c{font-size:0}.tg .h{font-size:9px}}
 /* time outside tiles */
 .hgrid{display:grid;gap:8px}
@@ -796,17 +774,6 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .sga{display:flex;gap:6px;margin:8px 0 0 25px}
 .z-sug .card{border:1px dashed var(--line2)}
 /* weekly habit check */
-.wcheck .card{padding:2px 14px 10px}
-.wcr{display:flex;align-items:center;gap:10px;min-height:52px}
-.wci{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--sunk);color:var(--muted)}
-.wcr.hit .wci,.wcr.kept .wci{background:color-mix(in srgb,var(--r4) 18%,transparent);color:var(--r4)}
-.wcr.reset .wci{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
-.wcn{flex:1;min-width:0;font-weight:600;display:flex;flex-direction:column;line-height:1.25}
-.wcn small,.wcs small{font-weight:400;font-size:12.5px;color:var(--muted)}
-.wcs{text-align:right;font-size:14px;font-weight:600;display:flex;flex-direction:column;line-height:1.25;color:var(--soft)}
-.wcr.hit .wcs,.wcr.kept .wcs{color:var(--r4)}
-.wcr.reset .wcs{color:var(--bad)}
-.wcnote{margin:6px 0 0;font-size:13px;color:var(--muted)}
 .logex{margin-top:6px;padding:2px 12px 12px;border-radius:12px;background:color-mix(in srgb,var(--bad) 8%,transparent)}
 .sgq{display:flex;align-items:center;gap:6px;color:var(--ink)}
 .sgt .sgd{display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap;justify-content:flex-end;white-space:normal;text-align:right;max-width:45%}
@@ -843,6 +810,17 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .gt.low .ptn{color:var(--bad)}.gt.low .ptp i.fl{box-shadow:inset 0 0 0 1.5px var(--bad)}.gt.met .ptp i.on{background:var(--good)}
 .gtb{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto}
 .gtl{gap:4px;font-variant-numeric:tabular-nums}
+.aico{width:34px;height:34px;border-radius:11px;background:var(--t);color:var(--a);display:grid;place-items:center;flex:none}
+.wcnote{margin:6px 0 0;font-size:13px;color:var(--muted)}
+/* Grow → Garden: records toggle, rings grid, suggestions */
+.seg{display:inline-flex;gap:2px;padding:2px;border-radius:999px;background:var(--sunk)}
+.seg button{font:inherit;font-size:13px;font-weight:600;padding:4px 12px;border-radius:999px;color:var(--muted)}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.tg.rg{grid-template-columns:minmax(58px,76px) repeat(7,minmax(0,1fr)) 40px 58px;max-width:560px}
+.tg.rg .c{aspect-ratio:auto;height:24px;max-height:none;font-size:11px}.tg.rg .c.fut{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.gst b small{font-size:.6em;color:var(--muted);margin-left:1px}
+.recn{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.recn li{display:flex;gap:8px;align-items:baseline;font-size:13.5px;line-height:1.4}.recn .vchip{flex:none}
 /* Plant lab (preview) */
 .plab{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
 .card>.plab:first-child{margin-top:0;padding-top:0;border-top:0}
@@ -864,10 +842,11 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .gal-e{margin-top:6px;padding:0}
 .chip.r-heirloom{background:color-mix(in srgb,#ff8a6b 18%,transparent);color:#c9452e}
 .chip.r-exotic{background:color-mix(in srgb,#a77bf0 18%,transparent);color:#7a4fd0}
+.gal-more{margin:10px 4px 0;padding:0}
 .gal-f{display:flex;flex-direction:column;gap:6px}
 .gal-f input,.gal-f textarea{font:inherit;font-size:16px;padding:7px 9px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:inherit}
 .gal-f textarea{min-height:72px;resize:vertical}
-.gsts{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px 10px}
+.gsts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px}@media (min-width:640px){.gsts{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .gst{display:flex;flex-direction:column;gap:1px}.gst b{font:600 26px/1.1 var(--display)}.gst span{font-size:13px;font-weight:600}.gst small{font-size:12px;color:var(--muted)}
 .lbk{list-style:none;margin:0;padding:0;display:grid;gap:0}
 .lbk li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}.lbk li:first-child{border-top:0}
