@@ -1853,7 +1853,9 @@ const lesRung = (l) => l.rungs[LBG.rungOf(l.level, l.rungs.length)];
 function lessonDeck() {
   const live = Object.values(LES.lessons).filter((l) => { const s = LES.sources[l.source_id]; return s && (s.status || 'active') === 'active'; });
   const lr = LBDB.get('checks', 'lesson_rules'), n = lr && lr.value && lr.value.deck > 0 ? +lr.value.deck : undefined;
-  const ids = LBG.buildDeck(live.map((l) => ({ id: l.id, level: l.level, due: lesDay(l.due), state: l.state })), lesDay(TODAY), n).map((x) => x.id);
+  /* the cap is per day: cards already answered today (lesson touched today) use up today's deck */
+  const cap = n || LBG.RULES.lessons.deck, used = live.filter((l) => l.updated_at && LB.laDateOf(l.updated_at) === TODAY).length;
+  const ids = LBG.buildDeck(live.map((l) => ({ id: l.id, level: l.level, due: lesDay(l.due), state: l.state })), lesDay(TODAY), Math.max(0, cap - used)).map((x) => x.id);
   let h = 0; for (const c of TODAY) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const key = (id) => { let x = h; for (const c of id) x = ((x ^ c.charCodeAt(0)) * 16777619) >>> 0; return x; };
   return ids.sort((a, b) => key(a) - key(b));
