@@ -35,7 +35,7 @@
   const nth = (n) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
 
   /* ---------- Tasks ---------- */
-  const GROUPS = ['Social', 'Health', 'Money', 'Home', 'Pets', 'Personal', 'Goals'];
+  const GROUPS = ['Social', 'Health', 'Money', 'Home', 'Pets', 'Personal', 'Work', 'Goals'];
   const eff = (t) => { const a = t.due_date, b = t.deadline_date; return a && b ? (a < b ? a : b) : (a || b || null); };
   function taskState(t, today) {
     const due = t.due_date, dl = t.deadline_date;

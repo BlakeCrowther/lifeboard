@@ -42,7 +42,7 @@
       title: [T.str, 1], category: [T.str], notes: [T.str], due_date: [T.date], deadline_date: [T.date],
       status: [oneOf('open', 'done'), 1], completed_at: [T.num], recurrence_rule: [rule], sort_order: [T.num],
       urgent_sort_order: [T.num], created_at: [T.num], icon_key: [T.str], recurrence_spawned: [T.bool],
-      recurrence_series_id: [T.str], recurrence_parent_task_id: [T.str], suggested: [T.bool],
+      recurrence_series_id: [T.str], recurrence_parent_task_id: [T.str], suggested: [T.bool], project: [T.str],
     },
     habits: { name: [T.str, 1], key: [T.str], target_per_week: [T.num, 1], streak_floor_per_week: [T.num], sort_order: [T.num], notes: [T.str], icon_key: [T.str], created_at: [T.num] },
     habit_sessions: { habit_id: [T.str, 1], date: [T.date, 1], created_at: [T.num] },

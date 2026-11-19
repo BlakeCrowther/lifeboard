@@ -63,8 +63,53 @@ const P = {
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
   clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  folder:'<path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4l2 2h8a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/>',
 };
-const ic = (k, s = 22, label) => `<svg class="i" style="--s:${s}px" viewBox="0 0 24 24" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'}>${P[k] || P.spark}</svg>`;
+/* cut-paper art icons: mid-century palette, layered shapes with a surface-colored cut edge and a hard shadow */
+const ART = {
+heart:[['path','d="M12 20.5s-8.5-4.8-8.5-11.3A4.7 4.7 0 0 1 12 6.3a4.7 4.7 0 0 1 8.5 2.9c0 6.5-8.5 11.3-8.5 11.3z"','warm']],
+pill:[['path','d="M12 8H7.6a4 4 0 0 0 0 8H12z" transform="rotate(-45 12 12)"','warm'],['path','d="M12 8h4.4a4 4 0 0 1 0 8H12z" transform="rotate(-45 12 12)"','paper']],
+coin:[['circle','cx="12" cy="12" r="8.6"','sun'],['circle','cx="12" cy="12" r="5.4"','sunD'],['rect','x="11.1" y="8.6" width="1.8" height="6.8" rx=".9"','sun']],
+house:[['path','d="M5.5 10.8V20.5h13v-9.7"','paper'],['path','d="M2.8 11.8L12 4l9.2 7.8z"','warm'],['rect','x="10.2" y="14.6" width="3.6" height="5.9" rx=".5"','earth'],['rect','x="14.9" y="12.8" width="2.4" height="2.4" rx=".3"','sky']],
+dog:[['ellipse','cx="6.3" cy="10" rx="2.3" ry="4.3" transform="rotate(22 6.3 10)"','earth'],['ellipse','cx="17.7" cy="10" rx="2.3" ry="4.3" transform="rotate(-22 17.7 10)"','earth'],['ellipse','cx="12" cy="12.8" rx="6.2" ry="6.6"','sun'],['ellipse','cx="12" cy="15.7" rx="3.3" ry="2.6"','paper'],['ellipse','cx="12" cy="14.4" rx="1.3" ry=".95"','ink'],['circle','cx="9.4" cy="11.3" r=".95"','ink'],['circle','cx="14.6" cy="11.3" r=".95"','ink']],
+cat:[['path','d="M5 10V3.8l4.2 3.4h5.6L19 3.8V10c1.3 1.4 2 3.1 2 5 0 3.6-3.6 5.8-9 5.8S3 18.6 3 15c0-1.9.7-3.6 2-5z"','warm'],['path','d="M6.4 6.6v2.6l2-1z"','paper'],['path','d="M17.6 6.6v2.6l-2-1z"','paper'],['ellipse','cx="9" cy="13" rx="1" ry="1.3"','ink'],['ellipse','cx="15" cy="13" rx="1" ry="1.3"','ink'],['path','d="M11 15.6h2l-1 1.2z"','earth']],
+leaf:[['path','d="M4.5 20C4.5 10.5 10 4.5 20.5 4c0 10.5-6 16-16 16z"','leaf'],['path','d="M5.6 19.4L15.5 9.5l.6.6-9.9 9.9z"','paper']],
+sprout:[['path','d="M7 14h10l-1.3 6.5H8.3z"','warm'],['path','d="M12 14c0-4-3-7.5-7.5-7.5 0 4.6 3 7.5 7.5 7.5z"','leaf'],['path','d="M12 11.5c0-3.3 2.4-6.5 7-6.5 0 4-2.4 6.5-7 6.5z"','leafL']],
+gift:[['rect','x="4.5" y="11.2" width="15" height="9.3" rx="1"','plum'],['rect','x="3.5" y="8" width="17" height="4" rx="1"','plum'],['rect','x="10.9" y="8" width="2.2" height="12.5"','sun'],['path','d="M12 8c-1.5-3.8-5.8-4-5.8-1.6C6.2 8 9.8 8 12 8zm0 0c1.5-3.8 5.8-4 5.8-1.6C17.8 8 14.2 8 12 8z"','sun']],
+chat:[['path','d="M4 5.5A2 2 0 0 1 6 3.5h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7.5l-5 4v-4H6a2 2 0 0 1-2-2z"','sky'],['circle','cx="8.5" cy="10" r="1.15"','paper'],['circle','cx="12" cy="10" r="1.15"','paper'],['circle','cx="15.5" cy="10" r="1.15"','paper']],
+car:[['path','d="M3 16.5v-4l2.2-5.2A2 2 0 0 1 7 6h10a2 2 0 0 1 1.8 1.3l2.2 5.2v4z"','warm'],['path','d="M6.6 11.5l1.4-3.6h8l1.4 3.6z"','paper'],['circle','cx="7.3" cy="17" r="2.2"','ink'],['circle','cx="16.7" cy="17" r="2.2"','ink'],['circle','cx="5" cy="13.9" r=".9"','sun'],['circle','cx="19" cy="13.9" r=".9"','sun']],
+laptop:[['rect','x="4.5" y="4.5" width="15" height="11" rx="1.5"','sky'],['rect','x="6.2" y="6.2" width="11.6" height="7.6" rx=".5"','paper'],['path','d="M2 17.5h20l-1.4 2.3H3.4z"','earth']],
+mountain:[['circle','cx="17.5" cy="6.5" r="2.6"','sun'],['path','d="M2 20.5l7-12 4.3 6.8 2.4-3.4 6.3 8.6z"','leaf'],['path','d="M7.1 11.7L9 8.5l1.9 3-1.9 1.2z"','paper']],
+book:[['path','d="M5.5 4.8A2 2 0 0 1 7.5 2.8h11.3v16H7.5a2 2 0 0 0-2 2z"','plum'],['path','d="M5.5 20.8a2 2 0 0 1 2-2h11.3v2.6H7.5a2 2 0 0 1-2-.6z"','paper'],['rect','x="9" y="6.5" width="6.5" height="1.6" rx=".8"','paper']],
+wave:[['path','d="M2 21v-6.5c1.6-4.6 5.2-8.3 10.6-8.3 3.3 0 5.6 1.6 6.4 4-2.4-.9-5.2.2-5.4 2.8-.2 2.3 2.1 3.6 4.4 3 1.6-.4 2.9-.2 4 .5V21z"','sky'],['path','d="M13.6 13c.2-2.6 3-3.7 5.4-2.8-.8-2.4-3.1-4-6.4-4-2 0-3.8.5-5.2 1.5 3-.4 5.3.7 6.2 5.3z"','paper']],
+spark:[['path','d="M10 2.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"','sun'],['path','d="M17.5 13.5c.4 2 1.1 2.7 3 3-1.9.4-2.6 1.1-3 3-.4-1.9-1.1-2.6-3-3 1.9-.3 2.6-1 3-3z"','warm']],
+med:[['rect','x="8.8" y="3.5" width="6.4" height="4.5" rx="1.2"','earth'],['rect','x="3.5" y="6.5" width="17" height="13.5" rx="2"','warm'],['path','d="M10.6 9.6h2.8v2.6H16V15h-2.6v2.6h-2.8V15H8v-2.8h2.6z"','paper']],
+receipt:[['path','d="M5.5 2.8h13v18.5l-2.2-1.5-2.1 1.5-2.2-1.5-2.2 1.5-2.1-1.5-2.2 1.5z"','paper'],['rect','x="8.3" y="6.6" width="7.4" height="1.6" rx=".8"','sunD'],['rect','x="8.3" y="9.8" width="5" height="1.6" rx=".8"','sunD'],['circle','cx="15.2" cy="15.4" r="2.8"','leaf']],
+wrench:[['path','d="M15.2 3.6a4.6 4.6 0 0 0-1.4 5.3L4.4 18.3a2 2 0 0 0 2.8 2.8l9.4-9.4a4.6 4.6 0 0 0 5.3-1.4l-2.7-.7-.8-2.7 2.7-.8a4.6 4.6 0 0 0-5.9-2.5z"','sky']],
+rings:[['path','fill-rule="evenodd" d="M9 9a5.5 5.5 0 1 0 0 11 5.5 5.5 0 1 0 0-11zm0 1.9a3.6 3.6 0 1 1 0 7.2 3.6 3.6 0 1 1 0-7.2z"','sun'],['path','fill-rule="evenodd" d="M15 9a5.5 5.5 0 1 0 0 11 5.5 5.5 0 1 0 0-11zm0 1.9a3.6 3.6 0 1 1 0 7.2 3.6 3.6 0 1 1 0-7.2z"','sunD'],['path','d="M13.1 4.6h3.8l1.3 1.6L15 9.1l-3.2-2.9z"','sky']],
+phone:[['rect','x="6.5" y="2.5" width="11" height="19" rx="2.2"','plum'],['rect','x="8" y="5" width="8" height="12.5" rx=".6"','paper'],['circle','cx="12" cy="19.4" r=".9"','paper']],
+lotus:[['path','d="M12 20c-5 0-9-2.8-9-6 3.2 0 6.4 1.2 9 6z"','warm'],['path','d="M12 20c5 0 9-2.8 9-6-3.2 0-6.4 1.2-9 6z"','warm'],['path','d="M12 20c-2-3-3-5.6-3-8.6C9 8.3 12 5 12 5s3 3.3 3 6.4c0 3-1 5.6-3 8.6z"','plum']],
+target:[['circle','cx="12" cy="12" r="9"','warm'],['circle','cx="12" cy="12" r="6.2"','paper'],['circle','cx="12" cy="12" r="3.5"','warm'],['circle','cx="12" cy="12" r="1.1"','paper']],
+paw:[['path','d="M12 12.3c-3.1 0-5.2 3-5.2 5.2 0 1.6 1.4 2.2 2.6 2.2 1 0 1.6-.5 2.6-.5s1.6.5 2.6.5c1.2 0 2.6-.6 2.6-2.2 0-2.2-2.1-5.2-5.2-5.2z"','earth'],['ellipse','cx="5.6" cy="10.4" rx="1.8" ry="2.2"','earth'],['ellipse','cx="9.2" cy="6.4" rx="1.8" ry="2.3"','earth'],['ellipse','cx="14.8" cy="6.4" rx="1.8" ry="2.3"','earth'],['ellipse','cx="18.4" cy="10.4" rx="1.8" ry="2.2"','earth']],
+person:[['path','d="M4.5 20.5c0-3.9 3.4-6.2 7.5-6.2s7.5 2.3 7.5 6.2z"','sky'],['circle','cx="12" cy="8.3" r="3.9"','sun']],
+drum:[['rect','x="13.6" y="1.6" width="1.6" height="9" rx=".8" transform="rotate(32 14.4 6.1)"','earth'],['rect','x="8.8" y="1.6" width="1.6" height="9" rx=".8" transform="rotate(-32 9.6 6.1)"','earth'],['path','d="M4 10v7.4c0 1.6 3.6 2.9 8 2.9s8-1.3 8-2.9V10"','warm'],['path','d="M4 14.2c0 1.6 3.6 2.9 8 2.9s8-1.3 8-2.9v1.6c0 1.6-3.6 2.9-8 2.9s-8-1.3-8-2.9z"','sunD'],['ellipse','cx="12" cy="10" rx="8" ry="2.8"','paper']],
+shoe:[['path','d="M3 17.5v-6.3c0-.7.6-1.2 1.3-1.1L8 10.6l2.5-3.1 3.5 2.6c1.1.8 2.4 1.3 3.8 1.5l2.4.4c.9.2 1.8 1 1.8 2v3.5z"','sky'],['path','d="M9.6 10.5l1.4-1.7 1.3 1-1.4 1.7zM11.6 12l1.4-1.7 1.3 1-1.4 1.7z"','paper'],['rect','x="2.5" y="16.5" width="19.5" height="3.2" rx="1.3"','paper'],['path','d="M15.5 12.6c1.6.6 3.3.9 5 1.1l.6 1.6h-6.4z"','warm']],
+flame:[['path','d="M12 21.5c-4 0-7-2.7-7-6.5 0-4.5 4.3-6.5 4.8-11.5 3 1.6 4.6 4.2 4.6 6.6.9-.6 1.5-1.6 1.7-2.8 2 1.8 2.9 4.5 2.9 7.2 0 4-3 7-7 7z"','warm'],['path','d="M12 21.5c-2 0-3.4-1.3-3.4-3.2 0-2.3 2-3.4 2.6-5.6 2.3 1.2 4.2 3.2 4.2 5.6 0 1.9-1.4 3.2-3.4 3.2z"','sun']],
+drop:[['path','d="M12 2.8s6.5 7.2 6.5 11.7a6.5 6.5 0 0 1-13 0C5.5 10 12 2.8 12 2.8z"','sky'],['ellipse','cx="9.6" cy="14.8" rx="1.1" ry="1.8"','paper']],
+cart:[['circle','cx="10.4" cy="6.2" r="2.2"','leaf'],['circle','cx="15" cy="5.8" r="2.4"','sun'],['path','d="M2.5 3.3h3.2l3 11.3h10v1.6H7.6L4.6 4.9H2.5z"','earth'],['path','d="M5.6 7.3h15l-1.8 6.6a1.5 1.5 0 0 1-1.5 1.1H8.3z"','warm'],['circle','cx="9" cy="19.2" r="1.7"','ink'],['circle','cx="17" cy="19.2" r="1.7"','ink']],
+star:[['path','d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"','sun']],
+pot:[['rect','x="1.6" y="12" width="3.4" height="1.9" rx=".95"','earth'],['rect','x="19" y="12" width="3.4" height="1.9" rx=".95"','earth'],['rect','x="10.4" y="6.6" width="3.2" height="2.6" rx="1"','earth'],['path','d="M4 10.5h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"','warm'],['rect','x="3" y="8.6" width="18" height="2.8" rx="1.4"','sky']],
+film:[['rect','x="3" y="9" width="18" height="11.5" rx="1.5"','plum'],['path','d="M3.2 5.6l16.9-2.9.6 3.4L3.8 9z"','paper'],['path','d="M6.4 5.2l2.4-.4.9 3-2.4.4zM11.2 4.4l2.4-.4.9 3-2.4.4zM16 3.6l2.4-.4.9 3-2.4.4z"','ink'],['rect','x="6" y="12.8" width="8.5" height="1.6" rx=".8"','paper'],['rect','x="6" y="15.8" width="5" height="1.6" rx=".8"','paper']],
+tv:[['path','d="M7.3 3.1l.9-.8 3.8 3.3 3.8-3.3.9.8L12 7.4z"','earth'],['rect','x="3" y="6.4" width="18" height="12.6" rx="2"','earth'],['rect','x="5" y="8.4" width="11" height="8.6" rx="1"','sky'],['circle','cx="18.5" cy="10.4" r="1"','sun'],['circle','cx="18.5" cy="13.8" r="1"','paper'],['rect','x="6" y="19" width="2.4" height="2" rx=".5"','earth'],['rect','x="15.6" y="19" width="2.4" height="2" rx=".5"','earth']],
+hourglass:[['path','d="M6.5 4.9h11c0 3.5-2.5 5.3-4.3 7.1 1.8 1.8 4.3 3.6 4.3 7.1h-11c0-3.5 2.5-5.3 4.3-7.1C9 10.2 6.5 8.4 6.5 4.9z"','paper'],['path','d="M8.6 7.4h6.8c-.6 1.3-1.9 2.4-3.4 3.6-1.5-1.2-2.8-2.3-3.4-3.6z"','sun'],['path','d="M8 19.1c.4-1.9 2.2-3.2 4-3.8 1.8.6 3.6 1.9 4 3.8z"','sun'],['rect','x="5" y="2.5" width="14" height="2.6" rx="1"','earth'],['rect','x="5" y="18.9" width="14" height="2.6" rx="1"','earth']],
+pin:[['path','d="M12 21.5s-6.8-6.4-6.8-11.6a6.8 6.8 0 0 1 13.6 0c0 5.2-6.8 11.6-6.8 11.6z"','warm'],['circle','cx="12" cy="9.8" r="2.6"','paper']],
+list:[['rect','x="4.5" y="3.5" width="15" height="18" rx="2"','earth'],['rect','x="6.5" y="6" width="11" height="13.5" rx=".6"','paper'],['rect','x="9" y="2.3" width="6" height="3.4" rx="1"','sky'],['circle','cx="9" cy="9.8" r="1.1"','leaf'],['rect','x="11" y="9.1" width="4.8" height="1.4" rx=".7"','sunD'],['circle','cx="9" cy="13.2" r="1.1"','leaf'],['rect','x="11" y="12.5" width="4.8" height="1.4" rx=".7"','sunD'],['circle','cx="9" cy="16.6" r="1.1"','warm'],['rect','x="11" y="15.9" width="3.4" height="1.4" rx=".7"','sunD']],
+sun:[...[0, 45, 90, 135, 180, 225, 270, 315].map((a) => ['rect', `x="11.1" y="1.4" width="1.8" height="3.8" rx=".9" transform="rotate(${a} 12 12)"`, 'sunD']),['circle','cx="12" cy="12" r="5"','sun']],
+calendar:[['rect','x="3.5" y="5" width="17" height="15.5" rx="2"','paper'],['path','d="M3.5 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v3h-17z"','warm'],['rect','x="7.2" y="2.8" width="1.9" height="4.4" rx=".95"','earth'],['rect','x="14.9" y="2.8" width="1.9" height="4.4" rx=".95"','earth'],['rect','x="6.5" y="12.4" width="3" height="2.8" rx=".6"','sky'],['rect','x="10.6" y="12.4" width="3" height="2.8" rx=".6"','sunD'],['rect','x="14.6" y="12.4" width="3" height="2.8" rx=".6"','sunD'],['rect','x="6.5" y="16" width="3" height="2.8" rx=".6"','sunD']],
+social:[['path','d="M11.5 18.5c0-3.3 2.3-5.2 5.3-5.2s5.2 1.9 5.2 5.2z"','plum'],['circle','cx="16.8" cy="8.8" r="3"','sunD'],['path','d="M2 20.5c0-3.7 3-6 6.6-6s6.6 2.3 6.6 6z"','sky'],['circle','cx="8.6" cy="9.4" r="3.6"','sun']]
+};
+const artSvg = (k, s, label) => `<svg class="i art" style="--s:${s}px" viewBox="0 0 24 24" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'}><g class="art-sh" transform="translate(.8 1.1)">${ART[k].map(([t, a]) => `<${t} ${a}/>`).join('')}</g>${ART[k].map(([t, a, c]) => `<${t} ${a} class="ac-${c}"/>`).join('')}</svg>`;
+const ic = (k, s = 22, label) => ART[k] ? artSvg(k, s, label) : `<svg class="i" style="--s:${s}px" viewBox="0 0 24 24" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'}>${P[k] || P.spark}</svg>`;
 
 /* ---------- dates: string math is zone-free; "today" and "now" are Pacific, like the original app ---------- */
 const pad = (n) => String(n).padStart(2, '0');
@@ -98,8 +143,9 @@ const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u.trim()) 
 const extLink = (u, label) => { const h = safeUrl(u); return h ? `<a class="xl" href="${esc(h)}" target="_blank" rel="noopener noreferrer">${label}</a>` : label; };
 
 /* ---------- domain constants ---------- */
-const GROUPS = ['Social', 'Health', 'Money', 'Home', 'Pets', 'Personal', 'Goals'];
-const GROUP_IC = { Social: 'social', Health: 'heart', Money: 'coin', Home: 'house', Pets: 'paw', Personal: 'person', Goals: 'sprout' };
+const GROUPS = ['Social', 'Health', 'Money', 'Home', 'Pets', 'Personal', 'Work', 'Goals'];
+const GROUP_IC = { Social: 'social', Health: 'heart', Money: 'coin', Home: 'house', Pets: 'paw', Personal: 'person', Work: 'laptop', Goals: 'sprout' };
+const art = ic;
 const TASK_ICONS = ['spark','heart','med','pill','coin','receipt','house','wrench','leaf','dog','cat','rings','gift','chat','phone','car','book','mountain','wave','lotus','laptop','target'];
 /* icon keys written by the original app, drawn with the nearest icon in this set */
 const ICON_MAP = { plant: 'leaf', tooth: 'med', medical: 'med', mail: 'chat', broom: 'house', droplet: 'drop', dumbbell: 'flame', plane: 'pin', cake: 'gift', music: 'drum', bag: 'cart', books: 'book', 'book-open': 'book', surf: 'wave', key: 'house', chart: 'target', scissors: 'person', journal: 'book', hola: 'chat', cup: 'drop', diamond: 'star', flag: 'target', dot: 'spark', clipboard: 'list', pumpkin: 'spark', 'bubble-heart': 'heart', sunset: 'sun', stopwatch: 'clock', news: 'list', bulb: 'spark' };
@@ -185,7 +231,7 @@ const recShort = (r) => (r ? LB.shortRule(r) : '');
 const byOrd = (a, b) => (a.sort_order ?? 1e9) - (b.sort_order ?? 1e9) || (a.created_at || 0) - (b.created_at || 0);
 const byCreated = (a, b) => (a.created_at || 0) - (b.created_at || 0);
 const str = (v) => (v == null ? '' : String(v));
-const emptyS = () => ({ tasks: [], habits: [], sessions: [], events: [], calOK: false, calAt: null, cond: null, groceries: [], wish: [], recipes: [], gifts: [], lists: {}, goals: [], weddings: [], checks: {}, logs: [] });
+const emptyS = () => ({ tasks: [], habits: [], sessions: [], events: [], calOK: false, calAt: null, cond: null, groceries: [], wish: [], recipes: [], gifts: [], lists: {}, goals: [], weddings: [], glance: [], checks: {}, logs: [] });
 let S = emptyS();
 const safeColor = (c) => (typeof c === 'string' && /^(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\))$/i.test(c.trim()) ? c.trim() : '');
 const CAL_FALLBACK = ['var(--cal-a)', 'var(--cal-b)', 'var(--cal-c)'];
@@ -207,10 +253,53 @@ function vmEvents(snap) {
     return { ...base, date, s, e: Math.max(en, s) };
   }).filter(Boolean);
 }
+/* ---------- live Google Calendar (mcp connector). Falls back to the saved snapshot when unavailable ---------- */
+const LIVE = { evs: null, at: null, err: null, day: null, unsub: null, mcp: null };
+const GCAL = 'Google Calendar';
+const calInput = (d) => ({ startTime: d + 'T00:00:00', endTime: addDays(d, 2) + 'T00:00:00', orderBy: 'startTime', pageSize: 100, timeZone: 'America/Los_Angeles' });
+function gcalToSnap(p) {
+  const items = p && Array.isArray(p.events) ? p.events : p && Array.isArray(p.items) ? p.items : [];
+  return { events: items.filter((e) => e && e.status !== 'cancelled'
+      && !(Array.isArray(e.attendees) && e.attendees.some((a) => a && a.self && a.responseStatus === 'declined'))
+      && e.eventType !== 'WORKING_LOCATION')
+    .map((e) => { const st = e.start || {}, en = e.end || {}; return { id: e.id, title: e.summary, start: st.dateTime || st.date, end: en.dateTime || en.date, all_day: !st.dateTime && !!st.date, calendar: e.colorId || '', location: e.location }; }) };
+}
+const DENY = ['needs_reauth', 'server_not_connected', 'selection_required', 'blocked_by_policy', 'approval_required', 'not_in_manifest', 'server_not_found'];
+const DEAD = ['not_granted', 'capability_disabled', 'capability_removed', 'bad_request', 'transform_error'];
+function onCal(ev) {
+  if (ev.type === 'data') {
+    LIVE.evs = vmEvents(gcalToSnap(ev.result && ev.result.payload));
+    LIVE.at = ev.result && ev.result.cache ? ev.result.cache.storedAt : Date.now();
+    LIVE.err = null;
+  } else {
+    const c = ev.error && ev.error.code;
+    if (DENY.includes(c)) { LIVE.evs = null; LIVE.err = c === 'not_in_manifest' ? null : c; }
+    else if (DEAD.includes(c)) { LIVE.err = null; if (LIVE.unsub) { LIVE.unsub(); LIVE.unsub = null; } }
+    /* transient errors keep the last good events */
+  }
+  derive(); render();
+}
+function watchCal() {
+  if (!LIVE.mcp || LIVE.day === TODAY) return;
+  if (LIVE.unsub) LIVE.unsub();
+  LIVE.day = TODAY;
+  LIVE.unsub = LIVE.mcp.watchTool(GCAL, 'list_events', calInput(TODAY), onCal, { refetchInterval: 10 * 60e3 });
+}
+async function startCal() {
+  try { LIVE.mcp = window.claude && window.claude.use ? await window.claude.use('mcp') : null; } catch (e) { LIVE.mcp = null; }
+  watchCal();
+}
+async function allowCal() {
+  if (!LIVE.mcp) return;
+  try { const r = await LIVE.mcp.callTool(GCAL, 'list_events', calInput(TODAY)); onCal({ type: 'data', result: r }); }
+  catch (e) { onCal({ type: 'error', error: e }); }
+}
+
 function vmTask(d) {
   return { id: d.id, title: d.title, group: GROUPS.includes(d.category) ? d.category : (d.category || 'Personal'), icon: iconOf(d.icon_key || LB.autoIcon(d.title)),
-    notes: d.notes || '', due: d.due_date || null, deadline: d.deadline_date || null, rule: d.recurrence_rule || null,
-    done: d.status === 'done', doneAt: d.completed_at || null, created: d.created_at || 0, _d: d };
+    project: typeof d.project === 'string' ? d.project.trim() : '', notes: d.notes || '', due: d.due_date || null, deadline: d.deadline_date || null, rule: d.recurrence_rule || null,
+    done: d.status === 'done', doneAt: d.completed_at || null, created: d.created_at || 0,
+    duet: d.duet_request && typeof d.duet_request === 'object' ? d.duet_request.status || 'queued' : null, _d: d };
 }
 const validException = (e) => !!e && typeof e === 'object' && typeof e.reason === 'string' && e.reason.trim().length >= 20 && typeof e.evidence === 'string' && e.evidence.trim().length >= 3;
 function derive() {
@@ -230,6 +319,7 @@ function derive() {
   s.calOK = !!(cal && cal.fetched_at && Array.isArray(cal.events));
   s.calAt = s.calOK ? cal.fetched_at : null;
   s.events = s.calOK ? vmEvents(cal) : [];
+  if (LIVE.evs) { s.calOK = true; s.calAt = LIVE.at; s.events = LIVE.evs; }
   const c = snaps.conditions;
   if (c && (c.weather || c.surf || (c.tides || []).length)) {
     const tides = (Array.isArray(c.tides) ? c.tides : []).filter((t) => t && t.type && t.time).map((t) => ({ type: str(t.type), ft: t.height_ft, time: str(t.time), upcoming: !!t.upcoming }));
@@ -242,6 +332,7 @@ function derive() {
   A('list_items').sort(byOrd).forEach((d) => { (s.lists[d.list_key] = s.lists[d.list_key] || []).push({ id: d.id, name: d.title, by: d.author || '', url: d.url, notes: d.notes || '', done: d.status === 'done' }); });
   s.goals = A('goals').sort(byOrd).map((d) => ({ id: d.id, title: d.title, cat: d.category || '', icon: iconOf(d.icon_key || GOAL_CAT_IC[d.category] || 'star'), year: +d.year, done: d.status === 'completed', notes: d.notes || '', q: [1, 2, 3, 4].map((q) => d['progress_q' + q] || '') }));
   s.weddings = A('countdowns').filter((d) => d.kind === 'wedding').sort((a, b) => (a.date < b.date ? -1 : 1)).map((d) => ({ id: d.id, title: d.title, date: d.date, where: d.detail || d.when || '', gift: d.gift || '', match: Array.isArray(d.match) ? d.match.filter((x) => typeof x === 'string') : [] }));
+  s.glance = A('countdowns').filter((d) => d.kind === 'glance').sort((a, b) => (a.date < b.date ? -1 : 1)).map((d) => ({ id: d.id, title: d.title, date: d.date, detail: d.detail || '' }));
   A('checks').forEach((d) => { s.checks[d.id] = d; });
   s.logs = A('logs').sort(byCreated).map((d) => ({ kind: d.kind, label: d.label || '', date: d.date, at: d.created_at || null }));
   S = s;
@@ -338,7 +429,7 @@ const W = LBDB;
 function newTaskBody(f) {
   return { title: f.title, category: f.category || 'Personal', notes: f.notes || '', due_date: f.due_date || null, deadline_date: f.deadline_date || null,
     status: 'open', completed_at: null, recurrence_rule: f.rule || null, recurrence_series_id: null, recurrence_parent_task_id: null, recurrence_spawned: false,
-    icon_key: f.icon_key || LB.autoIcon(f.title), sort_order: 9999, urgent_sort_order: null };
+    icon_key: f.icon_key || LB.autoIcon(f.title), sort_order: 9999, urgent_sort_order: null, project: f.project || null };
 }
 /* complete-and-reschedule, as in the original app: the done task stays, a successor is spawned once */
 function spawnSuccessor(d, completedOn, rec) {
@@ -346,7 +437,7 @@ function spawnSuccessor(d, completedOn, rec) {
   let deadline = null;
   if (d.deadline_date) deadline = LB.addDays(due, d.due_date ? LB.diffDays(d.due_date, d.deadline_date) : 0);
   return Promise.all([
-    W.create('tasks', { ...newTaskBody({ title: d.title, category: d.category, notes: d.notes, rule: d.recurrence_rule, icon_key: d.icon_key }),
+    W.create('tasks', { ...newTaskBody({ title: d.title, category: d.category, notes: d.notes, rule: d.recurrence_rule, icon_key: d.icon_key, project: d.project }),
       due_date: d.due_date || !d.deadline_date ? due : null, deadline_date: deadline,
       recurrence_series_id: d.recurrence_series_id || d.id, recurrence_parent_task_id: d.id }, rec),
     W.patch('tasks', d.id, { recurrence_spawned: true }, rec),
@@ -417,21 +508,76 @@ function taskMeta(t, opts = {}) {
     if (t.deadline && t.due && t.deadline !== t.due && !st.slipped && e !== t.deadline) bits.push(`<span class="m">Deadline ${relDate(t.deadline)}</span>`);
   }
   if (t.rule) bits.push(`<span class="m">${ic('repeat')}${esc(recShort(t.rule))}</span>`);
-  if (opts.groupIcon) bits.push(`<span class="m" title="${esc(t.group)}">${ic(GROUP_IC[t.group] || 'spark')}<span class="sr">${esc(t.group)}</span></span>`);
-  else if (!opts.hideGroup) bits.push(`<span class="m">${ic(GROUP_IC[t.group] || 'spark')}${esc(t.group)}</span>`);
+  if (!opts.hideGroup) bits.push(`<span class="chip gm" title="Group">${art(GROUP_IC[t.group] || 'spark', 15)}${esc(t.group)}</span>`);
+  if (t.project) bits.push(`<span class="chip" title="Project">${ic('folder', 13)}${esc(t.project)}</span>`);
+  if (t.duet && !t.done) bits.push(`<span class="chip hot" title="Handed to Duet">${ic('chat', 13)}Sent to Duet</span>`);
   return `<span class="tmeta">${bits.join('')}</span>`;
+}
+/* hand a task to Claude: a fresh chat (prefilled) or the Duet chat (copied to paste) */
+function taskPrompt(t, duet) {
+  const when = [];
+  if (t.due) when.push(`do date ${t.due}`);
+  if (t.deadline) when.push(`deadline ${t.deadline}`);
+  const lines = [duet ? `Lifeboard task: “${t.title}”. Help me work on this one now.` : `Help me get this task done: “${t.title}”.`];
+  const ctx = [t.group, t.project, when.join(', ')].filter(Boolean).join(' · ');
+  if (ctx) lines.push(`Context: ${ctx}.`);
+  if (t.notes) lines.push(`Notes: ${t.notes}`);
+  if (duet) lines.push('Update the task on the board if anything changes, but leave marking it done to me.');
+  else lines.push('Start by asking me anything you need, then do as much of it as you can.');
+  return lines.join('\n');
+}
+/* The desktop app's viewer drops new tabs and claude:// links blank the frame, so there the button copies the prompt. */
+const IN_DESKTOP = /Electron|Claude\//i.test(navigator.userAgent);
+const claudeUrl = (t) => 'https://claude.ai/new?q=' + encodeURIComponent(taskPrompt(t, false));
+function copyText(txt) {
+  const fallback = () => { const a = document.createElement('textarea'); a.value = txt; a.setAttribute('readonly', ''); a.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(a); a.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; } a.remove(); return ok; };
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(txt).then(() => true, () => fallback());
+  return Promise.resolve(fallback());
+}
+/* Send to Duet: mark the task, then start Duet's hourly check right now with this task as its focus.
+   If the page can't start it (connector not allowed), copy the task to paste into Duet instead. */
+const DUET_TRIGGER = 'trig_<id>';
+const CCR = 'Claude Code Remote';
+function duetRunText(t) {
+  const when = [t.due && `due ${t.due}`, t.deadline && `deadline ${t.deadline}`].filter(Boolean).join(', ');
+  return `The owner tapped "Send to Duet" on a lifeboard task, so this run was started early. Do the usual check, then make this task the focus of your message.\n\n`
+    + `Task: "${t.title}" (tasks doc ${t.id}${t.group ? ', ' + t.group : ''}${t.project ? ', project ' + t.project : ''}${when ? ', ' + when : ''}).${t.notes ? '\nNotes: ' + t.notes : ''}\n\n`
+    + `Start working on it with them in this chat: say what you can already do, do the parts that need no decision from them, and ask them for anything only they have. `
+    + `Don't send any email, pay, or book anything; drafts only. Don't mark or edit the task; the owner taps done themself.`;
+}
+async function sendToDuet(t) {
+  if (!LBDB.ready) { toast("Your data isn't connected in this view."); return; }
+  if (U.duetBusy) return;
+  U.duetBusy = true;
+  const mark = { duet_request: { requested_at: Date.now(), status: 'queued' } };
+  const fallback = async (why) => {
+    W.patch('tasks', t.id, { duet_request: null }).catch(() => {});
+    const ok = await copyText(taskPrompt(t, true));
+    toast(ok ? `${why} Copied the task instead: paste it into Duet.` : `${why} Open your Duet chat and paste the task title.`);
+  };
+  try {
+    await W.patch('tasks', t.id, mark);
+    if (!LIVE.mcp) { await fallback("Couldn't start Duet from here."); return; }
+    toast('Starting Duet…');
+    await LIVE.mcp.callTool(CCR, 'fire_trigger', { trigger_id: DUET_TRIGGER, text: duetRunText(t) }, { cache: false });
+    toast('Sent. Duet is starting now; its reply will be in your Duet chat.');
+  } catch (e) {
+    console.warn('[lifeboard] send to Duet failed', e);
+    await fallback(e && (e.code === 'not_granted' || e.code === 'denied') ? 'Duet needs permission first.' : "Couldn't start Duet.");
+  } finally { U.duetBusy = false; }
 }
 function taskRow(t, opts = {}) {
   const open = U.open === t.id, grip = opts.grip && !t.done;
   return `<li class="task${t.done ? ' done' : ''}${grip ? '' : ' nogrip'}${!t.done && tstate(t).overdue ? ' late' : ''}" data-id="${t.id}">
     <button class="tick" data-act="toggle" data-id="${t.id}" aria-pressed="${t.done}" aria-label="${t.done ? 'Mark not done' : 'Complete'}: ${esc(t.title)}"><span class="ring">${ic('check', 16)}</span></button>
-    <button class="tmain" data-act="expand" data-id="${t.id}" aria-expanded="${open}"><span class="ttl">${ic(t.icon || 'spark', 17)} ${esc(t.title)}</span>${taskMeta(t, opts)}</button>
+    <button class="tmain" data-act="expand" data-id="${t.id}" aria-expanded="${open}"><span class="ttl">${art(t.icon || 'spark', 22)} ${esc(t.title)}</span>${taskMeta(t, opts)}</button>
     ${t.done ? '' : `<button class="act" data-act="snooze" data-id="${t.id}" aria-label="Snooze ${esc(t.title)} by a day">${ic('snooze')}</button>`}
     ${grip ? `<button class="act grip" data-drag="${t.id}" data-act="grip" data-id="${t.id}" aria-label="Reorder ${esc(t.title)}. Drag, or use arrow keys">${ic('grip')}</button>` : ''}
     ${open && t.notes ? `<p class="notes">${esc(t.notes)}</p>` : ''}
     ${open ? `<div class="tray">
       ${t.done ? '' : `${eff(t) && eff(t) < TODAY ? `<button class="btn sm" data-act="resched" data-val="today" data-id="${t.id}">Today</button>` : ''}<button class="btn sm" data-act="resched" data-val="tomorrow" data-id="${t.id}">Tomorrow</button><button class="btn sm" data-act="resched" data-val="weekend" data-id="${t.id}">This weekend</button><button class="btn sm" data-act="snooze-week" data-id="${t.id}">${ic('snooze', 18)}Next week</button>`}
       ${grip ? `<button class="btn sm" data-act="move" data-dir="-1" data-id="${t.id}" aria-label="Move up">${ic('up', 18)}</button><button class="btn sm" data-act="move" data-dir="1" data-id="${t.id}" aria-label="Move down">${ic('down', 18)}</button>` : ''}
+      ${t.done ? '' : `${IN_DESKTOP ? `<button class="btn sm" data-act="claudecopy" data-id="${t.id}" title="Copies this task as a prompt for a new chat">${ic('spark', 18)}Copy for Claude</button>` : `<a class="btn sm" href="${esc(claudeUrl(t))}" target="_blank" rel="noopener noreferrer" title="Opens a new Claude chat with this task filled in">${ic('spark', 18)}New Claude chat</a>`}<button class="btn sm" data-act="duet" data-id="${t.id}" title="Starts Duet now with this task as its focus">${ic('chat', 18)}${t.duet ? 'Send to Duet again' : 'Send to Duet'}</button>`}
       <button class="btn sm" data-act="edit" data-id="${t.id}">${ic('edit', 18)}Edit</button>
       <button class="btn sm ghost" data-act="del" data-id="${t.id}">${ic('trash', 18)}Delete</button>
     </div>` : ''}
@@ -461,7 +607,7 @@ function viewToday() {
   const wed = nextWedding(), C = S.cond, w = C && C.w, sf = C && C.s, nextTide = nextTideOf(C);
   const B = buckets(S.tasks), sm = daySummary();
   const doneToday = S.tasks.filter((t) => t.done && t.doneAt && LB.laDateOf(t.doneAt) === TODAY).sort((a, b) => a.doneAt - b.doneAt);
-  const rows = (l, o = { grip: true, hideGroup: true }) => l.map((t) => taskRow(t, o)).join('');
+  const rows = (l, o = { grip: true }) => l.map((t) => taskRow(t, o)).join('');
   const none = !S.tasks.length;
   /* tier 1: needs me now. Carried over (anything past its day) and Today, each its own list */
   const carried = B.urgent.filter((t) => eff(t) < TODAY), dueToday = B.urgent.filter((t) => eff(t) >= TODAY);
@@ -476,10 +622,10 @@ function viewToday() {
   const sgShow = U.exp.sug ? sg : sg.filter((t, i) => i === 0 || t.id === U.adjust);
   const sgWhen = (t) => [t.due ? (t.due < TODAY ? `<b class="bad">${esc(relDate(t.due))}</b>` : esc(relDate(t.due))) : '', t.deadline && t.deadline !== t.due ? `by ${esc(relDate(t.deadline))}` : '', t.rule ? `${ic('repeat', 13)}${esc(recShort(t.rule))}` : ''].filter(Boolean).join(' · ');
   const sug = sg.length ? `<section class="sec t1 z-sug" id="suggested">${secH('Suggested', '', 1, sg.length)}
-    <div class="card"><ul class="list sugl">${sgShow.map((t) => `<li class="sg"><div class="sgt">${ic(t.icon || 'spark', 17)} <span>${esc(t.title)}</span>${sgWhen(t) ? ` <span class="sgd">${sgWhen(t)}</span>` : ''}</div>${t.notes ? `<p class="sgw">${esc(t.notes)}</p>` : ''}
+    <div class="card"><ul class="list sugl">${sgShow.map((t) => `<li class="sg"><div class="sgt">${art(t.icon || 'spark', 22)} <span>${esc(t.title)}</span>${sgWhen(t) ? ` <span class="sgd">${sgWhen(t)}</span>` : ''}</div>${t.notes ? `<p class="sgw">${esc(t.notes)}</p>` : ''}
       ${t._d.adjust_request && U.adjust !== t.id ? `<p class="sgw sgq">${ic('spark', 14)} Waiting on Claude: “${esc(t._d.adjust_request)}”</p>` : ''}
-      ${U.adjust === t.id ? `<form class="sgf" data-form="adj" data-id="${t.id}"><label for="adj-${t.id}">How should Claude adjust it?</label><span class="sgfr"><input id="adj-${t.id}" name="v" autocomplete="off" placeholder="e.g. make it Saturday, smaller first step" ${U.adjBusy === t.id ? 'disabled' : ''}><button class="btn primary" type="submit" ${U.adjBusy === t.id ? 'disabled' : ''}>${U.adjBusy === t.id ? 'Adjusting…' : 'Adjust'}</button></span></form>` : ''}
-      <div class="sga"><button class="btn sm" data-act="sug-keep" data-id="${t.id}">${ic('check', 18)}Keep</button><button class="btn sm${U.adjust === t.id ? ' on' : ''}" data-act="sug-adjust" data-id="${t.id}" aria-expanded="${U.adjust === t.id}">${ic('edit', 18)}${U.adjust === t.id ? 'Cancel' : 'Adjust'}</button><button class="btn sm ghost" data-act="sug-drop" data-id="${t.id}">Dismiss</button></div></li>`).join('')}</ul>${sg.length > 1 ? `<button class="disc" data-act="exp" data-val="sug" aria-expanded="${!!U.exp.sug}">${ic(U.exp.sug ? 'chevD' : 'chevR', 16)}${U.exp.sug ? 'Show less' : `${sg.length - 1} more suggestion${sg.length > 2 ? 's' : ''}`}</button>` : ''}</div></section>` : '';
+      ${U.adjust === t.id ? `<form class="sgf" data-form="adj" data-id="${t.id}"><label for="adj-${t.id}">Change it, or dismiss it and say why</label><span class="sgfr"><input id="adj-${t.id}" name="v" autocomplete="off" placeholder="e.g. make it Saturday · or: dismiss, I don't need recruiter follow-ups"${U.adjBusy === t.id ? 'disabled' : ''}><button class="btn primary" type="submit" ${U.adjBusy === t.id ? 'disabled' : ''}>${U.adjBusy === t.id ? 'Adjusting…' : 'Adjust'}</button></span></form>` : ''}
+      <div class="sga"><button class="btn sm" data-act="sug-keep" data-id="${t.id}">${ic('arrow', 18)}Keep</button><button class="btn sm" data-act="sug-done" data-id="${t.id}" title="Already did this: marks it done and logs it">${ic('check', 18)}Done</button><button class="btn sm${U.adjust === t.id ? ' on' : ''}" data-act="sug-adjust" data-id="${t.id}" aria-expanded="${U.adjust === t.id}">${ic('edit', 18)}${U.adjust === t.id ? 'Cancel' : 'Adjust'}</button><button class="btn sm ghost" data-act="sug-drop" data-id="${t.id}">Dismiss</button></div></li>`).join('')}</ul>${sg.length > 1 ? `<button class="disc" data-act="exp" data-val="sug" aria-expanded="${!!U.exp.sug}">${ic(U.exp.sug ? 'chevD' : 'chevR', 16)}${U.exp.sug ? 'Show less' : `${sg.length - 1} more suggestion${sg.length > 2 ? 's' : ''}`}</button>` : ''}</div></section>` : '';
   /* tier 2: working through. This week stays open; the rest fold to a one-line summary */
   /* Today and Tomorrow show every task; This week and Later show CAP, the rest behind "Show N more" */
   const CAP = 5, TMR = addDays(TODAY, 1);
@@ -493,6 +639,8 @@ function viewToday() {
   const more = fold('later', 'Later', { z: 'z-more', ct: B.later.length, sum: nextOf(B.later), body: capped('later', 'later', B.later, 'Nothing later.') })
     + fold('none', 'No date yet', { z: 'z-more', def: false, ct: B.none.length, sum: B.none[0] ? `<b>${esc(B.none[0].title)}</b>${B.none.length > 1 ? ` +${B.none.length - 1}` : ''}` : 'nothing here', body: lst('none', B.none) })
     + fold('done', 'Done today', { z: 'z-more', def: false, ct: doneToday.length, sum: doneToday[0] ? `last <b>${esc(doneToday[doneToday.length - 1].title)}</b>` : 'nothing finished yet', body: lst('done', doneToday, {}) });
+  /* Up next: compact calendar card from live Google Calendar (or the saved snapshot) */
+  const upnext = upNextCard();
   /* schedule shows only once a calendar snapshot exists */
   const tm = eventsOn(S.events, addDays(TODAY, 1));
   const schedule = S.calOK ? `<section class="sec t2 z-sched">${secH('Schedule', goLink('Month', 'plan'), 2)}${scheduleCard(TODAY, true)}
@@ -510,15 +658,18 @@ function viewToday() {
   if (nextTide) cells.push(`<span><span class="k">Tide</span><span class="v num">${esc(nextTide.type)}</span><span class="s">${esc(nextTide.time)}</span></span>`);
   const condGrid = cells.length ? `<button class="card cond" style="grid-template-columns:repeat(${cells.length},1fr)" data-act="go" data-to="life/hobbies" aria-label="Local conditions conditions. Open Hobbies for details.">${cells.join('')}</button>` : '';
   const wedRow = wed ? `<button class="wedrow" data-act="go" data-to="life/home" data-anchor="weddings"><b class="num">${wd}</b><span>days to ${esc(wed.title)}</span>${ic('chevR', 16)}</button>` : '';
+  const glanceUp = S.glance.filter((g) => g.date >= TODAY);
+  const glanceRows = glanceUp.map((g) => { const n = diffDays(TODAY, g.date); return `<div class="wedrow" title="${esc(g.detail)}"><b class="num">${n}</b><span>days to ${esc(g.title)}</span></div>`; }).join('');
   const sumBits = [];
   if (w && w.temp_f != null) sumBits.push(`${vv(w.temp_f, '°')}`);
   if (sf && sf.wave_ft != null) sumBits.push(`surf <b>${vv(sf.wave_ft)} ft</b>`);
   if (nextTide) sumBits.push(`${esc(nextTide.type.toLowerCase())} tide ${esc(nextTide.time)}`);
   if (wed) sumBits.push(`wedding ${wd}d`);
+  glanceUp.forEach((g) => sumBits.push(`${esc(g.title.toLowerCase())} ${diffDays(TODAY, g.date)}d`));
   const gw = labsHabits(hs, hDone, hTot, daysLeft);
-  const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow }) : '';
+  const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow + glanceRows }) : '';
   return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}, there. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}, there.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
-    <div class="today"><div class="col a">${weekRings()}${labsOn() ? '<div class="labs-slot" data-labs="habitat"></div>' : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${schedule}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
+    <div class="today"><div class="col a">${weekRings()}${labsOn() ? '<div class="labs-slot" data-labs="habitat"></div>' : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div><div class="col b">${upnext}${due}${sug}${tomorrow}${week}${more}</div></div>`;
 }
 /* Habit rings: one per habit, filling toward the weekly target. The dot on each ring is the floor that keeps the streak alive. */
 const habitLast = {}; /* sessions this week per habit at the last render: a ring sweeps only when it grows */
@@ -609,6 +760,35 @@ function weekRings() {
 }
 
 /* Schedule (graft from Daily paper): live Now line, proportional free gaps, past fades and shrinks */
+const inDur = (m) => (m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ' ' + (m % 60) + 'm' : ''}`);
+function upNextCard() {
+  const head = (r = '') => `<div class="un-h"><h3 class="un-t">${ic('calendar', 15)} Up next</h3>${r}</div>`;
+  if (LIVE.err) {
+    const msg = { needs_reauth: 'Google Calendar needs reconnecting. Reconnect it in claude.ai Settings → Connectors.',
+      server_not_connected: 'Add Google Calendar in claude.ai Settings → Connectors to see your day here.',
+      selection_required: 'Pick which Google Calendar to use when claude.ai asks.',
+      blocked_by_policy: 'Your organization blocks Google Calendar here.',
+      server_not_found: 'Google Calendar isn\'t available right now. Reconnect it in Settings → Connectors.',
+      approval_required: 'Lifeboard needs your OK to read Google Calendar.' }[LIVE.err] || '';
+    return `<section class="sec z-now un" aria-label="Up next">${head()}<div class="card un-c"><p class="un-msg">${esc(msg)}</p>${LIVE.err === 'approval_required' ? '<button class="btn sm" data-act="cal-allow">Show my calendar</button>' : ''}</div></section>`;
+  }
+  if (!S.calOK) return '';
+  const nm = nowMins(), ev = eventsOn(S.events, TODAY), tm = eventsOn(S.events, addDays(TODAY, 1));
+  const cur = ev.tm.filter((e) => e.s <= nm && e.e > nm), next = ev.tm.filter((e) => e.s > nm);
+  const lead = cur[0] || next[0], rest = (cur[0] ? cur.slice(1).concat(next) : next.slice(1)).slice(0, 2);
+  const more = (cur[0] ? cur.length - 1 + next.length : next.length - 1) - rest.length;
+  const dot = (e) => `<i class="un-dot" style="--c:${evColor(e)}"></i>`;
+  const ad = ev.ad.length ? `<p class="un-ad">${ev.ad.map((e) => `<span>${dot(e)}${esc(e.title)}</span>`).join('')}</p>` : '';
+  let body;
+  if (lead) {
+    const when = cur[0] ? `now · until ${minLabel(lead.e)}` : `${lead.e > lead.s ? minLabel(lead.s, (lead.s < 720) !== (lead.e % 1440 < 720)) + '–' + minLabel(lead.e) : minLabel(lead.s)} · <b>in ${inDur(lead.s - nm)}</b>`;
+    body = `<div class="un-lead" style="--c:${evColor(lead)}"><p class="un-n">${esc(lead.title)}</p><p class="un-w num">${when}</p></div>
+      ${rest.map((e) => `<div class="un-r">${dot(e)}<span class="un-rt">${esc(e.title)}</span><span class="num">${minLabel(e.s)}</span></div>`).join('')}${more > 0 ? `<p class="un-more">+${more} more today</p>` : ''}`;
+  } else body = `<p class="un-msg">Nothing else on the calendar today.</p>`;
+  const t1 = tm.tm[0] || tm.ad[0];
+  const peek = `<p class="un-tm">Tomorrow: ${t1 ? `${t1.allDay ? '' : minLabel(t1.s) + ' '}<b>${esc(t1.title)}</b>${tm.tm.length + tm.ad.length > 1 ? ` +${tm.tm.length + tm.ad.length - 1}` : ''}` : 'nothing yet'}</p>`;
+  return `<section class="sec z-now un" aria-label="Up next">${head(goLink('Month', 'plan'))}<div class="card un-c">${ad}${body}${peek}</div></section>`;
+}
 function scheduleCard(day, isToday) {
   const { ad, tm } = eventsOn(S.events, day), nm = isToday ? nowMins() : -1;
   if (!S.calOK) return `<div class="card"><p class="empty">Your calendar hasn't synced yet. Events show here once a calendar copy is saved.</p></div>`;
@@ -783,7 +963,8 @@ function viewLife() {
       + `      <section class="sec">${secH('Home')}${groupTasks((t) => t.group === 'Home', 'No home tasks open.')}</section>
       <section class="sec">${secH('Pets')}<div class="scroller" role="group" aria-label="Filter pets" style="margin-bottom:10px">${[['all', 'All pets'], ['biscuit', 'Biscuit'], ['pepper', 'Pepper']].map(([k, l]) => `<button class="seg" data-act="pet" data-val="${k}" aria-pressed="${pf === k}">${ic(k === 'pepper' ? 'cat' : k === 'biscuit' ? 'dog' : 'paw', 17)}${l}</button>`).join('')}</div>
         ${groupTasks((t) => t.group === 'Pets' && petMatch(t), pf === 'all' ? 'No pet tasks open.' : 'Nothing open for ' + (pf === 'biscuit' ? 'Biscuit' : 'Pepper') + '.')}</section>
-      <section class="sec">${secH('Personal')}${groupTasks((t) => t.group === 'Personal', 'No personal tasks open.')}</section>`;
+      <section class="sec">${secH('Personal')}${groupTasks((t) => t.group === 'Personal', 'No personal tasks open.')}</section>
+      <section class="sec">${secH('Work')}${groupTasks((t) => t.group === 'Work', 'No work tasks open.')}</section>`;
   } else {
     const C = S.cond, w = C && C.w, sf = C && C.s;
     const outside = S.habits.filter((h) => ['surfing', 'running'].includes(h.key) || /surf|run/i.test(h.name));
@@ -1054,24 +1235,54 @@ let lastFocus = null;
 function openSheet(cfg) { lastFocus = document.activeElement; U.sheet = { ...cfg }; renderSheet(); const sh = document.getElementById('sheet'); sh.hidden = false; void sh.offsetHeight; requestAnimationFrame(() => { sh.classList.add('open'); document.getElementById('scrim').classList.add('open'); const f = sh.querySelector('[autofocus]') || sh.querySelector('input,button'); f && f.focus({ preventScroll: true }); }); }
 function closeSheet() { const sh = document.getElementById('sheet'); sh.classList.remove('open'); document.getElementById('scrim').classList.remove('open'); U.sheet = null; setTimeout(() => { if (!U.sheet) { sh.hidden = true; sh.innerHTML = ''; } }, reduced.matches ? 0 : 300); lastFocus && lastFocus.focus && lastFocus.focus({ preventScroll: true }); if (pendingRender) schedule(); }
 function radios(name, opts, val) { return `<div class="radios">${opts.map(([v, l]) => `<label><input type="radio" name="${name}" value="${esc(v)}" ${v === val ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div>`; }
+function chatLogHtml(c) {
+  return c.msgs.map((m) => `<div class="cm ${m.role}">${esc(m.content || '…')}</div>`).join('') + (c.err ? `<p class="qhint" style="color:var(--bad)">${esc(c.err)}</p>` : '');
+}
+/* Ask Claude: a short chat about one task, run in the page through the sample capability (same as Adjust). */
+async function sendChat(text) {
+  const c = U.sheet; if (!c || c.kind !== 'chat' || c.busy) return;
+  const t = S.tasks.find((x) => x.id === c.taskId); if (!t) return;
+  let sample = null;
+  try { sample = window.claude && window.claude.use ? await window.claude.use('sample') : null; } catch (e) { sample = null; }
+  if (!sample) { c.err = 'Claude isn’t available in this view. Use Copy for a full chat.'; renderSheet(); return; }
+  const first = !c.msgs.length;
+  const ctx = `You are helping the owner with one task from their personal dashboard. Today is ${WD[dow(TODAY)]} ${TODAY}. Be concise and practical: concrete next steps, drafts they can paste, short questions only when needed. Plain text, no markdown headers.\n\n` + taskPrompt(t, false);
+  c.msgs.push({ role: 'user', content: first ? ctx + (text ? '\n\n' + text : '') : text, shown: text || 'Help me get started.' });
+  if (!first && !text) { c.msgs.pop(); return; }
+  c.msgs.push({ role: 'assistant', content: '' });
+  c.busy = true; c.err = ''; renderSheet();
+  const log = () => { const el = document.getElementById('chatLog'); if (el && U.sheet === c) { el.innerHTML = chatLogHtml(view(c)); el.lastElementChild && el.lastElementChild.scrollIntoView({ block: 'end' }); } };
+  const ask = c.msgs.slice(0, -1).map((m) => ({ role: m.role, content: m.content }));
+  try {
+    const r = await sample(ask, { cache: false, onText: ({ text: tx }) => { c.msgs[c.msgs.length - 1].content = tx; log(); } });
+    c.msgs[c.msgs.length - 1].content = r.text;
+  } catch (e) {
+    c.msgs.pop(); c.msgs.pop();
+    c.err = e && e.code === 'rate_limited' ? 'Claude is busy. Try again in a minute.' : e && e.code === 'not_granted' ? 'Claude isn’t allowed here. Use Copy for a full chat.' : 'Couldn’t reach Claude. Try again.';
+  }
+  c.busy = false;
+  if (U.sheet === c) { renderSheet(); log(); const i = document.getElementById('chatIn'); i && i.focus(); }
+}
+const view = (c) => ({ ...c, msgs: c.msgs.map((m) => ({ role: m.role, content: m.shown || m.content })) });
 function renderSheet() {
   const sh = document.getElementById('sheet'), c = U.sheet; if (!c) return;
   const editing = c.kind === 'task' && c.id ? S.tasks.find((t) => t.id === c.id) : null;
   if (c.kind === 'task' && c.id && !editing) { closeSheet(); return; }
-  const kinds = !editing ? `<div class="kinds" role="group" aria-label="What to add">${[['task', 'Task'], ['item', 'List item'], ['goal', 'Goal'], [S.habits.length ? 'log' : 'habit', 'Habit']].map(([k, l]) => `<button type="button" data-act="sheet-kind" data-val="${k}" aria-pressed="${c.kind === k || (l === 'Habit' && (c.kind === 'log' || c.kind === 'habit'))}">${l}</button>`).join('')}</div>` : '';
+  const kinds = !editing && c.kind !== 'chat' ? `<div class="kinds" role="group" aria-label="What to add">${[['task', 'Task'], ['item', 'List item'], ['goal', 'Goal'], [S.habits.length ? 'log' : 'habit', 'Habit']].map(([k, l]) => `<button type="button" data-act="sheet-kind" data-val="${k}" aria-pressed="${c.kind === k || (l === 'Habit' && (c.kind === 'log' || c.kind === 'habit'))}">${l}</button>`).join('')}</div>` : '';
   let title = '', fields = '', submit = 'Save';
   if (c.kind === 'task') {
-    const t = editing || { title: '', notes: '', group: 'Personal', due: TODAY, deadline: '', rule: null, icon: null, ...(c.defaults || {}) };
+    const t = editing || { title: '', notes: '', project: '', group: 'Personal', due: TODAY, deadline: '', rule: null, icon: null, ...(c.defaults || {}) };
     title = editing ? 'Edit task' : 'New task'; submit = editing ? 'Save' : 'Add task';
     if (!editing) { c.baseDue = t.due || ''; c.touched = c.touched || {}; }
     const curIcon = editing && editing._d.icon_key ? iconOf(editing._d.icon_key) : 'auto';
     const full = `<label class="fld"><span>Title</span><input name="title" required value="${esc(t.title)}" autocomplete="off" enterkeyhint="done" placeholder="What needs doing?"></label>
-      <fieldset class="fld"><legend>Group</legend>${radios('group', GROUPS.map((g) => [g, ic(GROUP_IC[g], 17) + g]), GROUPS.includes(t.group) ? t.group : 'Personal')}</fieldset>
+      <fieldset class="fld"><legend>Group</legend>${radios('group', GROUPS.map((g) => [g, art(GROUP_IC[g], 18) + g]), GROUPS.includes(t.group) ? t.group : 'Personal')}</fieldset>
+      <label class="fld"><span>Project <small class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">optional</small></span><input name="project" list="projects" value="${esc(t.project || '')}" autocomplete="off" placeholder="Job search"><datalist id="projects">${[...new Set(S.tasks.map((x) => x.project).filter(Boolean))].sort().map((p) => `<option value="${esc(p)}">`).join('')}</datalist></label>
       <div class="two"><label class="fld"><span>Do date</span><input type="date" name="due" id="fDue" value="${t.due || ''}"></label><label class="fld"><span>Deadline</span><input type="date" name="deadline" value="${t.deadline || ''}"></label></div>
       <div class="quick">${[['Today', TODAY], ['Tomorrow', addDays(TODAY, 1)], ['Saturday', addDays(TODAY, ((6 - dow(TODAY)) + 7) % 7 || 7)], ['Next week', addDays(mondayOf(TODAY), 7)], ['No date', '']].map(([l, v]) => `<button type="button" data-act="quick-date" data-val="${v}"><span>${l}</span></button>`).join('')}</div>
       <label class="fld"><span>Repeats</span><select name="rec">${PRESETS.map(([k, l]) => `<option value="${k}" ${presetOf(t.rule) === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <div id="recx">${recFields(t.rule)}</div><p class="qhint" id="rechelp">${t.rule ? esc(LB.describeRule(t.rule)) : ''}</p>
-      <fieldset class="fld"><legend>Icon</legend><div class="radios icons"><label><input type="radio" name="icon" value="auto" ${curIcon === 'auto' ? 'checked' : ''} aria-label="Pick for me"><span style="width:auto;padding:0 12px">Auto</span></label>${TASK_ICONS.map((k) => `<label><input type="radio" name="icon" value="${k}" ${curIcon === k ? 'checked' : ''} aria-label="${k}"><span>${ic(k, 20)}</span></label>`).join('')}</div></fieldset>
+      <fieldset class="fld"><legend>Icon</legend><div class="radios icons"><label><input type="radio" name="icon" value="auto" ${curIcon === 'auto' ? 'checked' : ''} aria-label="Pick for me"><span style="width:auto;padding:0 12px">Auto</span></label>${TASK_ICONS.map((k) => `<label><input type="radio" name="icon" value="${k}" ${curIcon === k ? 'checked' : ''} aria-label="${k}"><span>${art(k, 24)}</span></label>`).join('')}</div></fieldset>
       <label class="fld"><span>Notes</span><textarea name="notes" placeholder="Anything future you should know">${esc(t.notes)}</textarea></label>`;
     const ex = ['dentist fri', 'water plants every 3 days', 'pay rent monthly'];
     fields = editing ? full : `<label class="fld qfield"><span>Just type it</span><input name="quick" value="${esc(c.name || '')}" autocomplete="off" autofocus enterkeyhint="done" placeholder="dentist fri" aria-describedby="pchips qhint"></label>
@@ -1101,6 +1312,13 @@ function renderSheet() {
       <div class="two"><label class="fld"><span>Target a week</span><input type="number" name="target" min="1" max="14" value="3" inputmode="numeric"></label><label class="fld"><span>Floor a week</span><input type="number" name="floor" min="1" max="14" value="1" inputmode="numeric"></label></div>
       <p class="qhint">Hitting the floor keeps the streak alive, even in a slow week.</p>
       <label class="fld"><span>Notes</span><textarea name="notes" placeholder="What counts as a session"></textarea></label>`;
+  } else if (c.kind === 'chat') {
+    const t = S.tasks.find((x) => x.id === c.taskId);
+    title = 'Ask Claude'; submit = '';
+    fields = `<p class="qhint" style="margin-top:0">${t ? art(t.icon || 'spark', 18) + ' ' + esc(t.title) : ''}</p>
+      <div id="chatLog" class="chatlog" aria-live="polite">${chatLogHtml(view(c))}</div>
+      <label class="fld"><span class="sr">Message</span><textarea name="msg" id="chatIn" placeholder="${c.msgs.length ? 'Reply…' : 'What do you want help with? Leave blank to just start.'}" ${c.busy ? 'disabled' : ''}></textarea></label>
+      <div class="row-btns" style="margin-top:8px"><button type="submit" class="btn primary" ${c.busy ? 'disabled' : ''}>${c.busy ? 'Thinking…' : c.msgs.length ? 'Send' : 'Start'}</button><button type="button" class="btn ghost" data-act="chat-copy">${ic('chat', 18)}Copy for a full chat</button></div>`;
   } else {
     title = 'Log a session'; submit = '';
     fields = `<label class="fld"><span>When</span><input type="date" name="date" id="logDate" value="${TODAY}" max="${TODAY}"></label>
@@ -1119,6 +1337,7 @@ function renderSheet() {
 }
 function submitSheet(form) {
   const f = Object.fromEntries(new FormData(form).entries()), c = U.sheet;
+  if (c.kind === 'chat') { sendChat((f.msg || '').trim()); return; }
   if (c.kind === 'task') {
     const title = (f.title || '').trim() || (f.quick ? parseCmd(f.quick).title : '');
     if (!title) { (form.querySelector('[name=quick]') || form.querySelector('[name=title]')).focus(); toast('Give it a title'); return; }
@@ -1126,7 +1345,7 @@ function submitSheet(form) {
     if (!c.id && c.time != null && !notes) notes = 'At ' + minLabel(c.time);
     const rule = readRule(form);
     if (rule && LBS.ruleError(rule)) { toast('That repeat pattern is incomplete'); return; }
-    const p = { title, category: f.group || 'Personal', due_date: isDate(f.due) ? f.due : null, deadline_date: isDate(f.deadline) ? f.deadline : null, recurrence_rule: rule, notes };
+    const p = { title, category: f.group || 'Personal', due_date: isDate(f.due) ? f.due : null, deadline_date: isDate(f.deadline) ? f.deadline : null, recurrence_rule: rule, notes, project: (f.project || '').trim().replace(/\s+/g, ' ') || null };
     const icon = f.icon && f.icon !== 'auto' ? f.icon : null;
     if (c.id) {
       const t = S.tasks.find((x) => x.id === c.id);
@@ -1206,7 +1425,7 @@ function render() {
   { const ci = GROW.findIndex((x) => x[0] === 'collection'); /* with Labs on, Grow gets a third view: dioramas + pressed plants */
     if (labsOn() && ci < 0) GROW.push(['collection', 'Collection', 'star']); else if (!labsOn() && ci >= 0) { GROW.splice(ci, 1); if (U.grow === 'collection') U.grow = 'habits'; } }
   pendingRender = false;
-  if (LB.todayStr() !== TODAY) TODAY = LB.todayStr();
+  if (LB.todayStr() !== TODAY) { TODAY = LB.todayStr(); watchCal(); }
   const a = document.activeElement, fk = a && a.dataset && a.dataset.act ? [a.dataset.act, a.dataset.id || a.dataset.val || a.dataset.key || a.dataset.d || ''] : null;
   const sy = scrollY; /* re-rendering main must not move the page (a log tap used to jump it) */
   writeHash();
@@ -1306,11 +1525,23 @@ async function adjustSuggestion(id, ask) {
   U.adjBusy = id; render();
   try {
     const cur = { title: d.title, notes: d.notes || '', due_date: d.due_date || null, deadline_date: d.deadline_date || null, category: d.category || 'Personal' };
-    const r = await sample.json(`You revise one suggested to-do on a personal life dashboard. Today is ${WD[dow(TODAY)]} ${TODAY}.
+    const r = await sample.json(`You handle feedback on one suggested to-do on a personal life dashboard. Today is ${WD[dow(TODAY)]} ${TODAY}.
 Current suggestion (JSON): ${JSON.stringify(cur)}
-The person asked: ${JSON.stringify(ask)}
-Apply only that change and keep everything else. Keep the title short and plain; notes are one or two plain sentences.
-Reply with JSON only: {"title": string, "notes": string, "due_date": "YYYY-MM-DD" or null, "deadline_date": "YYYY-MM-DD" or null, "category": one of ${JSON.stringify(GROUPS)}}`, { modelTier: 'quick' });
+The person wrote: ${JSON.stringify(ask)}
+First decide the intent. "dismiss" if they reject the suggestion outright (e.g. "no", "dismiss", "already done", "not relevant", "don't suggest this"). Otherwise "edit".
+If "edit": apply only that change and keep everything else. Keep the title short and plain; notes are one or two plain sentences.
+If "dismiss": give the reason in a few words, and a one-sentence rule the suggestion assistant could follow to avoid suggestions like this (or null if it's a one-off, like "already done").
+Reply with JSON only: {"intent": "edit" | "dismiss", "title": string, "notes": string, "due_date": "YYYY-MM-DD" or null, "deadline_date": "YYYY-MM-DD" or null, "category": one of ${JSON.stringify(GROUPS)}, "reason": string or null, "rule": string or null}`, { modelTier: 'quick' });
+    if (r && r.intent === 'dismiss') {
+      const reason = typeof r.reason === 'string' && r.reason.trim() ? r.reason.trim().slice(0, 200) : ask.slice(0, 200);
+      const rule = typeof r.rule === 'string' && r.rule.trim() ? r.rule.trim().slice(0, 300) : null;
+      U.adjust = null;
+      act(async (rec) => {
+        await W.create('logs', { kind: 'dismissal', label: d.title, value: { reason, rule, said: ask.slice(0, 300) }, date: TODAY }, rec);
+        await W.remove('tasks', id, rec);
+      }, `Dismissed. Reason saved for the weekly review.`);
+      return;
+    }
     const title = r && typeof r.title === 'string' && r.title.trim() ? r.title.trim().slice(0, 200) : null;
     if (!title) throw new Error('bad reply');
     const due = isDate(r.due_date) ? r.due_date : null, dl = isDate(r.deadline_date) ? r.deadline_date : null;
@@ -1340,6 +1571,9 @@ document.addEventListener('click', (e) => {
   switch (act_) {
     case 'tab': if (U.tab === val) { scrollTo({ top: 0, behavior: reduced.matches ? 'auto' : 'smooth' }); } else go(val); break;
     case 'go': go(b.dataset.to, b.dataset.anchor); break;
+    case 'chat': { const t = S.tasks.find((x) => x.id === id); if (t) openSheet({ kind: 'chat', taskId: t.id, msgs: [] }); break; }
+    case 'chat-copy': { const c = U.sheet; const t = c && S.tasks.find((x) => x.id === c.taskId); if (t) copyText(taskPrompt(t, false) + (c.msgs.length ? '\n\nSo far:\n' + c.msgs.map((m) => (m.role === 'user' ? 'Me: ' : 'Claude: ') + m.content).join('\n\n') : '')).then((ok) => toast(ok ? 'Copied. Paste it into a full Claude chat.' : 'Couldn\u2019t copy here.')); break; }
+    case 'claudecopy': { const t = S.tasks.find((x) => x.id === id); if (t) copyText(taskPrompt(t, false)).then((ok) => toast(ok ? 'Task prompt copied. Paste it into a new chat (\u2318N).' : 'Couldn\u2019t copy the prompt here.')); break; }
     case 'menu': setPop(pop.hidden || popFrom !== b, b); break;
     case 'set-theme': {
       if (val === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = val;
@@ -1372,8 +1606,12 @@ document.addEventListener('click', (e) => {
     case 'carry-all': carryAll(); break;
     case 'move': moveTask(id, +b.dataset.dir); break;
     case 'edit': openSheet({ kind: 'task', id }); break;
+    case 'duet': { const t = S.tasks.find((x) => x.id === id); if (t) sendToDuet(t); break; }
     case 'sug-adjust': U.adjust = U.adjust === id ? null : id; render(); if (U.adjust) { const n = document.getElementById('adj-' + id); n && n.focus(); } break;
+    case 'cal-allow': allowCal(); break;
     case 'sug-keep': { const t = (S.suggested || []).find((x) => x.id === id); if (t) act((rec) => W.patch('tasks', id, { suggested: false }, rec), `Kept “${t.title}”`); break; }
+    case 'sug-done': { const t = (S.suggested || []).find((x) => x.id === id); if (t) act((rec) => W.patch('tasks', id, { status: 'done', completed_at: Date.now() }, rec)
+        .then(() => W.create('logs', { kind: 'suggestion_done', label: t.title, value: { task_id: id, note: 'The owner marked this suggestion done (already done)' }, date: TODAY }, rec)), `Marked “${t.title}” done`); break; }
     case 'sug-drop': { const t = (S.suggested || []).find((x) => x.id === id); if (t) delDoc('tasks', id, `Dismissed “${t.title}”`); break; }
     case 'del': { const t = S.tasks.find((x) => x.id === id); if (t) delDoc('tasks', id, `Deleted “${t.title}”`); break; }
     case 'tomorrow': U.showTomorrow = !U.showTomorrow; render(); break;
@@ -1601,3 +1839,4 @@ readHash();
 if (labsOn()) loadLabs();
 LBDB.start(() => { derive(); if (LBDB.state.status === 'ready') ensureRecurring(); schedule(); });
 render();
+startCal();

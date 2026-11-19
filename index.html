@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!doctype html>
 <html lang="en">
 <head>
@@ -890,6 +891,46 @@ body.km-open{overflow:hidden}
 .lbk li.good>span:last-child::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
 .lbk li.bad>span:last-child::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--bad);margin-right:7px;vertical-align:1px}
 .chip.gok{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}.chip.gwarn{background:color-mix(in srgb,var(--bad) 13%,transparent);color:var(--bad)}
+/* cut-paper art icons (mid-century palette). Edge = the surface they sit on, so each layer reads as cut paper. */
+:root{--mc-warm:#d0612c;--mc-sun:#e0a526;--mc-sunD:#c98418;--mc-leaf:#7c8b3a;--mc-leafL:#9aa94f;--mc-sky:#2a7f7a;--mc-plum:#8a4f6e;--mc-earth:#8a5a3a;--mc-paper:#efe0c2;--mc-ink:#2a2420;--mc-sh:rgba(70,40,10,.28)}
+:root[data-theme="dark"]{--mc-warm:#e0763f;--mc-sun:#e8b440;--mc-sunD:#d6962a;--mc-leaf:#97a64e;--mc-leafL:#b2c060;--mc-sky:#3a9a93;--mc-plum:#a8678a;--mc-earth:#a8734d;--mc-paper:#efe0c2;--mc-ink:#2a2420;--mc-sh:rgba(0,0,0,.5)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--mc-warm:#e0763f;--mc-sun:#e8b440;--mc-sunD:#d6962a;--mc-leaf:#97a64e;--mc-leafL:#b2c060;--mc-sky:#3a9a93;--mc-plum:#a8678a;--mc-earth:#a8734d;--mc-paper:#efe0c2;--mc-ink:#2a2420;--mc-sh:rgba(0,0,0,.5)}}
+svg.art{width:var(--s,22px);height:var(--s,22px);flex:none;overflow:visible;--edge:var(--surface)}
+svg.art>:not(g){stroke:var(--edge);stroke-width:1.1;stroke-linejoin:round;paint-order:stroke}
+svg.art .art-sh>*{fill:var(--mc-sh);stroke:none}
+.ac-warm{fill:var(--mc-warm)}.ac-sun{fill:var(--mc-sun)}.ac-sunD{fill:var(--mc-sunD)}.ac-leaf{fill:var(--mc-leaf)}.ac-leafL{fill:var(--mc-leafL)}.ac-sky{fill:var(--mc-sky)}.ac-plum{fill:var(--mc-plum)}.ac-earth{fill:var(--mc-earth)}.ac-paper{fill:var(--mc-paper)}.ac-ink{fill:var(--mc-ink)}
+.ttl svg.art{vertical-align:-5px;margin-right:3px}
+.tmeta svg.art{--s:15px}
+.tmeta .gm svg.art{vertical-align:-2px}
+.tmeta .chip{font-size:12px;padding:1px 8px 1px 6px;margin:2px 0;gap:4px}
+.tmeta .chip svg.i{--s:13px}
+.task.done .ttl svg.art{filter:grayscale(1);opacity:.45}
+.sgt svg.art{color:inherit}
+.radios input:checked+span svg.art{--edge:var(--text)}
+.radios span svg.art{--edge:var(--raise)}
+.un-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 2px 6px;min-height:36px}
+.un-t{margin:0;display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.un-c{padding:12px 14px 8px}
+.un-lead{border-left:3px solid var(--c);padding-left:10px}
+.un-n{margin:0;font:600 18px/1.2 var(--display);overflow-wrap:anywhere}
+.un-w{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.un-w b{color:var(--ink);font-weight:700}
+.un-r{display:flex;align-items:center;gap:8px;min-height:36px;font-size:14.5px;border-top:1px solid var(--line)}
+.un-lead+.un-r{margin-top:8px}
+.un-rt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.un-r .num{color:var(--muted);font-size:13.5px}
+.un-dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none;display:inline-block}
+.un-tm,.un-more,.un-msg{margin:6px 0 4px;font-size:13.5px;color:var(--muted)}
+.un-tm{border-top:1px solid var(--line);padding-top:8px}
+.un-tm b{color:var(--text);font-weight:600}
+.un-ad{display:flex;flex-wrap:wrap;gap:6px 12px;margin:0 0 8px;font-size:13.5px;font-weight:600}
+.un-ad span{display:inline-flex;align-items:center;gap:6px}
+.un-c .btn{margin:2px 0 6px}
+a.btn{text-decoration:none}
+.chatlog{display:flex;flex-direction:column;gap:8px;margin:8px 0;max-height:46dvh;overflow-y:auto}
+.cm{padding:9px 12px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.45;max-width:92%}
+.cm.user{align-self:flex-end;background:var(--hot);color:var(--text)}
+.cm.assistant{align-self:flex-start;background:var(--surface);box-shadow:var(--shadow)}
 </style>
 </head>
 <body>
@@ -916,3 +957,5 @@ body.km-open{overflow:hidden}
 <script src="app.js"></script>
 </body>
 </html>
+
+</body></html>
