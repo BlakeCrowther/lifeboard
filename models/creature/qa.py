@@ -1,6 +1,7 @@
 """Creature-kind gates (models/creature/CONTRACT.md), exec'd by shared/blender/qa_structural.py.
 g2 (REST pose): length/axes/symmetry/origin by body plan, `mouth` empty + `part:mouth` geometry.
-g3 (actions): idle loop + feed (start/end on idle, speed caps, visible amplitude, no pops, mouth reach)."""
+g3 (actions): idle loop + feed (start/end on idle, speed caps, visible amplitude, no pops, mouth reach) + sulk (mood loop:
+ slower than idle, a visibly different posture, frown on front mouths)."""
 
 def g2():
     global L, RADIAL, MOUTH_SIDE, ctr, mouth
@@ -39,7 +40,7 @@ def g2():
 def g3():
     acts = {act.name: act for act in bpy.data.actions}
     def find(name): return next((v for k, v in acts.items() if k == name or k.startswith(name + "_") or k.startswith(name + ".")), None)
-    idle, feed = find("idle"), find("feed")
+    idle, feed, sulk = find("idle"), find("feed"), find("sulk")
     check("G3", "has 'idle' animation", idle is not None, f"actions: {sorted(acts)}")
     check("G3", "has 'feed' animation", feed is not None)
     IDLE_MIN, FEED_MIN = 0.04, 0.12   # STYLE "gentle but readable": visible at card size
@@ -48,7 +49,7 @@ def g3():
         check("G3", "idle length 48-144 frames", 48 <= n <= 144, f"{n}")
         check("G3", "idle length matches spec", abs(n - spec["motion"]["idle"]["frames"]) <= 1, f"{n} vs {spec['motion']['idle']['frames']}")
         d = delta(pose(s), pose(e)); check("G3", "idle loops seamlessly", d < 1e-3, f"max bone delta {d:.2e}")
-        sp, pk, am = motion(idle)
+        sp, pk, am = motion(idle); idle_sp = sp
         check("G3", "idle gentle (max speed <= 8% length/frame)", sp <= 0.08, f"{sp:.3f}")
         check("G3", f"idle visible (max vertex displacement from frame 0 >= {IDLE_MIN:.0%} length)", am >= IDLE_MIN, f"{am:.3f}")
         check("G3", "idle has no pops (no acceleration spikes)", pk == 0, f"spike {pk:.3f}")
@@ -71,3 +72,28 @@ def g3():
             else:
                 reach = max((sc.frame_set(f), mouth.matrix_world.translation.x)[1] for f in range(s, e + 1)) - m0.x
                 check("G3", "feed visibly reaches forward (mouth +X >= 5% length)", reach >= 0.05 * L, f"{reach / L:.2f} of length")
+    check("G3", "has 'sulk' animation (mood loop)", sulk is not None)
+    if sulk:
+        use(sulk); s, e = map(int, sulk.frame_range); n = e - s
+        check("G3", "sulk length 48-144 frames", 48 <= n <= 144, f"{n}")
+        d = delta(pose(s), pose(e)); check("G3", "sulk loops seamlessly", d < 1e-3, f"max bone delta {d:.2e}")
+        sp, pk, am = motion(sulk)
+        check("G3", "sulk has no pops (no acceleration spikes)", pk == 0, f"spike {pk:.3f}")
+        if idle:
+            check("G3", "sulk slower than idle (max speed below idle's)", sp < idle_sp, f"{sp:.3f} vs idle {idle_sp:.3f}")
+            sv = verts(s); use(idle); iv = verts(int(idle.frame_range[0])); use(sulk)
+            post = max((a - b).length for a, b in zip(sv, iv)) / L
+            check("G3", "sulk posture visibly differs from idle (>= 4% length)", post >= 0.04, f"{post:.3f}")
+        if MOUTH_SIDE == "front":   # a frown: mouth corners drop relative to the jaw (the head pitching down does not count)
+            pb = arms[0].pose.bones
+            if "cornerL" in pb and "jaw" in pb:
+                def corner(f): sc.frame_set(f); return (pb["jaw"].matrix.inverted() @ pb["cornerL"].matrix).translation
+                use(idle); c0 = corner(int(idle.frame_range[0])); use(sulk); c1 = corner(s)
+                mt = (meta.get("mouth_parts") or [{}])[0]; Wm = mt.get("width_m", 0.01)
+                jr = arms[0].data.bones["jaw"].matrix_local.to_3x3().inverted()
+                a = Vector(mt.get("direction", (1, 0, 0))).normalized(); up = Vector((0, 0, 1)) if abs(a.z) < 0.9 else Vector((1, 0, 0))
+                h = a.cross(up.cross(a).normalized()).normalized(); hl = (jr @ h).normalized()
+                drop = -(c1 - c0).dot(hl) / Wm
+                check("G3", "sulk frowns (mouth corners drop >= 15% mouth width)", drop >= 0.15, f"{drop:.2f} of width")
+            else:
+                check("G3", "sulk frowns (mouth corner bones cornerL/R, lib.mouth_corner_bones)", False, "no cornerL/jaw bones")

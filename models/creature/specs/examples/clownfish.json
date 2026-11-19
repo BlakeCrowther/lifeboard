@@ -58,6 +58,14 @@
       "frames": 48,
       "technique": "dart forward, snap bite, two quick chews, settle",
       "reach_ratio": 0.25
+    },
+    "sulk": {
+      "frames": 72,
+      "cycles": 1,
+      "energy": 0.35,
+      "droop_deg": 14,
+      "frown": 0.7,
+      "technique": "nose droops, tail sags into a slump, fins clamped to the body, one slow tired tail beat, sinks a little, mouth corners turned down"
     }
   },
   "habitat": {

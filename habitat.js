@@ -62,7 +62,6 @@
     const t = gm.todayTide, bits = [gm.pf != null ? `preview: day ${Math.round(gm.pf * 31.5)} of ~32` : `${Math.round(r.pts)} / ${r.next ?? '–'} growth`];
     bits.push(t ? `today ${Math.round(t.pct * 100)}%${t.full ? ', full day' : ''}` : 'today neutral');
     if (engine && engine.newToday.length) bits.push(`new today: ${engine.newToday.join(', ')}`);
-    else if (engine && engine.nextUp) bits.push(`next: ${engine.nextUp}`);
     if (gm.overdue) bits.push(`${gm.overdue} overdue clouding the water`);
     if (gm.breaks && gm.breaks.sad) bits.push(`skipped ${gm.breaks.skipsToday > 1 ? gm.breaks.skipsToday + ' breaks' : 'a break'} · the fish noticed${gm.breaks.lost ? ` (−${gm.breaks.lost} growth)` : ''}`);
     $('line').textContent = bits.join(' · ');
@@ -540,13 +539,14 @@ attribute float aTip; varying float vTip;
       let mouth = root.getObjectByName('mouth');
       if (!mouth) { mouth = new THREE.Object3D(); mouth.position.set(bb.max.x / DISPLAY_SCALE, 0, 0); root.add(mouth); }
       const mixer = new THREE.AnimationMixer(root), clip = (n) => gltf.animations.find((a) => a.name === n);
-      const idle = clip('idle') ? mixer.clipAction(clip('idle')) : null, feed = clip('feed') ? mixer.clipAction(clip('feed')) : null;
+      const idle = clip('idle') ? mixer.clipAction(clip('idle')) : null, feed = clip('feed') ? mixer.clipAction(clip('feed')) : null, sulk = clip('sulk') ? mixer.clipAction(clip('sulk')) : null;
       const ts = 0.92 + Math.random() * 0.16;
       if (idle) { idle.play(); idle.time = Math.random() * idle.getClip().duration; idle.timeScale = ts; }
       if (feed) { feed.setLoop(THREE.LoopOnce, 1); feed.clampWhenFinished = true; feed.timeScale = ts; }
+      if (sulk) sulk.timeScale = ts;
       const loco = (entry.locomotion || spec.locomotion || 'swim').toLowerCase(), i = pathSeed++;
       const P = { c: [[1.4, 1.2], [-0.6, 0.4], [0.8, -0.6], [-1.8, 1.0]][i % 4], r: [R(1.1, 1.7), R(0.6, 1.0)], y: R(0.7, 1.4), sp: R(0.28, 0.4) * (loco === 'drift' ? 0.4 : loco === 'walk' || loco === 'crawl' ? 0.35 : 1), ph: R(0, 6.28), dir: i % 2 ? -1 : 1 };
-      const c = { id: entry.id, holder, root, mouth, mixer, idle, feed, loco, P, a: P.ph, len, footY: -bb.min.y, pos: new V(), prev: new V(), yaw: 0, pitch: 0, state: 'roam', target: null, eatEnd: 0, eaten: 0 };
+      const c = { id: entry.id, holder, root, mouth, mixer, idle, feed, sulk, rest: idle, loco, P, a: P.ph, len, footY: -bb.min.y, pos: new V(), prev: new V(), yaw: 0, pitch: 0, state: 'roam', target: null, eatEnd: 0, eaten: 0 };
       c.pos.copy(pathPos(c, c.a));
       if (enter && loco !== 'rooted') { c.state = 'enter'; c.pos.x = (k % 2 ? -1 : 1) * 9; c.pos.y += 0.6; } /* swims/flies in from the edge */
       if (entry.rarity === 'legendary') { const gl = new THREE.PointLight(0xffd36a, 1.2, 1.6 + len * 2); holder.add(gl); } /* legendary: a soft golden glow */
@@ -601,7 +601,11 @@ attribute float aTip; varying float vTip;
       if (c.pos.y < floor) c.pos.y = floor;
     }
     function stepCreatures(dt, t, m) {
+      const sad = !!(view() && view().breaks && view().breaks.sad);
       for (const c of creatures) {
+        /* mood: the resting loop is 'sulk' (the creature's own mope, from the model pipeline) while sad, else 'idle' */
+        const want = sad && c.sulk ? c.sulk : c.idle;
+        if (want && c.rest && want !== c.rest && c.state !== 'eat') { want.reset().play(); c.rest.crossFadeTo(want, 1.2, false); c.rest = want; }
         c.mixer.update(dt * m);
         if (c.state === 'roam' && food.length && c.eaten < 4 && c.loco !== 'rooted') {
           const f = food.filter((x) => !x.userData.claimed).sort((a, b) => a.position.distanceTo(c.pos) - b.position.distanceTo(c.pos))[0];
@@ -616,12 +620,12 @@ attribute float aTip; varying float vTip;
           if (tmpV.distanceTo(c.target.position) < Math.max(0.12, c.len * 0.12)) {
             c.state = 'eat'; c.eaten++; removeFood(c.target); c.target = null;
             const dur = c.feed ? c.feed.getClip().duration / c.feed.timeScale : 1.2;
-            if (c.feed && c.idle) { c.feed.reset().play(); c.idle.crossFadeTo(c.feed, 0.25, false); }
+            if (c.feed && c.rest) { c.feed.reset().play(); c.rest.crossFadeTo(c.feed, 0.25, false); }
             c.eatEnd = t + dur * 0.92;
           }
         } else if (c.state === 'eat') {
           desired = c.pos.clone();
-          if (t >= c.eatEnd) { if (c.feed && c.idle) { c.idle.reset().play(); c.feed.crossFadeTo(c.idle, 0.3, false); } c.state = 'roam'; }
+          if (t >= c.eatEnd) { if (c.feed && c.rest) { c.rest.reset().play(); c.feed.crossFadeTo(c.rest, 0.3, false); } c.state = 'roam'; }
         } else if (c.state === 'enter') {
           c.a += dt * m * c.P.sp; const goal = pathPos(c, c.a), v = goal.clone().sub(c.pos), d = v.length();
           desired = d < 0.25 ? goal : c.pos.clone().addScaledVector(v, Math.min(1, (1.3 * dt * m) / d)); if (d < 0.25) c.state = 'roam';
@@ -752,7 +756,7 @@ attribute float aTip; varying float vTip;
     function kick() { if (!raf && running()) { last = 0; raf = requestAnimationFrame(frame); } }
     document.addEventListener('visibilitychange', kick);
     reduceMQ.addEventListener('change', kick);
-    return { apply, kick, loadCreatures, dropFood, get visitorName() { return visitorName; }, get newToday() { return newToday; }, progress: (st) => progressOf(st), get nextUp() { return nextUp; }, get visitorInfo() { return visitorInfo; }, debug: () => ({ food: food.length, creatures: creatures.map((c) => ({ id: c.id, state: c.state, eaten: c.eaten, loco: c.loco, pos: c.pos.toArray().map((x) => +x.toFixed(2)), feeding: !!(c.feed && c.feed.isRunning()) })) }) };
+    return { apply, kick, loadCreatures, dropFood, get visitorName() { return visitorName; }, get newToday() { return newToday; }, progress: (st) => progressOf(st), get nextUp() { return nextUp; }, get visitorInfo() { return visitorInfo; }, debug: () => ({ food: food.length, creatures: creatures.map((c) => ({ id: c.id, state: c.state, eaten: c.eaten, loco: c.loco, pos: c.pos.toArray().map((x) => +x.toFixed(2)), feeding: !!(c.feed && c.feed.isRunning()), rest: c.rest ? c.rest.getClip().name : null })) }) };
   }
 
   /* ---------- visibility: lazy start + pause off-screen ---------- */

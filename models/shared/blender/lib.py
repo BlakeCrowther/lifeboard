@@ -129,6 +129,24 @@ def jaw_bone(parent="head", name="jaw"):
     mt = MOUTHS[-1]; c = Vector(mt["center"]); a = Vector(mt["direction"])
     return (name, tuple(c), tuple(c + a * max(mt["width_m"], 1e-3)), parent)
 
+def mouth_corner_bones(parent="jaw", spread=0.38):
+    """Bone entries for the last lib.mouth()'s corners (cornerL/R, children of the jaw). They let a mood action
+    (sulk) bend the slit into a frown. Skin mouth verts with mouth_weights()."""
+    mt = MOUTHS[-1]; c = Vector(mt["center"]); a, w, h = _frame(mt["direction"]); W = mt["width_m"]
+    return [(n, tuple(c + w * s * W * spread), tuple(c + w * s * W * spread + a * W * 0.5), parent) for n, s in (("cornerL", 1), ("cornerR", -1))]
+
+def mouth_weights(co):
+    """Weights for a mouth vertex: middle on the jaw, each end blending onto its corner bone."""
+    mt = MOUTHS[-1]; a, w, h = _frame(mt["direction"]); s = (Vector(co) - Vector(mt["center"])).dot(w) / (mt["width_m"] / 2)
+    sm = lambda x: 0.0 if x <= 0 else 1.0 if x >= 1 else x * x * (3 - 2 * x)
+    l, r = sm(s) * 0.5 + max(0.0, s) * 0.5, sm(-s) * 0.5 + max(0.0, -s) * 0.5   # gradual: the slit bends into an arc, not a V
+    return {"jaw": max(0.0, 1 - l - r), "cornerL": l, "cornerR": r}
+
+def frown_locs(amount):
+    """key_pose locs that drop both mouth corners by `amount` (0..1) of half the mouth width: a frown."""
+    mt = MOUTHS[-1]; a, w, h = _frame(mt["direction"]); d = -h * amount * mt["width_m"] * 0.5
+    return {"cornerL": d, "cornerR": d}
+
 def mouth_scale(arm, bone, opening):
     """Pose-bone scale for a mouth opened by `opening` (0 closed .. 1 wide): mostly gape, some width, little depth.
     Maps the mouth's world (forward, width, gape) axes onto the bone's local axes."""

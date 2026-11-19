@@ -1,6 +1,6 @@
 ---
 name: creature-animate
-description: Kind: creature. Rig and animate a built creature in headless Blender: armature, weights, a unique seamless idle loop and a feed action with jaw bites, mouth node, glTF export. Produces models/out/<id>/<id>.glb. Step 3 of the creature pipeline (after shared model-build; uses shared models/shared/blender/lib.py, build.py --run, and hands off to shared model-verify).
+description: Kind: creature. Rig and animate a built creature in headless Blender: armature, weights, a unique seamless idle loop and a feed action with jaw bites, a sulk mood loop, mouth node, glTF export. Produces models/out/<id>/<id>.glb. Step 3 of the creature pipeline (after shared model-build; uses shared models/shared/blender/lib.py, build.py --run, and hands off to shared model-verify).
 ---
 
 # Creature animate (rig + loops + export)
@@ -32,9 +32,13 @@ Write keys with Python on pose bones; Bezier interpolation, auto-clamped handles
 - Mouth opens/closes on the bite beats: `lib.key_mouth(arm, [(t, opening), ...], frames=M)` keys the `jaw` scale (≥ 2 bites; closed at t=0 and t=1).
 - Follow `spec.motion.feed.technique` for what moves. Peak rotation ≤ 60°; some vertex must move ≥ 12% body length from frame 0 (G3).
 
+**sulk**: `spec.motion.sulk.frames`, a seamless loop (same whole-cycle rules as idle), follows `spec.motion.sulk.technique`:
+- A held posture (droop/slump/retract, never through the body) plus a slow, small loop; max speed must stay below idle's (G3).
+- Posture differs from idle frame 0 by ≥ 4% body length. Front mouths frown: add `lib.mouth_corner_bones()` to the rig, skin the mouth with `lib.mouth_weights(co)`, key `lib.frown_locs(spec.motion.sulk.frown)` as locs every frame (G3: corners drop ≥ 15% mouth width).
+
 Optional `swim_fast` (same rules as idle, higher k) and `react` (startle) when the spec asks.
 
 ## 3. Export
-- Push each action to its own NLA track named exactly `idle`, `feed`, …
+- Push each action to its own NLA track named exactly `idle`, `feed`, `sulk`, …
 - Export: `export_format='GLB'`, `export_animations=True`, `export_animation_mode='NLA_TRACKS'`, `export_image_format='WEBP'`, `export_skins=True`, `export_yup=True`.
 - Run `models/shared/tools/verify.sh <id>` locally; if G2/G3 fail, fix and re-export before handing off (verify will run again independently).

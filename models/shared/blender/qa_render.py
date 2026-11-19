@@ -11,7 +11,7 @@ from mathutils import Vector
 
 argv = sys.argv[sys.argv.index("--") + 1:]
 LEGACY = "--legacy-framing" in argv; argv = [a for a in argv if a != "--legacy-framing"]   # A/B only: old fixed L*1.5 / L*2.0 framing
-CLIPS = ["idle", "feed"]                     # creature default; plants pass --clips sway_4,tend
+CLIPS = ["idle", "feed", "sulk"]                   # creature default; plants pass --clips sway_4,tend
 if "--clips" in argv: i = argv.index("--clips"); CLIPS = [c for c in argv[i + 1].split(",") if c]; del argv[i:i + 2]
 GLB, OUT, GOLDEN = argv[0], argv[1], argv[2:]
 os.makedirs(OUT, exist_ok=True)

@@ -40,7 +40,7 @@ json.dump({"checks":c,"pass":all(x["pass"] for x in c)},open(out,"w"),indent=1)
 sys.exit(0 if all(x["pass"] for x in c) else 1)
 EOF
 echo "== G5 renders"
-CLIPS=$(python3 -c "import json;print({'plant':'sway_4,tend'}.get(json.load(open('$SPEC')).get('kind','creature'),'idle,feed'))")
+CLIPS=$(python3 -c "import json;print({'plant':'sway_4,tend'}.get(json.load(open('$SPEC')).get('kind','creature'),'idle,feed,sulk'))")
 # golden source: the contract build out/<gid>/<gid>.glb if present (true meters), else the roster's shipped glb
 GOLD=$(python3 -c "
 import json,os;r=json.load(open('$ROOT/roster.json'))
@@ -49,8 +49,8 @@ blender -b --factory-startup --python "$ROOT/shared/blender/qa_render.py" -- "$G
 shopt -s nullglob
 if ls "$OUT"/renders/turn_*.png >/dev/null 2>&1; then
   magick montage "$OUT"/renders/turn_*.png -tile 8x1 -geometry 192x192+2+2 -background '#0b2230' "$OUT/row_turn.png"
-  IFS=, read -r C1 C2 <<< "$CLIPS"; rows=("$OUT/row_turn.png"); mot=()
-  for c in $C1 $C2; do   # one strip per clip (creature: idle, feed; plant: sway_4, tend)
+  IFS=, read -r -a CL <<< "$CLIPS"; rows=("$OUT/row_turn.png"); mot=()
+  for c in "${CL[@]}"; do   # one strip per clip (creature: idle, feed, sulk; plant: sway_4, tend)
     magick montage "$OUT"/renders/${c}_[0-9].png -tile 6x1 -geometry 256x256+2+2 -background '#0b2230' "$OUT/row_${c}.png"; rows+=("$OUT/row_${c}.png")
     # motion onion-skin: frame 0 opaque + 5 later poses at 40% opacity, one image per clip
     [[ -f "$OUT/renders/onion_${c}_0.png" ]] || continue
@@ -58,7 +58,7 @@ if ls "$OUT"/renders/turn_*.png >/dev/null 2>&1; then
     for f in "$OUT"/renders/onion_${c}_[1-9].png; do args+=( \( "$f" -channel A -evaluate multiply 0.4 +channel \) -composite ); done
     magick "${args[@]}" "$OUT/renders/motion_${c}.png"; mot+=(-label "$c: 6 poses overlaid, 3/4 above" "$OUT/renders/motion_${c}.png")
   done
-  magick montage "${mot[@]}" -tile 2x1 -geometry 384x384+4+4 -background '#0b2230' -fill white -pointsize 16 "$OUT/row_motion.png"
+  magick montage "${mot[@]}" -tile $(( ${#mot[@]} / 3 ))x1 -geometry 384x384+4+4 -background '#0b2230' -fill white -pointsize 16 "$OUT/row_motion.png"
   rows+=("$OUT/row_motion.png")
   # side-by-side: separate panels at one shared scale (true relative size), labelled
   for p in "$OUT"/renders/panel_*.png; do

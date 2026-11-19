@@ -161,7 +161,7 @@ def _bones(spec):
 
 def rig(spec, mesh):
     L, hh, hw = _dims(spec); X = lambda u: _x(u) * L
-    bones = _bones(spec) + [lib.jaw_bone("head")]; names = {b[0] for b in bones}
+    bones = _bones(spec) + [lib.jaw_bone("head")] + lib.mouth_corner_bones(); names = {b[0] for b in bones}
     arm = lib.armature(spec["id"] + "_rig", bones)
     stations = [(X(0.08), "head"), (X(0.35), "root"), (X(0.55), "spine1"), (X(0.75), "spine2"), (X(0.92), "tail")]
     def wf(co, parts):
@@ -169,7 +169,7 @@ def rig(spec, mesh):
             if p.startswith("cer"): return {p.split("_")[0] + p.split("_")[1]: 1.0}
             if p in names: return {p: 1.0}                    # rhinoL/R, oralL/R
             if p.startswith("eye"): return {"head": 1.0}
-            if p == "mouth": return {"jaw": 1.0}
+            if p == "mouth": return lib.mouth_weights(co)
         return lib.lerp_weights(co.x, stations)
     lib.skin(mesh, arm, wf)
     mouth = lib.empty("mouth", lib.MOUTHS[-1]["tip"], "head", arm)   # at the mouth part's opening
@@ -222,4 +222,24 @@ def animate(spec, arm):
     # mouth opens as the head dips toward each bite, shuts on the bite (three rasps on the dip peaks above)
     lib.key_mouth(arm, [(0.0, 0), (0.22, 0), (0.3, 1.0), (0.36, 0), (0.5, 0.9), (0.58, 0), (0.7, 0.8), (0.77, 0), (1.0, 0)], frames=M)
     lib.ease_all(feed); acts.append(feed)
+    acts.append(_sulk(spec, arm, names))
     return acts
+
+def _sulk(spec, arm, names):
+    """Mope loop (runtime plays it instead of idle while sad): rhinophores folded back, cerata flattened outward,
+    head dipped, a barely-there ripple, mouth corners down. Whole cycles only, so it loops seamlessly."""
+    ms = spec["motion"]["sulk"]; N, k = ms["frames"], ms["cycles"]; mi = spec["motion"]["idle"]
+    amp = math.radians(mi.get("amp_deg", 6)) * ms.get("energy", 0.35); droop = math.radians(ms.get("droop_deg", 12))
+    w = lambda kk, f, ph=0: math.sin(2 * math.pi * kk * f / N + ph)
+    act = lib.new_action(arm, "sulk")
+    for f in range(0, N + 1):
+        rots = {bn: [(Z, amp * 1.3 ** i * w(k, f - 5 * (i + 1)))] for i, bn in enumerate(CHAIN)}
+        rots["head"] = [(Y, droop)]
+        rots["root"] = [(Y, math.radians(1) * w(1, f))]
+        for sgn, side in ((1, "L"), (-1, "R")):
+            for g in range(3):
+                if f"cer{side}{g}" in names: rots[f"cer{side}{g}"] = [(Xax, -sgn * math.radians(30) + sgn * math.radians(3) * w(k, f - 5 * g))]
+            if "rhino" + side in names: rots["rhino" + side] = [(Y, -math.radians(40))]
+            if "oral" + side in names: rots["oral" + side] = [(Z, -sgn * math.radians(8))]
+        lib.key_pose(arm, 1 + f, rots, lib.frown_locs(ms.get("frown", 1.0)))
+    lib.ease_all(act); return act

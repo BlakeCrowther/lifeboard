@@ -796,6 +796,8 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .hab-info{position:absolute;left:0;right:0;bottom:0;padding:32px 14px 12px;background:linear-gradient(to top,rgba(2,18,30,.72),rgba(2,18,30,0));color:#fff;pointer-events:none;display:flex;flex-direction:column;gap:6px}
 .hab-info p{margin:0;font-size:13px;color:rgba(255,255,255,.9)}
 .hab-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.25)}.hab-bar>div{height:6px;border-radius:3px;background:#8fe3f5;width:0}
+/* overlay (name, visitor, growth) only on hover; touch screens without hover keep it */
+@media (hover:hover){.hab-chips,.hab-info{opacity:0;transition:opacity .25s}.hab:hover .hab-chips,.hab:hover .hab-info,.hab:focus-within .hab-chips,.hab:focus-within .hab-info{opacity:1}}
 .hab-msg{position:absolute;inset:auto 12px 50% 12px;margin:0;text-align:center;color:#fff;font-size:13px}
 .gplot{flex:none;overflow:visible}
 /* Labs Today: habits as a garden, full width above both columns */

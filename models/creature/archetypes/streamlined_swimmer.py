@@ -138,14 +138,14 @@ def rig(spec, mesh):
     for side, sgn in (("pecL", 1), ("pecR", -1)):
         y = _r(spec, 0.3) * hw * 0.85
         bones.append((side, (X(0.3), sgn * y, -0.15 * hh), (X(0.3) - 0.1 * L, sgn * (y + 0.03 * L), -0.15 * hh), "root"))
-    bones.append(lib.jaw_bone("head"))
+    bones.append(lib.jaw_bone("head")); bones += lib.mouth_corner_bones()
     arm = lib.armature(spec["id"] + "_rig", bones)
     stations = [(X(0.12), "head"), (X(0.36), "root"), (X(0.52), "spine1"), (X(0.69), "spine2"), (X(0.86), "spine3"), ((BASE - 0.06) * L, "tail")]
     def wf(co, parts):
         if "pecL" in parts: return {"pecL": 0.85, "root": 0.15}
         if "pecR" in parts: return {"pecR": 0.85, "root": 0.15}
         if parts & {"eyeL", "eyeR"}: return {"head": 1.0}
-        if "mouth" in parts: return {"jaw": 1.0}
+        if "mouth" in parts: return lib.mouth_weights(co)
         if "tail" in parts and co.x < BASE * L - 0.03 * L: return {"tail": 1.0}
         return lib.lerp_weights(co.x, stations)
     lib.skin(mesh, arm, wf)
@@ -199,4 +199,22 @@ def animate(spec, arm):
         lib.key_pose(arm, 1 + round(t * M), rots, {"root": Vector((dx, 0, 0))})
     lib.key_mouth(arm, [(0.0, 0), (0.24, 0), (0.3, 1.0), (0.42, 1.0), (0.5, 0), (0.53, 0), (0.58, 0.9), (0.62, 0.9), (0.69, 0), (0.72, 0), (0.76, 0.35), (0.81, 0), (1.0, 0)], frames=M)
     lib.ease_all(feed); acts.append(feed)
+    acts.append(_sulk(spec, arm))
     return acts
+
+def _sulk(spec, arm):
+    """Mope loop (runtime plays it instead of idle while sad): nose down, tail drooping into a slump, fins clamped,
+    a slow tired tail beat, sunk a little, mouth corners down. Whole cycles only, so it loops seamlessly."""
+    L, hh, hw = _dims(spec); mi = spec["motion"]["idle"]; ms = spec["motion"]["sulk"]
+    N, k = ms["frames"], ms["cycles"]; amp = math.radians(mi.get("amp_deg", 14)) * ms.get("energy", 0.35)
+    droop = math.radians(ms.get("droop_deg", 14)); w = lambda kk, f, ph=0: math.sin(2 * math.pi * kk * f / N + ph)
+    act = lib.new_action(arm, "sulk")
+    for f in range(0, N + 1):
+        rots = {bn: [(Z, amp * (0.6 + 0.3 * i) * w(k, f - 4 * i)), (Y, -droop * 0.18)] for i, bn in enumerate(CHAIN)}   # tail sags
+        rots["root"] = [(Y, droop + math.radians(2) * w(1, f))]                                                       # nose down, slow sigh
+        rots["head"] = [(Y, droop * 0.4)]
+        for side, sgn in (("pecL", 1), ("pecR", -1)): rots[side] = [(Xax, -sgn * math.radians(12) + sgn * math.radians(4) * w(k, f))]   # clamped in
+        locs = {"root": Vector((0, 0, -L * (0.05 + 0.01 * w(1, f))))}
+        locs.update(lib.frown_locs(ms.get("frown", 1.0)))
+        lib.key_pose(arm, 1 + f, rots, locs)
+    lib.ease_all(act); return act
