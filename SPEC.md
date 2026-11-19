@@ -133,7 +133,7 @@ Later candidate: **Scenario** (a short situation; pick which idea applies). Drop
 
 **Ladder per source:** each source picks which formats its lessons climb through, in order, and a lesson's format follows its level instead of staying fixed. A book might go Tap → Recall → Apply; Spanish skips Tap and goes Recall → Apply. A new lesson starts on the first rung; advancing moves it up a rung and lengthens the interval; a miss drops it a rung and brings it back sooner. The lesson-making skill sets the ladder and writes a prompt for every rung of every lesson.
 
-**Daily deck:** `lessons.deck = 5` lessons, shuffled (per-board override: `checks/lesson_rules` `{ value: { deck } }`). Reviews that are due come first, then new lessons. Never more than the deck size a day: cards answered earlier that day count toward it.
+**Feedings:** `lessons.feedings = 2` decks a day of `lessons.perFeeding = 5` lessons each, shuffled. The waking day `lessons.dayStart = 6` to `lessons.dayEnd = 22` (hours, Pacific) splits evenly between feedings (default: before 2 pm, after 2 pm); before the start counts as the first, after the end as the last. Reviews that are due come first, then new lessons. Never more than `perFeeding` per feeding: cards answered earlier in the same feeding count toward it, and a missed feeding doesn't carry over. Per-board override: `checks/lesson_rules` `{ value: { feedings, perFeeding, dayStart, dayEnd } }` (an old `{ deck }` sets `perFeeding`).
 
 **Spaced repetition:** each lesson tracks its level. Advancing brings it back after `lessons.intervals = [3,7,21]` days for levels 1, 2 and 3; advancing past the last level **graduates** it. A source can set its own `intervals` (any length, e.g. quotes `[7,30,90]`, a language `[1,3,7,14]`); the lesson-make skill picks them by type. A missed Recall drops a level (never below the first rung) and comes back after that level's interval, or tomorrow on the first rung.
 
@@ -285,6 +285,8 @@ Before building UI, the rules became one pure module (`game.js`, no DOM, like `l
 | First biome is too fast | Default pace 6 pts/day; real pace ~11 → first biome 2.6 weeks | Default 9 pts/day; later biomes already land at 4.6 weeks |
 | Tiny same-day tasks | No real gain: adaptive pacing absorbs it | None needed |
 | Cloudy water almost always on | Cloudy 76% of days at a 10-task threshold | Raise to 20 or scale to the person's usual pile |
+
+**Update (Nov 18, feedings):** two feedings of 5 a day → at 1 book a month the backlog stays ~0 and a book takes ~71 days (was ~14 and ~82 with one deck); 2 books a month backlog ~6.
 
 **Decision (Nov 18):** strict death kept, 4-week seasons kept, no wilt. Everything else adopted as defaults in `game.js`: dead plots stay dead until next season, overdue rewards capped at 1 a week and legendary at 1 per biome, deck of 5 on a 3-7-21 schedule, starting pace 9 a day, water murk and algae scaled gradually. Re-run: steady still blooms 1.7 of 4 (by design), dead plot-weeks ~30%, about 3 rare and 0.5 legendary visitors a month, first biome 3.9 weeks, lesson backlog flat at 1 book a month.
 

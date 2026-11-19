@@ -9,7 +9,7 @@ const G = require(path.join(__dirname, '..', 'game.js'));
 const argv0 = process.argv.slice(2), visArg = argv0.find((a) => a.startsWith('--visitors'));
 const args = argv0.filter((a) => !a.startsWith('--')), sets = args.filter((a) => a.includes('=')), nums = args.filter((a) => !a.includes('='));
 const SEEDS = +nums[0] || 200, WEEKS = +nums[1] || 28;
-/* overrides: garden.replant=true lessons.deck=5 lessons.intervals=[3,7,21] */
+/* overrides: garden.replant=true lessons.perFeeding=5 lessons.feedings=2 lessons.intervals=[3,7,21] */
 for (const kv of sets) { const [k, v] = kv.split('='), ks = k.split('.'); let o = G.RULES; ks.slice(0, -1).forEach((x) => (o = o[x])); o[ks.at(-1)] = JSON.parse(v); }
 if (sets.length) console.log('overrides:', sets.join(' '));
 
@@ -113,7 +113,7 @@ function runOne(P, seed, opts = {}) {
       if (G.algae(pile.map((t) => day - t.since)) >= 0.5) M.algaeDays++;
       M.pileSum += pile.length;
       /* lessons */
-      if (rng() < P.deck * (dayMode === 'gap' ? 0.4 : 1)) {
+      for (let fd = 0; fd < G.RULES.lessons.feedings; fd++) if (rng() < P.deck * (dayMode === 'gap' ? 0.4 : 1)) {
         for (const l of G.buildDeck(lessons, day)) {
           M.lessonsShown++;
           const r = rng();

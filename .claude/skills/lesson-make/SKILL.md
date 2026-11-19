@@ -11,7 +11,7 @@ Rules live in `SPEC.md` → Lessons (read it first). Data shapes: `schema.js` (`
 The user's live lifeboard artifact (never a mock/test build; see break-setup for how to pick it). Never hardcode its URL in this repo.
 
 ## 1. Show the queue first
-ArtifactData `list` on `lessons` (and `sources`). Report: active lessons, how many are due or new, books in progress. The deck takes `lessons.deck` (5) a day; 2+ books a month backs it up, so say so if this adds to a backlog.
+ArtifactData `list` on `lessons` (and `sources`). Report: active lessons, how many are due or new, books in progress. The board shows `lessons.feedings` (2) feedings a day of `lessons.perFeeding` (5) cards; 2+ books a month backs it up, so say so if this adds to a backlog.
 
 ## 2. Get the source
 Accept a link, file, pasted text, transcript, quote or "the book X". Read what you can (WebFetch for links, Read for files). For a book you can't read, work from what you reliably know and say so.
@@ -44,10 +44,10 @@ ArtifactData `batch` on the live board:
 Every doc must pass `LBS.validate` (check with `node -e` against `schema.js` before writing). The board skips invalid docs silently.
 
 ## 7. Report
-Source added, lesson count, ladder, and when they start showing (new lessons fill the deck after due reviews, 5 a day). Lessons appear only with Labs on.
+Source added, lesson count, ladder, and when they start showing (new lessons fill each feeding after due reviews). Lessons appear only with Labs on.
 
-## Deck size
-Board-wide cards per day: ArtifactData `set` `checks/lesson_rules` `{ "value": { "deck": <n> }, "updated_at": <ms> }` (default 5).
+## Feedings
+Board-wide: ArtifactData `set` `checks/lesson_rules` `{ "value": { "feedings": <n>, "perFeeding": <n>, "dayStart": <hour>, "dayEnd": <hour> }, "updated_at": <ms> }` (defaults 2 × 5, day 6–22; any key may be left out).
 
 ## Pausing / removing
 Pause a source: set `sources/<id>.status = "paused"` (its lessons leave the deck). Rewrite a flagged lesson (`flagged: true`) in place and clear the flag.

@@ -7,7 +7,9 @@
     tide: { perPct: 10, fullBonus: 5, phases: 5, targetWeeks: 4.5, defaultDaily: 9, trailingDays: 28, cloudyAt: 10, algaeAfter: 7, algaeAt: 10 },
     visitor: { fullDaysForRare: 6, rareOverdue: 7, legendaryOverdue: 30, overdueDropsPerWeek: 1, legendaryPerBiome: 1 },
     bleach: { days: 14, below: 0.25, recoverDays: 7, recoverAt: 0.5 },
-    lessons: { intervals: [3, 7, 21], deck: 5, hideAfter: 3 }, /* hideAfter: days without a lesson before creatures hide */
+    /* feedings: decks a day, perFeeding cards each; the waking day dayStart..dayEnd (hours) splits evenly between them.
+       hideAfter: days without a lesson before creatures hide */
+    lessons: { intervals: [3, 7, 21], feedings: 2, perFeeding: 5, dayStart: 6, dayEnd: 22, hideAfter: 3 },
     /* break overlay: each skipped break costs this much growth (never below the current phase); the fish sulk that day */
     breaks: { skipCost: 5 },
   };
@@ -109,13 +111,19 @@
   /* ---------- lessons ---------- */
   function newLesson(id, sourceId, format, day) { return { id, sourceId, format, level: 0, due: day, state: 'active' }; }
   /* due reviews first (oldest due first), then new lessons; at most `n` */
-  function buildDeck(lessons, day, n = RULES.lessons.deck) {
+  function buildDeck(lessons, day, n = RULES.lessons.perFeeding) {
     const act = lessons.filter((l) => l.state === 'active' && l.due <= day);
     const rev = act.filter((l) => l.level > 0).sort((a, b) => a.due - b.due);
     const fresh = act.filter((l) => l.level === 0);
     return rev.concat(fresh).slice(0, n);
   }
   /* action: advance | wrong | again | drop | skip. Graduates after the last interval. */
+  /* which feeding an hour (0-23, may be fractional) falls in; before dayStart is the first, after dayEnd the last.
+     r: RULES.lessons with any per-board override merged in */
+  function feedingOf(hour, r = RULES.lessons) {
+    const n = Math.max(1, r.feedings | 0), span = (r.dayEnd - r.dayStart) / n;
+    return Math.min(n - 1, Math.max(0, Math.floor((hour - r.dayStart) / span)));
+  }
   /* iv: the source's own intervals when it sets them (sources.intervals), else RULES.lessons.intervals */
   function answer(l, action, day, iv = RULES.lessons.intervals) {
     if (action === 'drop') l.state = 'dropped';
@@ -130,7 +138,7 @@
   /* which rung of the source's ladder a lesson is on: its level, capped at the last rung */
   const rungOf = (level, rungs) => Math.min(level || 0, rungs - 1);
 
-  const API = { RULES, weekResult, newPlant, plantWeek, rarityOf, endSeason, dayTide, phaseThresholds, newReef, reefDay, weekVisitor, overdueDrop, overdueReward, cloudiness, algae, newLesson, buildDeck, answer, sourceDone, rungOf };
+  const API = { RULES, weekResult, newPlant, plantWeek, rarityOf, endSeason, dayTide, phaseThresholds, newReef, reefDay, weekVisitor, overdueDrop, overdueReward, cloudiness, algae, newLesson, buildDeck, answer, sourceDone, rungOf, feedingOf };
   G.LBG = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
 })(typeof window !== 'undefined' ? window : globalThis);
