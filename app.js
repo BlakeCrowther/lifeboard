@@ -669,7 +669,7 @@ function viewToday() {
   const gw = labsHabits(hs, hDone, hTot, daysLeft);
   const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow + glanceRows }) : '';
   return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}, there. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}, there.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
-    <div class="today"><div class="col a">${weekRings()}${labsOn() ? `<div class="les-wrap"><div class="labs-slot" data-labs="habitat"></div>${lessonsChip()}${lessonModal(true)}</div>` : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div><div class="col b">${upnext}${due}${sug}${tomorrow}${week}${more}</div></div>`;
+    <div class="today"><div class="col a">${upnext}${weekRings()}${labsOn() ? `<div class="les-wrap"><div class="labs-slot" data-labs="habitat"></div>${lessonsChip()}${lessonModal(true)}</div>` : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
 }
 /* Habit rings: one per habit, filling toward the weekly target. The dot on each ring is the floor that keeps the streak alive. */
 const habitLast = {}; /* sessions this week per habit at the last render: a ring sweeps only when it grows */
