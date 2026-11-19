@@ -27,6 +27,7 @@ One judge is noisy (the same model scored 3.2–4.0 across judges), so G5 = **3 
 ```json
 {"species_read":1-5,"anatomy":1-5,"style_match":1-5,"artifacts":1-5,"idle_readable":1-5,"feed_readable":1-5,"mouth_correct":true,"notes":["..."],"fix":["..."]}
 ```
+- Plants: images `<qa>/contact.png` (row 2 = growth strip) + `renders/motion_{sway_4,tend}.png`; criteria `species_read, anatomy, style_match, artifacts, growth_readable, sway_readable, tend_readable` (no mouth); anchor + bar from `models/plant/qa_calibration.json` (golden `mermaids_cup`).
 - `species_read`: would someone recognise the reference animal?
 - `artifacts`: 5 = no holes, stretching, flipped normals, floating parts, texture seams or z-fighting, and no part passing through another part in any idle/feed frame (fin through body, arm through arm).
 - Aggregate: per criterion the **median** of the 3 judges; `mouth_correct` = true in ≥ 2 of 3.

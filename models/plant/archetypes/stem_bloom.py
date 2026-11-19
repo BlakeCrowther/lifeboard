@@ -10,14 +10,16 @@ Spec fields (all optional except size/palette/motion):
   size.height_m                       bloom height, soil to top of the head
   shape.stage_heights [5 floats]      stage height / bloom height (default .07 .3 .6 .85 1)
   shape.stem {radius_ratio .022, lean .06}            radius / height; lean = tip offset toward +X / stem height
-  shape.leaf {count 4 (1-5), length_ratio .22, width_ratio .3, pitch_deg 40, low .12, high .55}
+  shape.leaf {count 4 (1-5), whorl 1 (1-8), length_ratio .22, width_ratio .3, pitch_deg 40, low .12, high .55}
+        count = leaf nodes; whorl = leaves per node (>1: a ring of blades/hairs around the stem, one bone per node);
         width_ratio = leaf width / leaf length; low/high = attach span along the stem (0 soil .. 1 top)
-  shape.head {petals 8 (3-24), radius_ratio .16, petal_width_ratio .45, cup_deg 30, disc_ratio .22, bud_ratio .5}
+  shape.head {petals 8 (3-24), radius_ratio .16, petal_width_ratio .45, cup_deg 30, disc_ratio .22, bud_ratio .5, bud_stretch 1.5}
         radius = petal tip distance / height; cup_deg = petal rise above horizontal; disc = centre / radius;
-        bud = bud radius / head radius
+        petal_width_ratio ~0.9+ overlaps the petals into one fused, ribbed cap (parasol); bud = bud radius / head
+        radius, bud_stretch = bud height / width (2+ = club)
   shape.seed_ratio .035               seed radius / height
   palette.main [stem, leaf], palette.accent (head; the biome accent), palette.disc (default main[0]), palette.seed
-  motion.sway {frames, cycles, amp_deg, lag_frames}, motion.tend {frames, lift_deg 8, open 0.15}
+  motion.sway {frames, cycles, amp_deg, lag_frames}, motion.tend {frames, lift_deg 8, stretch 0.12, open 0.15}
   motion.medium  air|water (default: the biome's medium in models/biomes.json)
 Contract: origin at the soil point, +Z up, +X is the best side, meters."""
 import math, sys, os, json
@@ -44,7 +46,7 @@ def _stem_top(spec, n):
     """Stem height for stage n: bud/bloom heads sit on top, so the stem stops below the stage height."""
     h = _heights(spec)[n]; R = _head_r(spec); rise = math.sin(math.radians(_g(spec, "head", "cup_deg", 30)))
     if n == 4: return h - R * rise - 0.1 * R
-    if n == 3: return h - 2 * _g(spec, "head", "bud_ratio", 0.5) * R * 1.5
+    if n == 3: return h - 2 * _g(spec, "head", "bud_ratio", 0.5) * R * _g(spec, "head", "bud_stretch", 1.5)
     return h
 
 def _stem_pt(spec, n, t):
@@ -52,16 +54,27 @@ def _stem_pt(spec, n, t):
     top = _stem_top(spec, n); lean = _g(spec, "stem", "lean", 0.06) * top
     return Vector((lean * t * t, 0, top * t))
 
-def _leaves(spec, n):
-    """(name, attach t, yaw, length) for stage n's leaves. Sprout = two small round cotyledons."""
+def _whorl(spec): return int(round(min(max(_g(spec, "leaf", "whorl", 1), 1), 8)))
+
+def _nodes(spec, n):
+    """(bone name, attach t, yaw, length) per leaf node of stage n (no nodes in seed/sprout)."""
+    if n < 2: return []
     H = _H(spec); cnt = int(round(min(max(_g(spec, "leaf", "count", 4), 1), 5)))
     ln = _g(spec, "leaf", "length_ratio", 0.22) * H
-    if n == 1: return [(f"s1_cot{i}", 0.95, math.pi / 2 + math.pi * i, ln * 0.4) for i in range(2)]
-    if n < 2: return []
     k = cnt if n >= 3 else max(1, math.ceil(cnt * 0.6))
     lo, hi = _g(spec, "leaf", "low", 0.12), _g(spec, "leaf", "high", 0.55)
     grow = 0.75 if n == 2 else 1.0
     return [(f"s{n}_leaf{i}", lo + (hi - lo) * i / max(k - 1, 1), math.pi / 2 + GOLDEN * i, ln * grow * (1 - 0.25 * i / max(k - 1, 1))) for i in range(k)]
+
+def _leaves(spec, n):
+    """(part name, attach t, yaw, length) for stage n's blades. Sprout = two small round cotyledons; whorl > 1 = a ring
+    of blades per node (part s<n>_leaf<i>_<j>, skinned to node bone s<n>_leaf<i>)."""
+    if n == 1:
+        ln = _g(spec, "leaf", "length_ratio", 0.22) * _H(spec)
+        return [(f"s1_cot{i}", 0.95, math.pi / 2 + math.pi * i, ln * 0.4) for i in range(2)]
+    w = _whorl(spec)
+    if w == 1: return _nodes(spec, n)
+    return [(f"{nm}_{j}", t, yaw + 2 * math.pi * j / w, ln) for nm, t, yaw, ln in _nodes(spec, n) for j in range(w)]
 
 def _leaf_outline(ln, w, round_=False):
     """Lanceolate (or round, for cotyledons/petals) outline in XZ, base at x=0, tip at +X."""
@@ -92,7 +105,10 @@ def model(spec):
         top = _stem_pt(spec, n, 1.0)
         if n == 3:                                                       # closed bud: tall ovoid in the head colour
             br = _g(spec, "head", "bud_ratio", 0.5) * R
-            bud = lib.sphere("s3_bud", br, tuple(top + Vector((0, 0, br * 1.3))), 14); bud.scale = (1, 1, 1.5); parts["s3_bud"] = bud
+            st = _g(spec, "head", "bud_stretch", 1.5)                    # club: tapered tube, widest near the tip
+            prof = [0.45, 0.7, 0.9, 1.0, 0.9, 0.55]
+            path = [top + Vector((0, 0, 2 * br * st * k / (len(prof) - 1))) for k in range(len(prof))]
+            parts["s3_bud"] = lib.tube("s3_bud", path, [br * r for r in prof], segs=12)
         if n == 4:                                                       # open head: petal whorl around a centre disc
             cnt = int(round(min(max(_g(spec, "head", "petals", 8), 3), 24)))
             pw = _g(spec, "head", "petal_width_ratio", 0.45); cup = math.radians(_g(spec, "head", "cup_deg", 30))
@@ -125,9 +141,8 @@ def _bones(spec):
         k = _nstem(n); prev = None
         for i in range(k):
             nm = f"s{n}_stem{i}"; bones.append((nm, tuple(_stem_pt(spec, n, i / k)), tuple(_stem_pt(spec, n, (i + 1) / k)), prev)); prev = nm
-        for name, t, yaw, ln in _leaves(spec, n):
-            if name.startswith("s1_cot"): continue
-            pitch = math.radians(_g(spec, "leaf", "pitch_deg", 40)); b = _stem_pt(spec, n, t)
+        for name, t, yaw, ln in _nodes(spec, n):             # whorls: the node bone points up the stem, the ring bends with it
+            pitch = math.radians(_g(spec, "leaf", "pitch_deg", 40) if _whorl(spec) == 1 else 90); b = _stem_pt(spec, n, t)
             bones.append((name, tuple(b), tuple(b + _leaf_dir(yaw, pitch) * ln), f"s{n}_stem{min(int(t * k), k - 1)}"))
         if n >= 3:
             top = _stem_pt(spec, n, 1.0); bones.append((f"s{n}_head", tuple(top), tuple(top + Vector((0, 0, _head_r(spec)))), f"s{n}_stem{k - 1}"))
@@ -151,6 +166,7 @@ def rig(spec, mesh):
     def wf(co, parts):
         p = next(iter(parts)); n = int(p[1]); kind = p.split("_", 1)[1]
         if p in names: return {p: 1.0}                                         # true leaves, seed
+        if kind.startswith("leaf"): return {p.rsplit("_", 1)[0]: 1.0}         # whorl blade -> its node bone
         if kind.startswith(("petal", "bud", "disc")): return {f"s{n}_head": 1.0}
         k = _nstem(n); top = _stem_top(spec, n)
         if kind.startswith("cot"): return {f"s1_stem{k - 1}": 1.0}
@@ -195,23 +211,29 @@ def animate(spec, arm):
     for n in range(STAGES):
         act = lib.new_action(arm, f"sway_{n}")
         for f in range(0, N + 1): lib.key_pose(arm, 1 + f, _sway(spec, n, f, names))
-        _key_scale(arm, heads, 1, 1.0); _key_scale(arm, heads, 1 + N, 1.0)
+        sc = heads + sorted(b for b in names if "_stem" in b)        # scale channels exist in every clip (tend scales these)
+        _key_scale(arm, sc, 1, 1.0); _key_scale(arm, sc, 1 + N, 1.0)
         lib.ease_all(act); acts.append(act)
     # tend: every stage perks up at once (only one is visible): a small dip, then the stem straightens back past rest,
     # leaves lift, the head opens a little; settles back to rest
-    mt = spec["motion"]["tend"]; M = mt["frames"]; lift = math.radians(mt.get("lift_deg", 8)); op = mt.get("open", 0.15)
+    mt = spec["motion"]["tend"]; M = mt["frames"]; lift = math.radians(mt.get("lift_deg", 8)); op = mt.get("open", 0.15); sx = mt.get("stretch", 0.12)
+    stems = sorted(b for b in names if "_stem" in b)
     act = lib.new_action(arm, "tend")
     #        t     stem (+ = lean back)  leaf lift  head open
     beats = [(0.0, 0.0, 0.0, 0.0), (0.2, -0.35, -0.3, 0.0), (0.5, 1.0, 1.0, 1.0), (0.72, 0.55, 0.7, 0.8), (1.0, 0.0, 0.0, 0.0)]
     for t, sp, ll, ho in beats:
         rots = {}
         for b in arm.data.bones:
-            if "_stem" in b.name: rots[b.name] = [(Y, -lift * sp)]
+            if "_stem" in b.name: rots[b.name] = [(Y, -lift * 0.4 * sp)]
             elif b.name == "s0_seed": rots[b.name] = [(Y, -lift * 0.6 * sp)]
             elif "_leaf" in b.name:                            # lift around the leaf's own hinge (perpendicular to blade and up)
                 d = (b.tail_local - b.head_local).normalized(); hinge = d.cross(Vector(Z)).normalized()
                 rots[b.name] = [(tuple(hinge), -lift * 1.5 * ll)]
+            elif "_leaf" in b.name and _whorl(spec) > 1: rots[b.name] = []      # node bone points up the stem: the stretch lifts it
         lib.key_pose(arm, 1 + round(t * M), rots)
         _key_scale(arm, heads, 1 + round(t * M), 1 + op * ho)
+        for bn in stems:                                     # stretch along the bone (local Y): the plant rises, then settles
+            pb = arm.pose.bones[bn]; e = 1 + sx * max(sp, -0.5) / len(stems) * 3
+            pb.scale = Vector((1 / math.sqrt(e), e, 1 / math.sqrt(e))); pb.keyframe_insert("scale", frame=1 + round(t * M)); pb.scale = Vector((1, 1, 1))
     lib.ease_all(act); acts.append(act)
     return acts
