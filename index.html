@@ -874,9 +874,10 @@ body.km-open{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.kmodal.in,.kmodal.in .km-card{animation:none}}
 /* Labs lessons: chip on the habitat; deck drops over the water (modal on phones) */
 .les-wrap{position:relative}
-.les-chip{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:3;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border:0;border-radius:999px;background:rgba(255,252,246,.92);color:#3a2a14;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);backdrop-filter:blur(6px)}
+.les-chip{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:3;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border:0;border-radius:999px;background:var(--blur);color:var(--text);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);backdrop-filter:blur(6px)}
+.les-chip>svg:first-child{color:var(--ink)}.les-chip.on{background:var(--accent);color:var(--on)}.les-chip.on>svg:first-child{color:inherit}
 .les-chip::after{content:"";position:absolute;inset:-6px -2px}
-.les-pop{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:3;width:min(440px,calc(100% - 24px));max-height:calc(100% - 64px);overflow:auto;background:var(--surface);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);padding:16px 16px 8px;animation:lesDrop .2s cubic-bezier(.2,.8,.3,1)}
+.les-pop{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:3;width:min(440px,calc(100% - 24px));max-height:calc(100% - 64px);overflow:auto;background:var(--surface);color:var(--text);border-radius:16px;box-shadow:var(--lift);padding:16px 16px 8px;animation:lesDrop .2s cubic-bezier(.2,.8,.3,1)}
 .les-pop .les-body{min-height:0;gap:10px}.les-pop .les-p,.les-pop .les-q{font-size:16px}
 .les-pop .km-x{top:8px;right:8px;width:32px;height:32px}
 @keyframes lesDrop{from{opacity:0;transform:translate(-50%,-8px)}}
