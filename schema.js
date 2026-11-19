@@ -35,6 +35,11 @@
     return null;
   }
   const rule = (v) => ruleError(v) === null;
+  const FORMATS = ['tap', 'recall', 'apply'];
+  const ladder = (v) => Array.isArray(v) && v.length > 0 && v.every((f) => FORMATS.includes(f));
+  /* one rung per ladder step: { format, prompt, answer?, choices? }; recall needs an answer */
+  const rungs = (v) => Array.isArray(v) && v.length > 0 && v.every((r) => T.obj(r) && FORMATS.includes(r.format) && T.str(r.prompt) && r.prompt.length > 0
+    && (r.format !== 'recall' || (T.str(r.answer) && r.answer.length > 0)) && (r.choices == null || (Array.isArray(r.choices) && r.choices.every(T.str))));
 
   /* field: [check, required]. Optional fields may also be null. */
   const S = {
@@ -60,9 +65,13 @@
        not in COLLECTIONS, so store.js never listens to it. */
     labs_state: { started: [T.date, 1], created_at: [T.num] },
     labs_keepsakes: { kind: [oneOf('plant', 'reef'), 1], title: [T.str], note: [T.str], updated_at: [T.num] },
+    /* Labs lessons (SPEC.md Lessons): written by the lesson-make skill; the deck writes level/due/state and answers */
+    sources: { title: [T.str, 1], type: [oneOf('book', 'video', 'post', 'article', 'talk', 'podcast', 'course', 'note'), 1], author: [T.str], url: [T.str], size: [T.num], salience: [T.num], ladder: [ladder, 1], summary: [T.str], status: [oneOf('active', 'paused', 'finished')], created_at: [T.num] },
+    lessons: { source_id: [T.str, 1], level: [T.num, 1], due: [T.date, 1], state: [oneOf('active', 'graduated', 'dropped'), 1], rungs: [rungs, 1], order: [T.num], flagged: [T.bool], created_at: [T.num], updated_at: [T.num] },
+    lesson_answers: { lesson_id: [T.str, 1], source_id: [T.str], action: [oneOf('advance', 'wrong', 'again', 'drop', 'skip', 'flag'), 1], format: [T.str], text: [T.str], date: [T.date, 1], created_at: [T.num] },
     visitors_met: { creature: [T.str, 1], met_at: [T.num, 1], biome: [T.num], week: [T.date], rarity: [oneOf('common', 'rare', 'legendary')] },
   };
-  const OPTIONAL = ['visitors_met', 'labs_state', 'labs_keepsakes'];
+  const OPTIONAL = ['visitors_met', 'labs_state', 'labs_keepsakes', 'sources', 'lessons', 'lesson_answers'];
 
   function validate(col, doc) {
     const sch = S[col];
@@ -75,5 +84,5 @@
     }
     return null;
   }
-  G.LBS = { validate, ruleError, COLLECTIONS: Object.keys(S).filter((c) => !OPTIONAL.includes(c)), OPTIONAL, RULE_KINDS };
+  G.LBS = { validate, ruleError, COLLECTIONS: Object.keys(S).filter((c) => !OPTIONAL.includes(c)), OPTIONAL, RULE_KINDS, FORMATS };
 })(typeof window !== 'undefined' ? window : globalThis);

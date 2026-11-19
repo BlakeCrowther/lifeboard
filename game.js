@@ -121,14 +121,16 @@
     if (action === 'drop') l.state = 'dropped';
     else if (action === 'skip') l.due = day + 1;
     else if (action === 'again') l.due = day + iv[Math.max(0, l.level - 1)];
-    else if (action === 'wrong') { l.level = Math.max(1, l.level - 1); l.due = day + iv[l.level - 1]; }
+    else if (action === 'wrong') { l.level = Math.max(0, l.level - 1); l.due = day + (l.level ? iv[l.level - 1] : 1); }
     else if (l.level >= iv.length) l.state = 'graduated';
     else { l.level++; l.due = day + iv[l.level - 1]; }
     return l;
   }
   const sourceDone = (lessons) => lessons.every((l) => l.state !== 'active');
+  /* which rung of the source's ladder a lesson is on: its level, capped at the last rung */
+  const rungOf = (level, rungs) => Math.min(level || 0, rungs - 1);
 
-  const API = { RULES, weekResult, newPlant, plantWeek, rarityOf, endSeason, dayTide, phaseThresholds, newReef, reefDay, weekVisitor, overdueDrop, overdueReward, cloudiness, algae, newLesson, buildDeck, answer, sourceDone };
+  const API = { RULES, weekResult, newPlant, plantWeek, rarityOf, endSeason, dayTide, phaseThresholds, newReef, reefDay, weekVisitor, overdueDrop, overdueReward, cloudiness, algae, newLesson, buildDeck, answer, sourceDone, rungOf };
   G.LBG = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
 })(typeof window !== 'undefined' ? window : globalThis);

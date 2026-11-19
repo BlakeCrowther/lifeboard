@@ -669,7 +669,7 @@ function viewToday() {
   const gw = labsHabits(hs, hDone, hTot, daysLeft);
   const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow + glanceRows }) : '';
   return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}, there. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}, there.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
-    <div class="today"><div class="col a">${weekRings()}${labsOn() ? '<div class="labs-slot" data-labs="habitat"></div>' : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div><div class="col b">${upnext}${due}${sug}${tomorrow}${week}${more}</div></div>`;
+    <div class="today"><div class="col a">${weekRings()}${labsOn() ? '<div class="labs-slot" data-labs="habitat"></div>' + lessonsCard() : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div><div class="col b">${upnext}${due}${sug}${tomorrow}${week}${more}</div></div>`;
 }
 /* Habit rings: one per habit, filling toward the weekly target. The dot on each ring is the floor that keeps the streak alive. */
 const habitLast = {}; /* sessions this week per habit at the last render: a ring sweeps only when it grows */
@@ -1434,7 +1434,7 @@ function render() {
   const html = ready ? { today: viewToday, plan: viewPlan, lists: viewLists, life: viewLife, grow: viewGrow }[U.tab]() : statusView(st);
   const sq = S.cond && S.cond.quote, q = sq ? [str(sq.text), str(sq.author) || 'Unknown'] : QUOTES[U.quote % QUOTES.length];
   const sk = LBDB.skipped();
-  main.innerHTML = html + `<footer class="quote"><p>“${esc(q[0])}”</p><div class="by">${esc(q[1])}${sq ? '' : ' · <button class="link" style="display:inline-flex;min-height:44px" data-act="quote">Another</button>'}</div>
+  main.innerHTML = html + lessonModal() + `<footer class="quote"><p>“${esc(q[0])}”</p><div class="by">${esc(q[1])}${sq ? '' : ' · <button class="link" style="display:inline-flex;min-height:44px" data-act="quote">Another</button>'}</div>
     ${sk.n ? `<p class="skipnote" title="${esc(Object.entries(sk.by).map(([c, n]) => `${c}: ${n}`).join(', '))}">${plural(sk.n, 'item')} skipped because the saved data didn't match the expected shape.</p>` : ''}</footer>`;
   document.body.classList.toggle('km-open', !!main.querySelector('.kmodal'));
   const fc = fabConfig();
@@ -1652,6 +1652,11 @@ document.addEventListener('click', (e) => {
     case 'keep-edit': U.editKeep = id; render(); { const i = document.querySelector('[data-form="keep"] input'); i && i.focus(); } break;
     case 'keep-cancel': U.editKeep = null; render(); break;
     case 'coll': U.coll = val; render(); break;
+    case 'les-open': lessonOpen(); break;
+    case 'les-close': lessonClose(); break;
+    case 'les-act': lessonAct(val); break;
+    case 'les-pick': { const l = LES.lessons[LES.deck[LES.i]], r = l && lesRung(l); if (r) lessonAct(lesRight(r.choices[+val], r.answer) ? 'advance' : 'wrong'); break; }
+    case 'les-next': LES.i++; LES.fb = null; render(); lesFocus(); break;
     case 'inspect': U.inspect = id || null; U.editKeep = null; U.kmAnim = !!U.inspect; render(); U.kmAnim = false; break;
     case 'rec': U.rec = val; render(); break;
     case 'goal-done': { const g = S.goals.find((x) => x.id === id); if (g) act((rec) => W.patch('goals', id, { status: g.done ? 'active' : 'completed' }, rec)); break; }
@@ -1666,6 +1671,8 @@ document.addEventListener('submit', (e) => {
   if (kind === 'sheet') submitSheet(f);
   else if (kind === 'groc') { const v = f.name.value.trim(); if (!v) return; f.name.value = ''; act((rec) => W.create('groceries', { name: v, group_name: guessSec(v), checked: false, sort_order: 9999 }, rec), `Added ${v}`); const i = document.getElementById('qaG'); i && i.focus(); }
   else if (kind === 'adj') { const v = f.v.value.trim(); if (v) adjustSuggestion(f.dataset.id, v); }
+  else if (kind === 'les-recall') { const v = f.v.value.trim(), l = LES.lessons[LES.deck[LES.i]]; if (v && l) lessonAct(lesRight(v, lesRung(l).answer) ? 'advance' : 'wrong', v); }
+  else if (kind === 'les-apply') { const v = f.v.value.trim(); if (v) lessonAct('advance', v); else f.v.focus(); }
   else if (kind === 'keep') labsKeepSave(f.dataset.id, f.dataset.kind, f.querySelector('[name=title]').value.trim(), f.querySelector('[name=note]').value.trim());
   else if (kind === 'q') { const v = f.querySelector('textarea').value.trim(); const id = f.dataset.id, q = +f.dataset.q; U.editQ = null; act((rec) => W.patch('goals', id, { ['progress_q' + q]: v }, rec), `Q${q} note saved`); render(); }
 });
@@ -1814,14 +1821,99 @@ function labsAfterRender() {
   if (g) { Habitat.setState(g); labsVisitor(g); }
 }
 const labsFeed = () => { if (labsOn() && window.Habitat) Habitat.feed(6); };
-/* hook for the lesson flow when it lands in app.js: call this when a lesson is answered/completed.
-   Logs it (logs kind 'lesson'; days without one make the creatures hide) and drops food. */
+/* a lesson card was answered: drops food, and logs logs kind 'lesson' once a day (days without one make the creatures hide) */
 function labsLessonDone() {
-  if (LBDB.ready) LBDB.create('logs', { kind: 'lesson', label: 'done', date: TODAY }).catch((err) => console.warn('[lessons] log failed', err));
+  if (LBDB.ready && !LBDB.all('logs').some((l) => l.kind === 'lesson' && l.date === TODAY)) LBDB.create('logs', { kind: 'lesson', label: 'done', date: TODAY }).catch((err) => console.warn('[lessons] log failed', err));
   labsFeed();
 }
+
+/* ---------- Labs: lessons (SPEC.md Lessons) ----------
+   sources + lessons are written by the lesson-make skill; the deck writes each lesson's level/due/state and one
+   lesson_answers doc per action. Listened to only with Labs on, straight from the db (kept out of store.js). */
+const LES = { sources: {}, lessons: {}, got: 0, deck: null, i: 0, fb: null, n: 0, anim: false };
+const lesDay = (s) => Math.round(Date.parse(s + 'T00:00:00Z') / 864e5), lesDate = (n) => new Date(n * 864e5).toISOString().slice(0, 10);
+let lesP = null;
+function lessonsListen() {
+  if (lesP) return lesP;
+  lesP = (async () => {
+    try {
+      const db = await window.claude.use('db'); if (!db) return;
+      ['sources', 'lessons'].forEach((c, k) => db.collection(c).onSnapshot((snap) => {
+        const o = {}; snap.docs.forEach((d) => { const b = d.data ? d.data() : d; if (!LBS.validate(c, b)) o[d.id] = { id: d.id, ...b }; });
+        LES[c] = o; LES.got |= 1 << k; schedule();
+      }, () => {}));
+    } catch (e) { /* no db: no lessons */ }
+  })();
+  return lesP;
+}
+const lesRung = (l) => l.rungs[LBG.rungOf(l.level, l.rungs.length)];
+/* today's deck: due reviews then new lessons (game.js buildDeck), from active sources, shuffled the same way all day */
+function lessonDeck() {
+  const live = Object.values(LES.lessons).filter((l) => { const s = LES.sources[l.source_id]; return s && (s.status || 'active') === 'active'; });
+  const ids = LBG.buildDeck(live.map((l) => ({ id: l.id, level: l.level, due: lesDay(l.due), state: l.state })), lesDay(TODAY)).map((x) => x.id);
+  let h = 0; for (const c of TODAY) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const key = (id) => { let x = h; for (const c of id) x = ((x ^ c.charCodeAt(0)) * 16777619) >>> 0; return x; };
+  return ids.sort((a, b) => key(a) - key(b));
+}
+/* Today (Labs): "N lessons due" → opens the deck; nothing due → when the next review is */
+function lessonsCard() {
+  if (!labsOn()) return '';
+  lessonsListen();
+  if (LES.got !== 3) return '';
+  const all = Object.values(LES.lessons), deck = lessonDeck();
+  if (deck.length) return `<button class="card les-c" data-act="les-open">${ic('book', 22)}<span class="les-t"><b>${plural(deck.length, 'lesson')} due</b><small>about ${Math.max(1, Math.round(deck.length * 0.4))} min · feeds the fish</small></span>${ic('chevR', 16)}</button>`;
+  const next = all.filter((l) => l.state === 'active').map((l) => l.due).sort()[0];
+  const msg = !all.length ? 'No lessons yet. Hand Claude a book, link or note to make some.' : next ? `All done. Next review ${diffDays(TODAY, next) === 1 ? 'tomorrow' : dayLabel(next)}.` : 'Every lesson has graduated.';
+  return `<div class="card les-c quiet">${ic('book', 22)}<span class="les-t"><small>${esc(msg)}</small></span></div>`;
+}
+const lesNorm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const lesRight = (got, ans) => String(ans).split('|').some((a) => lesNorm(a) === lesNorm(got));
+function lessonModal() {
+  if (!LES.deck) return '';
+  const X = `<button class="km-x" data-act="les-close" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`;
+  const wrap = (inner, label) => `<div class="kmodal les-m${LES.anim ? ' in' : ''}" role="dialog" aria-modal="true" aria-label="${label}"><button class="km-bg" data-act="les-close" aria-label="Close" tabindex="-1"></button><article class="km-card les-card">${X}${inner}</article></div>`;
+  const tot = LES.deck.length, l = LES.lessons[LES.deck[LES.i]];
+  if (LES.i >= tot || !l) return wrap(`<div class="les-body les-done"><p class="dio-k">Deck done</p><p class="les-p">${LES.n ? `${plural(LES.n, 'card')} answered. The fish are fed.` : 'Nothing answered this time.'}</p><div class="les-acts"><button class="btn primary" data-act="les-close">Close</button></div></div>`, 'Lessons done');
+  const src = LES.sources[l.source_id] || {}, fb = LES.fb, r = fb ? fb.r : lesRung(l), f = r.format;
+  const dots = LES.deck.map((_, k) => `<i class="${k < LES.i ? 'on' : k === LES.i ? 'cur' : ''}"></i>`).join('');
+  const kick = `<p class="dio-k">${esc(src.title || 'Lesson')} · ${f === 'tap' ? 'Read' : f === 'recall' ? 'Recall' : 'Apply'}</p>`;
+  let body;
+  if (fb) body = `<p class="les-p">${esc(r.prompt)}</p><p class="les-fb ${fb.right ? 'good' : 'bad'}">${fb.right ? 'Right.' : `Not quite. It's <b>${esc(String(r.answer).split('|')[0])}</b>.`}</p>${r.note ? `<p class="les-n">${esc(r.note)}</p>` : ''}<div class="les-acts"><button class="btn primary" data-act="les-next">Next</button></div>`;
+  else if (f === 'tap') body = `<blockquote class="les-q">${esc(r.prompt)}</blockquote>${r.note ? `<p class="les-n">${esc(r.note)}</p>` : ''}<div class="les-acts"><button class="btn primary" data-act="les-act" data-val="advance">Got it</button><button class="btn" data-act="les-act" data-val="again">Again</button></div>`;
+  else if (f === 'recall') body = `<p class="les-p">${esc(r.prompt)}</p>` + (r.choices && r.choices.length
+    ? `<div class="les-ch">${r.choices.map((c, k) => `<button class="btn" data-act="les-pick" data-val="${k}">${esc(c)}</button>`).join('')}</div><div class="les-acts"><button class="btn sm" data-act="les-act" data-val="again">Again</button></div>`
+    : `<form class="les-f" data-form="les-recall"><label class="sr" for="lesIn">Your answer</label><input id="lesIn" name="v" autocomplete="off" placeholder="Your answer" enterkeyhint="done"><span class="les-acts"><button class="btn primary" type="submit">Check</button><button class="btn" type="button" data-act="les-act" data-val="again">Again</button></span></form>`);
+  else body = `<p class="les-p">${esc(r.prompt)}</p><form class="les-f" data-form="les-apply"><label class="sr" for="lesIn">Where could you use this?</label><textarea id="lesIn" name="v" rows="3" placeholder="One line: where could you use this today?"></textarea><span class="les-acts"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" data-act="les-act" data-val="again">Again</button></span></form>`;
+  const more = fb ? '' : `<details class="les-more"><summary>More</summary><button class="link" data-act="les-act" data-val="skip">Skip today</button><button class="link" data-act="les-act" data-val="flag">${l.flagged ? 'Flagged' : 'Flag as unclear'}</button><button class="link" data-act="les-act" data-val="drop">Drop it</button></details>`;
+  return wrap(`<div class="les-body"><div class="les-dots" aria-label="Card ${LES.i + 1} of ${tot}">${dots}</div>${kick}${body}${more}</div>`, 'Lessons');
+}
+function lessonOpen() { LES.deck = lessonDeck(); LES.i = 0; LES.fb = null; LES.n = 0; LES.anim = true; render(); LES.anim = false; lesFocus(); }
+function lessonClose() { LES.deck = null; LES.fb = null; render(); }
+function lesFocus() { const i = document.getElementById('lesIn'); if (i) i.focus(); }
+/* one action on the current card: game.js answer() moves level/due/state; writes the lesson and a lesson_answers doc */
+async function lessonAct(action, text) {
+  const id = LES.deck && LES.deck[LES.i], l = id && LES.lessons[id]; if (!l) return;
+  const r = lesRung(l), body = { ...l }; delete body.id;
+  if (action === 'flag') body.flagged = true;
+  else { const g = { level: l.level, due: lesDay(l.due), state: l.state }; LBG.answer(g, action, lesDay(TODAY)); Object.assign(body, { level: g.level, due: lesDate(g.due), state: g.state }); }
+  body.updated_at = Date.now();
+  LES.lessons[id] = { id, ...body };
+  const ans = { lesson_id: id, source_id: l.source_id, action, format: r.format, date: TODAY, created_at: Date.now() };
+  if (text) ans.text = text;
+  if (['advance', 'wrong', 'again'].includes(action)) { LES.n++; labsLessonDone(); }
+  if (action === 'advance' && body.state === 'graduated') toast('Lesson graduated');
+  if (r.format === 'recall' && (action === 'advance' || action === 'wrong')) LES.fb = { r, right: action === 'advance' };
+  else if (action !== 'flag') { LES.i++; LES.fb = null; }
+  render(); lesFocus();
+  try {
+    const why = LBS.validate('lessons', body) || LBS.validate('lesson_answers', ans); if (why) throw new Error(why);
+    const db = await window.claude.use('db');
+    await db.collection('lessons').doc(id).set(body);
+    await db.collection('lesson_answers').doc().set(ans);
+  } catch (e) { console.warn('[lessons] save failed', e); toast('Could not save that lesson'); }
+}
 window.LBLabs = { feed: labsFeed, lessonDone: labsLessonDone, game: () => LABS.game, render: () => render() };
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && U.inspect) { U.inspect = null; U.editKeep = null; render(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && LES.deck) { lessonClose(); return; } if (e.key === 'Escape' && U.inspect) { U.inspect = null; U.editKeep = null; render(); } });
 /* "a visitor arrived": one visitors_met doc per creature per week, written only with Labs on.
    Talks to the db directly so the collection stays out of store.js's always-on listeners. */
 async function labsVisitor(g) {

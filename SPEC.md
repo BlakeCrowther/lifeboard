@@ -13,7 +13,7 @@ Moved here from the "Lifeboard Game Spec" doc on Nov 18, 2026; that doc is froze
 
 ## Core rules
 
-**Status:** Built, except lessons (Planned).
+**Status:** Built, except parts of lessons (see Lessons).
 
 Each input drives exactly one thing, so no system can game another.
 
@@ -117,7 +117,7 @@ Overdue drops are capped: `visitor.overdueDropsPerWeek = 1` a week and `visitor.
 
 ## Lessons
 
-**Status:** Planned. `game.js` has the deck and level rules (`newLesson`, `buildDeck`, `answer`); there is no UI, no `sources`/`lessons` data and no lesson-making skill yet.
+**Status:** Partly built. Built: formats, ladder, daily deck, spaced repetition, card actions, the Today card and deck modal (Labs), feeding/hiding, the lesson-making skill (`.claude/skills/lesson-make`). Planned: perfect lesson week, finish rewards, Collection trophy, book species, weekly rewrite of flagged lessons, pollinators.
 
 Short daily lessons from books, videos, posts, courses and notes, resurfacing on a spaced schedule; doing them brings the scenes to life.
 
@@ -135,7 +135,7 @@ Later candidate: **Scenario** (a short situation; pick which idea applies). Drop
 
 **Daily deck:** `lessons.deck = 5` lessons, shuffled. Reviews that are due come first, then new lessons. Never more than the deck size.
 
-**Spaced repetition:** each lesson tracks its level. Advancing brings it back after `lessons.intervals = [3,7,21]` days for levels 1, 2 and 3; advancing past the last level **graduates** it. A missed Recall drops a level.
+**Spaced repetition:** each lesson tracks its level. Advancing brings it back after `lessons.intervals = [3,7,21]` days for levels 1, 2 and 3; advancing past the last level **graduates** it. A missed Recall drops a level (never below the first rung) and comes back after that level's interval, or tomorrow on the first rung.
 
 **Where it shows:** a small "N lessons due" card on Today (Labs). Tapping it opens the deck in a near-full-screen modal, one card at a time, about 2 minutes for 5 cards. Each answered card feeds the scene. With nothing due, the card says when the next review is.
 
@@ -229,6 +229,9 @@ Everything sits in the lifeboard artifact db; no hippocampus dependency. Claude 
 | `labs_state` | `game.started`: the day the game began |
 | `labs_keepsakes` | Your title and note per diorama or pressed plant |
 | `visitors_met` | One doc per creature per week: creature, biome, week, rarity |
+| `sources` | Book, video, post, course or note: title, type, size, salience, ladder, summary, status (active / paused / finished) |
+| `lessons` | Source id, level, a prompt and answer per rung, next due, state (active / graduated / dropped), flagged |
+| `lesson_answers` | Each answer and action, incl. Apply and typed Recall text |
 
 **Planned collections:**
 
@@ -237,9 +240,6 @@ Everything sits in the lifeboard artifact db; no hippocampus dependency. Claude 
 | `tasks.committed_on` (new field) | Dates the task was pulled into Today |
 | `days` | Frozen per day: committed ids, done ids, ring %, Growth |
 | `week_results` | Frozen per habit per week: count, floor, target, result (died / floor / target / above) |
-| `sources` | Book, video, post, course or note: title, type, size, salience, ladder, summary, status |
-| `lessons` | Source id, level, a prompt and answer per rung, next due, state (active / graduated / dropped) |
-| `lesson_answers` | Each answer and action, incl. Apply text |
 | `reports` | Weekly and season reports, notes, events |
 
 Seeds, plantings, the herbarium, the habitat and dioramas were planned as stored collections; they're derived from history instead (see Core rules) and only need storing if derivation stops being enough.

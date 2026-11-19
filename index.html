@@ -872,6 +872,21 @@ body.km-open{overflow:hidden}
 .km-x{position:absolute;top:10px;right:10px;border:0;background:var(--sunk);color:inherit;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;cursor:pointer;z-index:1}
 @keyframes kmIn{from{opacity:0}}@keyframes kmUp{from{opacity:0;transform:translateY(16px) scale(.98)}}
 @media (prefers-reduced-motion:reduce){.kmodal.in,.kmodal.in .km-card{animation:none}}
+/* Labs lessons: due card on Today + deck modal */
+.les-c{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;padding:12px 14px;text-align:left;color:inherit;font:inherit;border:0;cursor:pointer}
+.les-c.quiet{cursor:default;color:var(--muted)}.les-c>svg:first-child{color:var(--ink);flex:none}
+.les-t{flex:1;display:flex;flex-direction:column;gap:2px}.les-t small{color:var(--muted);font-size:13px}
+.les-card{display:block;width:min(560px,100%);padding:22px 22px 14px}
+.les-body{display:flex;flex-direction:column;gap:14px;min-height:min(340px,60vh)}
+.les-dots{display:flex;gap:6px;padding-right:44px}.les-dots i{flex:1;height:4px;border-radius:2px;background:var(--sunk)}.les-dots i.on{background:var(--accent)}.les-dots i.cur{background:var(--line2)}
+.les-q{margin:0;padding:4px 0 4px 14px;border-left:3px solid var(--accent);font-size:19px;line-height:1.45}
+.les-p{margin:0;font-size:18px;line-height:1.45}.les-n{margin:0;color:var(--muted);font-size:14px}
+.les-fb{margin:0;font-weight:600}.les-fb.good{color:var(--good)}.les-fb.bad{color:var(--bad)}
+.les-ch{display:flex;flex-direction:column;gap:8px}.les-ch .btn{justify-content:flex-start;text-align:left;min-height:48px}
+.les-f{display:flex;flex-direction:column;gap:10px}.les-f input,.les-f textarea{font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line2);background:var(--sunk);color:inherit}
+.les-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.les-more{margin-top:auto;color:var(--muted);font-size:14px}.les-more summary{cursor:pointer;min-height:36px;display:flex;align-items:center}.les-more[open]{display:flex;flex-wrap:wrap;gap:4px}
+.les-done{justify-content:center;text-align:center}.les-done .les-acts{justify-content:center;margin-top:0}
 .dio-k{margin:0;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .dio-h{margin:0;font:600 20px/1.2 var(--display);text-wrap:balance}
 .dio-st{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0 4px}.dio-st div{display:flex;flex-direction:column}.dio-st dt{font-size:11.5px;color:var(--muted)}.dio-st dd{margin:0;font:600 17px/1.2 var(--display)}
