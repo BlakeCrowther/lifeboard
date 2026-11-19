@@ -15,9 +15,14 @@ Output: `models/creature/specs/<id>.json` that passes `python3 models/shared/too
 - `models/creature/archetypes/`: proven generators (safe path).
 
 ## Steps
-1. **Pick a species** that fits the biome in `models/biomes.json` (its `medium`: water / land / air, its real-world ecology and its `examples`). Prefer real species with a strong silhouette and graphic pattern; legendary = iconic for that biome. The creature's `locomotion` (swim / walk / fly / drift / rooted) must suit the medium.
+1. **Pick a species** that fits the biome in `models/biomes.json`: its `medium` (water / land / air), real ecology, `examples`, and above all its `look` and the file's `identity_rules`. The creature must be *unmistakably from this biome*:
+   - Body plan and silhouette echo `look.shape`; colors come from or sit next to `look.palette`, following `look.creatures`; idle feel follows `look.motion`.
+   - Never use a motif another biome lists in its `look.owns`.
+   - **Swap test**: compare against every roster creature from *other* biomes. If this design would pass as theirs after a recolor, change at least two of: body plan, silhouette, pattern type, hue family, size class, motion.
+   - **Silhouette test**: filled black at card size, it still says which biome.
+   - Prefer real species with a strong silhouette and graphic pattern; legendary = the biome's most iconic animal, pushed one notch more dramatic (size, glow, plumage). The creature's `locomotion` (swim / walk / fly / drift / rooted / climb) must suit the medium.
 2. **Pick a path**: safe (existing archetype + new params) or novel (needs a new archetype). Rare/legendary may go novel; common stays safe unless the library has < 3 archetypes.
-3. **Write the reference line**: binomial name + 2–4 identifying traits. The judge checks the renders against this sentence.
+3. **Write the reference line**: binomial name + 2–4 identifying traits, at least one of them the biome-specific one (the shape or color that ties it to `look`). The judge checks the renders against this sentence.
 4. **Size** in real meters (card readability is the runtime's job). **Palette** 2–4 mains + accent inside STYLE ranges (check_spec enforces HSV).
 5. **Motion** (makes each loop unique):
    - `idle.frames` 48–144 and `cycles` (whole number). Bigger/calmer animals → longer, fewer cycles; small/busy → shorter, more cycles. Must differ from every roster creature (check_spec enforces).

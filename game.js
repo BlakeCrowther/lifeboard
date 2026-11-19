@@ -75,7 +75,7 @@
       r.pts += tide.pts;
       while (r.phase < r.th.length && r.pts >= r.th[r.phase]) { r.phase++; ev.push('phase'); }
       if (r.phase >= r.th.length) {
-        r.dioramas.push({ biome: r.biome, days: day + 1 - r.startDay });
+        { const days = day + 1 - r.startDay, span = r.log.slice(-days); r.dioramas.push({ biome: r.biome, days, start: r.startDay, end: day, full: span.filter((x) => x && x.full).length, pts: Math.round(r.pts) }); }
         const recent = r.log.slice(-RULES.tide.trailingDays);
         const avg = recent.reduce((s, x) => s + (x ? x.pts : 0), 0) / recent.length;
         Object.assign(r, { biome: r.biome + 1, startDay: day + 1, pts: 0, phase: 0, th: phaseThresholds(avg), legendaries: 0 });

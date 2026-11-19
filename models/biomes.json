@@ -1,5 +1,5 @@
 {
-  "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded. `pass_through`: scenery kinds creatures may swim/fly through in this biome (default none: everything registered is solid). Kinds: rock, coral, anemone, shrub, plus any new scenery's kind. `scene`: which scenery set habitat.js builds (reef, kelp, tidepool, mangrove, deep, meadow, canopy; default by medium). A new scene needs its builder in habitat.js `tiers` and colors in `LOOKS`.",
+  "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded. `pass_through`: scenery kinds creatures may swim/fly through in this biome (default none: everything registered is solid). Kinds: rock, coral, anemone, shrub, plus any new scenery's kind. `scene`: which scenery set habitat.js builds (reef, kelp, tidepool, mangrove, deep, meadow, canopy; default by medium). A new scene needs its builder in habitat.js `tiers` and colors in `LOOKS`. `look`: the biome's identity (see `identity_rules`); briefs, habitat.js and the shelf diorama all read it.",
   "biomes": [
     {
       "id": 0,
@@ -19,7 +19,27 @@
         "anemone",
         "cleaner shrimp"
       ],
-      "scene": "reef"
+      "scene": "reef",
+      "look": {
+        "shape": "branching and plated: antler corals, tables, fans, round brain domes",
+        "palette": [
+          "#3fd0e4",
+          "#0a5a86",
+          "#e9d3a6",
+          "#ff7f6b"
+        ],
+        "ground": "bright white sand with ripples",
+        "owns": [
+          "branching coral",
+          "brain coral",
+          "table coral",
+          "sea fan",
+          "tube sponge"
+        ],
+        "creatures": "laterally flat, disc-shaped or chunky reef fish and turtles; bold bands, spots and saddles in saturated warm-and-cool pairs (orange/white, yellow/blue)",
+        "plants": "reef algae, calcified fronds, polyp-like tufts in coral pinks and lime",
+        "motion": "busy darting, quick turns, hovering in place"
+      }
     },
     {
       "id": 1,
@@ -42,7 +62,25 @@
       "pass_through": [
         "kelp"
       ],
-      "scene": "kelp"
+      "scene": "kelp",
+      "look": {
+        "shape": "vertical ribbons floor to surface; long gas-bladdered stipes",
+        "palette": [
+          "#5fb89a",
+          "#0d4a3a",
+          "#4a4038",
+          "#ff8a2a"
+        ],
+        "ground": "dark cobble and boulders, urchin barrens",
+        "owns": [
+          "giant kelp",
+          "sea urchin",
+          "cold boulders"
+        ],
+        "creatures": "elongated, camouflaged or single loud color (garibaldi orange); leaf-like flaps, bristles, spines; olive, gold, rust",
+        "plants": "long blades, bladders, holdfasts in olive, amber and brown",
+        "motion": "slow sway with the swell, hanging in the current"
+      }
     },
     {
       "id": 2,
@@ -62,7 +100,25 @@
         "sculpin",
         "sea anemone"
       ],
-      "scene": "tidepool"
+      "scene": "tidepool",
+      "look": {
+        "shape": "rock rims and round pools seen close; clustered shells",
+        "palette": [
+          "#8ff0f5",
+          "#3a9fc0",
+          "#8a7a6a",
+          "#e0407a"
+        ],
+        "ground": "dark wet granite with pools of clear water",
+        "owns": [
+          "sea star",
+          "barnacle and mussel clusters",
+          "green anemone"
+        ],
+        "creatures": "small, low and sticky: crabs, stars, slugs, sculpins; frilly nudibranch ruffles; electric purple, ochre, hot pink, emerald",
+        "plants": "encrusting, tufted, rubbery: coralline pink, surfgrass, sea lettuce",
+        "motion": "still, then a quick scuttle; clinging"
+      }
     },
     {
       "id": 3,
@@ -82,7 +138,25 @@
         "kingfisher",
         "seahorse"
       ],
-      "scene": "mangrove"
+      "scene": "mangrove",
+      "look": {
+        "shape": "arching prop roots and tangled verticals over mud",
+        "palette": [
+          "#9ab87a",
+          "#2c4a30",
+          "#5a4632",
+          "#ffd060"
+        ],
+        "ground": "soft brown mud, leaf litter, tannin water",
+        "owns": [
+          "prop roots",
+          "oysters on roots",
+          "floating leaves"
+        ],
+        "creatures": "amphibious and bug-eyed: mudskippers, crabs with one big claw, archers; mottled mud browns with one bright flash (blue, yellow)",
+        "plants": "leathery waxy leaves, pencil roots, seed pods in olive and tan",
+        "motion": "perch, hop, pause; lazy in murky water"
+      }
     },
     {
       "id": 4,
@@ -100,7 +174,26 @@
         "lanternfish",
         "siphonophore"
       ],
-      "scene": "deep"
+      "scene": "deep",
+      "look": {
+        "shape": "translucent bells, long trailing strings, sparse points of light in black",
+        "palette": [
+          "#1a3f6a",
+          "#020a1a",
+          "#1a1f2a",
+          "#6af0ff"
+        ],
+        "ground": "near-black silt, almost no floor visible",
+        "owns": [
+          "jellies",
+          "glow lures",
+          "glass sponges",
+          "bioluminescence"
+        ],
+        "creatures": "translucent, gelatinous, big-mouthed or long-bodied; glowing photophores and lures; black, deep red, violet, with cyan points of light",
+        "plants": "pale glass spires, ghostly stalks, whip coral",
+        "motion": "drift and pulse, very slow, long pauses"
+      }
     },
     {
       "id": 5,
@@ -120,7 +213,26 @@
         "monarch butterfly",
         "foxglove"
       ],
-      "scene": "meadow"
+      "scene": "meadow",
+      "look": {
+        "shape": "soft rolling mounds and upright stems with round flower heads",
+        "palette": [
+          "#9fd4f2",
+          "#f2e2bc",
+          "#86b84a",
+          "#ffd23f"
+        ],
+        "ground": "sunny rolling grass",
+        "owns": [
+          "wildflowers",
+          "butterflies",
+          "flowering shrubs",
+          "toadstools"
+        ],
+        "creatures": "fuzzy and round: bees, hares, beetles, butterflies; warm yellows, pinks, soft browns, polka dots",
+        "plants": "daisy, poppy and lupine forms; round heads on upright stems; sunny warm colors",
+        "motion": "flitting, bobbing, hopping in short bursts"
+      }
     },
     {
       "id": 6,
@@ -143,7 +255,78 @@
       "pass_through": [
         "cloud"
       ],
-      "scene": "canopy"
+      "scene": "canopy",
+      "look": {
+        "shape": "horizontal mossy limbs with clouds below; things perched and clinging",
+        "palette": [
+          "#bfe2f7",
+          "#eef3f6",
+          "#4f6a3a",
+          "#e04a6a"
+        ],
+        "ground": "no floor: thick mossy branches above a cloud sea",
+        "owns": [
+          "clouds",
+          "mossy limbs",
+          "orchids",
+          "hanging moss"
+        ],
+        "creatures": "perchers and clingers: hummingbirds, tree frogs, sloths; iridescent greens and jewel tones",
+        "plants": "orchids, mosses, air plants, hanging epiphytes; pale petals, jewel accents",
+        "motion": "hover and cling; slow hang, quick hover"
+      }
+    },
+    {
+      "id": 7,
+      "name": "Jungle understory",
+      "medium": "land",
+      "light": "deep green shade, god rays through gaps",
+      "locomotion": [
+        "walk",
+        "climb",
+        "fly",
+        "crawl",
+        "rooted"
+      ],
+      "examples": [
+        "poison dart frog",
+        "jaguar",
+        "toucan",
+        "leafcutter ants",
+        "rhinoceros beetle"
+      ],
+      "scene": "jungle",
+      "pass_through": [
+        "vine"
+      ],
+      "look": {
+        "shape": "giant leaves and buttress trunks; everything big, layered and dripping",
+        "palette": [
+          "#6fae6a",
+          "#0f2a18",
+          "#3a2a1a",
+          "#ff3a2a"
+        ],
+        "ground": "dark leaf litter and roots",
+        "owns": [
+          "giant leaves",
+          "buttress trees",
+          "hanging vines",
+          "bromeliads",
+          "fireflies"
+        ],
+        "creatures": "warning colors on dark green: dart-frog reds, blues and yellows, toucan beaks, glossy beetles; big eyes, long limbs for climbing",
+        "plants": "huge split or paddle leaves, red bromeliad rosettes, pitcher plants; dark glossy greens with one hot accent",
+        "motion": "still and watchful, then a sudden leap or climb"
+      }
     }
+  ],
+  "identity_rules": [
+    "Each biome owns one SHAPE LANGUAGE (e.g. branching, vertical ribbons, rounded clusters, arching roots, hanging, horizontal limbs). Its scenery and its creatures echo that shape; no other biome uses it as its main shape.",
+    "Each biome owns a HUE FAMILY (`look.palette`: sky/water, depth/horizon, ground, accent). Pick creature and plant colors from or next to it; avoid the main hues of the neighboring biomes.",
+    "`look.owns` lists motifs only this biome may use (scenery, creatures, plants). Never use a motif another biome owns.",
+    "Swap test: if this design would look at home in another biome with only a recolor, redesign it. Change at least two of: body plan, silhouette, pattern type, hue family, size class, motion.",
+    "Silhouette test: filled solid black at card size, the design should still say which biome it is from.",
+    "Motion signature (`look.motion`) sets the idle feel: match it (a deep creature drifts and pulses, a meadow one flits)."
   ]
 }

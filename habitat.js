@@ -253,29 +253,42 @@ attribute float aTip; varying float vTip;
     let world = null, medium = null, growth = [], ambient = [], coralMats = [], algaeInst = null, rays = [], rockMat = null, snowMat = null;
     /* scene key: biomes.json `scene`, else by medium. Each key has its own scenery + water/air look (LOOKS). */
     const sceneOf = (b) => b.scene || ({ water: 'reef', land: 'meadow', air: 'canopy' })[b.medium || 'water'] || 'reef';
-    let sk = null;
+    /* per-scene frame: the base layer every scene shares (ground, rocks, ground cover, light shafts, motes). Distinct per biome
+       on purpose: identity comes from shape language + hue family (biomes.json identity_rules), not from tinting one set. */
+    const ROCKS5 = [[1.9, -1.4, 1.3, 0.7], [-2.9, -2.6, 1.7, 0.75], [3.9, 0.5, 0.85, 0.6], [-0.4, -4.4, 2.3, 0.85], [-4.6, 0.6, 0.8, 0.55]];
+    const FRAME = {
+      reef: { g: '#d8c290', sp: [220, 198, 150, 0.6], rock: [0x7a7166, 0x4c463f, 0xc77a95, 0x6f8a45, 0.25], rocks: ROCKS5, cover: { c: [0.18, 0.26], n: 220, w: 0.045, h: 0.55, amp: 0.28 }, mote: 0xe8fbff },
+      kelp: { g: '#4a4440', sp: [120, 108, 96, 0.7], rock: [0x6a6560, 0x3a3632, 0x8a4a5a, 0x5a6a3a, 0.12], rocks: [...ROCKS5, [4.6, -3.8, 1.5, 0.8], [-5.6, -4.2, 1.9, 0.7], [1.0, 2.6, 0.6, 0.6]], cover: { c: [0.0, 0.04], n: 90, w: 0.06, h: 0.3, amp: 0.3 }, mote: 0xd8f0e0 },
+      tidepool: { g: '#5a544c', sp: [150, 140, 128, 0.7], rock: [0x5f5a55, 0x34302c, 0xe07aa0, 0x4a8a4a, 0.3], rocks: [[1.9, -1.4, 1.0, 0.5], [-2.9, -2.6, 1.4, 0.55], [3.9, 0.5, 0.85, 0.5], [-0.4, -4.4, 1.8, 0.6], [-4.6, 0.6, 0.8, 0.5], [4.4, -3.2, 1.1, 0.5], [-5.4, -3.6, 1.2, 0.5]], cover: { c: [0.28, 0.33], n: 140, w: 0.03, h: 0.45, amp: 0.35 }, mote: 0xffffff },
+      mangrove: { g: '#5a4632', sp: [96, 74, 52, 0.7], rock: [0x5a4a3a, 0x3a2e22, 0x6a5a3a, 0x5a6a3a, 0.4], rocks: [[3.9, 0.5, 0.7, 0.5], [-4.6, 0.6, 0.6, 0.45]], cover: null, mote: 0xd8d0a0 },
+      deep: { g: '#14161c', sp: [44, 48, 64, 0.8], rock: [0x2a2c33, 0x15161a, 0x3a2a4a, 0x20302a, 0.1], rocks: [[-2.9, -2.6, 1.7, 0.6], [-0.4, -4.4, 2.3, 0.7], [3.9, 0.5, 0.7, 0.5]], cover: null, mote: 0x7af0ff },
+      meadow: { g: '#6f9a48', sp: [90, 140, 60, 0.7], rock: [0x7a7166, 0x4c463f, 0x8a8a70, 0x6f8a45, 0.5], rocks: ROCKS5, cover: { c: [0.18, 0.26], n: 400, w: 0.045, h: 0.55, amp: 0.12 }, mote: 0xfff2b0 },
+      canopy: { g: '#4f6a3a', sp: [70, 100, 55, 0.7], rock: [0x5a5040, 0x3a3428, 0x6a8a4a, 0x5f8a3f, 0.8], rocks: [], cover: { c: [0.22, 0.3], n: 320, w: 0.05, h: 0.18, amp: 0.05 }, mote: 0xffffff },
+      jungle: { g: '#3a2a1a', sp: [120, 72, 34, 0.75], rock: [0x5a5448, 0x2e2a24, 0x4a6a2a, 0x3f7a2f, 0.75], rocks: [[3.9, 0.5, 0.9, 0.6], [-4.6, 0.6, 0.8, 0.55]], cover: { c: [0.27, 0.36], n: 260, w: 0.13, h: 0.7, amp: 0.08, l: [0.18, 0.3] }, rays: 0xd8ffb0, mote: 0xfff4a0 },
+    };
+    let sk = null, fr = FRAME.reef;
     function buildWorld(med, key) {
       if (world) { scene.remove(world); world.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
       world = new THREE.Group(); scene.add(world); medium = med; sk = key || (med === 'water' ? 'reef' : med === 'air' ? 'canopy' : 'meadow'); growth = []; ambient = []; coralMats = []; rays = []; seed = 7;
-      const water = med === 'water';
+      const water = med === 'water'; fr = FRAME[sk] || (water ? FRAME.reef : FRAME.meadow);
       const sandGeo = new THREE.PlaneGeometry(80, 80, 120, 120); sandGeo.rotateX(-Math.PI / 2);
       { const p = sandGeo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, H(p.getX(i), p.getZ(i))); sandGeo.computeVertexNormals(); }
-      const map = water ? groundTex('#d8c290', (g) => `rgba(${(220 * g) | 0},${(198 * g) | 0},${(150 * g) | 0},.6)`) : groundTex('#6f9a48', (g) => `rgba(${(90 * g) | 0},${(140 * g) | 0},${(60 * g) | 0},.7)`);
+      const map = groundTex(fr.g, (g) => `rgba(${(fr.sp[0] * g) | 0},${(fr.sp[1] * g) | 0},${(fr.sp[2] * g) | 0},${fr.sp[3]})`);
       const sand = new THREE.Mesh(sandGeo, patch(new THREE.MeshStandardMaterial({ map, roughness: 0.95 }))); sand.receiveShadow = true; world.add(sand);
       rockMat = patch(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92 }));
       const rocks = []; colliders = [];
       const rock = (x, z, s, sy) => {
         let g = new THREE.IcosahedronGeometry(1, 4); g.deleteAttribute('normal'); g.deleteAttribute('uv'); g = BU.mergeVertices(g);
-        const p = g.attributes.position, k = R(0, 10), col = [], c = new THREE.Color(), base = new THREE.Color(0x7a7166), dark = new THREE.Color(0x4c463f), pink = new THREE.Color(water ? 0xc77a95 : 0x8a8a70), moss = new THREE.Color(0x6f8a45);
+        const p = g.attributes.position, k = R(0, 10), col = [], c = new THREE.Color(), base = new THREE.Color(fr.rock[0]), dark = new THREE.Color(fr.rock[1]), pink = new THREE.Color(fr.rock[2]), moss = new THREE.Color(fr.rock[3]);
         for (let i = 0; i < p.count; i++) {
           const v = new V().fromBufferAttribute(p, i), n = Math.sin(v.x * 2.1 + k) * Math.cos(v.z * 2.3 + k) * 0.16 + Math.sin(v.x * 5.3 + v.y * 4.1 + k) * 0.07;
           v.multiplyScalar(1 + n); p.setXYZ(i, v.x, v.y, v.z);
-          const top = smooth(-0.1, 0.7, v.y); c.copy(base).lerp(dark, smooth(0.1, -0.6, n * 4)); if (Math.sin(v.x * 4 + k) * Math.sin(v.z * 3.7 + v.y * 2) > 0.25) c.lerp(pink, 0.55 * top); c.lerp(moss, top * (water ? 0.25 : 0.5)); col.push(c.r, c.g, c.b);
+          const top = smooth(-0.1, 0.7, v.y); c.copy(base).lerp(dark, smooth(0.1, -0.6, n * 4)); if (Math.sin(v.x * 4 + k) * Math.sin(v.z * 3.7 + v.y * 2) > 0.25) c.lerp(pink, 0.55 * top); c.lerp(moss, top * fr.rock[4]); col.push(c.r, c.g, c.b);
         }
         g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
         const m = new THREE.Mesh(g, rockMat); m.scale.set(s, s * sy, s); m.position.set(x, H(x, z) + s * sy * 0.25, z); m.rotation.y = R(0, 6); m.castShadow = m.receiveShadow = true; world.add(m); rocks.push(m); solid('rock', m);
       };
-      rock(1.9, -1.4, 1.3, 0.7); rock(-2.9, -2.6, 1.7, 0.75); rock(3.9, 0.5, 0.85, 0.6); rock(-0.4, -4.4, 2.3, 0.85); rock(-4.6, 0.6, 0.8, 0.55);
+      fr.rocks.forEach(([x, z, s2, sy]) => rock(x, z, s2, sy));
       const tipAttr = (g, maxY) => { const p = g.attributes.position, a = new Float32Array(p.count); for (let i = 0; i < p.count; i++) a[i] = p.getY(i) / maxY; g.setAttribute('aTip', new THREE.BufferAttribute(a, 1)); return a; };
       const colorByTip = (g, tip, c1, c2) => { const col = new Float32Array(tip.length * 3), a = new THREE.Color(c1), b = new THREE.Color(c2), c = new THREE.Color(); for (let i = 0; i < tip.length; i++) { c.copy(a).lerp(b, smooth(0.35, 1, tip[i])); col.set([c.r, c.g, c.b], i * 3); } g.setAttribute('color', new THREE.BufferAttribute(col, 3)); };
       const coralMat = (sheen) => { const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.62, sheen: 0.35, sheenRoughness: 0.5, sheenColor: new THREE.Color(sheen) }); m.defines = { GLOW: '' }; coralMats.push(m); return patch(m); };
@@ -309,14 +322,13 @@ attribute float aTip; varying float vTip;
         for (let i = 0; i < n; i++) { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * 0.48; o.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); o.rotation.set(Math.sin(a) * r * 1.3, 0, -Math.cos(a) * r * 1.3); o.scale.setScalar(R(0.75, 1.15)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
         inst.position.set(x, H(x, z) + 0.02, z); inst.castShadow = true; world.add(inst); solid('anemone', inst); return inst;
       };
-      const reefish = sk === 'reef' || sk === 'deep';
-      if (reefish) {
+      if (sk === 'reef') {
         branchy(-1.4, 0.5, 1.1, 0xc2384f, 0xffb3bf); brain(0.5, 1.2, 0.72, 0x8a5a1e, 0xf2b866);
         branchy(2.5, -2.7, 1.3, 0x6b2fa8, 0xd7a8ff, { trunks: 2 }); branchy(-3.6, -0.7, 0.95, 0xd3533c, 0xffc9a3, { spread: 0.55 });
         brain(-2.2, -3.8, 0.55, 0x3f6b2a, 0xb8de7a); branchy(0.2, -2.4, 0.8, 0x2a8f86, 0x9ff5df, { trunks: 3, depth: 2, len: 0.55 });
         branchy(3.3, -1.6, 0.9, 0xb4471f, 0xffa35a, { spread: 0.5 }); brain(-0.8, -1.2, 0.45, 0x6a3a7a, 0xe0a8f0);
         growth.splice(1, 0, anem(1.6, 1.5, 0xd59ae8, 0xffe0ff));
-      } else if (!water) {
+      } else if (sk === 'meadow' || !FRAME[sk] && !water) {
         bush(-1.4, 0.5, 1.4, 0x3f6b2a, 0xffd23f); bush(0.6, 1.0, 1.0, 0x4a7d3a, 0xf28fb0); bush(2.5, -2.7, 1.6, 0x3a6a30, 0xffffff, { trunks: 2 });
         bush(-3.6, -0.7, 1.2, 0x4a7d3a, 0xb98cff); bush(-2.2, -3.8, 1.3, 0x355f2a, 0xff9a52); bush(0.2, -2.4, 1.1, 0x4a7d3a, 0xfff07a);
         bush(3.3, -1.6, 1.2, 0x3f6b2a, 0xff6a6a); bush(-0.8, -1.2, 0.9, 0x4a7d3a, 0x8fd0ff);
@@ -326,6 +338,7 @@ attribute float aTip; varying float vTip;
       const tier = (o, ph) => { o.userData.ph = ph; growth.push(o); return o; };
       const mesh = (g, mat, x, z, dy = 0) => { const m = new THREE.Mesh(g, mat); m.position.set(x, H(x, z) + dy, z); m.castShadow = m.receiveShadow = true; world.add(m); return m; };
       const tinted = (g, c1, c2) => { g.computeBoundingBox(); colorByTip(g, tipAttr(g, Math.max(0.01, g.boundingBox.max.y)), c1, c2); return g; };
+      const std = (col, o = {}) => patch(new THREE.MeshStandardMaterial({ color: col, roughness: 0.6, ...o }));
       /* starfish: flat 5-point star lying on the sand (thin dressing, not solid) */
       const star = (x, z, s, c1, c2) => { const sh = new THREE.Shape(); for (let i = 0; i <= 10; i++) { const a = (i / 10) * Math.PI * 2, r = i % 2 ? 0.42 : 1; sh[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r); }
         const g = new THREE.ExtrudeGeometry(sh, { depth: 0.18, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0.12, bevelSegments: 2 }); g.rotateX(-Math.PI / 2); g.scale(s, s, s);
@@ -341,11 +354,11 @@ attribute float aTip; varying float vTip;
       /* a small school / swarm: instanced bodies circling an anchor (decor, no collisions, above the rocks) */
       const swarm = (n, cx, cy, cz, rad, col, kind, glow) => {
         let g; if (kind === 'butterfly') { const w = new THREE.Shape(); w.moveTo(0, 0); w.bezierCurveTo(0.05, 0.02, 0.09, 0.12, 0.03, 0.13); w.bezierCurveTo(-0.01, 0.12, -0.02, 0.06, 0, 0); w.bezierCurveTo(-0.03, -0.02, -0.06, -0.08, -0.02, -0.09); w.lineTo(0, 0);
-          const L = new THREE.ShapeGeometry(w); L.rotateX(-Math.PI / 2); L.rotateX(-0.5); const Rw = L.clone(); Rw.scale(1, 1, -1); g = BU.mergeGeometries([L.toNonIndexed(), Rw.toNonIndexed()]); g.scale(1.4, 1.4, 1.4); } else { const b = new THREE.SphereGeometry(0.05, 8, 6); b.scale(1.6, 0.8, 0.45); const t = new THREE.ConeGeometry(0.035, 0.06, 4); t.rotateZ(Math.PI / 2); t.translate(-0.1, 0, 0); g = BU.mergeGeometries([b.toNonIndexed(), t.toNonIndexed()]); }
+          const L = new THREE.ShapeGeometry(w); L.rotateX(-Math.PI / 2); L.rotateX(-0.5); const Rw = L.clone(); Rw.scale(1, 1, -1); g = BU.mergeGeometries([L.toNonIndexed(), Rw.toNonIndexed()]); g.scale(1.4, 1.4, 1.4); } else if (kind === 'firefly') { g = new THREE.SphereGeometry(0.022, 6, 4); } else { const b = new THREE.SphereGeometry(0.05, 8, 6); b.scale(1.6, 0.8, 0.45); const t = new THREE.ConeGeometry(0.035, 0.06, 4); t.rotateZ(Math.PI / 2); t.translate(-0.1, 0, 0); g = BU.mergeGeometries([b.toNonIndexed(), t.toNonIndexed()]); }
         const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.5, side: THREE.DoubleSide, emissive: glow ? col : 0x000000, emissiveIntensity: glow ? 2.2 : 0 }), inst = new THREE.InstancedMesh(g, mat, n), o = new THREE.Object3D(), seeds = Array.from({ length: n }, () => [R(0, 6.28), R(-0.5, 0.5), R(-0.35, 0.35), R(0.8, 1.2)]);
         inst.userData.tick = (s) => { for (let i = 0; i < n; i++) { const [p, dr, dy, sp] = seeds[i], a = s * 0.35 * sp + p, r = rad + dr; o.position.set(cx + Math.cos(a) * r, cy + dy + Math.sin(s * 1.3 + p) * 0.1, cz + Math.sin(a) * r * 0.6); o.rotation.set(0, -a - Math.PI / 2, 0);
           o.scale.set(1, 1, kind === 'butterfly' ? 0.15 + 0.85 * Math.abs(Math.sin(s * 11 + p * 3)) : 1); if (kind === 'butterfly') o.position.y += Math.abs(Math.sin(s * 5.5 + p)) * 0.12; o.updateMatrix(); inst.setMatrixAt(i, o.matrix); } inst.instanceMatrix.needsUpdate = true; };
-        inst.userData.tick(0); inst.frustumCulled = false; world.add(inst); ambient.push(inst); inst.userData.nm = kind === 'butterfly' ? 'butterflies' : glow ? 'glowing fish' : 'fish school'; return inst; };
+        inst.userData.tick(0); inst.frustumCulled = false; world.add(inst); ambient.push(inst); inst.userData.nm = kind === 'butterfly' ? 'butterflies' : kind === 'firefly' ? 'fireflies' : glow ? 'glowing fish' : 'fish school'; return inst; };
       /* flowers / mushrooms: small instanced patches for land */
       const patchOf = (x, z, n, col, kind) => { const head = kind === 'mushroom' ? new THREE.SphereGeometry(0.09, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2) : new THREE.SphereGeometry(0.05, 8, 6); head.translate(0, kind === 'mushroom' ? 0.12 : 0.3, 0);
         const stem = new THREE.CylinderGeometry(0.012, 0.016, kind === 'mushroom' ? 0.13 : 0.3, 5); stem.translate(0, kind === 'mushroom' ? 0.065 : 0.15, 0); const g = BU.mergeGeometries([head.toNonIndexed(), stem.toNonIndexed()]);
@@ -366,16 +379,65 @@ attribute float aTip; varying float vTip;
         const t = new THREE.CylinderGeometry(0.16, 0.22, 4, 10); t.translate(x, H(x, z) + 2.6, z); geos.push(t.toNonIndexed());
         for (let i = 0; i < 7; i++) { const a = (i / 7) * 6.28 + R(-0.3, 0.3), r = R(0.9, 1.5) * s, ex = x + Math.cos(a) * r, ez = z + Math.sin(a) * r, y0 = H(x, z) + R(1.0, 1.6);
           const c = new THREE.CatmullRomCurve3([new V(x, y0, z), new V(x + Math.cos(a) * r * 0.5, y0 + 0.25, z + Math.sin(a) * r * 0.5), new V(ex, H(ex, ez) - 0.1, ez)]); geos.push(new THREE.TubeGeometry(c, 14, 0.06 * s, 6).toNonIndexed()); }
-        const m = new THREE.Mesh(BU.mergeGeometries(geos), mat); m.castShadow = m.receiveShadow = true; world.add(m); return solid('root', m, 0.85); };
+        const crown = []; for (let i = 0; i < 7; i++) { const g = new THREE.SphereGeometry(R(0.7, 1.1), 12, 8); g.scale(1, 0.55, 1); g.translate(x + R(-1, 1), H(x, z) + R(4.4, 5.0), z + R(-0.8, 0.8)); crown.push(g.toNonIndexed()); }
+        const m = new THREE.Mesh(BU.mergeGeometries(geos), mat); m.add(new THREE.Mesh(BU.mergeGeometries(crown), std(0x4a6a2a, { roughness: 0.8 }))); m.castShadow = m.receiveShadow = true; world.add(m); return solid('root', m, 0.85); };
       /* clouds: soft puff clusters for the canopy */
       const cloud = (x, y, z, s) => { const geos = []; for (let i = 0; i < 6; i++) { const g = new THREE.SphereGeometry(R(0.35, 0.6), 12, 10); g.translate(R(-0.6, 0.6), R(-0.1, 0.2), R(-0.3, 0.3)); geos.push(g.toNonIndexed()); }
         const g = BU.mergeGeometries(geos); g.scale(s, s * 0.6, s); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, transparent: true, opacity: 0.85 })); m.position.set(x, y, z); world.add(m); return solid('cloud', m); };
+      /* jellies (deep): glowing translucent bells with trailing threads that pulse and bob (decor, no collisions) */
+      const jellies = (n, cx, cy, cz, rad, col) => { const grp = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.6, transparent: true, opacity: 0.55, roughness: 0.2, side: THREE.DoubleSide, depthWrite: false });
+        const bell = new THREE.SphereGeometry(0.16, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2); const th = []; for (let i = 0; i < 6; i++) { const a = (i / 6) * 6.28, c = new THREE.CylinderGeometry(0.004, 0.004, R(0.4, 0.7), 3); c.translate(Math.cos(a) * 0.1, -0.25, Math.sin(a) * 0.1); th.push(c.toNonIndexed()); }
+        const g = BU.mergeGeometries([bell.toNonIndexed(), ...th]); const seeds = [];
+        for (let i = 0; i < n; i++) { const m = new THREE.Mesh(g, mat); seeds.push([R(0, 6.28), R(-rad, rad), R(-0.6, 0.6), R(-rad * 0.5, rad * 0.5), R(0.7, 1.3)]); grp.add(m); }
+        grp.userData.tick = (s2) => grp.children.forEach((m, i) => { const [p, dx, dy, dz, k] = seeds[i], pulse = Math.sin(s2 * 1.6 * k + p); m.position.set(cx + dx + Math.sin(s2 * 0.1 + p) * 0.3, cy + dy + Math.sin(s2 * 0.4 * k + p) * 0.35, cz + dz); m.scale.set(1 + pulse * 0.12, 1 - pulse * 0.15, 1 + pulse * 0.12); });
+        grp.userData.tick(0); world.add(grp); ambient.push(grp); grp.userData.nm = 'jellies'; return grp; };
+      /* giant leaves (jungle): a clump of long drooping paddle leaves on stems (solid, kind 'leaf') */
+      const leafGeo = (len, wid) => { const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.bezierCurveTo(wid, len * 0.2, wid * 0.95, len * 0.75, 0, len); sh.bezierCurveTo(-wid * 0.95, len * 0.75, -wid, len * 0.2, 0, 0);
+        const g = new THREE.ShapeGeometry(sh, 12), p = g.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i); p.setZ(i, (0.45 * y * y) / len + Math.abs(x) * 0.35); } return g; };
+      const bigLeaves = (x, z, s2, col, n = 6) => { const geos = []; for (let i = 0; i < n; i++) { const h = R(0.5, 1.3), len = R(0.9, 1.4), a = (i / n) * 6.28 + R(-0.3, 0.3), el = R(0.35, 0.9);
+          const st = new THREE.CylinderGeometry(0.018, 0.028, h, 5); st.translate(0, h / 2, 0); st.rotateY(a); geos.push(st.toNonIndexed());
+          const l = leafGeo(len, R(0.28, 0.42)); l.rotateX(Math.PI / 2 - el); l.rotateY(a); l.translate(0, h, 0); geos.push(l.toNonIndexed()); }
+        const g = BU.mergeGeometries(geos); g.scale(s2, s2, s2); g.computeVertexNormals(); const m = mesh(g, std(col, { roughness: 0.35, side: THREE.DoubleSide }), x, z); m.userData.nm = 'giant leaves'; return solid('leaf', m, 0.7); };
+      /* buttress tree (jungle): a trunk rising out of frame with blade-like root fins (solid) */
+      const buttress = (x, z, s2) => { const geos = [], t = new THREE.CylinderGeometry(0.32, 0.42, 9, 14); t.translate(0, 4.5, 0); geos.push(t.toNonIndexed());
+        for (let i = 0; i < 6; i++) { const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.lineTo(R(1.0, 1.5), 0); sh.quadraticCurveTo(0.4, 0.3, 0.2, R(1.5, 2.2)); sh.lineTo(0, 2.2); const f = new THREE.ExtrudeGeometry(sh, { depth: 0.07, bevelEnabled: false }); f.translate(0.25, 0, -0.035); f.rotateY((i / 6) * 6.28 + R(-0.2, 0.2)); geos.push(f.toNonIndexed()); }
+        const m = mesh(BU.mergeGeometries(geos).scale(s2, s2, s2), std(0x6a5d4c, { roughness: 0.95 }), x, z, -0.05); m.userData.nm = 'buttress tree'; return solid('tree', m, 0.75); };
+      /* hanging vines (jungle; pass-through): lianas dropping from above, a few with leaves */
+      const vines = (x, z, n, col) => { const geos = []; for (let i = 0; i < n; i++) { const px = x + R(-0.8, 0.8), pz = z + R(-0.5, 0.5), y1 = R(0.6, 2.0);
+          const c = new THREE.CatmullRomCurve3([new V(px, 7, pz), new V(px + R(-0.3, 0.3), (7 + y1) / 2, pz + R(-0.2, 0.2)), new V(px + R(-0.15, 0.15), y1, pz)]); geos.push(new THREE.TubeGeometry(c, 16, 0.02, 4).toNonIndexed());
+          for (let k = 0; k < 5; k++) { const lg = leafGeo(0.14, 0.06), q = c.getPoint(R(0.5, 1)); lg.rotateX(R(0.5, 1.4)); lg.rotateY(R(0, 6.28)); lg.translate(q.x, q.y, q.z); geos.push(lg.toNonIndexed()); } }
+        const m = new THREE.Mesh(BU.mergeGeometries(geos), std(col, { side: THREE.DoubleSide })); m.castShadow = true; world.add(m); m.userData.nm = 'vines'; return solid('vine', m, 0.6); };
+      /* bromeliad: a rosette of stiff strap leaves with a hot center */
+      const bromeliad = (x, z, s2, col, hot, y) => { const geos = []; for (let i = 0; i < 9; i++) { const l = leafGeo(R(0.3, 0.45), 0.06); l.rotateX(Math.PI / 2 - R(0.6, 1.1)); l.rotateY((i / 9) * 6.28); geos.push(l.toNonIndexed()); }
+        const g = BU.mergeGeometries(geos); g.computeBoundingBox(); const m = new THREE.Mesh(tinted(g, col, hot), coralMat(hot)); m.material.side = THREE.DoubleSide; m.scale.setScalar(s2); m.position.set(x, y ?? H(x, z), z); m.castShadow = true; world.add(m); m.userData.nm = 'bromeliads'; return m; };
+      /* mossy limb (canopy, solid): a thick horizontal branch with hanging moss */
+      const limb = (pts, r, moss) => { const c = new THREE.CatmullRomCurve3(pts.map((p) => new V(...p))), geos = [new THREE.TubeGeometry(c, 40, r, 10).toNonIndexed()];
+        for (let i = 0; i < 26; i++) { const q = c.getPoint(rnd()), h = R(0.25, 0.8), cg = new THREE.ConeGeometry(R(0.02, 0.05), h, 4); cg.rotateX(Math.PI); cg.translate(q.x + R(-r, r), q.y - r * 0.6 - h / 2, q.z + R(-r, r)); geos.push(cg.toNonIndexed()); }
+        const m = new THREE.Mesh(BU.mergeGeometries(geos), std(moss, { roughness: 0.95 })); m.castShadow = m.receiveShadow = true; world.add(m); m.userData.nm = 'mossy branch'; return solid('limb', m, 0.8); };
+      const perched = (p, n, col) => { const grp = new THREE.Group(), mat = std(col, { roughness: 0.4 }); for (let i = 0; i < n; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), mat); b.position.set(p[0] + R(-0.4, 0.4), p[1] + R(0, 0.12), p[2] + R(-0.15, 0.15)); grp.add(b); } world.add(grp); grp.userData.nm = 'orchids'; return grp; };
+      /* giant clam (reef): fluted shell with a blue mantle */
+      const clam = (x, z, s2) => { const grp = new THREE.Group(), sh = new THREE.SphereGeometry(0.3, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2); sh.scale(1.4, 0.55, 1); const ma = new THREE.TorusGeometry(0.3, 0.07, 8, 24); ma.rotateX(Math.PI / 2); ma.scale(1.25, 1, 0.85); ma.translate(0, 0.15, 0);
+        grp.add(new THREE.Mesh(sh, std(0xd8c8a8, { roughness: 0.5 })), new THREE.Mesh(ma, std(0x2a8ad0, { roughness: 0.3, emissive: 0x0a3a7a }))); grp.scale.setScalar(s2); grp.position.set(x, H(x, z) - 0.02, z); world.add(grp); grp.userData.nm = 'giant clam'; return grp; };
+      /* barnacles + mussels (tidepool): a crust of shells around a spot (dressing) */
+      const shells = (x, z, n) => { const geos = []; for (let i = 0; i < n; i++) { const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 0.55, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r, y = H(px, pz);
+          const g = i % 3 ? new THREE.ConeGeometry(0.045, 0.06, 6) : new THREE.SphereGeometry(0.05, 8, 6).scale(1.8, 0.6, 0.8); if (!(i % 3)) g.rotateY(R(0, 6)); g.translate(px, y + 0.02, pz); geos.push(g.toNonIndexed()); }
+        const g = BU.mergeGeometries(geos), col = [], cA = new THREE.Color(0xe8e2d4), cB = new THREE.Color(0x1f2a44), pc = g.attributes.position.count; for (let i = 0; i < pc; i++) { const c = Math.floor(i / 36) % 3 ? cA : cB; col.push(c.r, c.g, c.b); }
+        g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, patch(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5 }))); m.castShadow = true; world.add(m); m.userData.nm = 'barnacles and mussels'; return m; };
+      /* pencil roots (mangrove): breathing roots poking up through the mud */
+      const pencils = (x, z, n) => { const g = new THREE.CylinderGeometry(0.012, 0.03, 0.4, 5); g.translate(0, 0.2, 0); const inst = new THREE.InstancedMesh(g, std(0x6a5a42, { roughness: 1 }), n), o = new THREE.Object3D();
+        for (let i = 0; i < n; i++) { const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 1.4, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; o.position.set(px, H(px, pz) - 0.03, pz); o.rotation.set(R(-0.15, 0.15), 0, R(-0.15, 0.15)); o.scale.set(1, R(0.5, 1.4), 1); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
+        inst.castShadow = true; world.add(inst); inst.userData.nm = 'pencil roots'; return inst; };
+      /* leaf litter (mangrove floor, jungle floor): flat fallen leaves */
+      const litter = (x, z, n, c1, c2) => { const g = leafGeo(0.16, 0.06); g.rotateX(-Math.PI / 2); const inst = new THREE.InstancedMesh(g, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, side: THREE.DoubleSide }), n), o = new THREE.Object3D(), a1 = new THREE.Color(c1), a2 = new THREE.Color(c2);
+        for (let i = 0; i < n; i++) { const px = x + R(-1.6, 1.6), pz = z + R(-1.2, 1.2); o.position.set(px, H(px, pz) + 0.01, pz); o.rotation.set(R(-0.1, 0.1), R(0, 6.28), 0); o.scale.setScalar(R(0.7, 1.4)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); inst.setColorAt(i, a1.clone().lerp(a2, rnd())); }
+        world.add(inst); inst.userData.nm = 'leaf litter'; return inst; };
+      const glass = (x, z, s2) => { const m = sponge(x, z, s2, 0, 0); m.material = std(0xcfe8ff, { emissive: 0x4a9ad0, emissiveIntensity: 1.6, transparent: true, opacity: 0.75, roughness: 0.2, side: THREE.DoubleSide }); m.userData.nm = 'glass sponges'; return m; };
       const tiers = {
         reef: () => {
-        tier(star(0.9, 2.3, 0.09, 0xd9542c, 0xffa070), 0); tier(star(-2.4, 2.0, 0.07, 0x7a3fb0, 0xd0a0ff), 0);
-        tier(sponge(-4.2, -1.9, 1, 0x9b4f1d, 0xffa64a), 1); tier(star(2.9, 1.6, 0.08, 0x2c6fd9, 0x9fd0ff), 1); tier(swarm(6, 0.5, 2.6, -1.5, 2.2, 0x3aa6ff), 1);
+        tier(clam(0.9, 2.3, 0.7), 0); tier(anem(-2.4, 2.0, 0xff8ab0, 0xffe0f0, 70), 0);
+        tier(sponge(-4.2, -1.9, 1, 0x9b4f1d, 0xffa64a), 1); tier(brain(2.9, 1.6, 0.35, 0x2a6a8a, 0x8ff0ff), 1); tier(swarm(6, 0.5, 2.6, -1.5, 2.2, 0x3aa6ff), 1);
         tier(fan(-1.9, -4.6, 1.2, 0xa8326b, 0xff8fc0), 2); tier(fan(4.4, -2.9, 1.0, 0xc4802a, 0xffd27a), 2); tier(sponge(2.0, -4.1, 0.9, 0x5a2f8a, 0xc79bff), 2);
-        tier(table(-3.2, 1.6, 0.8, 0x6b8a3a, 0xd6f08a), 3); tier(swarm(14, -0.8, 3.1, -1.8, 2.8, 0xffd23f), 3); tier(star(-0.2, 2.6, 0.1, 0xe0b030, 0xfff0a0), 3);
+        tier(table(-3.2, 1.6, 0.8, 0x6b8a3a, 0xd6f08a), 3); tier(swarm(14, -0.8, 3.1, -1.8, 2.8, 0xffd23f), 3); tier(clam(-0.2, 2.6, 0.9), 3);
         tier(table(3.4, 2.0, 0.65, 0x2a7a8f, 0x9ff0f5), 4); tier(fan(-5.2, -3.4, 1.4, 0x7a2fb0, 0xe0a8ff), 4); tier(sponge(4.8, 1.8, 0.8, 0xb03a3a, 0xff9a8a), 4); tier(swarm(20, 1.2, 3.5, -2.4, 3.3, 0xff7a2a), 4);
         },
         meadow: () => {
@@ -384,40 +446,48 @@ attribute float aTip; varying float vTip;
         tier(patchOf(4.2, -2.2, 12, 0xe8e0d0, 'mushroom'), 3); tier(swarm(9, -1, 2.6, -1.5, 3, 0x8fd0ff, 'butterfly'), 3); tier(patchOf(0.2, 2.8, 26, 0xffffff, 'flower'), 3);
         tier(bush(-5.0, -3.5, 2.0, 0x2f5a24, 0xff9a52), 4); tier(patchOf(3.4, 2.4, 30, 0xff6a6a, 'flower'), 4); tier(swarm(12, 1, 3, -2, 3.4, 0xffe066, 'butterfly'), 4);
         },
-        kelp: () => {
-          tier(kelp(-2.0, -1.2, 9, 4.2), 0); tier(kelp(2.6, -2.2, 8, 4.6), 0); tier(anem(0.8, 1.6, 0xe0703a, 0xffd0a0, 80), 0); tier(urchin(0.2, 2.2, 1, 0x3a1f5a), 0);
-          tier(kelp(-4.2, -3.2, 10, 5), 1); tier(urchin(-1.4, 2.4, 0.8, 0x5a1f3a), 1); tier(star(2.1, 2.3, 0.08, 0xd9542c, 0xffa070), 1); tier(swarm(6, 0, 2.4, -1.4, 2.2, 0xff8a2a), 1);
-          tier(kelp(4.4, -0.4, 8, 4.4), 2); tier(kelp(0.4, -4.4, 10, 5.2), 2); tier(sponge(-3.0, 1.2, 0.9, 0x8a6a2a, 0xffd27a), 2);
+        kelp: () => { /* vertical ribbons over a cold urchin barren; no corals, no stars */
+          tier(kelp(-2.0, -1.2, 9, 4.2), 0); tier(kelp(2.6, -2.2, 8, 4.6), 0); tier(urchin(0.2, 2.2, 1, 0x3a1f5a), 0); tier(urchin(0.9, 1.7, 0.7, 0x5a1f3a), 0);
+          tier(kelp(-4.2, -3.2, 10, 5), 1); tier(urchin(-1.4, 2.4, 0.8, 0x5a1f3a), 1); tier(swarm(6, 0, 2.4, -1.4, 2.2, 0xff8a2a), 1);
+          tier(kelp(4.4, -0.4, 8, 4.4), 2); tier(kelp(0.4, -4.4, 10, 5.2), 2); tier(urchin(-2.6, 1.4, 1.0, 0x2a1f4a), 2);
           tier(kelp(-5.4, 0.8, 9, 4.8), 3); tier(swarm(12, -0.8, 3.0, -1.8, 2.8, 0xd0d8e0), 3); tier(urchin(3.4, 1.7, 1.1, 0x2a1f4a), 3);
-          tier(kelp(5.6, -3.6, 12, 5.6), 4); tier(kelp(-1.0, -6.0, 12, 5.8), 4); tier(swarm(18, 1, 3.6, -2.4, 3.3, 0xffb040), 4); tier(anem(-2.6, 2.4, 0x8ad0a0, 0xe0ffe0, 80), 4);
+          tier(kelp(5.6, -3.6, 12, 5.6), 4); tier(kelp(-1.0, -6.0, 12, 5.8), 4); tier(kelp(2.0, 0.6, 6, 4.0), 4); tier(swarm(18, 1, 3.6, -2.4, 3.3, 0xffb040), 4);
         },
-        tidepool: () => {
+        tidepool: () => { /* granite rims crusted with shells; stars and green anemones own this pool */
           [[-1.0, 1.6, 0.35, 0.6], [1.2, 2.3, 0.3, 0.55], [-3.6, 1.0, 0.45, 0.6], [2.8, -0.4, 0.4, 0.6]].forEach(([x, z, s2, sy]) => rock(x, z, s2, sy));
-          tier(anem(0.2, 2.0, 0x4ab06a, 0xd0ffd0, 90), 0); tier(star(-1.8, 2.4, 0.08, 0xe0407a, 0xffa0c0), 0); tier(star(1.8, 1.6, 0.07, 0xe08a2a, 0xffd0a0), 0);
-          tier(anem(-2.6, 0.2, 0xd05a8a, 0xffd0e8, 70), 1); tier(urchin(0.9, 2.6, 0.7, 0x5a2a8a), 1); tier(swarm(5, 0, 1.6, 0.4, 1.4, 0x6ab0ff), 1);
-          tier(star(-0.6, 2.8, 0.09, 0x7a3fb0, 0xd0a0ff), 2); tier(sponge(2.4, -2.0, 0.6, 0xc06a2a, 0xffb060), 2); tier(anem(3.0, 1.0, 0x4ab06a, 0xd0ffd0, 60), 2);
-          tier(brain(-3.0, -1.8, 0.4, 0x6a8a3a, 0xd6f08a), 3); tier(swarm(10, -0.5, 2, -0.5, 2, 0xffe040), 3); tier(urchin(-2.2, 2.8, 0.8, 0x3a1f5a), 3);
-          tier(anem(-0.6, -2.4, 0xff8a5a, 0xffe0c0, 100), 4); tier(star(3.2, 2.4, 0.1, 0x2c6fd9, 0x9fd0ff), 4); tier(swarm(16, 0.8, 2.4, -1.4, 2.6, 0xff6aa0), 4);
+          tier(anem(0.2, 2.0, 0x3ac06a, 0xc0ffd0, 90), 0); tier(star(-1.8, 2.4, 0.19, 0x8a2ad0, 0xd0a0ff), 0); tier(shells(-1.2, 1.2, 40), 0);
+          tier(star(1.8, 1.6, 0.17, 0xe08a2a, 0xffd0a0), 1); tier(shells(2.4, 1.0, 50), 1); tier(swarm(5, 0, 1.6, 0.4, 1.4, 0x6ab0ff), 1);
+          tier(anem(-2.6, 0.2, 0x3ac06a, 0xc0ffd0, 70), 2); tier(star(-0.6, 2.8, 0.22, 0xe0407a, 0xffa0c0), 2); tier(shells(-3.4, 1.6, 60), 2);
+          tier(anem(3.0, 1.0, 0x2a9a5a, 0xd0ffd0, 60), 3); tier(star(0.9, 2.6, 0.17, 0x8a2ad0, 0xd0a0ff), 3); tier(swarm(10, -0.5, 2, -0.5, 2, 0xffe040), 3);
+          tier(anem(-0.6, -2.4, 0x3ac06a, 0xe0ffe0, 100), 4); tier(star(3.2, 2.4, 0.24, 0xe08a2a, 0xffd0a0), 4); tier(shells(0.4, 2.9, 60), 4); tier(star(-2.4, 2.9, 0.29, 0x8a2ad0, 0xd0a0ff), 4);
         },
-        mangrove: () => {
-          tier(mangrove(-2.6, -1.6, 1), 0); tier(swarm(8, 0.6, 1.8, 0.2, 1.8, 0xc0c8a0), 0); tier(urchin(0.6, 2.2, 0.8, 0x4a3a2a), 0);
-          tier(mangrove(2.8, -2.8, 1.2), 1); tier(anem(1.0, 1.4, 0xb0a070, 0xfff0c0, 70), 1);
-          tier(sponge(-0.4, -1.4, 0.8, 0x8a5a2a, 0xffb060), 2); tier(swarm(12, -0.6, 2.4, -1.4, 2.6, 0xe0e0c0), 2); tier(star(-1.6, 2.4, 0.08, 0xd9542c, 0xffa070), 2);
-          tier(mangrove(-5.2, 1.0, 0.9), 3); tier(anem(-1.4, 2.0, 0xd0a0d0, 0xffe0ff, 60), 3);
-          tier(mangrove(4.8, 0.6, 1.0), 4); tier(swarm(20, 0.6, 2.8, -1.8, 3.2, 0xffd060), 4);
+        mangrove: () => { /* arching roots over brown mud; pencil roots and fallen leaves, silver schools */
+          tier(mangrove(-2.6, -1.6, 1), 0); tier(pencils(0.4, 1.4, 40), 0); tier(litter(0, 1.6, 40, 0x8a7a3a, 0x5a4a2a), 0);
+          tier(mangrove(2.8, -2.8, 1.2), 1); tier(swarm(8, 0.6, 1.8, 0.2, 1.8, 0xc0c8a0), 1); tier(pencils(-2.4, 1.0, 50), 1);
+          tier(litter(2.2, 1.8, 50, 0x9a8a3a, 0x6a3a1a), 2); tier(swarm(12, -0.6, 2.4, -1.4, 2.6, 0xe0e0c0), 2); tier(pencils(2.8, 0.2, 40), 2);
+          tier(mangrove(-5.2, 1.0, 0.9), 3); tier(pencils(-1.0, 2.6, 50), 3);
+          tier(mangrove(4.8, 0.6, 1.0), 4); tier(swarm(20, 0.6, 2.8, -1.8, 3.2, 0xffd060), 4); tier(mangrove(0.6, -5.2, 1.3), 4);
         },
-        deep: () => {
-          tier(swarm(5, 0, 2.6, -1.4, 2.2, 0x6af0ff, 'fish', true), 0); tier(swarm(4, -1, 3.4, -2, 2.8, 0xff6af0, 'fish', true), 1); tier(sponge(-4.2, -1.9, 1, 0x2a3a6a, 0x6ab0ff), 1);
-          tier(fan(-1.9, -4.6, 1.2, 0x3a2a6a, 0x9a8aff), 2); tier(swarm(10, 1, 3, -2, 3, 0x8affb0, 'fish', true), 2);
-          tier(fan(4.4, -2.9, 1.0, 0x2a5a6a, 0x8af0ff), 3); tier(swarm(14, -0.8, 3.4, -1.8, 3.2, 0x6af0ff, 'fish', true), 3);
-          tier(sponge(4.8, 1.8, 0.8, 0x4a2a6a, 0xc08aff), 4); tier(swarm(20, 1, 2.8, -2.4, 3.4, 0xffd06a, 'fish', true), 4);
+        deep: () => { /* black silt, glass spires, drifting jellies, points of light */
+          tier(swarm(5, 0, 2.6, -1.4, 2.2, 0x6af0ff, 'fish', true), 0); tier(jellies(2, -1.6, 2.4, -1.0, 0.6, 0xff6af0), 0);
+          tier(glass(-2.6, 0.6, 1.1), 1); tier(jellies(3, 1.8, 2.8, -2.0, 1.0, 0x6af0ff), 1);
+          tier(fan(-1.9, -4.6, 1.4, 0x6a1f2a, 0xff5a6a), 2); tier(swarm(10, 1, 3, -2, 3, 0x8affb0, 'fish', true), 2); tier(glass(2.6, -3.6, 1.6), 2);
+          tier(jellies(4, -0.6, 3.2, -2.4, 1.6, 0xb08aff), 3); tier(swarm(14, -0.8, 3.4, -1.8, 3.2, 0x6af0ff, 'fish', true), 3);
+          tier(glass(2.2, 1.4, 0.9), 4); tier(jellies(6, 0.5, 2.6, -1.5, 2.6, 0xffd06a), 4); tier(swarm(20, 1, 2.8, -2.4, 3.4, 0xffd06a, 'fish', true), 4);
         },
-        canopy: () => {
-          tier(cloud(-3, 1.2, -2, 1.4), 0); tier(cloud(3.2, 0.8, -3.2, 1.6), 0); tier(swarm(4, 0, 2.6, -1, 2.4, 0xffffff, 'butterfly'), 0);
-          tier(cloud(-0.5, 2.6, -4.5, 2), 1); tier(patchOf(1.0, 2.2, 18, 0xfff07a, 'flower'), 1); tier(swarm(6, -1, 3, -1.5, 3, 0x8fd0ff, 'butterfly'), 1);
-          tier(cloud(4.8, 2.2, -1, 1.2), 2); tier(cloud(-5, 2.8, 0, 1.3), 2); tier(patchOf(-2.6, 1.9, 14, 0xf28fb0, 'flower'), 2);
-          tier(swarm(10, 1, 3.4, -2, 3.4, 0xffb13d, 'butterfly'), 3); tier(cloud(1.5, 0.5, 1.2, 0.8), 3);
-          tier(cloud(-2, 3.4, -6, 2.4), 4); tier(swarm(14, -1, 2.2, -1, 2.8, 0xffe066, 'butterfly'), 4); tier(patchOf(3.4, 2.4, 30, 0xb98cff, 'flower'), 4);
+        canopy: () => { /* no floor to speak of: thick mossy limbs, orchids, mist and clouds */
+          tier(limb([[-7, 1.4, -2.5], [-3, 1.7, -1.6], [0.5, 1.5, -2.2], [3, 1.9, -3.4]], 0.28, 0x5a5a2a), 0); tier(cloud(-3, 0.6, -5, 1.4), 0); tier(swarm(4, 0, 2.6, -1, 2.4, 0x6affc0, 'butterfly'), 0);
+          tier(bromeliad(-3, 0, 1.62, 0x4f8a3a, 0xe04a6a, 1.95), 1); tier(perched([0.5, 1.75, -2.2], 6, 0xf0e0ff), 1); tier(cloud(3.2, 0.4, -4.2, 1.6), 1);
+          tier(limb([[7, 2.6, -1.5], [3.6, 2.9, -0.8], [1.2, 3.3, -1.8]], 0.22, 0x4a5a24), 2); tier(cloud(-0.5, 0.2, 0.6, 1.2), 2); tier(swarm(6, -1, 3, -1.5, 3, 0x8fd0ff, 'butterfly'), 2);
+          tier(perched([3.6, 3.1, -0.8], 7, 0xff7ab0), 3); tier(bromeliad(1.4, 0, 1.44, 0x3f7a3a, 0xff9a3a, 3.45), 3); tier(cloud(4.8, 0.8, -1, 1.2), 3);
+          tier(limb([[-6, 3.6, -4], [-2.5, 3.2, -3.4], [0.5, 3.8, -4.6]], 0.34, 0x5a5a2a), 4); tier(swarm(10, 1, 3.4, -2, 3.4, 0x2affa0, 'butterfly'), 4); tier(perched([-2.5, 3.45, -3.4], 8, 0xffffff), 4);
+        },
+        jungle: () => { /* huge layered leaves, buttress trunks, hanging lianas, red bromeliads, fireflies in the shade */
+          tier(bigLeaves(-1.6, 1.2, 0.9, 0x2f7a2a), 0); tier(litter(0.4, 1.8, 60, 0x8a5a2a, 0x3a2a1a), 0); tier(bromeliad(1.4, 1.9, 1.71, 0x2f6a2a, 0xff2a2a), 0);
+          tier(buttress(-3.2, -3.0, 1), 1); tier(bigLeaves(2.6, 0.4, 1.0, 0x3a8a2a), 1); tier(swarm(10, 0, 1.6, 0, 2.4, 0xfff06a, 'firefly', true), 1);
+          tier(vines(-1.2, -2.0, 5, 0x3a5a22), 2); tier(bigLeaves(-4.2, -0.4, 1.2, 0x1f5a22), 2); tier(bromeliad(-0.6, 2.4, 1.33, 0x2f6a2a, 0xff8a1a), 2);
+          tier(buttress(3.8, -3.8, 1.2), 3); tier(vines(2.4, -1.4, 6, 0x2f4a1e), 3); tier(swarm(5, 0.5, 2.4, -1, 2.2, 0x2a7aff, 'butterfly'), 3);
+          tier(bigLeaves(4.4, 1.6, 1.3, 0x2f7a2a, 8), 4); tier(bigLeaves(-3.6, 2.0, 1.1, 0x4a9a2a), 4); tier(swarm(26, 0, 2.0, -0.6, 3.2, 0xfff06a, 'firefly', true), 4);
         },
       };
       (tiers[sk] || (water ? tiers.reef : tiers.meadow))();
@@ -433,19 +503,20 @@ attribute float aTip; varying float vTip;
           if (last) { g.userData.landmark = true; if (!g.isInstancedMesh) g.scale.multiplyScalar(1.35); }
           g.userData.base = g.scale.clone(); g.visible = false;
         })); }
-      /* grass: seagrass under water, meadow grass on land */
-      { const g = new THREE.PlaneGeometry(0.045, 0.55, 1, 6); g.translate(0, 0.275, 0); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 - (p.getY(i) / 0.55) * 0.75));
-        const mat = new THREE.MeshStandardMaterial({ color: water ? 0x6f9a3c : 0x86b84a, roughness: 0.75, side: THREE.DoubleSide }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: water ? 0.28 : 0.12 } });
-        const N = water ? 220 : 400, inst = new THREE.InstancedMesh(g, mat, N), o = new THREE.Object3D(); let k = 0;
-        while (k < N) { const cx = R(-7, 7), cz = R(-2, 4); if (Math.hypot(cx, cz + 1) < 2.6) continue; for (let j = 0; j < 10 && k < N; j++, k++) { const x = cx + R(-0.4, 0.4), z = cz + R(-0.4, 0.4); o.position.set(x, H(x, z) - 0.02, z); o.rotation.set(0, R(0, 3), 0); o.scale.set(1, R(0.6, 1.5), 1); o.updateMatrix(); inst.setMatrixAt(k, o.matrix); inst.setColorAt(k, new THREE.Color().setHSL(R(0.18, 0.26), R(0.35, 0.55), R(0.3, 0.45))); } }
+      /* ground cover from the frame: seagrass, red turf, surfgrass, meadow grass, moss, ferns (none on mud and deep silt) */
+      if (fr.cover) { const cv = fr.cover, g = new THREE.PlaneGeometry(cv.w, cv.h, 1, 6); g.translate(0, cv.h / 2, 0); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 - (p.getY(i) / cv.h) * 0.75));
+        const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75, side: THREE.DoubleSide }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: cv.amp } });
+        const N = cv.n, inst = new THREE.InstancedMesh(g, mat, N), o = new THREE.Object3D(), L = cv.l || [0.3, 0.45]; let k = 0;
+        while (k < N) { const cx = R(-7, 7), cz = R(-2, 4); if (Math.hypot(cx, cz + 1) < 2.6) continue; for (let j = 0; j < 10 && k < N; j++, k++) { const x = cx + R(-0.4, 0.4), z = cz + R(-0.4, 0.4); o.position.set(x, H(x, z) - 0.02, z); o.rotation.set(R(-0.3, 0.3), R(0, 3), R(-0.3, 0.3)); o.scale.set(1, R(0.6, 1.5), 1); o.updateMatrix(); inst.setMatrixAt(k, o.matrix); inst.setColorAt(k, new THREE.Color().setHSL(R(cv.c[0], cv.c[1]), R(0.35, 0.6), R(L[0], L[1]))); } }
         inst.receiveShadow = true; world.add(inst); }
       /* algae from neglected tasks: hair algae on rocks (water) / weeds (land) */
       { const g = new THREE.ConeGeometry(0.025, 0.3, 4); g.translate(0, 0.15, 0); const mat = new THREE.MeshStandardMaterial({ color: 0x5d7228, roughness: 1 }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: 0.6 } });
         const N = 270, inst = new THREE.InstancedMesh(g, mat, N), o = new THREE.Object3D(), ray = new THREE.Raycaster();
-        for (let i = 0; i < N; i++) { const r = rocks[i % rocks.length], a = rnd() * 6.283, d = rnd() * 0.7; r.updateMatrixWorld(); ray.set(new V(r.position.x + Math.cos(a) * d * r.scale.x, r.position.y + 5, r.position.z + Math.sin(a) * d * r.scale.z), new V(0, -1, 0)); const hit = ray.intersectObject(r)[0]; o.position.copy(hit ? hit.point : r.position); o.rotation.set(R(-0.3, 0.3), R(0, 3), R(-0.3, 0.3)); o.scale.setScalar(R(0.6, 1.3)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
+        for (let i = 0; i < N; i++) { const r = rocks[i % Math.max(1, rocks.length)] || sand, a = rnd() * 6.283, d = rnd() * 0.7; r.updateMatrixWorld(); ray.set(new V(r.position.x + Math.cos(a) * d * r.scale.x, r.position.y + 5, r.position.z + Math.sin(a) * d * r.scale.z), new V(0, -1, 0)); const hit = ray.intersectObject(r)[0]; o.position.copy(hit ? hit.point : r.position); o.rotation.set(R(-0.3, 0.3), R(0, 3), R(-0.3, 0.3)); o.scale.setScalar(R(0.6, 1.3)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
         inst.count = 0; world.add(inst); algaeInst = inst; }
       /* light shafts (water only) */
-      if (water) for (let i = 0; i < 8; i++) {
+      rayU.uRayCol.value.set(fr.rays || 0xdffbff);
+      if (water || fr.rays) for (let i = 0; i < 8; i++) {
         const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, uniforms: { uTime: U.uTime, uRay: rayU.uRay, uRayCol: rayU.uRayCol, uSeed: { value: R(0, 10) } },
           vertexShader: 'varying vec2 vUv; varying vec3 vW; void main(){ vUv = uv; vW = (modelMatrix * vec4(position, 1.)).xyz; gl_Position = projectionMatrix * viewMatrix * vec4(vW, 1.); }',
           fragmentShader: `uniform float uTime, uRay, uSeed; uniform vec3 uRayCol; varying vec2 vUv; varying vec3 vW;
@@ -609,7 +680,7 @@ attribute float aTip; varying float vTip;
     const C = (h) => new THREE.Color(h);
     /* per-scene colors: s = shallow/sky, d = deep/horizon; dens = fog, light = sun/caustics, glow = constant bioluminescence */
     const LOOKS = { reef: { s: 0x3fd0e4, d: 0x0a5a86 }, kelp: { s: 0x5fb89a, d: 0x0d4a3a, dens: 1.15 }, tidepool: { s: 0x8ff0f5, d: 0x3a9fc0, dens: 0.55, light: 1.15 },
-      mangrove: { s: 0x9ab87a, d: 0x2c4a30, dens: 1.5, light: 0.8 }, deep: { s: 0x1a3f6a, d: 0x020a1a, dens: 1.25, light: 0.3, glow: 0.85 }, meadow: { s: 0x9fd4f2, d: 0xf2e2bc }, canopy: { s: 0xbfe2f7, d: 0xeef3f6, dens: 1.2 } };
+      mangrove: { s: 0x9ab87a, d: 0x2c4a30, dens: 1.5, light: 0.8 }, deep: { s: 0x1a3f6a, d: 0x020a1a, dens: 1.25, light: 0.3, glow: 0.85 }, meadow: { s: 0x9fd4f2, d: 0xf2e2bc }, canopy: { s: 0xbfe2f7, d: 0xeef3f6, dens: 0.6 }, jungle: { s: 0x8fc07a, d: 0x163a20, dens: 1.8, light: 0.85 } };
     const MURK_S = C(0x6f8f4a), MURK_D = C(0x23361c), NIGHT_S = C(0x0a2a48), NIGHT_D = C(0x01070f), DUSK = C(0xd9906a), ALGAE = C(0x8fb04a);
     let envDirty = true;
     /* biome progress 0..1 from reef points (thresholds are evenly spaced); preview overrides pin it */
@@ -630,7 +701,7 @@ attribute float aTip; varying float vTip;
       v.fEnd = f; try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* ignore */ }
       return v.f;
     }
-    const NAMES = { coral: 'coral', shrub: 'flowering bush', anemone: 'anemone', kelp: 'kelp', root: 'mangrove tree', cloud: 'cloud', sponge: 'tube sponges', rock: 'rock' };
+    const NAMES = { tree: 'buttress tree', leaf: 'giant leaves', vine: 'vines', limb: 'mossy branch', coral: 'coral', shrub: 'flowering bush', anemone: 'anemone', kelp: 'kelp', root: 'mangrove tree', cloud: 'cloud', sponge: 'tube sponges', rock: 'rock' };
     const nameOf = (g) => g.userData.nm || (g.userData.kind === 'coral' && medium !== 'water' ? 'bush' : NAMES[g.userData.kind]) || 'something new';
     function apply() {
       const st = view() || { reef: { phase: 2, phases: 5, bleached: false }, cloudiness: 0, algae: 0 }, water = medium === 'water';
@@ -653,8 +724,8 @@ attribute float aTip; varying float vTip;
       domeU.uSunDir.value.copy(sd); domeU.uSunCol.value.set(night > 0.5 ? 0x5a7ab0 : dusk > 0.4 ? 0xffb07a : 0xfff4dc).multiplyScalar((night > 0.5 ? 0.25 : 0.4 + day) * lightK);
       domeU.uSurfCol.value.copy(U.uShallow.value).lerp(C(0xffffff), 0.5).multiplyScalar(water ? (0.25 + day * 0.9) * lightK : 0);
       scene.environmentIntensity = 0.4 + day * 0.2; hemi.intensity = (0.15 + day * 0.65) * lightK;
-      rayU.uRay.value = 0.16 * day * (1 - o * 0.7);
-      if (snowMat) { snowMat.uniforms.uOp.value = water ? 0.45 + o * 0.5 : 0.25; snowMat.uniforms.uCol.value.set(water ? (night > 0.5 ? 0x7af0ff : 0xe8fbff) : 0xfff2b0); }
+      rayU.uRay.value = (water ? 0.16 : 0.24) * day * (1 - o * 0.7);
+      if (snowMat) { snowMat.uniforms.uOp.value = water ? 0.45 + o * 0.5 : 0.25; snowMat.uniforms.uCol.value.set(water && night > 0.5 ? 0x7af0ff : fr.mote); }
       if (rockMat) rockMat.color.set(0xffffff).lerp(C(0x9aa060), Math.max(o, al) * 0.6);
       if (algaeInst) algaeInst.count = Math.round(al * 270);
       /* phase -> which tiers of coral/plant life are in (userData.ph) */

@@ -18,6 +18,9 @@ Goal: any week's surprise visitor looks like it belongs in the same world as the
   - Feed reads in silhouette: anticipation is visible (small pull-back), strike is the fastest beat, settle is the slowest.
 - **QA lighting:** fixed rig (`shared/blender/qa_render.py`), so renders compare across weeks.
 
+## Biome identity (enforced at brief time)
+The style lock keeps every model in one *world*; `biomes.json` `look` + `identity_rules` keep each *biome* unmistakable inside it: its own shape language, hue family, owned motifs and motion feel. Locked rendering, free silhouette.
+
 ## Free (let it ride)
 Species, body plan, proportions within anatomy, color choices inside the palette range, pattern design, idle personality (lazy hover vs. busy flicker), feed technique.
 

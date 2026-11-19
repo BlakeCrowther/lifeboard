@@ -99,7 +99,7 @@
     const si = Math.floor(weeksDone / sw);
     return {
       day: today - first, today: input.today,
-      reef: { biome: reef.biome, phase: reef.phase, phases: LBG.RULES.tide.phases, pts: reef.pts, next: reef.th[reef.phase] ?? null, prev: reef.phase ? reef.th[reef.phase - 1] : 0, bleached: reef.bleached, dioramas: reef.dioramas.slice() },
+      reef: { biome: reef.biome, phase: reef.phase, phases: LBG.RULES.tide.phases, pts: reef.pts, next: reef.th[reef.phase] ?? null, prev: reef.phase ? reef.th[reef.phase - 1] : 0, bleached: reef.bleached, from: ds(first + reef.startDay), dioramas: reef.dioramas.map((d) => ({ ...d, from: d.start != null ? ds(first + d.start) : null, to: d.end != null ? ds(first + d.end) : null })) },
       todayTide, weekTides, events,
       overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), algae: LBG.algae(overdueAges),
       visitor: reef.bleached ? null : wv || 'common', visitorWeek: ds(wk),
@@ -267,108 +267,106 @@
   }
   const plotSVG = (pl, w) => { const st = visual(pl); return specimen(st, lookOf(pl), w, `${pl.name}: ${LABEL[st].toLowerCase()} ${(SPN[pl.species] || 'plant').toLowerCase()}`); };
 
-  /* ---- preview (#labs-preview or ?preview): restyle every plot, try seed rarities, fill the shelf with samples. View-only, never saved. ---- */
-  /* the local mock board (test.html) has no history, so it shows sample keepsakes by default */
-  const PV = { on: false, stage: null, rarity: null, mutated: false, hybrid: false, kind: null, sample: !!G.MOCK, all: false };
-  try { const u = new URL(G.LB_LABS_HREF || G.location.href); PV.on = u.hash === '#labs-preview' || u.searchParams.has('preview'); } catch (e) { /* off */ }
-  function view(pl) {
-    if (!PV.on || (!PV.stage && !PV.rarity && !PV.mutated && !PV.hybrid && !PV.kind)) return pl;
-    const o = { ...pl };
-    if (PV.kind) o.species = PV.kind;
-    const nb = (k) => SPECIES[(SPECIES.indexOf(k) + 3) % SPECIES.length];
-    if (PV.rarity || PV.mutated || PV.hybrid) o.seed = { rarity: PV.rarity || (pl.seed && pl.seed.rarity) || 'common', mutated: PV.mutated, hybrid: PV.hybrid ? nb(o.species) : null };
-    if (PV.stage) {
-      o.alive = PV.stage !== 'dead'; o.thirsty = PV.stage === 'wilt'; o.wilted = false; o.waiting = false;
-      if (STAGES.includes(PV.stage)) { o.stageName = PV.stage; o.stage = STAGES.indexOf(PV.stage); o.next = STAGES[Math.min(4, o.stage + 1)]; }
-    }
-    return o;
-  }
-  function plantLab() {
-    if (!PV.on) return '';
-    const b = (k, v, l, on) => `<button type="button" class="chip${on ? ' on' : ''}" data-gpv="${k}:${v}" aria-pressed="${!!on}">${l}</button>`;
-    const kind = PV.kind || 'daisy', nb = SPECIES[(SPECIES.indexOf(kind) + 3) % SPECIES.length];
-    const sp = { kind, rarity: PV.rarity || 'common', mutated: PV.mutated, hybrid: PV.hybrid ? nb : null, base: 'bud' };
-    const fig = (svg, cap) => `<figure>${svg}<figcaption>${cap}</figcaption></figure>`;
-    return `<div class="plab"><p class="plab-t">Plant lab <small>preview only · nothing is saved</small></p>
-      <div class="hab-pv"><span>Species</span>${b('kind', '', 'Live', !PV.kind)}${SPECIES.map((k) => b('kind', k, SPN[k], PV.kind === k)).join('')}</div>
-      <div class="hab-pv"><span>Stage</span>${b('stage', '', 'Live', !PV.stage)}${[...STAGES, 'wilt', 'dead'].map((s) => b('stage', s, LABEL[s], PV.stage === s)).join('')}</div>
-      <div class="hab-pv"><span>Seed</span>${b('rarity', '', 'Live', !PV.rarity)}${Object.keys(RAR).map((r) => b('rarity', r, RAR[r], PV.rarity === r)).join('')}${b('mutated', PV.mutated ? '0' : '1', 'Mutated', PV.mutated)}${b('hybrid', PV.hybrid ? '0' : '1', 'Hybrid', PV.hybrid)}</div>
-      <div class="hab-pv"><span>Shelf</span>${b('sample', PV.sample ? '0' : '1', 'Sample keepsakes', PV.sample)}</div>
-      <p class="plab-l">Every species${PV.stage ? '' : ' in bloom'}</p><div class="plab-strip">${SPECIES.map((k) => fig(specimen(PV.stage || 'bloom', { ...sp, kind: k, hybrid: PV.hybrid ? SPECIES[(SPECIES.indexOf(k) + 3) % SPECIES.length] : null }, 76), SPN[k])).join('')}</div>
-      <p class="plab-l">${SPN[kind]}, every stage</p><div class="plab-strip">${[...STAGES, 'wilt', 'dead'].map((s) => fig(specimen(s, sp, 76), LABEL[s])).join('')}</div>
-      <p class="plab-l">${SPN[kind]} blooms</p><div class="plab-strip">${Object.keys(RAR).flatMap((r) => [false, true].map((m) => fig(specimen('bloom', { kind, rarity: r, mutated: m }, 76), RAR[r] + (m ? ' mutant' : '')))).join('')}${fig(specimen('bloom', { kind, hybrid: nb }, 76), `× ${SPN[nb]}`)}</div></div>`;
-  }
-  if (typeof document !== 'undefined') document.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-gpv]'); if (!b) return;
-    const [k, v] = b.dataset.gpv.split(':');
-    if (k === 'stage') PV.stage = v || null; else if (k === 'rarity') PV.rarity = v || null; else if (k === 'mutated') PV.mutated = v === '1'; else if (k === 'sample') PV.sample = v === '1'; else if (k === 'all') PV.all = v === '1'; else if (k === 'hybrid') PV.hybrid = v === '1'; else if (k === 'kind') PV.kind = v || null;
-    if (G.LBLabs && G.LBLabs.render) G.LBLabs.render();
-  });
-
-  /* ---- Grow: the shelf (finished plants + reef dioramas, each with a title and note), stats, logbook ---- */
+  /* ---- Grow → Collection (dioramas + pressed plants, each with a title and note), stats, logbook ---- */
   let biomeNames = null;
   function biomeOf(id) {
     if (!biomeNames) { biomeNames = []; fetch('models/biomes.json').then((r) => r.json()).then((j) => { biomeNames = j.biomes || []; if (G.LBLabs && G.LBLabs.render) G.LBLabs.render(); }).catch(() => {}); }
     const L = biomeNames.length ? biomeNames : [{ id: 0, name: 'Coral shallows', medium: 'water' }];
     return L.find((x) => x.id === id) || L[((id % L.length) + L.length) % L.length];
   }
+  /* a finished biome as a glass-dome diorama, drawn from its biomes.json look (palette + scene motif) */
+  const MOTIF = {
+    reef: (ac) => `<path d="M28 61 q-3 -9 1 -14 M28 55 q4 -4 6 -9" stroke="${ac}" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="47" cy="58" rx="5" ry="3.5" fill="#d9a35a"/><path d="M53 61 q0 -8 3 -12 M56 61 q1 -6 4 -9" stroke="#b07ae0" stroke-width="1.8" fill="none"/><path d="M36 44 q3 -2 6 0 q-3 2 -6 0z M42 44 l2 -1.5 v3z" fill="#ff9a3c"/>`,
+    kelp: (ac) => `<path d="M24 61 q-4 -12 1 -24 q3 -6 0 -9 M31 61 q4 -14 -1 -27 M50 61 q-3 -10 2 -22 q2 -5 -1 -8 M57 61 q3 -9 0 -18" stroke="#8a7a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="40" cy="58" r="2.4" fill="#3a1f5a"/><path d="M38 44 q3 -2 6 0 q-3 2 -6 0z" fill="${ac}"/>`,
+    tidepool: (ac) => `<ellipse cx="26" cy="59" rx="7" ry="4" fill="#5f5a55"/><ellipse cx="55" cy="58" rx="8" ry="5" fill="#4f4a45"/><path d="M40 52 l1.6 3.4 3.7 .4 -2.8 2.4 .9 3.6 -3.4 -1.9 -3.3 1.9 .8 -3.6 -2.8 -2.4 3.7 -.4z" fill="${ac}"/><circle cx="30" cy="55" r="2.6" fill="#3ac06a"/><circle cx="52" cy="52" r="2" fill="#8a2ad0"/>`,
+    mangrove: (ac) => `<path d="M40 30 v18 M40 46 q-8 2 -12 15 M40 46 q-3 5 -5 15 M40 46 q4 4 6 15 M40 46 q9 3 13 15" stroke="#5a4632" stroke-width="2" fill="none"/><ellipse cx="40" cy="33" rx="13" ry="6" fill="#4a6a2a"/><path d="M26 61 v-3 M30 61 v-4 M50 61 v-3 M55 61 v-4" stroke="#6a5a42" stroke-width="1"/><path d="M46 52 q2 -1.5 4 0 q-2 1.5 -4 0z" fill="${ac}"/>`,
+    deep: (ac) => `<path d="M30 40 a4 3 0 0 1 8 0z M48 34 a3.5 2.6 0 0 1 7 0z" fill="${ac}" opacity=".85"/><path d="M31 40 v7 M34 40 v9 M37 40 v6 M49 34 v6 M52 34 v8" stroke="${ac}" stroke-width=".6" opacity=".8"/><path d="M27 61 v-12 M29 61 v-8 M55 61 v-10" stroke="#cfe8ff" stroke-width="1.6" opacity=".7"/><circle cx="42" cy="50" r="1" fill="#ffd36b"/><circle cx="24" cy="44" r=".8" fill="${ac}"/><circle cx="58" cy="46" r=".8" fill="${ac}"/>`,
+    meadow: (ac) => `<circle cx="30" cy="52" r="5" fill="#4f8f3a"/><circle cx="48" cy="50" r="6.5" fill="#3f7f34"/><path d="M27 61 v-6 M36 61 v-8 M44 61 v-5 M53 61 v-7" stroke="#4f8a3a" stroke-width="1"/><circle cx="27" cy="54" r="1.8" fill="${ac}"/><circle cx="36" cy="52" r="1.8" fill="#e57e9d"/><circle cx="44" cy="55" r="1.6" fill="#fff"/><circle cx="53" cy="53" r="1.8" fill="#b98cff"/>`,
+    canopy: (ac) => `<ellipse cx="32" cy="58" rx="10" ry="3.5" fill="#fff" opacity=".9"/><ellipse cx="51" cy="57" rx="9" ry="3" fill="#fff" opacity=".85"/><path d="M16 46 q14 -5 26 -2 q12 2 22 -3" stroke="#4f6a3a" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M24 46 v4 M30 45 v5 M46 44 v4 M54 43 v5" stroke="#5f8a3f" stroke-width=".8"/><circle cx="36" cy="42" r="2" fill="${ac}"/><circle cx="50" cy="40" r="1.6" fill="#f0e0ff"/>`,
+    jungle: (ac) => `<path d="M30 30 v31" stroke="#6a5d4c" stroke-width="4"/><path d="M26 61 l4 -7 4 7z" fill="#6a5d4c"/><path d="M48 36 q1 10 -1 18 M54 34 q-1 8 1 14" stroke="#3a5a22" stroke-width="1" fill="none"/><path d="M40 60 q-12 -4 -14 -12 q8 -1 14 12z M42 60 q10 -6 18 -8 q-4 9 -18 8z M38 60 q2 -12 8 -16 q2 9 -8 16z" fill="#2f7a2a"/><path d="M52 61 l-3 -5 M52 61 l0 -6 M52 61 l3 -5" stroke="${ac}" stroke-width="1.6" stroke-linecap="round"/><circle cx="36" cy="40" r=".9" fill="#fff06a"/><circle cx="44" cy="46" r=".8" fill="#fff06a"/>`,
+  };
   function dioramaSVG(biome, w = 96) {
-    const p = 'gd' + uid++ + '-', land = biome.medium === 'air' || biome.medium === 'land';
-    const TINT = { 0: ['#7fd3e6', '#1f6f9a'], 1: ['#6fc0b0', '#14505a'], 2: ['#a6e4ec', '#3a8fb0'], 3: ['#a8d4b4', '#3d6b5a'], 4: ['#3a4a8a', '#0d1530'], 5: ['#cfeaf7', '#8cc8a0'], 6: ['#eef7ff', '#9fc4ea'] };
-    const [a, b] = TINT[biome.id] || (land ? TINT[5] : TINT[0]);
-    const extra = biome.id === 1 ? '<path d="M24 61 q-4 -12 1 -24 M31 61 q4 -14 -1 -27 M58 61 q-3 -10 1 -20" stroke="#3f8f4a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
-      : biome.id === 4 ? '<circle cx="30" cy="40" r="1.4" fill="#9ff3ff"/><circle cx="50" cy="36" r="1.1" fill="#9ff3ff"/><circle cx="44" cy="46" r=".9" fill="#ffd36b"/>'
-      : biome.id === 6 ? '<ellipse cx="30" cy="42" rx="7" ry="3.5" fill="#fff" opacity=".9"/><ellipse cx="50" cy="38" rx="6" ry="3" fill="#fff" opacity=".85"/>' : '';
-    const life = land
-      ? `<path d="M18 61 q22 -8 44 0z" fill="#6fae4f"/><circle cx="30" cy="52" r="5" fill="#4f8f3a"/><circle cx="48" cy="50" r="6.5" fill="#3f7f34"/><circle cx="27" cy="57" r="1.6" fill="#f5c73e"/><circle cx="52" cy="58" r="1.6" fill="#e57e9d"/><circle cx="40" cy="58" r="1.4" fill="#fff"/>`
-      : `<path d="M18 61 q22 -6 44 0z" fill="#e9d3a6"/><path d="M28 61 q-3 -9 1 -14 M28 55 q4 -4 6 -9" stroke="#ff7f6b" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="47" cy="57" r="4.5" fill="#c9a0e8"/><path d="M53 61 q0 -8 3 -12 M56 61 q1 -6 4 -9" stroke="#5fb86b" stroke-width="1.6" fill="none"/><path d="M36 44 q3 -2 6 0 q-3 2 -6 0z M42 44 l2 -1.5 v3z" fill="#ff9a3c"/><circle cx="33" cy="37" r="1" fill="#fff" opacity=".7"/><circle cx="36" cy="33" r=".7" fill="#fff" opacity=".7"/>`;
-    const lifeX = life + extra;
-    return `<svg class="gdio" viewBox="0 0 80 80" width="${w}" height="${w}" role="img" aria-label="${esc(biome.name)} diorama"><defs><linearGradient id="${p}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient><linearGradient id="${p}b" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8723f"/><stop offset="1" stop-color="#6a401c"/></linearGradient></defs>
-      <ellipse cx="40" cy="73" rx="31" ry="4" fill="#000" opacity=".18"/><path d="M14 61 A26 26 0 0 1 66 61z" fill="url(#${p}w)" opacity=".9"/>${lifeX}<path d="M14 61 A26 26 0 0 1 66 61" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/><path d="M22 47 A19 19 0 0 1 33 37" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/><rect x="10" y="60" width="60" height="11" rx="3" fill="url(#${p}b)"/><rect x="10" y="60" width="60" height="2.5" rx="1.2" fill="#f0c48e" opacity=".7"/></svg>`;
-  }
-  function samples(game) {
-    const out = [];
-    game.plots.forEach((pl, i) => {
-      out.push({ id: `sample-${pl.key}-a`, kind: 'plant', key: pl.key, name: pl.name, species: pl.species, season: 1, from: '2026-10-26', to: '2026-11-22', stageName: 'bloom', bloomed: true, died: false, score: 5 + i, sessions: 4 * pl.target, seed: { rarity: Object.keys(RAR)[i % 3], mutated: i === 2, hybrid: i === 4 && game.plots[3] ? game.plots[3].species : null }, earned: { rarity: i % 2 ? 'exotic' : 'heirloom', mutated: false, hybrid: i === 1 && game.plots[0] ? game.plots[0].species : null } });
-      if (i % 2) out.push({ id: `sample-${pl.key}-b`, kind: 'plant', key: pl.key, name: pl.name, species: pl.species, season: 0, from: '2026-09-28', to: '2026-10-25', stageName: 'leafy', bloomed: false, died: true, score: 1, sessions: 3, seed: { rarity: 'common' }, earned: { rarity: 'common', mutated: false } });
-    });
-    [[0, 41], [1, 33], [4, 52], [5, 29], [6, 38]].forEach(([b, d], i) => out.push({ id: `sample-reef-${i}`, kind: 'reef', biome: b, days: d }));
-    return out;
+    const p = 'gd' + uid++ + '-', L = biome.look || {}, [a, b, gr, ac] = L.palette || ['#7fd3e6', '#1f6f9a', '#e9d3a6', '#ff7f6b'];
+    const sc = biome.scene || ({ water: 'reef', land: 'meadow', air: 'canopy' })[biome.medium] || 'reef', life = (MOTIF[sc] || MOTIF.reef)(ac);
+    return `<svg class="gdio" viewBox="0 0 80 80" width="${w}" height="${w}" role="img" aria-label="${esc(biome.name)} diorama"><defs><linearGradient id="${p}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient><linearGradient id="${p}b" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8723f"/><stop offset="1" stop-color="#6a401c"/></linearGradient><clipPath id="${p}c"><path d="M14 61 A26 26 0 0 1 66 61z"/></clipPath></defs>
+      <ellipse cx="40" cy="73" rx="31" ry="4" fill="#000" opacity=".18"/><path d="M14 61 A26 26 0 0 1 66 61z" fill="url(#${p}w)" opacity=".92"/><g clip-path="url(#${p}c)"><path d="M14 61 q26 -9 52 0z" fill="${gr}"/>${life}</g><path d="M14 61 A26 26 0 0 1 66 61" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/><path d="M22 47 A19 19 0 0 1 33 37" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/><rect x="10" y="60" width="60" height="11" rx="3" fill="url(#${p}b)"/><rect x="10" y="60" width="60" height="2.5" rx="1.2" fill="#f0c48e" opacity=".7"/></svg>`;
   }
   function keepsakes(game) {
-    const real = [...game.reef.dioramas.map((d, i) => ({ id: `reef-${i}`, kind: 'reef', biome: d.biome, days: d.days })).reverse(), ...game.history.filter((h) => h.bloomed || h.died || h.stage > 0).slice().reverse()];
-    return PV.sample && (PV.on || G.MOCK) ? [...samples(game), ...real] : real;
+    return [...game.reef.dioramas.map((d, i) => ({ id: `reef-${i}`, kind: 'reef', ...d })).reverse(), ...game.history.filter((h) => h.bloomed || h.died || h.stage > 0).slice().reverse()];
   }
   function keepTitle(k) {
     if (k.kind === 'reef') return `${biomeOf(k.biome).name} diorama`;
     const sp = (SPN[k.species] || 'plant').toLowerCase(), hy = k.seed && k.seed.hybrid ? ` × ${SPN[k.seed.hybrid].toLowerCase()}` : '';
     return `${k.name} ${sp}${hy}, ${k.bloomed ? 'in bloom' : k.died ? 'withered' : LABEL[k.stageName].toLowerCase()}`;
   }
-  function keepCard(k, notes, editing) {
-    const n = notes[k.id] || {}, title = n.title || keepTitle(k);
-    const art = k.kind === 'reef' ? dioramaSVG(biomeOf(k.biome)) : specimen(k.died ? 'dead' : k.stageName, lookOf(k), 84, title);
-    const sub = k.kind === 'reef' ? `Biome finished in ${k.days} days`
-      : `Season ${k.season + 1} · ${fmt(k.from)}–${fmt(k.to)} · ${k.sessions} session${k.sessions === 1 ? '' : 's'}`;
-    const tag = k.kind === 'reef' ? '<span class="chip gok">Diorama</span>'
-      : k.bloomed ? `<span class="chip gok">Bloomed</span><span class="chip r-${k.earned.rarity}">${RAR[k.earned.rarity]} seed${k.earned.mutated ? ' · mutant' : ''}</span>${k.earned.hybrid ? `<span class="chip r-hybrid">Hybrid × ${SPN[k.earned.hybrid]}</span>` : ''}`
+  /* naming + notes, shared by plants and dioramas: pencil renames inline; the note is a one-line box whose Save shows while editing */
+  const PEN = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+  const keepF = (k, kind, inner) => `<form class="dio-f" data-form="keep" data-id="${esc(k.id)}" data-kind="${kind}">${inner}</form>`;
+  function nameRow(k, n, kind, fallback, editing, cls) {
+    const nm = n.title || fallback;
+    return editing === k.id
+      ? keepF(k, kind, `<label class="sr" for="kt-${esc(k.id)}">Name</label><input id="kt-${esc(k.id)}" name="title" maxlength="60" value="${esc(n.title || '')}" placeholder="${esc(fallback)}" autocomplete="off" enterkeyhint="done"><input type="hidden" name="note" value="${esc(n.note || '')}"><span class="dio-fb"><button class="btn sm primary" type="submit">Save</button><button class="btn sm ghost" type="button" data-act="keep-cancel">Cancel</button></span>`)
+      : `<p class="${cls}">${esc(nm)}<button class="dio-pen" data-act="keep-edit" data-id="${esc(k.id)}" aria-label="Rename ${esc(nm)}">${PEN}</button></p>`;
+  }
+  const noteRow = (k, n, kind) => keepF(k, kind, `<input type="hidden" name="title" value="${esc(n.title || '')}"><label class="sr" for="kn-${esc(k.id)}">Note</label><textarea id="kn-${esc(k.id)}" name="note" rows="1" maxlength="600" placeholder="Add a note…" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(n.note || '')}</textarea><button class="btn sm primary dio-save" type="submit">Save</button>`);
+  function plantParts(k) {
+    const sub = `Season ${k.season + 1} · ${fmt(k.from)}–${fmt(k.to)} · ${k.sessions} session${k.sessions === 1 ? '' : 's'}`;
+    const tag = k.bloomed ? `<span class="chip gok">Bloomed</span><span class="chip r-${k.earned.rarity}">${RAR[k.earned.rarity]} seed${k.earned.mutated ? ' · mutant' : ''}</span>${k.earned.hybrid ? `<span class="chip r-hybrid">Hybrid × ${SPN[k.earned.hybrid]}</span>` : ''}`
       : k.died ? '<span class="chip gwarn">Withered</span><span class="chip">Next seed starts sprouted</span>' : `<span class="chip">Reached ${LABEL[k.stageName].toLowerCase()}</span>`;
-    const body = editing === k.id
-      ? `<form class="gal-f" data-form="keep" data-id="${esc(k.id)}" data-kind="${k.kind}"><label class="sr" for="kt-${esc(k.id)}">Title</label><input id="kt-${esc(k.id)}" name="title" maxlength="60" value="${esc(n.title || '')}" placeholder="${esc(keepTitle(k))}" autocomplete="off"><label class="sr" for="kn-${esc(k.id)}">Note</label><textarea id="kn-${esc(k.id)}" name="note" maxlength="600" placeholder="What was going on this season?">${esc(n.note || '')}</textarea><span class="row-btns"><button class="btn sm primary" type="submit">Save</button><button class="btn sm" type="button" data-act="keep-cancel">Cancel</button></span></form>`
-      : `<p class="gal-t">${esc(title)}</p><p class="gal-s">${esc(sub)}</p><p class="gal-c">${tag}</p>${n.note ? `<p class="gal-n">${esc(n.note)}</p>` : ''}<button class="link gal-e" data-act="keep-edit" data-id="${esc(k.id)}">${n.title || n.note ? 'Edit' : 'Name it'}</button>`;
-    return `<li class="gal-i${k.died ? ' gone' : ''}"><div class="gal-a">${art}</div><div class="gal-b">${body}</div></li>`;
+    return { sub, tag };
   }
   const EVL = { phase: 'Habitat reached a new phase', biome: 'Habitat biome finished: a diorama joined the shelf', bleach: 'Habitat bleached: too few full days', recover: 'Habitat recovered' };
   /* Grow → Garden pieces; app.js lays them out next to its own habit and ring records */
-  function shelfHTML(game, notes = {}, editing = null) {
-    if (!game) return '';
-    const ks = keepsakes(game), sea = game.season;
-    const head = sea.opens ? `Seeds plant ${fmt(sea.opens)}` : `Season ${sea.index + 1} · week ${sea.week} of ${sea.of} · ends ${fmt(sea.ends)}`;
-    const cap = PV.all || ks.length <= 6 ? ks.length : 6;
-    const shelf = ks.length ? `<ul class="gal">${ks.slice(0, cap).map((k) => keepCard(k, notes, editing)).join('')}</ul>${ks.length > 6 ? `<button class="link gal-more" data-gpv="all:${PV.all ? '0' : '1'}">${PV.all ? 'Show fewer' : `Show all ${ks.length}`}</button>` : ''}`
-      : `<div class="card pad"><p class="empty" style="padding:0 4px">Nothing on the shelf yet. Each season runs ${sea.of} weeks; when season ${sea.index + 1} ends ${fmt(sea.ends)}, every plant lands here, bloomed or withered, for you to name and caption. Finished habitat biomes join as dioramas.</p></div>`;
-    return `${PV.on ? `<div class="card pad" style="margin-top:14px">${plantLab()}</div>` : ''}<section class="sec labs-shelf"><div class="sec-h"><h3 class="sec-t">Shelf <span class="ct num">${ks.length}</span></h3><span class="gseason">${esc(head)}</span></div>${shelf}</section>`;
+
+  /* Grow → Collection: dioramas (tap to inspect) + pressed plants. The habitat in progress leads the dioramas. */
+  let roster = null;
+  function visitorsOf(biomeId) {
+    if (!roster) { roster = []; fetch('models/roster.json').then((r) => r.json()).then((j) => { roster = (j.models || []).filter((m) => (m.kind || 'creature') === 'creature'); if (G.LBLabs && G.LBLabs.render) G.LBLabs.render(); }).catch(() => {}); }
+    return roster.filter((m) => m.biome === biomeId).map((m) => ({ name: m.name || m.id.replace(/[-_]/g, ' ').replace(/^./, (c) => c.toUpperCase()), rarity: m.rarity || 'common' }));
   }
-  /* stat tiles for the band: counted from what the shelf shows, so samples and stats agree */
+  const span = (k) => (k.from && k.to ? `${fmt(k.from)} – ${fmt(k.to)}` : k.from ? `Since ${fmt(k.from)}` : '');
+  /* tiles are read-only; tapping one opens a near-full-screen look (kmodal) with rename + note */
+  function dioTile(k, notes) {
+    const b = biomeOf(k.biome), n = notes[k.id] || {}, now = k.id === 'now';
+    return `<li><button class="dio-t${now ? ' now' : ''}" data-act="inspect" data-id="${esc(k.id)}"><span class="dio-a">${dioramaSVG(b, 104)}</span><span class="dio-n">${esc(n.title || b.name)}</span><span class="dio-s">${now ? `Growing · phase ${k.phase + 1} of ${k.phases}` : esc(span(k))}</span></button></li>`;
+  }
+  function plantTile(k, notes) {
+    const n = notes[k.id] || {}, title = n.title || keepTitle(k);
+    return `<li><button class="dio-t pl${k.died ? ' gone' : ''}" data-act="inspect" data-id="${esc(k.id)}"><span class="dio-a">${specimen(k.died ? 'dead' : k.stageName, lookOf(k), 76, title)}</span><span class="dio-n">${esc(title)}</span><span class="dio-s">Season ${k.season + 1} · ${k.bloomed ? 'bloomed' : k.died ? 'withered' : LABEL[k.stageName].toLowerCase()}</span>${n.note ? `<span class="dio-note">${esc(n.note)}</span>` : ''}</button></li>`;
+  }
+  function inspectModal(k, notes, editing, anim) {
+    const n = notes[k.id] || {}, reef = k.kind === 'reef', now = k.id === 'now';
+    let art, kicker, head, sub, body = '';
+    if (reef) {
+      const b = biomeOf(k.biome), L = b.look || {}, vis = visitorsOf(k.biome);
+      const stats = now ? [['Phase', `${k.phase + 1} / ${k.phases}`], ['Started', k.from ? fmt(k.from) : '—'], ['Tide points', Math.round(k.pts)]] : [['Days', k.days], ['Full days', k.full ?? '—'], ['Tide points', k.pts ?? '—']];
+      art = dioramaSVG(b, 240); kicker = `${now ? 'In progress' : 'Diorama'} · ${b.medium || 'water'}`;
+      head = now ? `<p class="dio-h">${esc(b.name)}</p>` : nameRow(k, n, 'reef', b.name, editing, 'dio-h');
+      sub = `${n.title ? `${esc(b.name)} · ` : ''}${esc(span(k))}`;
+      body = `<dl class="dio-st">${stats.map(([t, v]) => `<div><dt>${t}</dt><dd class="num">${esc(String(v))}</dd></div>`).join('')}</dl>${L.owns ? `<p class="dio-l"><b>Signature</b> ${esc(L.owns.join(', '))}</p>` : ''}<p class="dio-l"><b>Visitors</b> ${vis.length ? vis.map((v) => `${esc(v.name)}${v.rarity !== 'common' ? ` <span class="chip r-${v.rarity === 'legendary' ? 'exotic' : 'heirloom'}">${v.rarity}</span>` : ''}`).join(', ') : 'none yet'}</p>`;
+    } else {
+      const P = plantParts(k);
+      art = specimen(k.died ? 'dead' : k.stageName, lookOf(k), 200, keepTitle(k)); kicker = `Pressed plant · season ${k.season + 1}`;
+      head = nameRow(k, n, k.kind, keepTitle(k), editing, 'dio-h'); sub = esc(P.sub); body = `<p class="gal-c">${P.tag}</p>`;
+    }
+    return `<div class="kmodal${anim ? ' in' : ''}" role="dialog" aria-modal="true" aria-label="Closer look"><button class="km-bg" data-act="inspect" data-id="" aria-label="Close" tabindex="-1"></button>
+      <article class="km-card"><button class="km-x" data-act="inspect" data-id="" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <div class="km-art">${art}</div><div class="dio-info"><p class="dio-k">${esc(kicker)}</p>${head}<p class="gal-s">${sub}</p>${body}${now ? '' : noteRow(k, n, reef ? 'reef' : k.kind)}</div></article></div>`;
+  }
+  function collectionHTML(game, notes = {}, editing = null, inspect = null, anim = false, view = 'dioramas') {
+    if (!game) return '';
+    const ks = keepsakes(game), r = game.reef;
+    const dios = [{ id: 'now', kind: 'reef', biome: r.biome, phase: r.phase, phases: r.phases, pts: r.pts, from: r.from }, ...ks.filter((k) => k.kind === 'reef')];
+    const plants = ks.filter((k) => k.kind !== 'reef'), sea = game.season, open = [...dios, ...plants].find((k) => k.id === inspect);
+    const pl = plants.length ? `<ul class="dio">${plants.map((k) => plantTile(k, notes)).join('')}</ul>`
+      : `<div class="card pad"><p class="empty" style="padding:0 4px">No pressed plants yet. When season ${sea.index + 1} ends ${fmt(sea.ends)}, every habit plant lands here, bloomed or withered, for you to name and caption.</p></div>`;
+    const seg = [['dioramas', 'Dioramas', dios.length - 1], ['plants', 'Plants', plants.length]];
+    const tabs = `<div class="seg" role="tablist" aria-label="Collection">${seg.map(([v, l, c]) => `<button role="tab" data-act="coll" data-val="${v}" aria-selected="${view === v}">${l} <span class="num">${c}</span></button>`).join('')}</div>`;
+    const sub = view === 'plants' ? esc(sea.opens ? `Seeds plant ${fmt(sea.opens)}` : `Season ${sea.index + 1} · ends ${fmt(sea.ends)}`) : 'Tap one for a closer look';
+    const list = view === 'plants' ? pl : `<ul class="dio">${dios.map((k) => dioTile(k, notes)).join('')}</ul>`;
+    return `<section class="sec labs-shelf"><div class="seg-row">${tabs}<span class="gseason">${sub}</span></div>${list}</section>${open ? inspectModal(open, notes, editing, anim) : ''}`;
+  }
+  /* stat tiles for the band: counted from the same keepsakes the Collection shows */
   function gardenTiles(game) {
     if (!game) return [];
     const ks = keepsakes(game), pl = ks.filter((k) => k.kind === 'plant'), rare = pl.filter((k) => k.bloomed && k.earned.rarity !== 'common');
@@ -388,6 +386,6 @@
     return log.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
   }
   const logbookHTML = (items) => `<ol class="lbk">${items.map((x) => `<li class="${x.c}"><span class="num">${fmt(x.d)}</span><span>${esc(x.t)}</span></li>`).join('')}</ol>`;
-  Object.assign(API, { SPN, renderPlant, specimen, plotSVG, view, visual, plantLab, shelfHTML, gardenTiles, logbookItems, logbookHTML, LABEL, preview: PV, fmt });
+  Object.assign(API, { SPN, renderPlant, specimen, plotSVG, visual, collectionHTML, gardenTiles, logbookItems, logbookHTML, LABEL, fmt });
   G.LBGarden = API;
 })(typeof window !== 'undefined' ? window : globalThis);

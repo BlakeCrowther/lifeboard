@@ -290,7 +290,7 @@ function eventsOn(evs, d) {
 const U = {
   tab: 'today', life: 'health', grow: 'habits', list: 'groceries',
   open: null, adjust: null, adjBusy: null, exp: {}, showDone: false, showTomorrow: false, wishFilter: 'all', petFilter: 'all', script: false,
-  calSel: TODAY, calMonth: TODAY.slice(0, 7) + '-01', editQ: null, editKeep: null, rec: 'habits',
+  calSel: TODAY, calMonth: TODAY.slice(0, 7) + '-01', editQ: null, editKeep: null, inspect: null, coll: 'dioramas', rec: 'habits',
   timer: { len: 2, end: null, msg: '' }, quote: (diffDays('2026-01-01', TODAY) % 7 + 7) % 7, sheet: null,
 };
 /* which folds are open and how lists sort: remembered per device */
@@ -553,7 +553,7 @@ function labsHabits(hs, done, tot, daysLeft) {
   const GD = LBGarden, by = Object.fromEntries(g.plots.map((p) => [p.key, p]));
   const tiles = hs.map(({ h, st, met, low }) => {
     const pl0 = by[h.key]; if (!pl0) return '';
-    const pl = GD.view(pl0), vis = GD.visual(pl);
+    const pl = pl0, vis = GD.visual(pl);
     let p = '';
     for (let i = 0; i < h.target; i++) p += `<i class="${i < st.week ? 'on' : ''}${i < h.floor ? ' fl' : ''}"></i>`;
     for (let i = h.target; i < st.week; i++) p += '<i class="bonus"></i>';
@@ -574,7 +574,7 @@ function labsHabits(hs, done, tot, daysLeft) {
     : lowN ? `${plural(lowN, 'plant')} need${lowN === 1 ? 's' : ''} water in the next ${plural(daysLeft, 'day')}.` : 'Tap a plant to log a session. Meet the floor and it grows a stage on Monday.';
   const sea = g.season.opens ? `Seeds plant Mon ${GD.fmt(g.season.opens)}` : `Season ${g.season.index + 1} · week ${g.season.week} of ${g.season.of}`;
   return `<section class="sec z-now habitsec gwide">${secH('Habits', goLink('History', 'grow/habits'), 2, `${done}/${tot}`)}
-    <div class="card"><p class="gwh"><span>${esc(sea)}</span>${g.season.opens ? '' : `<span class="muted">ends ${GD.fmt(g.season.ends)}</span>`}</p><ul class="gtiles">${tiles}</ul>${GD.plantLab()}</div><p class="wmsg">${esc(last + msg0)}</p></section>`;
+    <div class="card"><p class="gwh"><span>${esc(sea)}</span>${g.season.opens ? '' : `<span class="muted">ends ${GD.fmt(g.season.ends)}</span>`}</p><ul class="gtiles">${tiles}</ul></div><p class="wmsg">${esc(last + msg0)}</p></section>`;
 }
 /* streak badge: solid = safe this week, outlined = still needs the floor, red = at risk */
 function flameBadge(st, low) {
@@ -909,7 +909,8 @@ function labsLogbook(g) {
 }
 function viewGrow() {
   let body = '';
-  if (U.grow === 'habits') {
+  if (U.grow === 'collection') body = labsCollectionHTML();
+  else if (U.grow === 'habits') {
     body = S.habits.length ? labsGrowHTML() : `<div class="card pad" style="margin-top:14px"><p class="empty" style="padding:0 4px 10px">No habits yet. Give one a weekly target and a lower floor that keeps the streak alive.</p><button class="btn primary" data-act="new-habit">${ic('plus', 18)}Add a habit</button></div>`;
   } else {
     const years = [...new Set(S.goals.map((g) => +g.year))].sort((a, b) => b - a);
@@ -928,7 +929,7 @@ function viewGrow() {
   }
   const gw = GROW.find((x) => x[0] === U.grow);
   return `${phead(U.grow, gw[2], 'Grow', "Habits you keep and goals you're chasing.")}
-    <div class="kinds" style="grid-template-columns:1fr 1fr;margin-top:4px;max-width:360px" role="tablist" aria-label="Grow">${GROW.map(([k, l, i]) => `<button class="sub k-${k}" role="tab" data-act="grow" data-val="${k}" aria-selected="${U.grow === k}" aria-pressed="${U.grow === k}" style="display:flex;align-items:center;justify-content:center;gap:6px">${ic(i, 18)}${l}</button>`).join('')}</div>
+    <div class="kinds" style="grid-template-columns:repeat(${GROW.length},1fr);margin-top:4px;max-width:${GROW.length * 180}px" role="tablist" aria-label="Grow">${GROW.map(([k, l, i]) => `<button class="sub k-${k}" role="tab" data-act="grow" data-val="${k}" aria-selected="${U.grow === k}" aria-pressed="${U.grow === k}" style="display:flex;align-items:center;justify-content:center;gap:6px">${ic(i, 18)}${l}</button>`).join('')}</div>
     <div role="tabpanel">${body}</div>`;
 }
 
@@ -1042,7 +1043,7 @@ function quickSync(fromParse) {
    ========================================================= */
 function fabConfig() {
   if (U.tab === 'lists') { const d = listDefs().find((l) => l.key === U.list) || BASE_LISTS[0]; return { label: 'Add to ' + d.title, sheet: { kind: 'item', list: d.key } }; }
-  if (U.tab === 'grow') return U.grow === 'habits' ? (S.habits.length ? { label: 'Log a habit', sheet: { kind: 'log' } } : { label: 'New habit', sheet: { kind: 'habit' } }) : { label: 'New goal', sheet: { kind: 'goal' } };
+  if (U.tab === 'grow') return U.grow !== 'goals' ? (S.habits.length ? { label: 'Log a habit', sheet: { kind: 'log' } } : { label: 'New habit', sheet: { kind: 'habit' } }) : { label: 'New goal', sheet: { kind: 'goal' } };
   if (U.tab === 'life') { const g = { health: 'Health', money: 'Money', home: 'Home', hobbies: 'Personal' }[U.life]; return { label: 'New ' + g.toLowerCase() + ' task', sheet: { kind: 'task', defaults: { group: g } } }; }
   if (U.tab === 'plan') return { label: 'New task on ' + shortDate(U.calSel), sheet: { kind: 'task', defaults: { due: U.calSel } } };
   return { label: 'New task', sheet: { kind: 'task' } };
@@ -1172,7 +1173,7 @@ function renderPop() {
   const t = document.documentElement.dataset.theme || 'auto';
   const grp = (label, act, opts, cur) => `<p class="pop-l">${label}</p><div class="kinds" style="grid-template-columns:repeat(${opts.length},1fr)" role="group" aria-label="${label}">${opts.map(([v, l, i]) => `<button type="button" data-act="${act}" data-val="${v}" aria-pressed="${cur === v}">${i ? ic(i, 16) + ' ' : ''}${l}</button>`).join('')}</div>`;
   pop.innerHTML = grp('Theme', 'set-theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']], t)
-    + grp('Labs: habitat &amp; garden preview', 'set-labs', [['off', 'Off'], ['on', 'On']], labsOn() ? 'on' : 'off')
+    + grp('Labs: habitat &amp; garden', 'set-labs', [['off', 'Off'], ['on', 'On']], labsOn() ? 'on' : 'off')
     + (LABS.forced && !UI.labs ? '<p class="pop-n">On for this visit (link).</p>' : '');
 }
 function setPop(open, btn) {
@@ -1200,7 +1201,8 @@ function schedule() {
 }
 main.addEventListener('focusout', () => setTimeout(() => { if (pendingRender && !busy()) render(); }, 0));
 function render() {
-  GROW[0][1] = labsOn() ? 'Garden' : 'Habits'; /* with Labs on, Grow's first view is the garden */
+  { const ci = GROW.findIndex((x) => x[0] === 'collection'); /* with Labs on, Grow gets a third view: dioramas + pressed plants */
+    if (labsOn() && ci < 0) GROW.push(['collection', 'Collection', 'star']); else if (!labsOn() && ci >= 0) { GROW.splice(ci, 1); if (U.grow === 'collection') U.grow = 'habits'; } }
   pendingRender = false;
   if (LB.todayStr() !== TODAY) TODAY = LB.todayStr();
   const a = document.activeElement, fk = a && a.dataset && a.dataset.act ? [a.dataset.act, a.dataset.id || a.dataset.val || a.dataset.key || a.dataset.d || ''] : null;
@@ -1212,6 +1214,7 @@ function render() {
   const sk = LBDB.skipped();
   main.innerHTML = html + `<footer class="quote"><p>“${esc(q[0])}”</p><div class="by">${esc(q[1])}${sq ? '' : ' · <button class="link" style="display:inline-flex;min-height:44px" data-act="quote">Another</button>'}</div>
     ${sk.n ? `<p class="skipnote" title="${esc(Object.entries(sk.by).map(([c, n]) => `${c}: ${n}`).join(', '))}">${plural(sk.n, 'item')} skipped because the saved data didn't match the expected shape.</p>` : ''}</footer>`;
+  document.body.classList.toggle('km-open', !!main.querySelector('.kmodal'));
   const fc = fabConfig();
   const fab = document.getElementById('fab');
   fab.hidden = !ready;
@@ -1404,6 +1407,8 @@ document.addEventListener('click', (e) => {
     case 'q-cancel': U.editQ = null; render(); break;
     case 'keep-edit': U.editKeep = id; render(); { const i = document.querySelector('[data-form="keep"] input'); i && i.focus(); } break;
     case 'keep-cancel': U.editKeep = null; render(); break;
+    case 'coll': U.coll = val; render(); break;
+    case 'inspect': U.inspect = id || null; U.editKeep = null; U.kmAnim = !!U.inspect; render(); U.kmAnim = false; break;
     case 'rec': U.rec = val; render(); break;
     case 'goal-done': { const g = S.goals.find((x) => x.id === id); if (g) act((rec) => W.patch('goals', id, { status: g.done ? 'active' : 'completed' }, rec)); break; }
     case 'goal-del': { const g = S.goals.find((x) => x.id === id); if (g) delDoc('goals', id, `Deleted “${g.title}”`); break; }
@@ -1486,7 +1491,7 @@ setInterval(() => { if (!U.sheet && !drag && document.visibilityState === 'visib
 /* ---------- Labs: habitat & garden preview (off by default; per-viewer in lb-ui) ----------
    Off: nothing below loads or runs (no three.js, no game derivation). #labs or a visitor test link
    (?visitor=<id>, #visitor=<id>, #labs-visitor-<id>) turns it on for one visit. */
-const LABS = { forced: false, loading: null, ready: false, game: null, gameKey: null, metSeen: null, keeps: {}, localKeeps: {} };
+const LABS = { forced: false, loading: null, ready: false, game: null, gameKey: null, metSeen: null, keeps: {} };
 function labsFromUrl(href) { try { const u = new URL(href), h = u.hash.slice(1); return h === 'labs' || h === 'labs-preview' || /^labs-visitor-[\w-]+$/.test(h) || /(^|[&/])visitor=/.test(h) || u.searchParams.has('visitor'); } catch (e) { return false; } }
 const labsOn = () => UI.labs === true || LABS.forced;
 function loadLabs() {
@@ -1529,7 +1534,12 @@ function labsStart() {
 function labsGrowHTML() {
   const g = labsOn() ? labsGame() : null;
   if (g) labsKeeps();
-  return (g ? LBGarden.shelfHTML(g, LABS.keeps, U.editKeep) : '') + growBand(g) + recordsCard() + (g ? labsLogbook(g) : '');
+  return growBand(g) + recordsCard() + (g ? labsLogbook(g) : '');
+}
+function labsCollectionHTML() {
+  const g = labsOn() ? labsGame() : null;
+  if (g) labsKeeps();
+  return g ? LBGarden.collectionHTML(g, LABS.keeps, U.editKeep, U.inspect, U.kmAnim, U.coll) : '<div class="card pad" style="margin-top:14px"><p class="empty">Loading the collection…</p></div>';
 }
 /* shelf titles and notes: labs_keepsakes/<keepsake id> = { kind, title, note, updated_at }. Listens only with Labs on. */
 let labsKeepsP = null;
@@ -1538,7 +1548,7 @@ function labsKeeps() {
   labsKeepsP = (async () => {
     try {
       const db = await window.claude.use('db'); if (!db) return;
-      db.collection('labs_keepsakes').onSnapshot((snap) => { const o = {}; snap.docs.forEach((d) => { o[d.id] = d.data ? d.data() : d; }); LABS.keeps = { ...o, ...LABS.localKeeps }; schedule(); }, () => {});
+      db.collection('labs_keepsakes').onSnapshot((snap) => { const o = {}; snap.docs.forEach((d) => { o[d.id] = d.data ? d.data() : d; }); LABS.keeps = o; schedule(); }, () => {});
     } catch (e) { /* no db: titles stay local to this page */ }
   })();
   return labsKeepsP;
@@ -1546,7 +1556,6 @@ function labsKeeps() {
 async function labsKeepSave(id, kind, title, note) {
   const body = { kind, title, note, updated_at: Date.now() };
   U.editKeep = null;
-  if (id.startsWith('sample-')) { LABS.localKeeps[id] = body; LABS.keeps = { ...LABS.keeps, [id]: body }; render(); toast('Saved for this preview only'); return; }
   LABS.keeps = { ...LABS.keeps, [id]: body }; render();
   try { if (LBS.validate('labs_keepsakes', body)) throw new Error(LBS.validate('labs_keepsakes', body)); const db = await window.claude.use('db'); await db.collection('labs_keepsakes').doc(id).set(body); toast('Saved to the shelf'); } catch (e) { toast('Could not save that note'); }
 }
@@ -1560,6 +1569,7 @@ function labsAfterRender() {
 const labsFeed = () => { if (labsOn() && window.Habitat) Habitat.feed(6); };
 /* hook for the lesson flow when it lands in app.js: call this when a lesson is answered/completed */
 window.LBLabs = { feed: labsFeed, lessonDone: labsFeed, game: () => LABS.game, render: () => render() };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && U.inspect) { U.inspect = null; U.editKeep = null; render(); } });
 /* "a visitor arrived": one visitors_met doc per creature per week, written only with Labs on.
    Talks to the db directly so the collection stays out of store.js's always-on listeners. */
 async function labsVisitor(g) {
