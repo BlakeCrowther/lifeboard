@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>break</title>
+<style>
+  html,body{margin:0;height:100%;background:#121110;color:#f3ede2;font:18px/1.4 -apple-system,system-ui,sans-serif}
+  body{display:grid;place-items:center;text-align:center}
+  .fish{font-size:96px;animation:swim 6s ease-in-out infinite}
+  @keyframes swim{0%,100%{transform:translateX(-60px)}50%{transform:translateX(60px) scaleX(-1)}}
+  h1{font-weight:600;margin:.4em 0 .2em}
+  p{color:#a99f8f;margin:0}
+  #left{font-variant-numeric:tabular-nums;font-size:48px;margin-top:24px}
+  button{margin-top:24px;font:inherit;padding:8px 18px;border-radius:999px;border:1px solid #444;background:#222;color:inherit;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+  <div class="fish">🐟</div>
+  <h1>Break time.</h1>
+  <p>Placeholder. The lifeboard break view goes here.</p>
+  <div id="left">–:––</div>
+  <button onclick="window.lifeboardBreak && lifeboardBreak.done()">I'm done (bridge test)</button>
+</main>
+<script>
+  addEventListener('lifeboardbreaktick', e => {
+    const s = e.detail;
+    document.getElementById('left').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  });
+</script>
+</body>
+</html>
