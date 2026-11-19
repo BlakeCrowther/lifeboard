@@ -1,5 +1,5 @@
-/* lifeboard Labs: Habitat card. A 3D scene of the current reef biome, driven by game state (garden.js deriveGame).
-   Loaded only when Labs is on; three.js (r170, jsdelivr, via the importmap in index.html) loads only once the
+/* lifeboard Ecosystem card (code name: habitat). A 3D scene of the current reef biome, driven by game state (garden.js deriveGame).
+   Loaded only when the Ecosystem is on; three.js (r170, jsdelivr, via the importmap in index.html) loads only once the
    card scrolls into view.
 
    Runtime hooks
@@ -8,8 +8,8 @@
    - Habitat.feed(n)         drop n food particles; nearby creatures steer in, idle -> feed -> idle, mouth aimed at food
    - Habitat.stats           { fps, bloom, pixelRatio, creatures, loadMs }
    Test hook (pipeline gate G6): force a roster creature into the scene, in its own biome:
-     ?visitor=<id>   #visitor=<id>   #labs-visitor-<id>   (the artifact host passes only plain #name hashes,
-     so use #labs-visitor-<id> there; any of these also turns Labs on for that page load)
+     ?visitor=<id>   #visitor=<id>   #visitor-<id>   (the artifact host passes only plain #name hashes,
+     so use #visitor-<id> there; any of these also turns the Ecosystem on for that page load)
    Models: MODEL_BASES is tried in order for roster.json / biomes.json (roster v1 `creatures[]` or v2 `models[]`
    with kind creature|plant); roster paths are relative to that base.
    Each roster entry's `js` sets window.LB_CREATURES[id] = "<base64 glb>"; glTF +X is the head, meters,
@@ -26,22 +26,22 @@
     const q = u.searchParams.get('visitor');
     if (q) return q;
     const h = decodeURIComponent(u.hash.slice(1));
-    let m = h.match(/(?:^|[&/])visitor=([\w-]+)/) || h.match(/^labs-visitor-([\w-]+)$/);
+    let m = h.match(/(?:^|[&/])visitor=([\w-]+)/) || h.match(/^(?:labs-)?visitor-([\w-]+)$/);
     return m ? m[1] : null;
   }
 
   /* ---------- card DOM (persistent across app renders) ---------- */
   const card = document.createElement('section');
-  card.className = 'sec labs-habitat';
-  card.setAttribute('aria-label', 'Habitat');
-  card.innerHTML = `<div class="sec-h"><h3 class="sec-t">Habitat <span class="ct num">Labs</span></h3><span class="hab-ph" data-h="phase"></span></div>
+  card.className = 'sec eco-card';
+  card.setAttribute('aria-label', 'Ecosystem');
+  card.innerHTML = `<div class="sec-h"><h3 class="sec-t">Ecosystem</h3><span class="hab-ph" data-h="phase"></span></div>
     <div class="hab"><canvas aria-hidden="true"></canvas><div class="hab-chips"><span class="hab-chip" data-h="biome"></span><span class="hab-chip" data-h="visitor" hidden></span></div>
-    <div class="hab-info"><div class="hab-bar"><div data-h="bar"></div></div><p data-h="line"></p></div><p class="hab-msg" data-h="msg">Habitat loads when you scroll here.</p></div>`;
+    <div class="hab-info"><div class="hab-bar"><div data-h="bar"></div></div><p data-h="line"></p></div><p class="hab-msg" data-h="msg">Ecosystem loads when you scroll here.</p></div>`;
   /* the state the scene draws: the real game, with preview overrides on top */
   const view = () => game;
   const $ = (k) => card.querySelector(`[data-h="${k}"]`);
   const canvas = card.querySelector('canvas');
-  let game = null, biomes = null, roster = null, base = null, forced = visitorOverride(G.LB_LABS_HREF);
+  let game = null, biomes = null, roster = null, base = null, forced = visitorOverride(G.LB_GAME_HREF);
   const stats = { fps: null, bloom: true, pixelRatio: null, creatures: 0, loadMs: null, base: null };
   let engine = null, starting = false, inView = false;
 
@@ -59,7 +59,7 @@
     $('phase').textContent = `Phase ${Math.min(r.phase + 1, r.phases)} of ${r.phases}${r.bleached ? ' · bleached' : ''}`;
     const span = (r.next ?? r.pts) - r.prev, f = span > 0 ? (r.pts - r.prev) / span : 1;
     $('bar').style.width = Math.round(Math.max(0, Math.min(1, f)) * 100) + '%';
-    const t = gm.todayTide, bits = [gm.pf != null ? `preview: day ${Math.round(gm.pf * 31.5)} of ~32` : `${Math.round(r.pts)} / ${r.next ?? '–'} growth`];
+    const t = gm.todayTide, bits = [gm.pf != null ? `preview: day ${Math.round(gm.pf * 31.5)} of ~32` : `${Math.round(r.pts)} / ${r.next ?? '–'} life points`];
     bits.push(t ? `today ${Math.round(t.pct * 100)}%${t.full ? ', full day' : ''}` : 'today neutral');
     if (engine && engine.newToday.length) bits.push(`new today: ${engine.newToday.join(', ')}`);
     if (gm.overdue) bits.push(`${gm.overdue} overdue clouding the water`);
@@ -67,7 +67,7 @@
     if (gm.lessons && gm.lessons.hide) bits.push(`no lessons in ${gm.lessons.daysSince} days · the fish are hiding`);
     $('line').textContent = bits.join(' · ');
     const v = $('visitor'); const who = forced || (engine && engine.visitorName);
-    v.hidden = !who; const vi = engine && engine.visitorInfo, RR = { rare: 'rare', legendary: 'legendary' };
+    v.hidden = !who; const vi = engine && engine.visitorInfo, RR = { rare: 'rare', exotic: 'exotic' };
     if (who) v.textContent = forced ? `Visitor: ${forced} (test)` : `${vi && vi.count > 1 ? vi.count + ' visitors · newest ' : 'Visitor: '}${who}${vi && RR[vi.rarity] ? ' · ' + RR[vi.rarity] : ''}`;
     v.dataset.rarity = (vi && vi.rarity) || '';
   }
@@ -94,7 +94,7 @@
   async function start() {
     if (engine || starting) return;
     starting = true; const t0 = performance.now();
-    $('msg').textContent = 'Loading habitat…';
+    $('msg').textContent = 'Loading ecosystem…';
     try {
       const [THREE, EC, RP, UB, OP, SP, GL, BU, SU] = await Promise.all([
         import('three'), import('three/addons/postprocessing/EffectComposer.js'), import('three/addons/postprocessing/RenderPass.js'),
@@ -107,7 +107,7 @@
       paintInfo(); engine.apply(); engine.kick();
       if (pendingFood) { engine.dropFood(Math.min(12, pendingFood)); pendingFood = 0; }
     } catch (e) {
-      console.warn('[habitat]', e); $('msg').hidden = false; $('msg').textContent = 'The habitat preview could not load here.';
+      console.warn('[habitat]', e); $('msg').hidden = false; $('msg').textContent = 'The ecosystem preview could not load here.';
     }
     starting = false;
   }
@@ -551,7 +551,7 @@ attribute float aTip; varying float vTip;
       const c = { id: entry.id, holder, root, mouth, mixer, idle, feed, sulk, rest: idle, shelter, loco, P, a: P.ph, len, footY: -bb.min.y, pos: new V(), prev: new V(), yaw: 0, pitch: 0, state: 'roam', target: null, eatEnd: 0, eaten: 0 };
       c.pos.copy(pathPos(c, c.a));
       if (enter && loco !== 'rooted') { c.state = 'enter'; c.pos.x = (k % 2 ? -1 : 1) * 9; c.pos.y += 0.6; } /* swims/flies in from the edge */
-      if (entry.rarity === 'legendary') { const gl = new THREE.PointLight(0xffd36a, 1.2, 1.6 + len * 2); holder.add(gl); } /* legendary: a soft golden glow */
+      if (entry.rarity === 'exotic') { const gl = new THREE.PointLight(0xffd36a, 1.2, 1.6 + len * 2); holder.add(gl); } /* exotic: a soft golden glow */
       c.prev.copy(c.pos); holder.position.copy(c.pos);
       scene.add(holder); creatures.push(c);
     }

@@ -1,6 +1,6 @@
 # Plant contract
 
-Status: first generator built (`archetypes/stem_bloom.py`, example `specs/mermaids_cup.json`, passes `verify.sh`). Runtime hookup built (`garden.js`, SPEC.md Garden "Species per season"). Still open: a plant golden + `qa_calibration.json`. `models/plant/qa.py` encodes the ✓ rules. Shared rules are **not repeated here**: units, meters, Blender scene scale, glTF export settings, materials/texture/bake, ≤ 4 weights normalized, no pops, eased Bezier motion, file-size optimize + `-glb.js` shipping format and the G4 export gate all follow `models/creature/CONTRACT.md` and `models/STYLE.md`. Lines marked ✓ are checked by `models/shared/tools/verify.sh` (shared gates + `plant/qa.py`).
+Status: first generator built (`archetypes/stem_bloom.py`, example `specs/mermaids_cup.json`, passes `verify.sh`). Runtime hookup built (`garden.js`, SPEC.md Garden "3D plants, one per plant"). Still open: a plant golden + `qa_calibration.json`. `models/plant/qa.py` encodes the ✓ rules. Shared rules are **not repeated here**: units, meters, Blender scene scale, glTF export settings, materials/texture/bake, ≤ 4 weights normalized, no pops, eased Bezier motion, file-size optimize + `-glb.js` shipping format and the G4 export gate all follow `models/creature/CONTRACT.md` and `models/STYLE.md`. Lines marked ✓ are checked by `models/shared/tools/verify.sh` (shared gates + `plant/qa.py`).
 
 ## One glb per species, five stages
 - ✓ Stage nodes `stage_0` … `stage_4`, matching `game.js RULES.garden.stages`: `seed`, `sprout`, `leafy`, `bud`, `bloom`. Each is an empty (or mesh root) whose children are that stage's geometry. `stem_bloom` ships each stage as one skinned mesh named `stage_<n>`, all sharing one baked material/texture.
@@ -22,19 +22,19 @@ Status: first generator built (`archetypes/stem_bloom.py`, example `specs/mermai
 | `wilt` | optional | pose or 24–48 | A died week: drooped pose (stem bend, leaves down, desaturation is the runtime's job). |
 
 ## Rarity tiers and budgets (per stage)
-| | common | heirloom | exotic |
+| | common | rare | exotic |
 |---|---|---|---|
 | Triangles per stage (whole file ≤ 5 × this) | ≤ 1.6k | ≤ 2.4k | ≤ 4k |
 | ✓ Triangles whole file (G2) | ≤ 8k | ≤ 12k | ≤ 20k |
 | Texture | 1 × 1024² | 1024² | 2048² allowed |
 | Final file | ≤ 400 KB | ≤ 600 KB | ≤ 1.2 MB |
-Rarity comes from the garden (`game.js` `rarityOf`: heirloom ≥ 4, exotic ≥ 7 season score).
+Rarity comes from the garden (`game.js` `rarityOf`: rare ≥ 4, exotic ≥ 7, the finished plant's score). Rare/exotic plants carry a habit accessory (plant-brief step 6): `s<n>_acc_*` parts, counted in the same budget.
 
-## Blendable specs (design intent)
-`endSeason` can produce **hybrid** seeds from two parents. Plant spec parameters must therefore be **blendable**: numeric (lengths, ratios, counts as floats rounded at build time, angles, HSV colors, profile curves sampled at fixed u) or enums with a defined pick rule (dominant parent). A hybrid spec = per-parameter blend of the two parent specs (weight from the game, ± small mutation), then the normal G1 check. Avoid parameters that only make sense as whole structures (free-form node lists).
+## One plant per model
+Each model is one plant in one plot: the garden matches a roster plant to a plot by `plot` (habit key) and `gen` (0 = the plot's first plant). There are no hybrids. Prefer numeric params anyway (they keep generators reusable).
 
 ## Spec (draft fields)
-`kind: "plant"`, `id`, `name`, `biome`, `rarity` (common|heirloom|exotic), `archetype`, `reference`, `size.height_m`, `palette`, `motion.sway {frames, cycles, amp_deg}`, `motion.tend {frames}`, `budget`, `parents` (hybrids only). `check_spec.py` enforces the shared fields plus sway/tend ranges.
+`kind: "plant"`, `id`, `name`, `biome`, `rarity` (common|rare|exotic), `archetype`, `reference`, `size.height_m`, `palette`, `motion.sway {frames, cycles, amp_deg}`, `motion.tend {frames}`, `budget`, `plot`, `gen`, `habit`, `accessory` (rare only). `check_spec.py` enforces the shared fields plus sway/tend ranges.
 
 ## Shipping
-Same as creatures: `assets/<id>.glb` + `assets/<id>-glb.js` setting `window.LB_PLANTS['<id>']` (base64 glb). Roster entry: `{id, name, kind: "plant", spec, glb, js, biome, rarity, svg, golden, added, parents?}` (`added` = ship date: the garden uses a plant from the first season whose first week ends on or after it; `parents` for hybrids); `name` is shown in the garden, `svg` = the SVG species shape used for thirsty/withered/loading (one of garden.js `SPECIES`). Runtime: `garden.js` (`plantPool`, 3D plots); the board scales the bloom to ~46 SVG units, so thin stems read as hairlines in an 84 px tile: prefer `stem.radius_ratio` ≥ 0.035 and chunky heads.
+Same as creatures: `assets/<id>.glb` + `assets/<id>-glb.js` setting `window.LB_PLANTS['<id>']` (base64 glb). Roster entry: `{id, name, kind: "plant", spec, glb, js, biome, rarity, svg, golden, added, plot, gen, habit}` (`plot` + `gen` pick the plot's plant; `added` = ship date); `name` is shown in the garden, `svg` = the SVG species shape used for thirsty/withered/loading (one of garden.js `SPECIES`). Runtime: `garden.js` (`plantPool`, 3D plots); the board scales the bloom to ~46 SVG units, so thin stems read as hairlines in an 84 px tile: prefer `stem.radius_ratio` ≥ 0.035 and chunky heads.

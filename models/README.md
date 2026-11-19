@@ -1,6 +1,18 @@
 # Model pipeline (creatures + plants)
 
-Autonomous pipelines that design, build, animate, verify and ship 3D models for lifeboard, with no human in the loop. Two **kinds** share one toolchain: **creatures** (weekly reef/habitat visitors) and **plants** (garden seed species per biome; first archetype `stem_bloom`; garden.js plots show them). A model ships only after every gate passes; otherwise the run falls back to a safe variant or ships nothing.
+Autonomous pipelines that design, build, animate, verify and ship 3D models for lifeboard, with no human in the loop. Two **kinds** share one toolchain: **creatures** (weekly reef/habitat visitors) and **plants** (one species per garden plant, made weekly for the plots that need one; rare ones get a habit accessory; first archetype `stem_bloom`). A model ships only after every gate passes; otherwise the run falls back to a safe variant or ships nothing.
+
+## Terms
+- **Kind**: what sort of model: `creature` (an animal that visits the habitat) or `plant` (one garden plant: a habit's plot, generation `gen`). Each kind has its own contract, QA and archetypes under `models/<kind>/`.
+- **Creature**: one species that visits, e.g. the clownfish or the Gulf pipefish. Its **spec** (`creature/specs/<id>.json`) is the design: species reference, size, palette, pattern, motion personality, lore. One spec → one shipped `.glb` with `idle`, `feed` and `sulk` animations.
+- **Body plan**: the anatomy a species is built on, independent of species or biome: "torpedo body + fins + tail", "soft slug on a foot", "pencil-thin tube with a snout", "eight arms", "shell + four flippers". Many species share a body plan (clownfish, tuna and sheepshead are all torpedo swimmers).
+- **Archetype**: the code that builds one body plan: a parametric Python generator in `<kind>/archetypes/<name>.py` (`model`, `material`, `rig`, `animate`). A spec picks an archetype and fills in its parameters. Archetype = body plan in code; creature = one species built with it. Each shipped creature gets its own generator (`archetypes/<id>.py`, copied from the closest one and edited to add its traits, e.g. a beak), so the library grows by one per creature; shared pieces live in `shared/blender/lib.py`.
+- **Safe path / novel path**: safe starts from an existing archetype (copied per species); novel writes a generator for a body plan the library lacks. creature-brief prefers novel (variety), and a shipped novel archetype joins the library.
+- **Biome**: a habitat stage in `biomes.json` (name, medium, look, owned motifs). Creatures are briefed for the current biome.
+- **Gates G1–G6**: checks every model must pass to ship: G1 spec, G2 mesh/rig, G3 animation, G4 export size/validity, G5 visual judges (3 fresh AI judges graded against the golden), G6 in-page runtime.
+- **Golden**: the reference creature (today the clownfish) whose judge scores set the G5 bar (`creature/qa_calibration.json`).
+- **Polish round**: after a G5 pass, the run fixes the judges' shared notes, rebuilds and re-judges, shipping the better-scoring version.
+- **Roster**: `roster.json`, every shipped model. **Quarantine**: `out/quarantine/<id>/`, failed attempts kept for inspection.
 
 ```
 models/
@@ -56,7 +68,7 @@ Archetypes are named by **body plan**, not species or biome, so one generator se
 
 | Archetype | Examples |
 |---|---|
-| `streamlined_swimmer` | clownfish, tuna, dolphin, squid mantle, tadpole |
+| `streamlined_swimmer` (built) | clownfish, tuna, dolphin, squid mantle, tadpole |
 | `flat_disc_swimmer` | tang, angelfish, butterflyfish |
 | `undulating_flat` | ray, flounder, cuttlefish fin |
 | `serpentine` | eel, snake, worm |
@@ -66,13 +78,14 @@ Archetypes are named by **body plan**, not species or biome, so one generator se
 | `shelled_paddler` | turtle, tortoise |
 | `winged_flyer` | bird, butterfly, bat, flying fish |
 | `rooted` | anemone, coral polyp, flower, mushroom |
-| `soft_glider` | nudibranch, slug, snail |
+| `soft_glider` (built) | nudibranch, slug, snail |
+| `slender_tube` (built) | pipefish, trumpetfish, stick insect |
 
 ## Lessons → feed
 Doing a lesson drops food into the habitat. Every creature within range plays `feed` aimed at the food (runtime steers the root toward the food, `feed` supplies the body action). That's why every creature must have a `feed` action and a `mouth` node, whatever its body plan (swimmer lunge-bite, octopus arm curl-to-mouth, jelly tentacle wrap, crab claw-to-mouth, anemone tentacle close, bird peck, bee land-and-sip).
 
 ## Run ledger (budget)
-`shared/tools/ledger.py` is the only budget counter: `start <run> --builds 6 --minutes 90`, every build is `build.py ... --run <run>` (exits 4 `BUDGET EXHAUSTED`; pre-build G1 failures don't count), every G5 judge is `ledger.py judge <run> <id> <agent_id>` (a reused agent id is refused), `status <run>`. State: `out/runs/<run>.json`.
+`shared/tools/ledger.py` is the only budget counter: `start <run> --builds 8 --minutes 120`, every build is `build.py ... --run <run>` (exits 4 `BUDGET EXHAUSTED`; pre-build G1 failures don't count), every G5 judge is `ledger.py judge <run> <id> <agent_id>` (a reused agent id is refused), `status <run>`. State: `out/runs/<run>.json`.
 
 ## Failure policy
 - Each gate failure returns machine-readable reasons; the failing step retries with them (max 2 retries, 3 for novel archetypes).

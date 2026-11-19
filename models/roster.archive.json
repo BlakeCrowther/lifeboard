@@ -1,0 +1,30 @@
+{
+  "models": [
+    {
+      "id": "clownfish",
+      "spec": "creature/specs/examples/clownfish.json",
+      "glb": "assets/clownfish.glb",
+      "js": "assets/clownfish-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "golden": true,
+      "added": "2026-11-18",
+      "kind": "creature",
+      "archived": "2026-11-18"
+    },
+    {
+      "id": "mermaids_cup",
+      "name": "Mermaid's Cup",
+      "kind": "plant",
+      "spec": "plant/specs/mermaids_cup.json",
+      "glb": "assets/mermaids_cup.glb",
+      "js": "assets/mermaids_cup-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "svg": "daisy",
+      "golden": true,
+      "added": "2026-11-18",
+      "archived": "2026-11-18"
+    }
+  ]
+}

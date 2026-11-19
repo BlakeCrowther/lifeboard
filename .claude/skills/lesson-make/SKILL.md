@@ -1,6 +1,6 @@
 ---
 name: lesson-make
-description: Turn a book, video, post, article, talk, podcast, course or note into lifeboard lessons (Labs). Interviews the user about what mattered, or with "do it for me" works from the source alone; rates size and salience, picks the source's format ladder, writes a prompt per rung, and adds rows to the live lifeboard's sources and lessons collections. Use when the user hands over something to learn from, says "make lessons from X", or wants to see the lesson queue.
+description: Turn a book, video, post, article, talk, podcast, course or note into lifeboard lessons (Ecosystem). Interviews the user about what mattered, or with "do it for me" works from the source alone; rates size and salience, picks the source's format ladder, writes a prompt per rung, and adds rows to the live lifeboard's sources and lessons collections. Use when the user hands over something to learn from, says "make lessons from X", or wants to see the lesson queue.
 ---
 
 # Make lessons
@@ -44,7 +44,7 @@ ArtifactData `batch` on the live board:
 Every doc must pass `LBS.validate` (check with `node -e` against `schema.js` before writing). The board skips invalid docs silently.
 
 ## 7. Report
-Source added, lesson count, ladder, and when they start showing (new lessons fill each feeding after due reviews). Lessons appear only with Labs on.
+Source added, lesson count, ladder, and when they start showing (new lessons fill each feeding after due reviews). Lessons appear only with the Ecosystem on.
 
 ## Feedings
 Board-wide: ArtifactData `set` `checks/lesson_rules` `{ "value": { "feedings": <n>, "perFeeding": <n>, "dayStart": <hour>, "dayEnd": <hour> }, "updated_at": <ms> }` (defaults 2 × 5, day 6–22; any key may be left out).

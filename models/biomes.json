@@ -3,9 +3,9 @@
   "biomes": [
     {
       "id": 0,
-      "name": "Coral shallows",
+      "name": "Seagrass lagoon",
       "medium": "water",
-      "light": "bright, caustics",
+      "light": "bright, dappled shallows",
       "locomotion": [
         "swim",
         "drift",
@@ -13,311 +13,31 @@
         "rooted"
       ],
       "examples": [
-        "clownfish",
-        "tang",
-        "sea turtle",
-        "anemone",
-        "cleaner shrimp"
-      ],
-      "scene": "reef",
-      "look": {
-        "shape": "branching and plated: antler corals, tables, fans, round brain domes",
-        "palette": [
-          "#3fd0e4",
-          "#0a5a86",
-          "#e9d3a6",
-          "#ff7f6b"
-        ],
-        "ground": "bright white sand with ripples",
-        "owns": [
-          "branching coral",
-          "brain coral",
-          "table coral",
-          "sea fan",
-          "tube sponge"
-        ],
-        "creatures": "laterally flat, disc-shaped or chunky reef fish and turtles; bold bands, spots and saddles in saturated warm-and-cool pairs (orange/white, yellow/blue)",
-        "plants": "reef algae, calcified fronds, polyp-like tufts in coral pinks and lime",
-        "motion": "busy darting, quick turns, hovering in place"
-      }
-    },
-    {
-      "id": 1,
-      "name": "Kelp forest",
-      "medium": "water",
-      "light": "green-gold shafts",
-      "locomotion": [
-        "swim",
-        "drift",
-        "crawl",
-        "rooted"
-      ],
-      "examples": [
-        "garibaldi",
-        "sea otter",
-        "sea urchin",
-        "octopus",
-        "leafy seadragon"
-      ],
-      "pass_through": [
-        "kelp"
+        "bucktooth parrotfish",
+        "pipefish",
+        "queen conch",
+        "green sea turtle",
+        "dugong"
       ],
       "scene": "kelp",
       "look": {
-        "shape": "vertical ribbons floor to surface; long gas-bladdered stipes",
+        "shape": "swaying grass blades: dense low tufts of long, thin, leaning blades",
         "palette": [
-          "#5fb89a",
-          "#0d4a3a",
-          "#4a4038",
-          "#ff8a2a"
+          "#6fd6c0",
+          "#1d6b78",
+          "#d8c48a",
+          "#ff9f43"
         ],
-        "ground": "dark cobble and boulders, urchin barrens",
+        "ground": "pale shell-flecked sand between seagrass beds",
         "owns": [
-          "giant kelp",
-          "sea urchin",
-          "cold boulders"
+          "eelgrass tuft",
+          "turtle grass blade",
+          "conch shell",
+          "sand dollar"
         ],
-        "creatures": "elongated, camouflaged or single loud color (garibaldi orange); leaf-like flaps, bristles, spines; olive, gold, rust",
-        "plants": "long blades, bladders, holdfasts in olive, amber and brown",
-        "motion": "slow sway with the swell, hanging in the current"
-      }
-    },
-    {
-      "id": 2,
-      "name": "Tide pools",
-      "medium": "water",
-      "light": "shallow, sparkly",
-      "locomotion": [
-        "swim",
-        "crawl",
-        "rooted",
-        "walk"
-      ],
-      "examples": [
-        "hermit crab",
-        "sea star",
-        "nudibranch",
-        "sculpin",
-        "sea anemone"
-      ],
-      "scene": "tidepool",
-      "look": {
-        "shape": "rock rims and round pools seen close; clustered shells",
-        "palette": [
-          "#8ff0f5",
-          "#3a9fc0",
-          "#8a7a6a",
-          "#e0407a"
-        ],
-        "ground": "dark wet granite with pools of clear water",
-        "owns": [
-          "sea star",
-          "barnacle and mussel clusters",
-          "green anemone"
-        ],
-        "creatures": "small, low and sticky: crabs, stars, slugs, sculpins; frilly nudibranch ruffles; electric purple, ochre, hot pink, emerald",
-        "plants": "encrusting, tufted, rubbery: coralline pink, surfgrass, sea lettuce",
-        "motion": "still, then a quick scuttle; clinging"
-      }
-    },
-    {
-      "id": 3,
-      "name": "Mangrove edge",
-      "medium": "water",
-      "light": "dappled, murky",
-      "locomotion": [
-        "swim",
-        "walk",
-        "crawl",
-        "fly"
-      ],
-      "examples": [
-        "mudskipper",
-        "archerfish",
-        "fiddler crab",
-        "kingfisher",
-        "seahorse"
-      ],
-      "scene": "mangrove",
-      "look": {
-        "shape": "arching prop roots and tangled verticals over mud",
-        "palette": [
-          "#9ab87a",
-          "#2c4a30",
-          "#5a4632",
-          "#ffd060"
-        ],
-        "ground": "soft brown mud, leaf litter, tannin water",
-        "owns": [
-          "prop roots",
-          "oysters on roots",
-          "floating leaves"
-        ],
-        "creatures": "amphibious and bug-eyed: mudskippers, crabs with one big claw, archers; mottled mud browns with one bright flash (blue, yellow)",
-        "plants": "leathery waxy leaves, pencil roots, seed pods in olive and tan",
-        "motion": "perch, hop, pause; lazy in murky water"
-      }
-    },
-    {
-      "id": 4,
-      "name": "Twilight deep",
-      "medium": "water",
-      "light": "dark, bioluminescent",
-      "locomotion": [
-        "swim",
-        "drift"
-      ],
-      "examples": [
-        "anglerfish",
-        "comb jelly",
-        "vampire squid",
-        "lanternfish",
-        "siphonophore"
-      ],
-      "scene": "deep",
-      "look": {
-        "shape": "translucent bells, long trailing strings, sparse points of light in black",
-        "palette": [
-          "#1a3f6a",
-          "#020a1a",
-          "#1a1f2a",
-          "#6af0ff"
-        ],
-        "ground": "near-black silt, almost no floor visible",
-        "owns": [
-          "jellies",
-          "glow lures",
-          "glass sponges",
-          "bioluminescence"
-        ],
-        "creatures": "translucent, gelatinous, big-mouthed or long-bodied; glowing photophores and lures; black, deep red, violet, with cyan points of light",
-        "plants": "pale glass spires, ghostly stalks, whip coral",
-        "motion": "drift and pulse, very slow, long pauses"
-      }
-    },
-    {
-      "id": 5,
-      "name": "Wildflower meadow",
-      "medium": "land",
-      "light": "warm sun",
-      "locomotion": [
-        "walk",
-        "fly",
-        "crawl",
-        "rooted"
-      ],
-      "examples": [
-        "bumblebee",
-        "ladybug",
-        "hare",
-        "monarch butterfly",
-        "foxglove"
-      ],
-      "scene": "meadow",
-      "look": {
-        "shape": "soft rolling mounds and upright stems with round flower heads",
-        "palette": [
-          "#9fd4f2",
-          "#f2e2bc",
-          "#86b84a",
-          "#ffd23f"
-        ],
-        "ground": "sunny rolling grass",
-        "owns": [
-          "wildflowers",
-          "butterflies",
-          "flowering shrubs",
-          "toadstools"
-        ],
-        "creatures": "fuzzy and round: bees, hares, beetles, butterflies; warm yellows, pinks, soft browns, polka dots",
-        "plants": "daisy, poppy and lupine forms; round heads on upright stems; sunny warm colors",
-        "motion": "flitting, bobbing, hopping in short bursts"
-      }
-    },
-    {
-      "id": 6,
-      "name": "Cloud canopy",
-      "medium": "air",
-      "light": "soft fog",
-      "locomotion": [
-        "fly",
-        "walk",
-        "crawl",
-        "rooted"
-      ],
-      "examples": [
-        "hummingbird",
-        "tree frog",
-        "sloth",
-        "orchid",
-        "quetzal"
-      ],
-      "pass_through": [
-        "cloud"
-      ],
-      "scene": "canopy",
-      "look": {
-        "shape": "horizontal mossy limbs with clouds below; things perched and clinging",
-        "palette": [
-          "#bfe2f7",
-          "#eef3f6",
-          "#4f6a3a",
-          "#e04a6a"
-        ],
-        "ground": "no floor: thick mossy branches above a cloud sea",
-        "owns": [
-          "clouds",
-          "mossy limbs",
-          "orchids",
-          "hanging moss"
-        ],
-        "creatures": "perchers and clingers: hummingbirds, tree frogs, sloths; iridescent greens and jewel tones",
-        "plants": "orchids, mosses, air plants, hanging epiphytes; pale petals, jewel accents",
-        "motion": "hover and cling; slow hang, quick hover"
-      }
-    },
-    {
-      "id": 7,
-      "name": "Jungle understory",
-      "medium": "land",
-      "light": "deep green shade, god rays through gaps",
-      "locomotion": [
-        "walk",
-        "climb",
-        "fly",
-        "crawl",
-        "rooted"
-      ],
-      "examples": [
-        "poison dart frog",
-        "jaguar",
-        "toucan",
-        "leafcutter ants",
-        "rhinoceros beetle"
-      ],
-      "scene": "jungle",
-      "pass_through": [
-        "vine"
-      ],
-      "look": {
-        "shape": "giant leaves and buttress trunks; everything big, layered and dripping",
-        "palette": [
-          "#6fae6a",
-          "#0f2a18",
-          "#3a2a1a",
-          "#ff3a2a"
-        ],
-        "ground": "dark leaf litter and roots",
-        "owns": [
-          "giant leaves",
-          "buttress trees",
-          "hanging vines",
-          "bromeliads",
-          "fireflies"
-        ],
-        "creatures": "warning colors on dark green: dart-frog reds, blues and yellows, toucan beaks, glossy beetles; big eyes, long limbs for climbing",
-        "plants": "huge split or paddle leaves, red bromeliad rosettes, pitcher plants; dark glossy greens with one hot accent",
-        "motion": "still and watchful, then a sudden leap or climb"
+        "creatures": "slender, grass-green and sand-tan grazers with soft mottling that hides in the blades; small warm-orange accents",
+        "plants": "ribbon-thin seagrass blades in greens and olive, epiphyte-speckled tips",
+        "motion": "slow grazing drift that leans with the blades, short pauses"
       }
     }
   ],

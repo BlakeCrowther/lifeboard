@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!doctype html>
 <html lang="en">
 <head>
@@ -667,6 +666,27 @@ a.xl:hover{text-decoration-color:var(--accent)}
 .ptp i.bonus{width:7px;height:7px;border-radius:50%;background:var(--good)}
 .pt.low .ptn{color:var(--bad)}
 .pt.low .ptp i.fl{box-shadow:inset 0 0 0 1.5px var(--bad)}
+.pips{display:flex;width:100%;gap:2px;align-items:flex-end;--water:#4f8fb3;--waterok:#1f5f8a;--waterbg:#e4edf1;--honey:#e9a93a;--honeydeep:#d48a12}
+.pip{display:block;overflow:visible}
+.pips.dly{justify-content:space-between;gap:0}
+.pd{display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 1px 2px;border-radius:7px;flex:1 1 0;min-width:0}
+.pd .pip{width:100%;max-width:32px;height:auto}
+.pd small{font-size:9px;line-height:1;color:var(--muted)}
+.pd.td{background:color-mix(in srgb,var(--accent) 15%,transparent)}.pd.td small{color:var(--ink);font-weight:700}
+.pip .de{fill:var(--waterbg)}.pip .dz{fill:none;stroke:var(--line);stroke-width:1.2}
+.pip .df{fill:var(--water)}
+.pip .do{fill:none;stroke:var(--water);stroke-width:.9}.pip .dok{fill:none;stroke:var(--waterok);stroke-width:1.4}.pip .dm{fill:none;stroke:var(--bad);stroke-width:1.8}
+.pip .dl{stroke:#1f3d52;stroke-width:1.3;stroke-dasharray:.1 2.2;stroke-linecap:round}
+.pip .r1{stroke:var(--accent)}.pip .r2{stroke:var(--honey)}.pip .r3{stroke:var(--good)}
+.pips.wk{--w:min(30px,calc(200% / (var(--n) + 1)));flex-wrap:nowrap;align-items:flex-start;justify-content:center;gap:0;padding-bottom:calc(var(--w) * .95)}
+.pips.wk .pip{flex:none;width:var(--w);height:auto}.pips.wk .pip+.pip{margin-left:calc(var(--w) * -.5 + 1px)}.pips.wk .pip:nth-child(even){transform:translateY(75%)}
+.pip .he{fill:var(--sunk)}.pip .hf{fill:var(--honey)}.pip .hx{fill:var(--honeydeep)}
+.pip .hs{fill:none;stroke:var(--faint);stroke-width:1.5;stroke-dasharray:2 2}.pip .hs.on{stroke:#8a5a0c}
+.pip .bee{fill:#16130d}.pip .bs{stroke:var(--honey);stroke-width:1}.pip .bw{fill:#fffcf6;stroke:#928672;stroke-width:.5}
+.gt.add .pip.hot{animation:pipIn .45s cubic-bezier(.3,1.6,.5,1)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .pips{--waterbg:#26343c;--waterok:#8cc3e6}}
+:root[data-theme=dark] .pips{--waterbg:#26343c;--waterok:#8cc3e6}
+.ptp i.miss{background:color-mix(in srgb,var(--bad) 35%,var(--sunk))}.ptp i.hot.fl:not(.on){box-shadow:inset 0 0 0 1.5px var(--accent)}
 .pt .hminus{flex:none;margin-right:2px}
 .habitsec .wmsg{margin:8px 4px 0}
 .flb{display:inline-flex;align-items:center;gap:1px;flex:none;height:17px;padding:0 6px 0 4px;border-radius:9px;background:var(--fill);color:var(--on);font-size:11px;font-weight:700}
@@ -690,6 +710,8 @@ button.nm{background:none;border:0;padding:0 4px 0 0;margin:0;font:inherit;font-
 .tg .c.l1{background:color-mix(in srgb,var(--accent) 30%,var(--sunk));color:var(--ink)}
 .tg .c.l2{background:var(--accent);color:var(--on)}
 .tg .c.l3,.tg .c.l4{background:var(--good);color:var(--on)}
+.tg .c.l0{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--bad) 45%,transparent)}
+.hidrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0}.wr .wc b.sm{font-size:clamp(12px,3.4vw,16px)}.wr .wc b span{white-space:nowrap;letter-spacing:-.02em}.wr .wc b small{font-size:.6em;font-weight:500;color:var(--muted);margin-left:1px}
 .tg .c.l4{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--on) 50%,transparent)}
 .tg .c.cur{outline:2px solid var(--ink);outline-offset:1px}
 .tg .s{text-align:right;font-weight:700;color:var(--soft);font-variant-numeric:tabular-nums;font-size:12.5px}
@@ -788,12 +810,12 @@ button.nm{background:none;border:0;padding:0 4px 0 0;margin:0;font:inherit;font-
 .sgfr input{flex:1;min-width:0;min-height:44px}
 .sgfr .btn{flex:none}
 .sga .btn.on{background:var(--text);color:var(--bg)}
-.labs-habitat .hab-ph,.labs-shelf .gseason{font-size:13px;color:var(--muted)}
+.eco-card .hab-ph,.game-shelf .gseason{font-size:13px;color:var(--muted)}
 .hab{position:relative;aspect-ratio:4/3;max-height:420px;width:100%;border-radius:var(--r);overflow:hidden;background:#0b3a5c;box-shadow:var(--shadow)}
 .hab canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .hab-chips{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;gap:6px;pointer-events:none}
 .hab-chip{font-size:12px;font-weight:600;color:#fff;background:rgba(0,20,35,.4);backdrop-filter:blur(6px);padding:4px 10px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hab-chip[data-rarity=rare]{background:rgba(40,80,190,.6)}.hab-chip[data-rarity=legendary]{background:rgba(170,120,10,.7);box-shadow:0 0 12px rgba(255,210,100,.6)}
+.hab-chip[data-rarity=rare]{background:rgba(40,80,190,.6)}.hab-chip[data-rarity=exotic]{background:rgba(170,120,10,.7);box-shadow:0 0 12px rgba(255,210,100,.6)}
 .hab-info{position:absolute;left:0;right:0;bottom:0;padding:32px 14px 12px;background:linear-gradient(to top,rgba(2,18,30,.72),rgba(2,18,30,0));color:#fff;pointer-events:none;display:flex;flex-direction:column;gap:6px}
 .hab-info p{margin:0;font-size:13px;color:rgba(255,255,255,.9)}
 .hab-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.25)}.hab-bar>div{height:6px;border-radius:3px;background:#8fe3f5;width:0}
@@ -802,10 +824,11 @@ button.nm{background:none;border:0;padding:0 4px 0 0;margin:0;font:inherit;font-
 .hab-msg{position:absolute;inset:auto 12px 50% 12px;margin:0;text-align:center;color:#fff;font-size:13px}
 .gplot{flex:none;overflow:visible}
 .gp3w{position:relative;display:inline-block;line-height:0}.gp3w .gplot{display:block}.gp3{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.gp3w.on .gpl{display:none}
-/* Labs Today: habits as a garden, full width above both columns */
+/* Garden on Today: habits as a garden, full width above both columns */
 #main>.today>.gwide{grid-column:1/-1}
 .gwh{display:flex;justify-content:space-between;gap:8px;margin:0 2px 8px;font-size:13px;font-weight:600}
-.gtiles{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.gtg{display:flex;align-items:center;gap:6px;margin:4px 2px 6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.gtg svg{width:11px;height:13px}.gtiles+.gtg{margin-top:14px}
+.gtiles{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .card.gcard{background:none;border:0;box-shadow:none;padding:0 0 4px;overflow:visible}.gcard .gwh{margin:2px 2px 10px;color:var(--muted)}
 .gt{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:6px 8px 8px;border-radius:14px;background:var(--surface);box-shadow:0 1px 3px var(--line2);min-width:0}
 .gtp{display:grid;place-items:center;padding:2px 0 0;border-radius:12px}
@@ -845,12 +868,11 @@ button.nm{background:none;border:0;padding:0 4px 0 0;margin:0;font:inherit;font-
 .gst b small{font-size:.6em;color:var(--muted);margin-left:1px}
 .recn{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
 .recn li{display:flex;gap:8px;align-items:baseline;font-size:13.5px;line-height:1.4}.recn .vchip{flex:none}
-/* Labs chips */
-.chip.r-hybrid{background:color-mix(in srgb,#5fd3c4 18%,transparent);color:#1f8f86}
-/* Labs Grow: Collection, stats, logbook */
+/* game chips */
+/* Grow (game on): Collection, stats, logbook */
 .gal-s{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
 .gal-c{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 0}
-.chip.r-heirloom{background:color-mix(in srgb,#ff8a6b 18%,transparent);color:#c9452e}
+.chip.r-rare{background:color-mix(in srgb,#ff8a6b 18%,transparent);color:#c9452e}
 .chip.r-exotic{background:color-mix(in srgb,#a77bf0 18%,transparent);color:#7a4fd0}
 .dio{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
 .dio-t{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 8px 12px;border:0;border-radius:16px;background:var(--surface);box-shadow:var(--shadow);color:inherit;font:inherit;cursor:pointer;text-align:center;min-width:0;transition:transform .15s}
@@ -874,7 +896,7 @@ body.km-open{overflow:hidden}
 .km-x{position:absolute;top:10px;right:10px;border:0;background:var(--sunk);color:inherit;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;cursor:pointer;z-index:1}
 @keyframes kmIn{from{opacity:0}}@keyframes kmUp{from{opacity:0;transform:translateY(16px) scale(.98)}}
 @media (prefers-reduced-motion:reduce){.kmodal.in,.kmodal.in .km-card{animation:none}}
-/* Labs lessons: chip on the habitat; deck drops over the water (modal on phones) */
+/* lessons: chip on the ecosystem; deck drops over the water (modal on phones) */
 .les-wrap{position:relative}
 .les-chip{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:3;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border:0;border-radius:999px;background:var(--blur);color:var(--text);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);backdrop-filter:blur(6px)}
 .les-chip>svg:first-child{color:var(--ink)}.les-chip.on{background:var(--accent);color:var(--on)}.les-chip.on>svg:first-child{color:inherit}
@@ -973,7 +995,7 @@ a.btn{text-decoration:none}
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT" hidden></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="pop" id="pop" role="dialog" aria-label="Display settings" hidden></div>
-<!-- Labs only: maps bare 'three' for habitat.js's dynamic imports. Inert (no download) until Labs is on and the Habitat card is visible. -->
+<!-- Ecosystem only: maps bare 'three' for habitat.js's dynamic imports. Inert (no download) until the Ecosystem is on and its card is visible. -->
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
 <script src="logic.js"></script>
 <script src="game.js"></script>
@@ -982,5 +1004,3 @@ a.btn{text-decoration:none}
 <script src="app.js"></script>
 </body>
 </html>
-
-</body></html>

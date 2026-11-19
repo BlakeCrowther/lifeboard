@@ -2,7 +2,7 @@
 Agents must not count builds or minutes in their heads; every build goes through it (build.py --run <id>) and every
 G5 judge is recorded here.
 
-Usage: python3 models/shared/tools/ledger.py start  <run_id> [--builds 6] [--minutes 90]
+Usage: python3 models/shared/tools/ledger.py start  <run_id> [--builds 8] [--minutes 120]
        python3 models/shared/tools/ledger.py build  <run_id> <creature_id>      # exit 4 + "BUDGET EXHAUSTED" when spent
        python3 models/shared/tools/ledger.py judge  <run_id> <creature_id> <agent_id>   # exit 5 if agent_id already judged
        python3 models/shared/tools/ledger.py status <run_id>
@@ -69,7 +69,7 @@ def main(argv):
         if name in rest: i = rest.index(name); v = rest[i + 1]; del rest[i:i + 2]; return v
         return default
     if cmd == "start":
-        b, m = opt("--builds", 6), opt("--minutes", 90)
+        b, m = opt("--builds", 8), opt("--minutes", 120)
         if len(rest) != 1: print(__doc__); return 2
         ok, msg = start(rest[0], b, m); print(msg); return 0 if ok else 2
     if cmd == "build" and len(rest) == 2:

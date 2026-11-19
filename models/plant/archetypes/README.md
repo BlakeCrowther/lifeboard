@@ -7,4 +7,4 @@ Built:
 
 Planned: `rosette` (lettuce, succulent), `vine` (bean, ivy), `shrub` (lavender, berry bush), `kelp_frond` (water biomes), `cap_fungus` (mushroom). New ones: copy `stem_bloom`'s rig/animate shape (per-stage bones, frame 0 = rest, whole-cycle sines).
 
-Keep every parameter blendable (see `../CONTRACT.md`, hybrids).
+Each shipped plant may get its own generator (`<id>.py`, copied from the closest archetype), e.g. to add a rare plant's accessory (`s<n>_acc_*` parts).

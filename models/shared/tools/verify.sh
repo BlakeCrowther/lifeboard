@@ -20,7 +20,7 @@ echo "== G2/G3 blender"; blender -b --factory-startup --python "$ROOT/shared/ble
 python3 -c "import json,sys;r=json.load(open('$OUT/g23.json'));[print(('  ok  ' if c['pass'] else '  FAIL'),c['gate'],c['check'],'|',c['detail']) for c in r['checks']];sys.exit(0 if r['pass'] else 1)" || rc=1
 echo "== G4 export";
 RAR=$(python3 -c "import json;print(json.load(open('$SPEC'))['rarity'])")
-LIMIT=$(python3 -c "print({'common':400,'rare':600,'legendary':1200,'heirloom':600,'exotic':1200}['$RAR']*1024)")
+LIMIT=$(python3 -c "print({'common':400,'rare':600,'exotic':1200}['$RAR']*1024)")
 # G4 runs on what ships: optimize exactly like model-ship, then validate + size the optimized file (G2/G3 stay on the source)
 TEXSZ=$(python3 -c "import json;print(json.load(open('$SPEC')).get('budget',{}).get('texture',1024))")
 OPT="$OUT/optimized.glb"; rm -f "$OPT"

@@ -20,7 +20,7 @@ Every shipped creature is one `.glb` that satisfies all of this. `models/shared/
 
 ## Nodes
 - ✓ One skinned mesh named `<id>` (eyes/shell may be extra meshes parented to bones; ≤3 meshes total).
-- ✓ One armature named `<id>_rig`; ≤ 32 bones (legendary ≤ 48); ≤ 4 weights per vertex, normalized.
+- ✓ One armature named `<id>_rig`; ≤ 32 bones (exotic ≤ 48); ≤ 4 weights per vertex, normalized.
 - ✓ Empty `mouth` parented to the head bone, placed at the mouth opening. Runtime aims food at it.
 - ✓ Visible mouth geometry, every archetype: a real mesh part named `mouth` built with `lib.mouth()` (dark recessed lip slit or round opening, sized from the head, coloured from `palette.lip`/`accent`), facing the spec's mouth direction (`front` +X, `underside` −Z), skinned to a `jaw` bone that opens/closes it on the `feed` bite beats, with `cornerL`/`cornerR` child bones at its ends (`lib.mouth_corner_bones`, weights `lib.mouth_weights`) so mood actions can bend it. A texture line alone does not count. The part is joined into the skinned mesh, so `build.py` records it in `build_meta.json` (`mouth_parts[]`: verts, tip, direction, size); G2 checks `part:mouth` exists (verts > 0) and the `mouth` empty sits at its tip (≤ 8% length).
 - ✓ Structural (bbox) checks — length, axes, symmetry, origin, mouth position — are measured with the armature at its **rest pose** (`pose_position='REST'`), not frame 0 of an action, so animation amplitude never reads as asymmetric modeling.
@@ -45,7 +45,7 @@ Median of 3 fresh judge subagents (each recorded in the run ledger): every media
 - Uniqueness: idle length, cycle count, amplitude and phase offsets come from the spec; runtime additionally randomizes per instance: start phase (0–1) and timeScale (0.92–1.08).
 
 ## Budgets
-| | common | rare | legendary |
+| | common | rare | exotic |
 |---|---|---|---|
 | ✓ Triangles (hard cap, G1/G2) | ≤ 8k | ≤ 12k | ≤ 20k |
 | Default `budget.tris` in briefs (fits the file-size cap at 1024²) | 8k | 9k | 16k |

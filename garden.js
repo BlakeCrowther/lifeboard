@@ -1,28 +1,31 @@
-/* lifeboard Labs: game-state derivation (pure) + Garden card (DOM, SVG).
-   Loaded only when Labs is on. The derivation half has no DOM and runs in node:
+/* lifeboard game: game-state derivation (pure) + Garden card (DOM, SVG).
+   Loaded only when the Ecosystem or Garden is on. The derivation half has no DOM and runs in node:
      const { deriveGame } = require('./garden.js');   (needs game.js loaded as global LBG or passed in)
 
    deriveGame(input, G) -> game state. Input (plain data, dates 'YYYY-MM-DD'):
-     today, ringGoal (tasks per day that close the ring),
+     today,
      tasks:    [{ eff: due-or-deadline date | null, done: bool, doneDate: date | null }]
-     habits:   [{ key, name, floor, target }]
+     habits:   [{ key, name, floor, target, daily: floor/target are per day (optional), since: created date (optional) }]
+     weekStart (optional): 0 Sun .. 6 Sat, the day weeks (garden and streaks) start; default 1 Monday
      sessions: [{ h: habit key, date }]
-     plantPool (optional): { n: biome count, byBiome: { <biome id>: [roster plant ids] }, plants: { <id>: { added, parents } } } (3D species, roster kind 'plant')
-   Choices where game.js leaves the mapping open (see the Labs report):
-   - Tide day = the Today ring: dayTide(ringGoal, tasks completed that day). A day with nothing done
-     and nothing due is neutral (null). Days run from the first task/session date (max 365 back) to today.
+     plantPool (optional): { n: biome count, byBiome: { <biome id>: [roster plant ids] }, plants: { <id>: { added, plot: habit key, gen } } } (3D species, roster kind 'plant')
+   Choices where game.js leaves the mapping open (see SPEC.md):
+   - Tide day = the Today ring: dayTide(committed, done) from LBG.ringTally. A day with nothing committed
+     is neutral (null). Days run from the first task/session date (max 365 back) to today.
    - Overdue = open tasks whose effective date < today; cloudiness/algae use their ages. Rescheduled
      tasks only keep their current date, so history is approximate.
    - Visitor this week = weekVisitor(Mon..today tides) || 'common' (sim's assumption), none while bleached.
-   - Garden: weeks are Mondays counted from the first habit-session week; seasons every
-     RULES.garden.seasonWeeks from there; the current week is still open, so plantWeek runs on finished
-     weeks only. "Thirsty" = this week below floor with <= need+2 days left (same rule as the habit rings).
-   - endSeason's rng is seeded from the habit key, so reloads agree. */
+   - Garden: weeks are Mondays from the garden start; each habit's plot runs plotWeek on finished weeks only (the current
+     week is still open). A plant blooms or dies, shows that a week, is pressed, and the plot's next seed (gen + 1) goes in.
+     "Thirsty" = this week below floor with <= need+2 days left (same rule as the habit rings). Seasons = real calendar seasons.
+   - plotWeek's rng is seeded from the habit key, so reloads agree. */
 (function (G) {
   const DAY = 864e5;
   const dn = (s) => Math.round(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / DAY);
   const ds = (n) => new Date(n * DAY).toISOString().slice(0, 10);
-  const monday = (n) => n - ((new Date(n * DAY).getUTCDay() + 6) % 7);
+  /* start of the week holding day n; weeks start on WS (0 Sun .. 6 Sat, input.weekStart, default 1 = Monday) */
+  let WS = 1;
+  const monday = (n) => n - ((new Date(n * DAY).getUTCDay() - WS + 7) % 7);
   const mulberry = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   /* one species per habit (spread by key hash, no repeats until all are used); shapes live in DRAW below */
   const SPECIES = ['daisy', 'tulip', 'sunflower', 'mushroom', 'cactus', 'fern', 'bonsai', 'lavender'];
@@ -34,9 +37,19 @@
     if (!isFinite(last)) return { daysSince: null, hide: false };
     const n = today - last; return { daysSince: n, hide: n >= ((LBG.RULES.lessons && LBG.RULES.lessons.hideAfter) || 3) };
   }
+  /* the real season a date falls in (meteorological: Mar-May spring, Jun-Aug summer, Sep-Nov fall, Dec-Feb winter; flipped south) */
+  const SEASONS = ['winter', 'spring', 'summer', 'fall'];
+  function calSeason(date, hemi) {
+    const [y, m] = date.split('-').map(Number), q = Math.floor((m % 12) / 3), name = SEASONS[hemi === 'south' ? (q + 2) % 4 : q];
+    const sm = q === 0 ? 12 : q * 3, sy = q === 0 && m === 12 ? y : q === 0 ? y - 1 : y;
+    const from = `${sy}-${String(sm).padStart(2, '0')}-01`, em = sm + 3 > 12 ? sm - 9 : sm + 3, ey = sm + 3 > 12 ? sy + 1 : sy;
+    const ends = ds(dn(`${ey}-${String(em).padStart(2, '0')}-01`) - 1);
+    return { name, label: name[0].toUpperCase() + name.slice(1) + ' ' + (q === 0 ? `${sy}–${String(ey).slice(2)}` : sy), from, ends };
+  }
   function deriveGame(input, LBG) {
     LBG = LBG || G.LBG;
-    const today = dn(input.today), goal = Math.max(1, input.ringGoal || 3);
+    WS = Number.isInteger(input.weekStart) && input.weekStart >= 0 && input.weekStart <= 6 ? input.weekStart : 1;
+    const today = dn(input.today), tally = LBG.ringTally(input.tasks.map((t) => ({ eff: t.eff || null, doneDate: t.done && t.doneDate ? t.doneDate : null })));
     /* input.start ('YYYY-MM-DD', optional): the game begins that day at 0; history before it is ignored and
        tasks already overdue then count as overdue from the start date. */
     const start = input.start ? dn(input.start) : null, from = (d) => (start != null ? Math.max(d, start) : d);
@@ -57,7 +70,7 @@
     let lost = 0;
     const reef = LBG.newReef(), events = [], tides = [], biomeAt = {};
     for (let d = first; d <= today; d++) {
-      const done = doneOn[d] || 0, tide = done || dueOn[d] ? LBG.dayTide(goal, done) : null;
+      const x = tally[ds(d)], tide = x && x.committed ? LBG.dayTide(x.committed, x.done) : null;
       tides.push(tide);
       const ev = LBG.reefDay(reef, d - first, tide);
       if (skipOn[d] && skipCost > 0) { const floor = reef.phase ? reef.th[reef.phase - 1] : 0, before = reef.pts; reef.pts = Math.max(floor, reef.pts - skipOn[d] * skipCost); if (d === today) lost += before - reef.pts; }
@@ -69,75 +82,62 @@
     const wv = LBG.weekVisitor(weekTides);
     const todayTide = tides[tides.length - 1];
     /* ---- garden ---- */
-    const sw = LBG.RULES.garden.seasonWeeks;
-    /* garden weeks run Mon..Sun: with a start date the garden opens the first Monday on/after it; until then every plot is a seed */
+    /* garden weeks run Mon..Sun: with a start date the garden opens the first Monday on/after it; until then every plot is a seed.
+       Each plot (habit) runs its own plant lifecycle (game.js plotWeek): bloom or die, show it a week, pressed, next seed. A habit
+       added later starts its plot the Monday on/after it was created. */
     const gStart = start == null ? null : monday(start) === start ? start : monday(start) + 7, waiting = gStart != null && today < gStart;
     const gSessions = gStart == null ? sessions : sessions.filter((s) => dn(s.date) >= gStart);
     const firstWeek = gStart != null ? gStart : gSessions.length ? monday(Math.min(...gSessions.map((s) => dn(s.date)))) : wk;
     const weeksDone = waiting ? 0 : Math.max(0, Math.round((wk - firstWeek) / 7));
     const daysLeft = 7 - (today - wk);
-    /* history: one entry per plot per finished season (the gallery's keepsakes), oldest first */
-    const history = [], N = SPECIES.length, used = new Set(), speciesOf = {};
-    habits.forEach((h) => { if (used.size >= N) used.clear(); let i = ((hash(h.key) % N) + N) % N; while (used.has(SPECIES[i])) i = (i + 1) % N; used.add(SPECIES[i]); speciesOf[h.key] = SPECIES[i]; });
-    const si = Math.floor(weeksDone / sw), seasonSpecies = [];
-    const plots = habits.map((h) => {
-      const counts = {};
-      gSessions.forEach((s) => { if (s.h === h.key) { const m = monday(dn(s.date)); counts[m] = (counts[m] || 0) + 1; } });
-      const rng = mulberry(hash(h.key));
-      let p = LBG.newPlant({ rarity: 'common' }, false), seasons = 0;
-      for (let w = 0; w < weeksDone; w++) {
-        LBG.plantWeek(p, LBG.weekResult(counts[firstWeek + w * 7] || 0, h.floor, h.target), w);
-        if ((w + 1) % sw === 0) {
-          const r = LBG.endSeason([p], rng).plots[0], s0 = firstWeek + (w + 1 - sw) * 7;
-          let n = 0; for (let k = 0; k < sw; k++) n += counts[s0 + k * 7] || 0;
-          history.push({ id: `plant-${h.key}-s${seasons}`, kind: 'plant', key: h.key, name: h.name, species: null, hi: habits.indexOf(h), season: seasons, from: ds(s0), to: ds(s0 + sw * 7 - 1),
-            stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], bloomed: r.bloomed, died: r.died, score: r.score, sessions: n, seed: p.seed, earned: r.seed });
-          p = LBG.newPlant(r.seed, r.compost); seasons++;
-        }
-      }
-      const week = counts[wk] || 0, need = Math.max(1, h.floor) - week;
-      return { key: h.key, name: h.name, species: null, stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], alive: p.alive, wilted: !!p.wilted,
-        thirsty: !waiting && p.alive && p.stage > 0 && need > 0 && daysLeft <= need + 2, week, floor: h.floor, target: h.target, seed: p.seed, seasons, plant: p,
-        /* this week's floor met: the plant grows a stage when the week closes */
-        grows: !waiting && p.alive && need <= 0, next: LBG.RULES.garden.stages[Math.min(4, p.stage + 1)], need: Math.max(0, need), waiting };
-    });
-    /* Species, season by season (growth above doesn't depend on species).
-       3D species: season-seeds builds each season's plants (SPEC.md Garden "Species per season"); a plot can use roster plants
-       added by the end of its season's first week (week 1 is the seed week), from the biome current on the season's first day.
-       Order per plot: the hybrid of last season's cross (roster `parents` = both species), then a distinct species not used
-       last season, then one used last season, then a repeat (short pool or a habit added mid-season); no 3D plant in the biome:
-       its SVG species (speciesOf).
-       Hybrids: neighbouring plots (habit order) that both bloom in a season cross; the seed each earns carries the other's
-       species (earned is the next season's seed object, so the new plant shows it too). */
-    const bySeason = {};
-    history.forEach((e) => { (bySeason[e.season] = bySeason[e.season] || {})[e.hi] = e; });
     const pool = input.plantPool || null, meta = (pool && pool.plants) || {};
     const biomeOn = (d) => (biomeAt[d] != null ? biomeAt[d] : d < first ? 0 : reef.biome);
-    for (let s = 0; s <= si; s++) {
-      const s0 = firstWeek + s * sw * 7, cut = s0 + 6, b = biomeOn(s0), row = bySeason[s - 1] || {};
-      const ok = (id) => !meta[id] || !meta[id].added || dn(meta[id].added) <= cut;
-      const bb = (pool && (pool.byBiome[b] || pool.byBiome[b % Math.max(1, pool.n)]) || []).filter(ok);
-      const prev = new Set(Object.values(seasonSpecies[s - 1] || {})), rng = mulberry(hash('season' + s)), taken = new Set(), m = {};
-      const shuf = (a) => { a = a.slice().sort(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-      const fresh = shuf(bb.filter((x) => !prev.has(x))), old = shuf(bb.filter((x) => prev.has(x)));
-      habits.forEach((h, i) => {
-        const e = row[i], pa = e && e.earned.hybrid ? [e.species, e.earned.hybrid].sort().join('|') : null;
-        const hy = pa && Object.keys(meta).sort().find((id) => !taken.has(id) && ok(id) && meta[id].parents && meta[id].parents.slice().sort().join('|') === pa);
-        if (hy) { m[h.key] = hy; taken.add(hy); }
-      });
-      const rest = [...fresh, ...old].filter((x) => !taken.has(x));
-      let k = 0;
-      habits.forEach((h) => { if (m[h.key]) return; const x = rest.shift(); if (x) { m[h.key] = x; taken.add(x); } else m[h.key] = bb.length ? [...fresh, ...old][k++ % bb.length] : speciesOf[h.key]; });
-      seasonSpecies.push(m);
-      const cur = bySeason[s] || {};
-      habits.forEach((h, i) => { if (cur[i]) cur[i].species = m[h.key]; });
-      Object.keys(cur).forEach((q) => { const a = cur[q], c = cur[+q + 1]; if (c && a.bloomed && c.bloomed) { a.earned.hybrid = a.earned.hybrid || c.species; c.earned.hybrid = c.earned.hybrid || a.species; } });
-    }
-    plots.forEach((p) => { p.species = seasonSpecies[si][p.key]; });
+    const hemi = LBG.RULES.garden.hemisphere;
+    /* a plant's species: the roster plant made for it (`plot` = habit key, `gen`), else the plot's SVG species until the weekly run makes one */
+    const N = SPECIES.length, used = new Set(), speciesOf = {};
+    habits.forEach((h) => { if (used.size >= N) used.clear(); let i = ((hash(h.key) % N) + N) % N; while (used.has(SPECIES[i])) i = (i + 1) % N; used.add(SPECIES[i]); speciesOf[h.key] = SPECIES[i]; });
+    const madeFor = {};
+    Object.keys(meta).sort().forEach((id) => { const m = meta[id]; if (m.plot != null && m.gen != null) madeFor[m.plot + '#' + m.gen] = id; });
+    const speciesFor = (key, gen) => madeFor[key + '#' + gen] || speciesOf[key];
+    const history = [];
+    const plots = habits.map((h) => {
+      const counts = {}, perDay = {};
+      gSessions.forEach((s) => { if (s.h === h.key) { const d = dn(s.date), m = monday(d); counts[m] = (counts[m] || 0) + 1; perDay[d] = (perDay[d] || 0) + 1; } });
+      /* daily habits: a day below the floor kills the plant that week; otherwise the week is scored on its total vs 7x floor/target */
+      const missedIn = (w, upto) => { for (let d = w; d < Math.min(w + 7, upto); d++) if ((perDay[d] || 0) < h.floor) return true; return false; };
+      const result = (w) => (h.daily ? (missedIn(w, w + 7) ? 'died' : LBG.weekResult(counts[w] || 0, 7 * h.floor, 7 * h.target)) : LBG.weekResult(counts[w] || 0, h.floor, h.target));
+      const rng = mulberry(hash(h.key));
+      const since = h.since ? Math.max(firstWeek, monday(dn(h.since)) === dn(h.since) ? dn(h.since) : monday(dn(h.since)) + 7) : firstWeek;
+      const pl = LBG.newPlot();
+      let sown = since, n = 0;
+      for (let w = since; w < wk && !waiting; w += 7) {
+        const c = counts[w] || 0, grew = pl.plant.seed; n += c;
+        const r = result(w), done = LBG.plotWeek(pl, r, (w - firstWeek) / 7, rng, h.daily && r === 'died' ? { rest: 0 } : undefined);
+        if (done) {
+          const gen = pl.gen - 1;
+          history.push({ id: `plant-${h.key}-g${gen}`, kind: 'plant', key: h.key, name: h.name, gen, species: speciesFor(h.key, gen), hi: habits.indexOf(h),
+            from: ds(sown), to: ds(w + 6), season: calSeason(ds(sown), hemi).name, biome: biomeOn(sown),
+            seed: grew, stage: done.died ? 0 : 4, stageName: done.died ? 'seed' : 'bloom', bloomed: done.bloomed, died: done.died, score: done.score, sessions: n, earned: done.seed });
+          sown = w + 7; n = 0;
+        }
+      }
+      const p = pl.plant, week = counts[wk] || 0, todayN = perDay[today] || 0;
+      /* a daily habit that missed a day earlier this week: its growing plant is dead now; the next seed goes in when the week starts */
+      const doomed = !waiting && h.daily && pl.rest < 0 && p.alive && p.stage > 0 && missedIn(wk, today);
+      const need = h.daily ? Math.max(1, h.floor) - todayN : Math.max(1, h.floor) - week;
+      const showing = doomed ? 'withered' : pl.rest > 0 ? (p.alive ? 'bloom' : 'withered') : null;
+      return { key: h.key, name: h.name, gen: pl.gen, species: speciesFor(h.key, pl.gen), made: !!madeFor[h.key + '#' + pl.gen], sown: ds(sown), biome: biomeOn(sown),
+        upcoming: showing ? { gen: pl.gen + 1, made: !!madeFor[h.key + '#' + (pl.gen + 1)], rarity: p.alive && !doomed ? LBG.rarityOf(p.score) : 'common', compost: !p.alive || doomed } : null,
+        stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], alive: p.alive && !doomed, daily: !!h.daily, today: todayN, wilted: !!p.wilted, showing, rarity: p.seed.rarity, mutated: !!p.seed.mutated,
+        thirsty: !waiting && !showing && p.alive && p.stage > 0 && need > 0 && (h.daily || daysLeft <= need + 2), week, floor: h.floor, target: h.target, seed: p.seed, plant: p,
+        /* this week's floor met: the plant grows a stage when the week closes */
+        grows: !waiting && !showing && p.alive && need <= 0 && !(h.daily && today - wk < 6), next: LBG.RULES.garden.stages[Math.min(4, p.stage + 1)], need: Math.max(0, need), waiting };
+    });
     history.sort((a, b) => (a.to < b.to ? -1 : a.to > b.to ? 1 : 0));
-    const gardenStats = { seasons: Math.floor(weeksDone / sw), blooms: history.filter((x) => x.bloomed).length, withered: history.filter((x) => x.died).length,
-      heirloom: history.filter((x) => x.earned.rarity === 'heirloom').length, exotic: history.filter((x) => x.earned.rarity === 'exotic').length,
-      mutated: history.filter((x) => x.earned.mutated).length, hybrids: history.filter((x) => x.earned.hybrid).length, sessions: gSessions.length, weeks: weeksDone };
+    const gardenStats = { blooms: history.filter((x) => x.bloomed).length, withered: history.filter((x) => x.died).length,
+      rare: history.filter((x) => x.earned.rarity === 'rare').length, exotic: history.filter((x) => x.earned.rarity === 'exotic').length,
+      mutated: history.filter((x) => x.earned.mutated).length, sessions: gSessions.length, weeks: weeksDone };
+    const sea = calSeason(input.today, hemi);
     return {
       day: today - first, today: input.today,
       reef: { biome: reef.biome, phase: reef.phase, phases: LBG.RULES.tide.phases, pts: reef.pts, next: reef.th[reef.phase] ?? null, prev: reef.phase ? reef.th[reef.phase - 1] : 0, bleached: reef.bleached, from: ds(first + reef.startDay), dioramas: reef.dioramas.map((d) => ({ ...d, from: d.start != null ? ds(first + d.start) : null, to: d.end != null ? ds(first + d.end) : null })) },
@@ -146,13 +146,13 @@
       breaks: { skipsToday: skipOn[today] || 0, skipCost, lost: Math.round(lost), sad: (skipOn[today] || 0) > 0 },
       overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), algae: LBG.algae(overdueAges),
       visitor: reef.bleached ? null : wv || 'common', visitorWeek: ds(wk),
-      season: { week: (weeksDone % sw) + 1, of: sw, index: si, biome: biomeOn(firstWeek + si * sw * 7), opens: waiting ? ds(gStart) : null, from: ds(firstWeek + si * sw * 7), ends: ds(firstWeek + (si + 1) * sw * 7 - 1) },
+      season: { ...sea, biome: reef.biome, opens: waiting ? ds(gStart) : null },
       start: start != null ? ds(start) : null,
       plots, history, gardenStats,
     };
   }
 
-  const API = { deriveGame, SPECIES, _dn: dn, _ds: ds };
+  const API = { deriveGame, calSeason, SPECIES, _dn: dn, _ds: ds };
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; return; }
   if (typeof document === 'undefined') return;
 
@@ -190,11 +190,11 @@
   /* Seam for the model pipeline: roster kind 'plant' entries will set window.LB_PLANTS[id] = "<base64 glb>";
      swap this for a glb-backed renderer then; same (stage, look) in, markup out.
      stage: seed|sprout|leafy|bud|bloom|wilt|dead.
-     look: { kind: species id (SPECIES), rarity: common|heirloom|exotic, mutated, hybrid: neighbour species id, base: stage under wilt/dead }.
+     look: { kind: species id (SPECIES), rarity: common|rare|exotic, mutated, base: stage under wilt/dead }.
      Each species has its own shape per stage; the look only recolours its "accent" (petals, cap, blossoms, tips):
-     common = the species' own colour, heirloom = coral, exotic = violet with sparkles, mutated = every other accent teal,
-     hybrid = every other accent in the neighbour species' colour. Thirsty and withered reuse the species' own shape, drooped and dried. */
-  const PET = { heirloom: 'peh', exotic: 'pex' };
+     common = the species' own colour, rare = coral, exotic = violet with sparkles, mutated = every other accent teal.
+     Thirsty and withered reuse the species' own shape, drooped and dried. */
+  const PET = { rare: 'peh', exotic: 'pex' };
   const SP_ACC = { daisy: 'pet', tulip: 'ptu', sunflower: 'pet', mushroom: 'pmr', cactus: 'bud', fern: 'pet', bonsai: 'pbl', lavender: 'plv' };
   const sh = (rx) => `<ellipse cx="${40 + rx * 0.25}" cy="29" rx="${rx}" ry="${Math.max(2.6, rx * 0.32)}" fill="#1e120a" opacity=".45"/>`;
   const stem = (y2, w = 2.2, bend = -1) => `<path d="M40 28 Q${40 + bend} ${(28 + y2) / 2} 40 ${y2}" stroke="#4a7d3a" stroke-width="${w}" stroke-linecap="round" fill="none"/>`;
@@ -281,13 +281,13 @@
   const SP_DEF = Object.keys(DRAW);
   function renderPlant(stage, look, p) {
     const lk = look || {}, k3 = P3.entries[lk.kind], kind = DRAW[lk.kind] ? lk.kind : k3 && DRAW[k3.svg] ? k3.svg : 'daisy', rar = PET[lk.rarity] ? lk.rarity : 'common', mut = !!lk.mutated;
-    const base = rar === 'common' ? SP_ACC[kind] : PET[rar], alt = mut ? 'pmu' : lk.hybrid && SP_ACC[lk.hybrid] && SP_ACC[lk.hybrid] !== base ? SP_ACC[lk.hybrid] : lk.hybrid ? 'pmu' : null;
+    const base = rar === 'common' ? SP_ACC[kind] : PET[rar], alt = mut ? 'pmu' : null;
     const A = (i) => `url(#${p}${alt && i % 2 ? alt : base})`, L1 = `url(#${p}l1)`, L2 = `url(#${p}${mut ? 'pmu' : 'l2'})`;
     const spark = rar === 'exotic' ? `<g fill="#fff6c8"><path d="M56 -22 l1 2.6 l2.6 1 l-2.6 1 l-1 2.6 l-1 -2.6 l-2.6 -1 l2.6 -1z"/><path d="M23 -14 l.7 1.8 l1.8 .7 l-1.8 .7 l-.7 1.8 l-.7 -1.8 l-1.8 -.7 l1.8 -.7z"/><circle cx="54" cy="0" r=".9"/><circle cx="26" cy="-2" r=".7"/></g>` : '';
     const art = (st) => (DRAW[kind](st, A, L1, L2) || '').replace(/url\(#P-/g, `url(#${p}`);
     if (stage === 'seed' || !stage) {
-      const seedC = mut ? '#2f8f86' : rar === 'exotic' ? '#6b48b0' : rar === 'heirloom' ? '#9a4a32' : '#5e3d28';
-      return `<ellipse cx="40" cy="28" rx="8" ry="3.8" fill="#3a2416"/><ellipse cx="40" cy="27" rx="7" ry="3" fill="${seedC}"/><ellipse cx="40" cy="25.5" rx="2.8" ry="2.1" fill="${kind === 'mushroom' ? '#d9cfc0' : '#e8cb96'}"/><ellipse cx="39.1" cy="24.8" rx="1" ry=".7" fill="#fff8e6"/>${rar === 'heirloom' ? '<path d="M38.4 24.4 v2.4 M40 24 v3 M41.6 24.4 v2.4" stroke="#9a4a32" stroke-width=".55"/>' : ''}${rar === 'exotic' ? '<circle cx="42.6" cy="23.6" r=".8" fill="#fff6c8"/>' : ''}`;
+      const seedC = mut ? '#2f8f86' : rar === 'exotic' ? '#6b48b0' : rar === 'rare' ? '#9a4a32' : '#5e3d28';
+      return `<ellipse cx="40" cy="28" rx="8" ry="3.8" fill="#3a2416"/><ellipse cx="40" cy="27" rx="7" ry="3" fill="${seedC}"/><ellipse cx="40" cy="25.5" rx="2.8" ry="2.1" fill="${kind === 'mushroom' ? '#d9cfc0' : '#e8cb96'}"/><ellipse cx="39.1" cy="24.8" rx="1" ry=".7" fill="#fff8e6"/>${rar === 'rare' ? '<path d="M38.4 24.4 v2.4 M40 24 v3 M41.6 24.4 v2.4" stroke="#9a4a32" stroke-width=".55"/>' : ''}${rar === 'exotic' ? '<circle cx="42.6" cy="23.6" r=".8" fill="#fff6c8"/>' : ''}`;
     }
     if (stage === 'wilt' || stage === 'dead') {
       const b = STAGES.includes(lk.base) && lk.base !== 'seed' ? lk.base : 'leafy', dead = stage === 'dead';
@@ -299,7 +299,8 @@
   const STAGES = ['seed', 'sprout', 'leafy', 'bud', 'bloom'];
   const visual = (pl) => (!pl.alive ? 'dead' : pl.thirsty || pl.wilted ? 'wilt' : pl.stageName);
   const LABEL = { seed: 'Seed', sprout: 'Sprout', leafy: 'Leafy', bud: 'Bud', bloom: 'Bloom', wilt: 'Thirsty', dead: 'Withered' };
-  const RAR = { common: 'Common', heirloom: 'Heirloom', exotic: 'Exotic' };
+  const cap = (x) => (x ? x[0].toUpperCase() + x.slice(1) : '');
+  const RAR = { common: 'Common', rare: 'Rare', exotic: 'Exotic' };
   const SPN = { daisy: 'Daisy', tulip: 'Tulip', sunflower: 'Sunflower', mushroom: 'Toadstool', cactus: 'Cactus', fern: 'Fern', bonsai: 'Bonsai', lavender: 'Lavender' };
   const lookOf = (x) => ({ ...(x.seed || {}), kind: x.species, base: x.stageName });
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -327,9 +328,9 @@
       P3.pool = { n: 1, byBiome: {} };
       Promise.all([fetch('models/roster.json').then((r) => r.json()), fetch('models/biomes.json').then((r) => r.json()).catch(() => null)]).then(([r, b]) => {
         const pl = (r.models || []).filter((m) => m.kind === 'plant'), by = {}, meta = {};
-        pl.forEach((m) => { P3.entries[m.id] = m; SPN[m.id] = m.name || m.id.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()); (by[m.biome] = by[m.biome] || []).push(m.id); meta[m.id] = { added: m.added || null, parents: m.parents || null }; });
+        pl.forEach((m) => { P3.entries[m.id] = m; SPN[m.id] = m.name || m.id.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()); (by[m.biome] = by[m.biome] || []).push(m.id); meta[m.id] = { added: m.added || null, plot: m.plot ?? null, gen: m.gen ?? null }; });
         P3.pool = { n: (b && b.biomes && b.biomes.length) || 1, byBiome: by, plants: meta }; P3.v++;
-        if (pl.length && G.LBLabs && G.LBLabs.render) G.LBLabs.render();
+        if (pl.length && G.LBGame && G.LBGame.render) G.LBGame.render();
       }).catch(() => {});
     }
     return P3.pool;
@@ -394,7 +395,7 @@
   /* ---- Grow → Collection (dioramas + pressed plants, each with a title and note), stats, logbook ---- */
   let biomeNames = null;
   function biomeOf(id) {
-    if (!biomeNames) { biomeNames = []; fetch('models/biomes.json').then((r) => r.json()).then((j) => { biomeNames = j.biomes || []; if (G.LBLabs && G.LBLabs.render) G.LBLabs.render(); }).catch(() => {}); }
+    if (!biomeNames) { biomeNames = []; fetch('models/biomes.json').then((r) => r.json()).then((j) => { biomeNames = j.biomes || []; if (G.LBGame && G.LBGame.render) G.LBGame.render(); }).catch(() => {}); }
     const L = biomeNames.length ? biomeNames : [{ id: 0, name: 'Coral shallows', medium: 'water' }];
     return L.find((x) => x.id === id) || L[((id % L.length) + L.length) % L.length];
   }
@@ -420,8 +421,8 @@
   }
   function keepTitle(k) {
     if (k.kind === 'reef') return `${biomeOf(k.biome).name} diorama`;
-    const sp = (SPN[k.species] || 'plant').toLowerCase(), hy = k.seed && k.seed.hybrid ? ` × ${SPN[k.seed.hybrid].toLowerCase()}` : '';
-    return `${k.name} ${sp}${hy}, ${k.bloomed ? 'in bloom' : k.died ? 'withered' : LABEL[k.stageName].toLowerCase()}`;
+    const sp = (SPN[k.species] || 'plant').toLowerCase();
+    return `${k.name} ${sp}, ${k.bloomed ? 'in bloom' : k.died ? 'withered' : LABEL[k.stageName].toLowerCase()}`;
   }
   /* naming + notes, shared by plants and dioramas: pencil renames inline; the note is a one-line box whose Save shows while editing */
   const PEN = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
@@ -434,18 +435,18 @@
   }
   const noteRow = (k, n, kind) => keepF(k, kind, `<input type="hidden" name="title" value="${esc(n.title || '')}"><label class="sr" for="kn-${esc(k.id)}">Note</label><textarea id="kn-${esc(k.id)}" name="note" rows="1" maxlength="600" placeholder="Add a note…" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(n.note || '')}</textarea><button class="btn sm primary dio-save" type="submit">Save</button>`);
   function plantParts(k) {
-    const sub = `Season ${k.season + 1} · ${fmt(k.from)}–${fmt(k.to)} · ${k.sessions} session${k.sessions === 1 ? '' : 's'}`;
-    const tag = k.bloomed ? `<span class="chip gok">Bloomed</span><span class="chip r-${k.earned.rarity}">${RAR[k.earned.rarity]} seed${k.earned.mutated ? ' · mutant' : ''}</span>${k.earned.hybrid ? `<span class="chip r-hybrid">Hybrid × ${SPN[k.earned.hybrid]}</span>` : ''}`
+    const sub = `${cap(k.season)} · ${fmt(k.from)}–${fmt(k.to)} · ${k.sessions} session${k.sessions === 1 ? '' : 's'}`;
+    const tag = k.bloomed ? `<span class="chip gok">Bloomed</span><span class="chip r-${k.earned.rarity}">${RAR[k.earned.rarity]} seed${k.earned.mutated ? ' · mutant' : ''}</span>`
       : k.died ? '<span class="chip gwarn">Withered</span><span class="chip">Next seed starts sprouted</span>' : `<span class="chip">Reached ${LABEL[k.stageName].toLowerCase()}</span>`;
     return { sub, tag };
   }
-  const EVL = { phase: 'Habitat reached a new phase', biome: 'Habitat biome finished: a diorama joined the shelf', bleach: 'Habitat bleached: too few full days', recover: 'Habitat recovered' };
+  const EVL = { phase: 'Ecosystem reached a new phase', biome: 'Ecosystem biome finished: a diorama joined the shelf', bleach: 'Ecosystem bleached: too few full days', recover: 'Ecosystem recovered' };
   /* Grow → Garden pieces; app.js lays them out next to its own habit and ring records */
 
   /* Grow → Collection: dioramas (tap to inspect) + pressed plants. The habitat in progress leads the dioramas. */
   let roster = null;
   function visitorsOf(biomeId) {
-    if (!roster) { roster = []; fetch('models/roster.json').then((r) => r.json()).then((j) => { roster = (j.models || []).filter((m) => (m.kind || 'creature') === 'creature'); if (G.LBLabs && G.LBLabs.render) G.LBLabs.render(); }).catch(() => {}); }
+    if (!roster) { roster = []; fetch('models/roster.json').then((r) => r.json()).then((j) => { roster = (j.models || []).filter((m) => (m.kind || 'creature') === 'creature'); if (G.LBGame && G.LBGame.render) G.LBGame.render(); }).catch(() => {}); }
     return roster.filter((m) => m.biome === biomeId).map((m) => ({ name: m.name || m.id.replace(/[-_]/g, ' ').replace(/^./, (c) => c.toUpperCase()), rarity: m.rarity || 'common' }));
   }
   const span = (k) => (k.from && k.to ? `${fmt(k.from)} – ${fmt(k.to)}` : k.from ? `Since ${fmt(k.from)}` : '');
@@ -456,21 +457,21 @@
   }
   function plantTile(k, notes) {
     const n = notes[k.id] || {}, title = n.title || keepTitle(k);
-    return `<li><button class="dio-t pl${k.died ? ' gone' : ''}" data-act="inspect" data-id="${esc(k.id)}"><span class="dio-a">${specimen(k.died ? 'dead' : k.stageName, lookOf(k), 76, title)}</span><span class="dio-n">${esc(title)}</span><span class="dio-s">Season ${k.season + 1} · ${k.bloomed ? 'bloomed' : k.died ? 'withered' : LABEL[k.stageName].toLowerCase()}</span>${n.note ? `<span class="dio-note">${esc(n.note)}</span>` : ''}</button></li>`;
+    return `<li><button class="dio-t pl${k.died ? ' gone' : ''}" data-act="inspect" data-id="${esc(k.id)}"><span class="dio-a">${specimen(k.died ? 'dead' : k.stageName, lookOf(k), 76, title)}</span><span class="dio-n">${esc(title)}</span><span class="dio-s">${cap(k.season)} · ${k.bloomed ? 'bloomed' : k.died ? 'withered' : LABEL[k.stageName].toLowerCase()}</span>${n.note ? `<span class="dio-note">${esc(n.note)}</span>` : ''}</button></li>`;
   }
   function inspectModal(k, notes, editing, anim) {
     const n = notes[k.id] || {}, reef = k.kind === 'reef', now = k.id === 'now';
     let art, kicker, head, sub, body = '';
     if (reef) {
       const b = biomeOf(k.biome), L = b.look || {}, vis = visitorsOf(k.biome);
-      const stats = now ? [['Phase', `${k.phase + 1} / ${k.phases}`], ['Started', k.from ? fmt(k.from) : '—'], ['Growth', Math.round(k.pts)]] : [['Days', k.days], ['Full days', k.full ?? '—'], ['Growth', k.pts ?? '—']];
+      const stats = now ? [['Phase', `${k.phase + 1} / ${k.phases}`], ['Started', k.from ? fmt(k.from) : '—'], ['Life points', Math.round(k.pts)]] : [['Days', k.days], ['Full days', k.full ?? '—'], ['Life points', k.pts ?? '—']];
       art = dioramaSVG(b, 240); kicker = `${now ? 'In progress' : 'Diorama'} · ${b.medium || 'water'}`;
       head = now ? `<p class="dio-h">${esc(b.name)}</p>` : nameRow(k, n, 'reef', b.name, editing, 'dio-h');
       sub = `${n.title ? `${esc(b.name)} · ` : ''}${esc(span(k))}`;
-      body = `<dl class="dio-st">${stats.map(([t, v]) => `<div><dt>${t}</dt><dd class="num">${esc(String(v))}</dd></div>`).join('')}</dl>${L.owns ? `<p class="dio-l"><b>Signature</b> ${esc(L.owns.join(', '))}</p>` : ''}<p class="dio-l"><b>Visitors</b> ${vis.length ? vis.map((v) => `${esc(v.name)}${v.rarity !== 'common' ? ` <span class="chip r-${v.rarity === 'legendary' ? 'exotic' : 'heirloom'}">${v.rarity}</span>` : ''}`).join(', ') : 'none yet'}</p>`;
+      body = `<dl class="dio-st">${stats.map(([t, v]) => `<div><dt>${t}</dt><dd class="num">${esc(String(v))}</dd></div>`).join('')}</dl>${L.owns ? `<p class="dio-l"><b>Signature</b> ${esc(L.owns.join(', '))}</p>` : ''}<p class="dio-l"><b>Visitors</b> ${vis.length ? vis.map((v) => `${esc(v.name)}${v.rarity !== 'common' ? ` <span class="chip r-${v.rarity === 'exotic' ? 'exotic' : 'rare'}">${v.rarity}</span>` : ''}`).join(', ') : 'none yet'}</p>`;
     } else {
       const P = plantParts(k);
-      art = specimen(k.died ? 'dead' : k.stageName, lookOf(k), 200, keepTitle(k)); kicker = `Pressed plant · season ${k.season + 1}`;
+      art = specimen(k.died ? 'dead' : k.stageName, lookOf(k), 200, keepTitle(k)); kicker = `Pressed plant · ${k.season}`;
       head = nameRow(k, n, k.kind, keepTitle(k), editing, 'dio-h'); sub = esc(P.sub); body = `<p class="gal-c">${P.tag}</p>`;
     }
     return `<div class="kmodal${anim ? ' in' : ''}" role="dialog" aria-modal="true" aria-label="Closer look"><button class="km-bg" data-act="inspect" data-id="" aria-label="Close" tabindex="-1"></button>
@@ -483,12 +484,12 @@
     const dios = [{ id: 'now', kind: 'reef', biome: r.biome, phase: r.phase, phases: r.phases, pts: r.pts, from: r.from }, ...ks.filter((k) => k.kind === 'reef')];
     const plants = ks.filter((k) => k.kind !== 'reef'), sea = game.season, open = [...dios, ...plants].find((k) => k.id === inspect);
     const pl = plants.length ? `<ul class="dio">${plants.map((k) => plantTile(k, notes)).join('')}</ul>`
-      : `<div class="card pad"><p class="empty" style="padding:0 4px">No pressed plants yet. When season ${sea.index + 1} ends ${fmt(sea.ends)}, every habit plant lands here, bloomed or withered, for you to name and caption.</p></div>`;
+      : `<div class="card pad"><p class="empty" style="padding:0 4px">No pressed plants yet. When a habit's plant blooms or withers it is pressed the week after and lands here, for you to name and caption.</p></div>`;
     const seg = [['dioramas', 'Dioramas', dios.length - 1], ['plants', 'Plants', plants.length]];
     const tabs = `<div class="seg" role="tablist" aria-label="Collection">${seg.map(([v, l, c]) => `<button role="tab" data-act="coll" data-val="${v}" aria-selected="${view === v}">${l} <span class="num">${c}</span></button>`).join('')}</div>`;
-    const sub = view === 'plants' ? esc(sea.opens ? `Seeds plant ${fmt(sea.opens)}` : `Season ${sea.index + 1} · ends ${fmt(sea.ends)}`) : 'Tap one for a closer look';
+    const sub = view === 'plants' ? esc(sea.opens ? `Seeds plant ${fmt(sea.opens)}` : `${sea.label} · ends ${fmt(sea.ends)}`) : 'Tap one for a closer look';
     const list = view === 'plants' ? pl : `<ul class="dio">${dios.map((k) => dioTile(k, notes)).join('')}</ul>`;
-    return `<section class="sec labs-shelf"><div class="seg-row">${tabs}<span class="gseason">${sub}</span></div>${list}</section>${open ? inspectModal(open, notes, editing, anim) : ''}`;
+    return `<section class="sec game-shelf"><div class="seg-row">${tabs}<span class="gseason">${sub}</span></div>${list}</section>${open ? inspectModal(open, notes, editing, anim) : ''}`;
   }
   /* stat tiles for the band: counted from the same keepsakes the Collection shows */
   function gardenTiles(game) {
@@ -496,9 +497,9 @@
     const ks = keepsakes(game), pl = ks.filter((k) => k.kind === 'plant'), rare = pl.filter((k) => k.bloomed && k.earned.rarity !== 'common');
     return [
       { n: pl.filter((k) => k.bloomed).length, l: 'Blooms', s: `${pl.filter((k) => k.died).length} withered` },
-      { n: rare.length, l: 'Rare seeds', s: `${rare.filter((k) => k.earned.rarity === 'heirloom').length} heirloom · ${rare.filter((k) => k.earned.rarity === 'exotic').length} exotic` },
-      { n: ks.filter((k) => k.kind === 'reef').length, l: 'Dioramas', s: `habitat phase ${game.reef.phase + 1} of ${game.reef.phases}` },
-      game.season.opens ? { n: '–', l: 'Season', s: `opens ${fmt(game.season.opens)}` } : { n: game.season.index + 1, l: 'Season', s: `week ${game.season.week} of ${game.season.of}` },
+      { n: rare.length, l: 'Rare seeds', s: `${rare.filter((k) => k.earned.rarity === 'rare').length} rare · ${rare.filter((k) => k.earned.rarity === 'exotic').length} exotic` },
+      { n: ks.filter((k) => k.kind === 'reef').length, l: 'Dioramas', s: `ecosystem phase ${game.reef.phase + 1} of ${game.reef.phases}` },
+      game.season.opens ? { n: '–', l: 'Season', s: `opens ${fmt(game.season.opens)}` } : { n: cap(game.season.name), l: 'Season', s: `ends ${fmt(game.season.ends)}` },
     ];
   }
   function logbookItems(game) {
@@ -506,7 +507,7 @@
     game.history.forEach((h) => log.push({ d: h.to, t: h.bloomed ? `${h.name} bloomed · ${RAR[h.earned.rarity].toLowerCase()} seed${h.earned.mutated ? ', mutant' : ''}` : h.died ? `${h.name} withered` : `${h.name} ended at ${LABEL[h.stageName].toLowerCase()}`, c: h.bloomed ? 'good' : h.died ? 'bad' : '' }));
     game.events.forEach((e) => e.ev.forEach((x) => log.push({ d: e.date, t: EVL[x] || x, c: x === 'bleach' ? 'bad' : x === 'phase' || x === 'biome' ? 'good' : '' })));
     if (game.season.opens) log.push({ d: game.season.opens, t: 'Garden opens: seeds go in', c: '' });
-    if (game.start) log.push({ d: game.start, t: 'Labs started: everything at zero', c: '' });
+    if (game.start) log.push({ d: game.start, t: 'Game started: everything at zero', c: '' });
     return log.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
   }
   const logbookHTML = (items) => `<ol class="lbk">${items.map((x) => `<li class="${x.c}"><span class="num">${fmt(x.d)}</span><span>${esc(x.t)}</span></li>`).join('')}</ol>`;

@@ -13,28 +13,28 @@ Runs unattended. Do not ask the user anything; decide, log, and report.
 `models/shared/tools/doctor.sh`. If anything required fails, there's no visitor this week. Report the failing line and point to the lifeboard-setup skill.
 
 ## 0b. Start the run ledger
-`python3 models/shared/tools/ledger.py start <run_id> --builds 6 --minutes 90` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).
+`python3 models/shared/tools/ledger.py start <run_id> --builds 8 --minutes 120` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).
 
 ## 1. Should a visitor come?
-Read the game state from the lifeboard artifact db (see AGENTS.md / `game.js`). The board writes the habitat's status to `checks/labs_reef` whenever it changes: `value = { biome, phase, phases, bleached, dioramas, visitor, visitorWeek }` (ArtifactData `get`). If it's missing (Labs never opened), use biome 0 and common.
+Read the game state from the lifeboard artifact db (see AGENTS.md / `game.js`). The board writes the habitat's status to `checks/game_status` whenever it changes: `value = { biome, phase, phases, bleached, dioramas, visitor, visitorWeek }` (ArtifactData `get`). If it's missing, try the old name `checks/labs_reef` (boards before Nov 19 2026); if both are missing (the game was never opened), use biome 0 and common.
 - current `biome`;
 - this week's visitor result (`value.visitor`: `rare`, `common`, or null when bleached);
-- overdue drops (`overdueReward` → `rare` or `legendary`, capped per week and per biome).
+- overdue drops (`overdueReward` → `rare` or `exotic`, capped per week and per biome).
 
 The most rare earned this week wins. If the game says no visitor (for example the habitat is bleached), skip and report why.
 
 ## 1b. New biome?
 If `models/biomes.json` has no entry for `biome`, or `phase == phases - 1` (final phase) and there is no entry for `biome + 1`: run **biome-brief** for that id first (it validates with `check_biome.py`). It doesn't count toward the build budget. If it fails twice, report it and brief this week's creature for the current biome as usual. A biome brief needs no visitor: run it even when the habitat is bleached.
 
-## 1c. New garden season?
-If `checks/labs_reef` `value.garden.week == 1` (the season's first week, including the week before the garden opens): after this week's visitor (or the no-visitor branch), run **season-seeds** for that season. It has its own ledger runs (`seeds-<garden.from>-<n>`), so it doesn't spend the visitor's budget, and it stops on its own if this season's plants already shipped. Commit its plants on the same branch; one republish covers both. Missed week 1: run it anyway; the plants serve next season.
+## 1c. Garden plants
+Every week, after this week's visitor (or the no-visitor branch): if `checks/game_status` `value.garden.needs` is non-empty, run **season-seeds**. It has its own ledger per plant (`plant-<plot>-g<gen>`), so it doesn't spend the visitor's budget. Commit its plants on the same branch; one republish covers both.
 
 ## 2. Pipeline (each step is its own skill; pass ids and paths, not prose)
 ```
 creature-brief(biome, rarity) → id
 model-build(id) → creature-animate(id) → model-verify(id)
 ```
-Retry loop, driven by `report.json.fix_notes`:
+Retry loop, driven by `report.json.fix_notes` (fix the cause: a trait the judges say is missing gets built into the species generator, not approximated with parameters):
 - route each fix note to the step that owns it;
 - re-run from that step;
 - max 2 retries (3 for a novel archetype).
@@ -44,11 +44,14 @@ Retry loop, driven by `report.json.fix_notes`:
 - Verify signature: `models/shared/tools/verify.sh <id> [glb] [spec]` (defaults `out/<id>/<id>.glb`; QA goes to `<glb dir>/qa`).
 
 ## 3. Fallbacks (in order)
-1. Still failing → brief a **safe-path** variant: proven archetype, new species/palette/params. Run build → animate → verify again (2 retries).
+1. Still failing → if the first attempt was **novel**, keep the species idea and simplify the new archetype once (fewer parts, proven rig pieces from lib.py) before giving up on it. Only then brief a **safe-path** variant: proven archetype, new species/palette/params, and a species the archetype can genuinely express (not a recolor of a past miss). Run build → animate → verify again (2 retries).
 2. Still failing → no visitor this week. Move `out/<id>` to `out/quarantine/<id>/` (dry run: `out/dryrun/quarantine/<id>/`).
 
+## 3b. Polish rounds (after a PASS)
+A first pass ships nothing yet. While the ledger has ≥ 1 build left (and at most 2 rounds): take the fix notes ≥ 2 judges agreed on, fix their **cause** in the species generator or spec (a missing trait is code, not a parameter nudge), rebuild, re-run G1–G5 with 3 fresh judges, and keep whichever version has the higher G5 mean (ties: the newer one). Stop early when a round doesn't raise the mean. Report each round's mean.
+
 ## 4. Ship
-On PASS → model-ship.
+On PASS (after polish) → model-ship the best version.
 
 ## 5. Report (the run's final message)
 - **Visitor arrived:** name, rarity, lore, the contact sheet image, gates passed, and attempts used.
@@ -67,4 +70,4 @@ Tests the whole pipeline on a simulated week without touching anything live.
 - Report like a normal run, plus timings per step and every fix note, so the pipeline itself can be improved.
 
 ## Budget
-90 minutes of wall time or 6 Blender build attempts in total (pre-build G1 failures don't count), whichever comes first, **enforced by `models/shared/tools/ledger.py`** (`out/runs/<run_id>.json`). `BUDGET EXHAUSTED` from build.py or `ledger.py build` is final for the run. Every G5 judge is recorded with `ledger.py judge` (see model-verify), which refuses a reused judge agent. Judges are cheap (~15 s each) and do not count toward the build budget: each G5 attempt uses 3 fresh judges (median-of-3); the ledger records all of them.
+120 minutes of wall time or 8 Blender build attempts (novel archetypes need the room) in total (pre-build G1 failures don't count), whichever comes first, **enforced by `models/shared/tools/ledger.py`** (`out/runs/<run_id>.json`). `BUDGET EXHAUSTED` from build.py or `ledger.py build` is final for the run. Every G5 judge is recorded with `ledger.py judge` (see model-verify), which refuses a reused judge agent. Judges are cheap (~15 s each) and do not count toward the build budget: each G5 attempt uses 3 fresh judges (median-of-3); the ledger records all of them.

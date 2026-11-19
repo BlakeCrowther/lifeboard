@@ -11,7 +11,7 @@ Input `out/<id>/<id>_model.blend` + spec. Output `out/<id>/<id>.glb` meeting `mo
 - Armature `<id>_rig` from the archetype's `rig(spec)`:
   - spine chain along X (4–8 bones, root at center, head bone at +X end);
   - appendage chains: tail/fin/wing (2–4), each tentacle/arm (4–8), legs (3 each), neck (2–3);
-  - ≤ 32 bones (legendary 48).
+  - ≤ 32 bones (exotic 48).
 - Empty `mouth` parented to the head bone at the `lib.mouth()` part's tip (`lib.MOUTHS[-1]["tip"]`); eyes parented to head bone.
 - `jaw` bone (`lib.jaw_bone("head")`) at the mouth part, mouth part weighted 100% to it.
 - Skin: Armature modifier, automatic weights; then limit to 4 influences, normalize all, check no unweighted verts (`qa_structural.py` will fail otherwise).

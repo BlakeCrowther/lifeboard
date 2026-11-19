@@ -83,8 +83,8 @@ def model(spec):
         ps = pd.get("pectoral_scale", 1.5)    # paddle size multiplier (default 1.5: reads at card size)
         shape = [(0, 0), (-.05 * L * ps, .045 * L * ps), (-.11 * L * ps, .03 * L * ps), (-.12 * L * ps, -.015 * L * ps), (-.06 * L * ps, -.035 * L * ps)]
         for side, sgn in (("pecL", 1), ("pecR", -1)):
-            o = lib.flat_part(side, shape, th * 0.8, at=(x, sgn * y, -0.15 * hh), rot=(sgn * math.radians(70), 0, sgn * math.radians(-25)), rim=RIM * L * 0.7)
-            lib.subsurf(o, 1); parts[side] = o
+            o = lib.flat_part(side, shape, th * 0.8, at=(x, sgn * y * 0.93, -0.15 * hh), rot=(sgn * math.radians(40), 0, sgn * math.radians(-30)), rim=RIM * L * 0.7)
+            lib.subsurf(o, 2); parts[side] = o
     # eyes (shared STYLE eye: glossy dark sphere, ~10% body depth)
     eu = 0.12
     for side, sgn in (("eyeL", 1), ("eyeR", -1)):
@@ -119,7 +119,15 @@ def material(spec, parts):
         cr.elements[0].color = main[1] if len(main) > 1 else acc; cr.elements[1].position = pat.get("spot_size", 0.22); cr.elements[1].color = main[0]
         nt.links.new(vor.outputs["Distance"], r.inputs[0]); nt.links.new(r.outputs[0], b.inputs["Base Color"])
     fin_col = lib.hex_rgba(pal["fins"]) if pal.get("fins") else main[0]
-    fm, _, _ = lib.principled("fin", fin_col, 0.4, 0.2, 0.2)
+    fm, fnt, fb = lib.principled("fin", fin_col, 0.4, 0.2, 0.2)
+    # fin rays: fine darker stripes running root→edge so fins read as webbed membrane, not flat paper
+    wv = fnt.nodes.new("ShaderNodeTexWave"); wv.wave_type = "BANDS"; wv.bands_direction = "X"
+    wv.inputs["Scale"].default_value = spec.get("fin_rays", 14) / L; wv.inputs["Distortion"].default_value = 1.5
+    ftc = fnt.nodes.new("ShaderNodeTexCoord"); fnt.links.new(ftc.outputs["Object"], wv.inputs["Vector"])
+    ray = tuple(c * 0.55 for c in fin_col[:3]) + (1,)
+    fr = fnt.nodes.new("ShaderNodeValToRGB"); fr.color_ramp.elements[0].color = ray; fr.color_ramp.elements[1].color = fin_col
+    fr.color_ramp.elements[0].position = 0.35; fr.color_ramp.elements[1].position = 0.6
+    fnt.links.new(wv.outputs["Fac"], fr.inputs[0]); fnt.links.new(fr.outputs[0], fb.inputs["Base Color"])
     rim, _, _ = lib.principled("fin_rim", acc, 0.4, 0.2)
     for n, o in parts.items():
         if o.data.materials: continue            # eyes come with the shared eye material

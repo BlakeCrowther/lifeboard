@@ -1,8 +1,8 @@
 """G1: validate a model spec (any kind; spec.kind default creature). Usage: python3 check_spec.py <kind>/specs/<id>.json  → JSON report on stdout, exit 1 on failure."""
 import json, re, sys, colorsys, os
 
-RARITY = {"creature": {"common", "rare", "legendary"}, "plant": {"common", "heirloom", "exotic"}}
-TRIS = {"common": 8000, "rare": 12000, "legendary": 20000, "heirloom": 12000, "exotic": 20000}
+RARITY = {"creature": {"common", "rare", "exotic"}, "plant": {"common", "rare", "exotic"}}
+TRIS = {"common": 8000, "rare": 12000, "exotic": 20000}
 
 def hsv(hexc):
     h = hexc.lstrip("#"); r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))

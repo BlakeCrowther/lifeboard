@@ -10,7 +10,7 @@ description: Kind: biome. Design the next habitat biome and add it to models/bio
 Runs unattended when weekly-visitor calls it: decide, validate, report. Never ask the user.
 
 ## When it runs
-- **Needed:** the board's `checks/labs_reef` (see weekly-visitor step 1) says `biome` = B and `biomes.json` has no entry with `id` B (the habitat already moved on), or `phase == phases - 1` (final phase) and there is no entry for B + 1. Brief exactly that one id.
+- **Needed:** the board's `checks/game_status` (see weekly-visitor step 1) says `biome` = B and `biomes.json` has no entry with `id` B (the habitat already moved on), or `phase == phases - 1` (final phase) and there is no entry for B + 1. Brief exactly that one id.
 - **Not needed:** the entry exists. Never rewrite an existing biome: the shelf dioramas and visitors already met depend on it. (After the last entry the habitat would cycle back to biome 0's look; designing the next one stops that.)
 
 ## 1. Read
@@ -19,10 +19,10 @@ Runs unattended when weekly-visitor calls it: decide, validate, report. Never as
 - The habitat's scene builders: the keys of `LOOKS` in `habitat.js` (today: reef, kelp, tidepool, mangrove, deep, meadow, canopy, jungle). `scene` must be one of these.
 
 ## 2. Design
-Pick a real-world habitat that makes a good next step: vary the medium every few biomes (water → land → air), avoid repeating the previous biome's feel, and keep it reachable for a weekly creature pipeline (animals with clear silhouettes).
+Pick a real-world habitat that makes a good next step: vary the medium: never three biomes in a row in the same medium, and the second biome of a fresh game (after a game-reset) should leave water. Read `models/biomes.archive.json` for past designs as inspiration but never copy one (new name, palette, owned motifs); `scene` may be reused (habitat.js has reef, kelp, tidepool, mangrove, deep, meadow, canopy, jungle), avoid repeating the previous biome's feel, and keep it reachable for a weekly creature pipeline (animals with clear silhouettes).
 - **name**: 1–3 words, evocative and plain ("Salt marsh", "Desert spring").
 - **medium** water | land | air, **light** (a few words), **locomotion** (subset of swim, drift, crawl, rooted, walk, fly, climb, burrow, hop, glide).
-- **examples**: 4–6 real species with strong silhouettes; at least one rare-worthy and one legendary-worthy (the biome's icon).
+- **examples**: 4–6 real species with strong silhouettes; at least one rare-worthy and one exotic-worthy (the biome's icon).
 - **scene**: the closest existing builder by structure, not colour (a salt marsh → `mangrove`, a desert spring → `meadow`). `pass_through` only for scenery the creatures move through (e.g. `["kelp"]`).
 - **look** (follow every `identity_rules` line):
   - `shape`: one shape language no other biome uses as its main shape.

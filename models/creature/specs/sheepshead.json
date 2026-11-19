@@ -1,0 +1,127 @@
+{
+  "kind": "creature",
+  "id": "sheepshead",
+  "name": "Sheepshead",
+  "lore": "Grins with people teeth. Nobody knows why.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "streamlined_swimmer",
+  "locomotion": "swim",
+  "reference": "Archosargus probatocephalus: deep, sand-tan body crossed by bold dark olive-brown vertical bars, tall pointed dorsal fin, forked tail",
+  "size": {
+    "length_m": 0.4,
+    "height_ratio": 0.5,
+    "width_ratio": 0.4
+  },
+  "palette": {
+    "main": [
+      "#d6a85a",
+      "#5c5622"
+    ],
+    "accent": "#ff9f43",
+    "fins": "#6a7040"
+  },
+  "pattern": {
+    "type": "bands",
+    "bands": [
+      {
+        "u": 0.12,
+        "w": 0.05
+      },
+      {
+        "u": 0.3,
+        "w": 0.1
+      },
+      {
+        "u": 0.47,
+        "w": 0.07
+      },
+      {
+        "u": 0.62,
+        "w": 0.09
+      },
+      {
+        "u": 0.76,
+        "w": 0.04
+      }
+    ]
+  },
+  "parts": {
+    "dorsal": "pointed",
+    "tail": "forked",
+    "pectoral": "paddle",
+    "anal": "pointed"
+  },
+  "motion": {
+    "idle": {
+      "frames": 96,
+      "cycles": 2,
+      "amp_deg": 9,
+      "chain_lag_frames": 4,
+      "personality": "slow grazing lean, drifting with the blades, brief pauses"
+    },
+    "feed": {
+      "frames": 72,
+      "technique": "tilt nose down, small pull-back, quick crunching bite, two chews, slow settle",
+      "reach_ratio": 0.15
+    },
+    "sulk": {
+      "frames": 96,
+      "cycles": 1,
+      "energy": 0.3,
+      "droop_deg": 16,
+      "frown": 0.6,
+      "technique": "nose droops into the grass, fins clamped, one slow tail sweep, sinks low"
+    }
+  },
+  "habitat": {
+    "depth": "low",
+    "anchor": "kelp",
+    "shelter": "kelp",
+    "schooling": false
+  },
+  "budget": {
+    "tris": 8000,
+    "texture": 1024
+  },
+  "shape": {
+    "profile": [
+      [
+        0,
+        0.0
+      ],
+      [
+        0.03,
+        0.45
+      ],
+      [
+        0.1,
+        0.8
+      ],
+      [
+        0.25,
+        0.98
+      ],
+      [
+        0.4,
+        1.0
+      ],
+      [
+        0.55,
+        0.9
+      ],
+      [
+        0.7,
+        0.68
+      ],
+      [
+        0.85,
+        0.42
+      ],
+      [
+        1.0,
+        0.28
+      ]
+    ]
+  }
+}

@@ -9,7 +9,7 @@ const G = require(path.join(__dirname, '..', 'game.js'));
 const argv0 = process.argv.slice(2), visArg = argv0.find((a) => a.startsWith('--visitors'));
 const args = argv0.filter((a) => !a.startsWith('--')), sets = args.filter((a) => a.includes('=')), nums = args.filter((a) => !a.includes('='));
 const SEEDS = +nums[0] || 200, WEEKS = +nums[1] || 28;
-/* overrides: garden.replant=true lessons.perFeeding=5 lessons.feedings=2 lessons.intervals=[3,7,21] */
+/* overrides: garden.bloomWeeks=1 lessons.perFeeding=5 lessons.feedings=2 lessons.intervals=[3,7,21] */
 for (const kv of sets) { const [k, v] = kv.split('='), ks = k.split('.'); let o = G.RULES; ks.slice(0, -1).forEach((x) => (o = o[x])); o[ks.at(-1)] = JSON.parse(v); }
 if (sets.length) console.log('overrides:', sets.join(' '));
 
@@ -57,15 +57,15 @@ function habitMode(rng, weekMode) {
   return weekMode;
 }
 
-const RANK = { none: 0, common: 1, rare: 2, legendary: 3 };
+const RANK = { none: 0, common: 1, rare: 2, exotic: 3 };
 function runOne(P, seed, opts = {}) {
   const rng = mulberry32(seed), st = { off: 0 };
-  const M = { deaths: 0, blooms: 0, plantSeasons: 0, deadPlotWeeks: 0, plotWeeks: 0, rarity: { common: 0, heirloom: 0, exotic: 0 }, hybrids: 0,
-    visitors: [], biomeDays: [], rare: 0, rareOd: 0, pileEnd: 0, algaeDays: 0, pileSum: 0, legendary: 0, bleach: 0, bleachDays: 0, cloudyDays: 0, ringSum: 0, ringDays: 0, fullDays: 0, neutral: 0,
+  const M = { deaths: 0, blooms: 0, finished: 0, deadPlotWeeks: 0, plotWeeks: 0, rarity: { common: 0, rare: 0, exotic: 0 },
+    visitors: [], biomeDays: [], rare: 0, rareOd: 0, pileEnd: 0, algaeDays: 0, pileSum: 0, exotic: 0, bleach: 0, bleachDays: 0, cloudyDays: 0, ringSum: 0, ringDays: 0, fullDays: 0, neutral: 0,
     lessonsShown: 0, backlogEnd: 0, backlogMax: 0, bookDays: [], booksStarted: 0, booksDone: 0 };
 
   /* garden */
-  let plants = P.habits.map(() => G.newPlant({ rarity: 'common' }, false));
+  const plots = P.habits.map(() => G.newPlot());
   /* reef */
   const reef = G.newReef();
   let pile = []; /* overdue tasks: { since } */
@@ -100,7 +100,7 @@ function runOne(P, seed, opts = {}) {
       if (pile.length && rng() < P.pull) {
         const k = randInt(rng, 0, pile.length - 1), t = pile[k];
         committed++;
-        if (rng() < q) { done++; pile.splice(k, 1); const drop = G.overdueReward(reef, day - t.since); if (drop === 'rare') M.rareOd++; if (drop === 'legendary') M.legendary++; if (drop && RANK[drop] > RANK[weekDrop || 'none']) weekDrop = drop; }
+        if (rng() < q) { done++; pile.splice(k, 1); const drop = G.overdueReward(reef, day - t.since); if (drop === 'rare') M.rareOd++; if (drop === 'exotic') M.exotic++; if (drop && RANK[drop] > RANK[weekDrop || 'none']) weekDrop = drop; }
       }
       if (P.tiny) { committed += P.tiny; done += P.tiny; }
       const tide = G.dayTide(committed, done);
@@ -129,25 +129,20 @@ function runOne(P, seed, opts = {}) {
       M.backlogMax = Math.max(M.backlogMax, backlog); M.backlogEnd = backlog;
     }
     if (G.weekVisitor(tides) === 'rare') M.rare++;
-    /* visitor event for this week: best of tide streak (rare) and overdue drop (rare/legendary); common otherwise; none while bleached.
-       ASSUMPTION: a common visitor arrives every non-bleached week. game.js only defines rare/legendary triggers. */
+    /* visitor event for this week: best of tide streak (rare) and overdue drop (rare/exotic); common otherwise; none while bleached.
+       ASSUMPTION: a common visitor arrives every non-bleached week. game.js only defines rare/exotic triggers. */
     { const wv = G.weekVisitor(tides), cand = [wv, weekDrop].filter(Boolean).sort((a, b) => RANK[b] - RANK[a])[0];
       const rarity = reef.bleached ? null : cand || 'common';
       M.visitors.push({ week: w, biome: reef.biome, rarity, reason: reef.bleached ? 'bleached' : cand === weekDrop && weekDrop ? 'overdue task finished' : wv ? 'full-tide streak' : 'weekly' }); }
     /* habits */
     P.habits.forEach((h, i) => {
       const r = G.weekResult(habitCount(rng, habitMode(rng, weekMode), h), h.f, h.t);
-      const p = plants[i], wasAlive = p.alive;
-      G.plantWeek(p, r, w);
-      if (wasAlive && !p.alive) M.deaths++;
-      M.plotWeeks++; if (!p.alive) M.deadPlotWeeks++;
+      const pl = plots[i], wasAlive = pl.plant.alive;
+      const done = G.plotWeek(pl, r, w, rng);
+      if (wasAlive && !pl.plant.alive) M.deaths++;
+      M.plotWeeks++; if (!pl.plant.alive) M.deadPlotWeeks++;
+      if (done) { M.finished++; if (done.bloomed) { M.blooms++; M.rarity[done.seed.rarity]++; } }
     });
-    if ((w + 1) % G.RULES.garden.seasonWeeks === 0) {
-      const res = G.endSeason(plants, rng);
-      res.plots.forEach((x) => { M.plantSeasons++; if (x.bloomed) { M.blooms++; M.rarity[x.seed.rarity]++; } });
-      M.hybrids += res.hybrids.length;
-      plants = res.plots.map((x) => G.newPlant(x.seed, x.compost));
-    }
   }
   M.biomeDays = reef.dioramas.map((d) => d.days); M.pileEnd = pile.length;
   return M;
@@ -156,28 +151,28 @@ function runOne(P, seed, opts = {}) {
 function summarize(name, P, opts) {
   const runs = Array.from({ length: SEEDS }, (_, i) => runOne(P, 1000 + i, opts));
   const avg = (f) => runs.reduce((s, r) => s + f(r), 0) / runs.length;
-  const seasons = Math.floor(WEEKS / G.RULES.garden.seasonWeeks), months = WEEKS / 4, n = P.habits.length;
+  const months = WEEKS / 4, n = P.habits.length;
   const allBiome = runs.flatMap((r) => r.biomeDays.slice(1)); /* skip the cold-start biome */
   const firstBiome = runs.flatMap((r) => r.biomeDays.slice(0, 1));
   const book = runs.flatMap((r) => r.bookDays);
   const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
   const blooms = avg((r) => r.blooms);
-  const rar = { c: avg((r) => r.rarity.common), h: avg((r) => r.rarity.heirloom), e: avg((r) => r.rarity.exotic) };
+  const rar = { c: avg((r) => r.rarity.common), h: avg((r) => r.rarity.rare), e: avg((r) => r.rarity.exotic) };
   return {
     persona: name,
     'ring%': (100 * avg((r) => r.ringSum / Math.max(1, r.ringDays))).toFixed(0),
-    'deaths/season': (avg((r) => r.deaths) / seasons).toFixed(2),
-    'blooms/season': (blooms / seasons).toFixed(2) + `/${n}`,
+    'deaths/plot/mo': (avg((r) => r.deaths) / months / n).toFixed(2),
+    'blooms/plot/mo': (blooms / months / n).toFixed(2),
+    'new plants/wk': (avg((r) => r.finished) / WEEKS).toFixed(2),
     'dead plot %': (100 * avg((r) => r.deadPlotWeeks / r.plotWeeks)).toFixed(0),
-    'seed c/h/e %': [rar.c, rar.h, rar.e].map((x) => ((100 * x) / Math.max(1e-9, blooms)).toFixed(0)).join('/'),
-    'hybrids/season': (avg((r) => r.hybrids) / seasons).toFixed(2),
+    'seed c/r/e %': [rar.c, rar.h, rar.e].map((x) => ((100 * x) / Math.max(1e-9, blooms)).toFixed(0)).join('/'),
     'biome1 wks': (mean(firstBiome) / 7).toFixed(1),
     'biome wks': (mean(allBiome) / 7).toFixed(1),
     'rare wk/mo': (avg((r) => r.rare) / months).toFixed(2),
     'rare od/mo': (avg((r) => r.rareOd) / months).toFixed(2),
     'pile end': avg((r) => r.pileEnd).toFixed(0),
-    'legend/mo': (avg((r) => r.legendary) / months).toFixed(2),
-    'visitors c/r/l per mo': ['common', 'rare', 'legendary'].map((k) => (avg((r) => r.visitors.filter((v) => v.rarity === k).length) / months).toFixed(1)).join('/'),
+    'exotic/mo': (avg((r) => r.exotic) / months).toFixed(2),
+    'visitors c/r/e per mo': ['common', 'rare', 'exotic'].map((k) => (avg((r) => r.visitors.filter((v) => v.rarity === k).length) / months).toFixed(1)).join('/'),
     'bleach': avg((r) => r.bleach).toFixed(2),
     'murk50 %': (100 * avg((r) => r.cloudyDays) / (WEEKS * 7)).toFixed(0),
     'algae50 %': (100 * avg((r) => r.algaeDays) / (WEEKS * 7)).toFixed(0),

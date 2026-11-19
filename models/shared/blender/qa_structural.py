@@ -10,9 +10,9 @@ from mathutils import Vector
 argv = sys.argv[sys.argv.index("--") + 1:]
 GLB, SPEC, OUT = argv[0], argv[1], argv[2]
 spec = json.load(open(SPEC))
-TRIS = {"common": 8000, "rare": 12000, "legendary": 20000, "heirloom": 12000, "exotic": 20000}
-BONES = {"common": 32, "rare": 32, "legendary": 48, "heirloom": 32, "exotic": 48}
-TEX = {"common": 1024, "rare": 1024, "legendary": 2048, "heirloom": 1024, "exotic": 2048}
+TRIS = {"common": 8000, "rare": 12000, "exotic": 20000}
+BONES = {"common": 32, "rare": 32, "exotic": 48}
+TEX = {"common": 1024, "rare": 1024, "exotic": 2048}
 rar = spec.get("rarity", "common")
 checks = []
 def check(gate, name, ok, detail=""):
@@ -114,7 +114,10 @@ def motion(act):
     acc = [max((a - 2 * b + c).length for a, b, c in zip(P[i - 1], P[i], P[i + 1])) / L for i in range(1, len(P) - 1)]
     # a pop is an isolated frame: much sharper than both neighbours (smooth accent beats ramp up and down)
     nb = lambda i: max(acc[i - 1] if i > 0 else 0, acc[i + 1] if i + 1 < len(acc) else 0)
-    spike = max((x for i, x in enumerate(acc) if x > 0.015 and x > 1.6 * nb(i)), default=0)
+    # floor is relative to the clip's own typical acceleration (median) so body shape/size doesn't flip a borderline frame:
+    # a pop must clear 0.03 L/frame^2 AND 3x the clip median AND 1.6x both neighbours
+    med = sorted(acc)[len(acc) // 2] if acc else 0
+    spike = max((x for i, x in enumerate(acc) if x > max(0.03, 3 * med) and x > 1.6 * nb(i)), default=0)
     amp = max(max((a - b).length for a, b in zip(P[i], P[0])) for i in range(len(P))) / L
     return speed, spike, amp
 

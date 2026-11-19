@@ -1,7 +1,7 @@
 /* lifeboard: data layer over the artifact db. One live listener per collection, validated on load,
    optimistic local writes (reverted if the store refuses), one write at a time per document. */
 (function (G) {
-  const COLS = ['tasks', 'habits', 'habit_sessions', 'groceries', 'recipes', 'list_items', 'buy_list_items', 'gift_ideas', 'goals', 'logs', 'checks', 'snapshots', 'countdowns'];
+  const COLS = ['tasks', 'habits', 'habit_sessions', 'groceries', 'recipes', 'list_items', 'buy_list_items', 'gift_ideas', 'goals', 'logs', 'checks', 'snapshots', 'countdowns', 'game_state'];
   const V = G.LBS.validate;
   const RAW = {}; /* col -> Map(id -> body), valid docs only */
   const BAD = {}; /* col -> Map(id -> reason) */

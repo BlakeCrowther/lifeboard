@@ -119,6 +119,10 @@ const addDays = (s, n) => { const d = toD(s); d.setDate(d.getDate() + n); return
 const diffDays = (a, b) => Math.round((toD(b) - toD(a)) / 864e5);
 const dow = (s) => toD(s).getDay();
 const mondayOf = (s) => addDays(s, -((dow(s) + 6) % 7));
+/* habit weeks (streaks, garden) start on WS: checks/week_start value 0 Sun .. 6 Sat, default 1 Monday (lifeboard-setup asks) */
+let WS = 1;
+const weekOf = (s) => addDays(s, -((dow(s) - WS + 7) % 7));
+const wkFirst = () => WD[WS], wkLast = () => WD[(WS + 6) % 7];
 const addMonths = (s, n) => { const d = toD(s); const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + n); const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); d.setDate(Math.min(day, last)); return ymd(d); };
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MON3 = MONTHS.map((m) => m.slice(0, 3));
@@ -304,14 +308,17 @@ function vmTask(d) {
 const validException = (e) => !!e && typeof e === 'object' && typeof e.reason === 'string' && e.reason.trim().length >= 20 && typeof e.evidence === 'string' && e.evidence.trim().length >= 3;
 function derive() {
   const A = (c) => LBDB.all(c);
+  applyPrefs();
+  { const w = LBDB.get('checks', 'week_start'), v = w ? +w.value : NaN; WS = Number.isInteger(v) && v >= 0 && v <= 6 ? v : 1; }
   const s = emptyS();
   const allT = A('tasks').map(vmTask), isSug = (t) => t._d.suggested === true && !t.done;
   s.suggested = allT.filter(isSug).sort((a, b) => b.created - a.created);
   s.tasks = allT.filter((t) => !isSug(t));
-  s.habits = A('habits').sort(byOrd).map((d) => ({ id: d.id, key: d.key || d.id, name: d.name, icon: iconOf(d.icon_key || HABIT_IC[d.key]), target: Math.max(1, +d.target_per_week || 1), floor: Math.max(1, +d.streak_floor_per_week || 1), notes: d.notes || '', _d: d }));
+  s.hiddenHabits = A('habits').filter((d) => d.hidden).sort(byOrd).map((d) => ({ id: d.id, name: d.name }));
+  s.habits = A('habits').filter((d) => !d.hidden).sort(byOrd).map((d) => ({ id: d.id, key: d.key || d.id, name: d.name, icon: iconOf(d.icon_key || HABIT_IC[d.key]), target: Math.max(1, +d.target_per_week || 1), floor: Math.max(1, +d.streak_floor_per_week || 1), daily: d.cadence === 'day', notes: d.notes || '', _d: d }));
   /* a session counts when it was logged during its own week. Later logs count only with an exception (reason + evidence). Older docs without created_at count. */
   const allS = A('habit_sessions').map((d) => ({ id: d.id, h: d.habit_id, date: d.date, created: d.created_at || 0, ex: validException(d.exception) ? d.exception : null }));
-  const onTime = (x) => !x.created || mondayOf(LB.laDateOf(x.created)) <= mondayOf(x.date);
+  const onTime = (x) => !x.created || weekOf(LB.laDateOf(x.created)) <= weekOf(x.date);
   s.sessions = allS.filter((x) => onTime(x) || x.ex);
   s.voidSessions = allS.filter((x) => !onTime(x) && !x.ex);
   const snaps = Object.fromEntries(A('snapshots').map((d) => [d.id, d]));
@@ -353,17 +360,20 @@ function buckets(tasks) {
 /* ---------- habits & wish timers ---------- */
 function habitStats(h, sessions) {
   const ss = sessions.filter((s) => (s.h === h.key || s.h === h.id) && s.date <= TODAY).map((s) => s.date);
-  const wk = mondayOf(TODAY), mon = TODAY.slice(0, 7), yr = TODAY.slice(0, 4);
-  const counts = {}; ss.forEach((d) => { const m = mondayOf(d); counts[m] = (counts[m] || 0) + 1; });
-  const c = (m) => counts[m] || 0;
+  const wk = weekOf(TODAY), mon = TODAY.slice(0, 7), yr = TODAY.slice(0, 4);
+  const counts = {}, perDay = {}; ss.forEach((d) => { const m = weekOf(d); counts[m] = (counts[m] || 0) + 1; perDay[d] = (perDay[d] || 0) + 1; });
+  /* floor met: weekly = the week's count; daily = every day of the week (so far) at its floor. missed: a daily habit already broke this week */
+  const missed = (m) => { for (let i = 0; i < 7; i++) { const d = addDays(m, i); if (d >= TODAY) break; if ((perDay[d] || 0) < h.floor) return true; } return false; };
+  const c = (m) => counts[m] || 0, ok = (m) => (h.daily ? !missed(m) && (m < wk ? (perDay[addDays(m, 6)] || 0) >= h.floor : (perDay[TODAY] || 0) >= h.floor) : c(m) >= h.floor);
   const weeks = []; for (let i = 0, m = wk; i < 12; i++, m = addDays(m, -7)) weeks.unshift({ m, n: c(m), cur: i === 0 });
-  const curMet = c(wk) >= h.floor; let streak = curMet ? 1 : 0;
-  for (let m = addDays(wk, -7); c(m) >= h.floor; m = addDays(m, -7)) streak++;
+  const curMet = ok(wk); let streak = curMet ? 1 : 0;
+  for (let m = addDays(wk, -7); ok(m); m = addDays(m, -7)) streak++;
   /* best run of floor-met weeks, from the first logged week through this one */
   let best = 0, run = 0;
-  const first = ss.length ? mondayOf(ss.reduce((a, b) => (a < b ? a : b))) : wk;
-  for (let m = first; m <= wk; m = addDays(m, 7)) { run = c(m) >= h.floor ? run + 1 : 0; if (run > best) best = run; }
-  return { best: Math.max(best, streak), week: c(wk), month: ss.filter((d) => d.startsWith(mon)).length, year: ss.filter((d) => d.startsWith(yr)).length, total: ss.length, today: ss.filter((d) => d === TODAY).length, weeks, streak, pending: !curMet && streak > 0 };
+  const first = ss.length ? weekOf(ss.reduce((a, b) => (a < b ? a : b))) : wk;
+  for (let m = first; m <= wk; m = addDays(m, 7)) { run = ok(m) ? run + 1 : 0; if (run > best) best = run; }
+  return { best: Math.max(best, streak), week: c(wk), month: ss.filter((d) => d.startsWith(mon)).length, year: ss.filter((d) => d.startsWith(yr)).length, total: ss.length, today: ss.filter((d) => d === TODAY).length, weeks, streak, pending: !curMet && streak > 0 && !(h.daily && missed(wk)),
+    missed: !!h.daily && missed(wk), days: Array.from({ length: 7 }, (_, i) => { const d = addDays(wk, i); return { d, n: perDay[d] || 0, future: d > TODAY, today: d === TODAY }; }) };
 }
 function buyCalc(it) {
   const days = TAGS[it.tag] ? TAGS[it.tag].days : null;
@@ -385,8 +395,24 @@ const U = {
   timer: { len: 2, end: null, msg: '' }, quote: (diffDays('2026-01-01', TODAY) % 7 + 7) % 7, sheet: null,
 };
 /* which folds are open and how lists sort: remembered per device */
-let UI = { fold: {}, sort: {}, labs: false };
-try { const r = JSON.parse(localStorage.getItem('lb-ui') || 'null'); if (r) UI = { fold: r.fold && typeof r.fold === 'object' ? r.fold : {}, sort: r.sort && typeof r.sort === 'object' ? r.sort : {}, labs: r.labs === true }; } catch (e) { /* defaults */ }
+let UI = { fold: {}, sort: {}, eco: true, garden: true };
+try { const r = JSON.parse(localStorage.getItem('lb-ui') || 'null'); if (r) UI = { fold: r.fold && typeof r.fold === 'object' ? r.fold : {}, sort: r.sort && typeof r.sort === 'object' ? r.sort : {}, eco: (r.eco ?? r.labs) !== false, garden: (r.garden ?? r.labs) !== false }; } catch (e) { /* defaults */ }
+/* board-wide view prefs (Ecosystem, Garden, theme) live in checks/ui_prefs so every device matches; the newest change wins */
+let prefsSeen = 0;
+function applyPrefs() {
+  const d = LBDB.get('checks', 'ui_prefs'), v = d && d.value; if (!v || !(d.updated_at > prefsSeen)) return;
+  prefsSeen = d.updated_at;
+  const eco = v.eco ?? v.labs, garden = v.garden ?? v.labs;
+  if ((typeof eco === 'boolean' && eco !== UI.eco) || (typeof garden === 'boolean' && garden !== UI.garden)) {
+    if (typeof eco === 'boolean') UI.eco = eco; if (typeof garden === 'boolean') UI.garden = garden;
+    saveUI(); if (gameOn()) setTimeout(() => loadGame(), 0);
+  }
+  if (v.theme) { if (v.theme === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v.theme; try { localStorage.setItem('lb-theme', v.theme); } catch (e) { /* ignore */ } }
+}
+function savePrefs(patch) {
+  const d = LBDB.get('checks', 'ui_prefs'), v = Object.assign({}, d && d.value, patch), now = Date.now(); prefsSeen = now;
+  LBDB.put('checks', 'ui_prefs', { value: v, updated_at: now }).catch((e) => console.warn('[prefs]', e));
+}
 const saveUI = () => { try { localStorage.setItem('lb-ui', JSON.stringify(UI)); } catch (e) { /* private mode: keep in memory */ } };
 const SORTS = { groceries: [['aisle', 'Aisle'], ['az', 'A-Z'], ['new', 'Newest']], wish: [['ready', 'Ready first'], ['tag', 'Tag'], ['price', 'Price'], ['new', 'Newest']], recipes: [['az', 'A-Z'], ['new', 'Newest']], gifts: [['person', 'Person'], ['new', 'Newest']] };
 const sortOpts = (k) => SORTS[k] || [['new', 'Newest'], ['az', 'A-Z']];
@@ -647,8 +673,11 @@ function viewToday() {
       <button class="link" data-act="tomorrow" aria-expanded="${U.showTomorrow}">${ic(U.showTomorrow ? 'chevD' : 'chevR', 16)} Tomorrow · ${plural(tm.ad.length + tm.tm.length, 'event')}</button>
       ${U.showTomorrow ? scheduleCard(addDays(TODAY, 1), false) : ''}</section>` : '';
   /* tier 3: at a glance. Each part shows only when its data exists; with none, the row is gone */
-  const daysLeft = 7 - ((dow(TODAY) + 6) % 7);
-  const hs = S.habits.map((h) => { const st = habitStats(h, S.sessions), need = h.floor - st.week; return { h, st, met: st.week >= h.target, low: need > 0 && daysLeft <= need + 2 }; });
+  const daysLeft = 7 - diffDays(weekOf(TODAY), TODAY);
+  /* daily habits: met = today's target hit; low = today's floor still open (and the week not already broken) */
+  const hs = S.habits.map((h) => { const st = habitStats(h, S.sessions);
+    if (h.daily) return { h, st, met: !st.missed && st.today >= h.target, low: !st.missed && st.today < h.floor };
+    const need = h.floor - st.week; return { h, st, met: st.week >= h.target, low: need > 0 && daysLeft <= need + 2 }; });
   const hDone = hs.reduce((n, x) => n + Math.min(x.st.week, x.h.target), 0), hTot = S.habits.reduce((n, h) => n + h.target, 0);
   const wd = wed ? diffDays(TODAY, wed.date) : 0;
   const cells = [];
@@ -666,13 +695,43 @@ function viewToday() {
   if (nextTide) sumBits.push(`${esc(nextTide.type.toLowerCase())} tide ${esc(nextTide.time)}`);
   if (wed) sumBits.push(`wedding ${wd}d`);
   glanceUp.forEach((g) => sumBits.push(`${esc(g.title.toLowerCase())} ${diffDays(TODAY, g.date)}d`));
-  const gw = labsHabits(hs, hDone, hTot, daysLeft);
+  const gw = gardenHabits(hs, hDone, hTot, daysLeft);
   const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow + glanceRows }) : '';
   return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}, there. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}, there.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
-    <div class="today"><div class="col a">${upnext}${weekRings()}${labsOn() ? `<div class="les-wrap"><div class="labs-slot" data-labs="habitat"></div>${lessonsChip()}${lessonModal(true)}</div>` : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
+    <div class="today"><div class="col a">${upnext}${weekRings()}${ecoOn() ? `<div class="les-wrap"><div class="eco-slot"></div>${lessonsChip()}${lessonModal(true)}</div>` : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
 }
 /* Habit rings: one per habit, filling toward the weekly target. The dot on each ring is the floor that keeps the streak alive. */
 const habitLast = {}; /* sessions this week per habit at the last render: a ring sweeps only when it grows */
+/* session pips: weekly = one per session toward the target (outlined = floor, dots = bonus); daily = one per day of the week, on when that day met its floor */
+/* habit pips (SPEC.md "Habit pips"): daily = a water drop per day, weekly = a honey cell per session.
+   Fill: 0..floor fills the bottom half, floor..target the top half. */
+const PIP_DROP = 'M10 2C10 2 3 11 3 15a7 7 0 0 0 14 0C17 11 10 2 10 2Z', PIP_HEX = '10,2 18,7 18,17 10,22 2,17 2,7';
+let pipId = 0;
+function pipFrac(n, f, t) { f = Math.max(1, f); t = Math.max(f, t); if (n <= 0) return 0; if (n < f) return 0.5 * n / f; return t <= f ? 1 : Math.min(1, 0.5 + 0.5 * (n - f) / (t - f)); }
+function pipSvg(inner, cls = '', vb = '1 1 18 23') { return `<svg class="pip${cls}" viewBox="${vb}" aria-hidden="true">${inner}</svg>`; }
+function dropPip(n, f, t, { future, today } = {}) {
+  const fr = future ? 0 : pipFrac(n, f, t), id = 'pd' + (++pipId), y = (22 - 20 * fr).toFixed(2);
+  const miss = !future && !today && n < f, above = !future && n > t;
+  let s = above ? '<g class="rb" fill="none" stroke-width="2"><path d="M-4 16a14 14 0 0 1 28 0" class="r1"/><path d="M-2 16a12 12 0 0 1 24 0" class="r2"/><path d="M0 16a10 10 0 0 1 20 0" class="r3"/></g>' : '';
+  s += `<path d="${PIP_DROP}" class="${future ? 'dz' : 'de'}"/>`;
+  if (fr > 0) s += `<clipPath id="${id}"><rect x="0" y="${y}" width="20" height="24"/></clipPath><path d="${PIP_DROP}" class="df" clip-path="url(#${id})"/>`;
+  if (!future && fr < 1) s += `<clipPath id="${id}f"><path d="M10 3.6C10 3.6 4.1 11.4 4.1 15a5.9 5.9 0 0 0 11.8 0C15.9 11.4 10 3.6 10 3.6Z"/></clipPath><line x1="0" y1="12" x2="20" y2="12" class="dl" clip-path="url(#${id}f)"/>`;
+  if (!future) s += `<path d="${PIP_DROP}" class="${miss ? 'dm' : fr >= 0.5 ? 'dok' : 'do'}"/>`;
+  return pipSvg(s, today ? ' today' : '');
+}
+function honeyPip(on, { floorSlot, extra, hot } = {}) {
+  let s = `<polygon points="${PIP_HEX}" class="${extra ? 'hx' : on ? 'hf' : 'he'}"/>`;
+  if (floorSlot) s += `<polygon points="${PIP_HEX}" class="hs${on ? ' on' : ''}"/>`;
+  if (extra) s += '<path d="M13 19v3a1.5 1.5 0 0 0 3 0v-5z" class="hx"/><ellipse cx="14.5" cy="6" rx="3.2" ry="2.2" class="bee"/><path d="M13.5 4v4M15.5 4v4" class="bs"/><ellipse cx="13.5" cy="3.4" rx="1.8" ry="1.2" class="bw"/>';
+  return pipSvg(s, hot ? ' hot' : '', '2 2 16 20');
+}
+function habitPips(h, st, hot = -1) {
+  if (h.daily) return '<span class="pips dly">' + st.days.map((x) => `<span class="pd${x.today ? ' td' : ''}">${dropPip(x.n, h.floor, h.target, x)}<small>${'SMTWTFS'[new Date(x.d + 'T12:00').getDay()]}</small></span>`).join('') + '</span>';
+  const n = Math.max(h.target, st.week);
+  let p = '';
+  for (let i = 0; i < n; i++) p += honeyPip(i < st.week, { floorSlot: i < h.floor, extra: i >= h.target, hot: i === hot });
+  return `<span class="pips wk" style="--n:${n}">${p}</span>`;
+}
 function habitRings(hs, done, tot, daysLeft) {
   if (!hs.length) return '';
   const allTarget = hs.every((x) => x.met), allFloor = hs.every((x) => x.st.week >= x.h.floor);
@@ -681,82 +740,81 @@ function habitRings(hs, done, tot, daysLeft) {
     : allFloor ? 'Every streak is safe this week. The rest is bonus.'
     : lowN ? `${plural(lowN, 'streak')} need${lowN === 1 ? 's' : ''} a session in the next ${plural(daysLeft, 'day')}.`
     : 'Tap a habit to log a session.';
-  const wc = dow(TODAY) === 1 || dow(TODAY) === 2 ? weekCheck() : null;
+  const wc = diffDays(weekOf(TODAY), TODAY) <= 1 ? weekCheck() : null;
   const checkMsg = wc && wc.rows.length ? `Last week: ${wc.kept} of ${wc.rows.length} streaks kept${wc.reset ? `, ${wc.reset} reset` : ''}. ` : '';
   const tiles = hs.map(({ h, st, met, low }) => {
-    let p = '';
-    for (let i = 0; i < h.target; i++) p += `<i class="${i < st.week ? 'on' : ''}${i < h.floor ? ' fl' : ''}"></i>`;
-    for (let i = h.target; i < st.week; i++) p += '<i class="bonus"></i>';
-    const label = `Log a ${h.name} session today. ${st.week} of ${h.target} this week${met ? ', target hit' : st.week >= h.floor ? ', streak safe' : low ? ', streak at risk' : ''}. ${st.streak ? `${st.streak}-week streak.` : 'No streak yet.'}`;
+    const p = habitPips(h, st);
+    const label = `Log a ${h.name} session today. ${h.daily ? st.today : st.week} of ${h.target} ${h.daily ? 'today' : 'this week'}${met ? ', target hit' : (h.daily ? st.today : st.week) >= h.floor ? ', streak safe' : low ? ', streak at risk' : ''}. ${st.streak ? `${st.streak}-week streak.` : 'No streak yet.'}`;
     return `<li class="pt${met ? ' met' : ''}${low ? ' low' : ''}"><button class="ptb" data-act="log" data-id="${h.id}" aria-label="${esc(label)}"><span class="ptt"><span class="ptn">${esc(h.name.split(' ')[0])}</span>${flameBadge(st, low)}</span><span class="ptp" aria-hidden="true">${p}</span></button>
-      <button class="hminus" data-act="unlog" data-id="${h.id}" aria-label="Remove a ${esc(h.name)} session from this week"${st.week ? '' : ' disabled'}>${ic('minus', 13)}</button></li>`;
+      <button class="hminus" data-act="unlog" data-id="${h.id}" aria-label="Remove a ${esc(h.name)} session from ${h.daily ? 'today' : 'this week'}"${(h.daily ? st.today : st.week) ? '' : ' disabled'}>${ic('minus', 13)}</button></li>`;
   }).join('');
   const f = tot ? Math.min(done / tot, 1) : 0, C = 238.8;
   return `<section class="sec z-now habitsec">${secH('Habits', goLink('All', 'grow/habits'), 2, `${done}/${tot}`)}
     <div class="card hsc"><div class="hscore${f >= 1 ? ' full' : ''}" role="img" aria-label="Week score ${Math.round(f * 100)} percent, ${done} of ${tot} sessions"><svg viewBox="0 0 88 88" aria-hidden="true"><circle class="ht" cx="44" cy="44" r="38"/><circle class="ha" cx="44" cy="44" r="38" stroke-dasharray="${C}" stroke-dashoffset="${(C - C * f).toFixed(1)}" transform="rotate(-90 44 44)"/></svg><b class="num">${Math.round(f * 100)}%<small>this week</small></b></div>
     <ul class="pgrid">${tiles}</ul></div><p class="wmsg">${esc(checkMsg + msg)}</p></section>`;
 }
-/* Labs: the habits card as a garden. One plot per habit, full width above both columns; tap the plant (or +) to log,
+/* Garden: the habits card as a garden. One plot per habit, full width above both columns; tap the plant (or +) to log,
    − to undo. Falls back to the rings card until the game state is ready. */
-function labsHabits(hs, done, tot, daysLeft) {
-  if (!labsOn() || !hs.length) return '';
-  const g = labsGame(); if (!g) return '';
+function gardenHabits(hs, done, tot, daysLeft) {
+  if (!gardenOn() || !hs.length) return '';
+  const g = currentGame(); if (!g) return '';
   const GD = LBGarden, by = Object.fromEntries(g.plots.map((p) => [p.key, p])), pz = U.pulse;
-  const tiles = hs.map(({ h, st, met, low }) => {
+  const tile = ({ h, st, met, low }) => {
     const anim = pz && !pz.used && pz.id === h.id && pz.w === st.week ? (pz.used = true, pz.d > 0 ? ' add' : ' sub') : '';
     const pl0 = by[h.key]; if (!pl0) return '';
     const pl = pl0, vis = GD.visual(pl);
-    let p = '';
-    const hot = anim ? (pz.d > 0 ? st.week - 1 : st.week) : -1;
-    for (let i = 0; i < h.target; i++) p += `<i class="${i < st.week ? 'on' : ''}${i < h.floor ? ' fl' : ''}${i === hot ? ' hot' : ''}"></i>`;
-    for (let i = h.target; i < st.week; i++) p += `<i class="bonus${i === hot ? ' hot' : ''}"></i>`;
-    const status = pl.waiting ? 'Seed · goes in Monday'
-      : !pl.alive ? 'Withered · new seed next season'
-      : vis === 'wilt' ? `Thirsty · ${pl.need} more by Sunday`
-      : pl.grows ? (pl.stage >= 4 ? (met ? 'In full bloom' : 'Blooming') : `Grows to ${GD.LABEL[pl.next].toLowerCase()} Monday`)
+    const hot = anim ? (pz.d > 0 ? st.week - 1 : st.week) : -1, p = habitPips(h, st, hot);
+    const D1 = wkFirst(), DL = wkLast(), nx = pl.showing === 'bloom' && pl.upcoming ? pl.upcoming.rarity : 'common';
+    const status = pl.waiting ? `Seed · goes in ${D1}`
+      : pl.showing === 'withered' ? `Withered · new seed ${D1}`
+      : pl.showing === 'bloom' ? `In bloom · pressed ${D1}${nx !== 'common' ? ` · ${nx} seed next` : ''}`
+      : pl.daily ? (pl.need > 0 ? `${pl.need} more today${pl.stage ? ' or it withers' : ' to sprout'}` : pl.grows ? `Grows to ${GD.LABEL[pl.next].toLowerCase()} ${D1}` : `Today done · every day to ${DL}`)
+      : vis === 'wilt' ? `Thirsty · ${pl.need} more by ${DL}`
+      : pl.grows ? (pl.stage >= 4 ? (met ? 'In full bloom' : 'Blooming') : `Grows to ${GD.LABEL[pl.next].toLowerCase()} ${D1}`)
       : pl.stage === 0 ? `${plural(pl.need, 'session')} to sprout` : `${pl.need} more to grow`;
     const cls = !pl.alive || vis === 'wilt' ? ' warn' : pl.grows ? ' good' : '';
-    const label = `Log a ${h.name} session today. ${st.week} of ${h.target} this week. Plant: ${GD.LABEL[vis].toLowerCase()}. ${status}.`;
+    const label = `Log a ${h.name} session today. ${h.daily ? st.today : st.week} of ${h.target} ${h.daily ? 'today' : 'this week'}. Plant: ${GD.LABEL[vis].toLowerCase()}. ${status}.`;
     return `<li class="gt${met ? ' met' : ''}${low ? ' low' : ''}${anim}"><button class="gtp" data-act="log" data-id="${h.id}" aria-label="${esc(label)}">${GD.plotSVG(pl, 84)}</button>
       <div class="gtm"><span class="ptt"><span class="ptn">${esc(h.name)}</span>${flameBadge(st, low)}</span><span class="ptp" aria-hidden="true">${p}</span><span class="gts${cls}">${esc(status)}</span></div>
-      <div class="gstep"><button class="gs-m" data-act="unlog" data-id="${h.id}" aria-label="Remove a ${esc(h.name)} session from this week"${st.week ? '' : ' disabled'}>${ic('minus', 15)}</button><span class="gs-n num" aria-hidden="true">${st.week}<small>/${h.target}</small></span><button class="gs-p" data-act="log" data-id="${h.id}" aria-label="Log a ${esc(h.name)} session today">${ic('plus', 17)}</button></div></li>`;
-  }).join('');
+      <div class="gstep"><button class="gs-m" data-act="unlog" data-id="${h.id}" aria-label="Remove a ${esc(h.name)} session from ${h.daily ? 'today' : 'this week'}"${(h.daily ? st.today : st.week) ? '' : ' disabled'}>${ic('minus', 15)}</button><span class="gs-n num" aria-hidden="true">${h.daily ? st.today : st.week}<small>/${h.target}${h.daily ? ' today' : ''}</small></span><button class="gs-p" data-act="log" data-id="${h.id}" aria-label="Log a ${esc(h.name)} session today">${ic('plus', 17)}</button></div></li>`;
+  };
+  const dly = hs.filter((x) => x.h.daily), wky = hs.filter((x) => !x.h.daily);
+  const grp = (xs, t, ico) => xs.length ? `${dly.length && wky.length ? `<p class="gtg">${ico}<span>${t}</span></p>` : ''}<ul class="gtiles">${xs.map(tile).join('')}</ul>` : '';
+  const tiles = grp(dly, 'Daily', '<svg viewBox="1 1 18 23" aria-hidden="true"><path d="' + PIP_DROP + '" fill="#4f8fb3"/></svg>') + grp(wky, 'Weekly', '<svg viewBox="2 2 16 20" aria-hidden="true"><polygon points="' + PIP_HEX + '" fill="#e9a93a"/></svg>');
   const lowN = hs.filter((x) => x.low).length;
-  const wc = dow(TODAY) === 1 || dow(TODAY) === 2 ? weekCheck() : null, last = wc && wc.rows.length ? `Last week: ${wc.kept} of ${wc.rows.length} streaks kept${wc.reset ? `, ${wc.reset} reset` : ''}. ` : '';
-  const msg0 = g.season.opens ? 'Sessions this week still count for streaks.' : hs.every((x) => x.met) ? 'Perfect week. Every plant is drinking its fill.' : hs.every((x) => x.st.week >= x.h.floor) ? 'Every plant grows on Monday. The rest is bonus.'
-    : lowN ? `${plural(lowN, 'plant')} need${lowN === 1 ? 's' : ''} water in the next ${plural(daysLeft, 'day')}.` : 'Tap a plant to log a session. Meet the floor and it grows a stage on Monday.';
-  const sea = g.season.opens ? `Season ${g.season.index + 1} starts Mon ${GD.fmt(g.season.opens)}` : `Season ${g.season.index + 1} · week ${g.season.week} of ${g.season.of}`;
+  const wc = diffDays(weekOf(TODAY), TODAY) <= 1 ? weekCheck() : null, last = wc && wc.rows.length ? `Last week: ${wc.kept} of ${wc.rows.length} streaks kept${wc.reset ? `, ${wc.reset} reset` : ''}. ` : '';
+  const msg0 = g.season.opens ? 'Sessions this week still count for streaks.' : hs.every((x) => x.met) ? 'Perfect week. Every plant is drinking its fill.' : hs.every((x) => x.st.week >= x.h.floor) ? `Every plant grows on ${wkFirst()}. The rest is bonus.`
+    : lowN ? `${plural(lowN, 'plant')} need${lowN === 1 ? 's' : ''} water in the next ${plural(daysLeft, 'day')}.` : `Tap a plant to log a session. Meet the floor and it grows a stage on ${wkFirst()}.`;
+  const sea = g.season.opens ? `Garden opens Mon ${GD.fmt(g.season.opens)}` : g.season.label;
   return `<section class="sec z-now habitsec">${secH('Habits', goLink('History', 'grow/habits'), 2, `${done}/${tot}`)}
-    <div class="card gcard"><p class="gwh"><span>${esc(sea)}</span>${g.season.opens ? '' : `<span class="muted">ends ${GD.fmt(g.season.ends)}</span>`}</p><ul class="gtiles">${tiles}</ul></div><p class="wmsg">${esc(last + msg0)}</p></section>`;
+    <div class="card gcard"><p class="gwh"><span>${esc(sea)}</span>${g.season.opens ? '' : `<span class="muted">ends ${GD.fmt(g.season.ends)}</span>`}</p>${tiles}</div><p class="wmsg">${esc(last + msg0)}</p></section>`;
 }
 /* streak badge: solid = safe this week, outlined = still needs the floor, red = at risk */
 function flameBadge(st, low) {
   if (!st.streak) return '';
   return `<span class="flb num${st.pending ? (low ? ' risk' : ' pend') : ''}" title="${st.streak}-week streak${st.pending ? ', not safe yet this week' : ''}">${ic('flame', 11)}${st.streak}</span>`;
 }
-/* Week of rings: tasks finished per day over the last seven days. A ring closes at RING_GOAL; today fills live. */
-const RING_GOAL = 3;
-let ringLast = null; /* today's count at the last render: the ring sweeps only when it grows */
+/* Week of rings: each day's ring = tasks done ÷ tasks committed (LBG.ringTally, SPEC.md "Ring %"); today fills live. */
+let ringLast = null; /* today's done count at the last render: the ring sweeps only when it grows */
 /* completion step for ring color: p1 under a third, p2 under two thirds, p3 almost there, p4 done */
 const ringStep = (f) => (f >= 1 ? 'p4' : f >= 2 / 3 ? 'p3' : f >= 1 / 3 ? 'p2' : 'p1');
+const ringTally = () => LBG.ringTally(S.tasks.map((t) => ({ eff: eff(t) || null, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null })));
 function weekRings() {
-  const counts = {};
-  S.tasks.forEach((t) => { if (t.done && t.doneAt) { const d = LB.laDateOf(t.doneAt); counts[d] = (counts[d] || 0) + 1; } });
-  const C = 100.5, days = [];
+  const T = ringTally(), C = 100.5, days = [];
   for (let i = 6; i >= 0; i--) days.push(addDays(TODAY, -i));
-  const lastFull = days.slice(0, 6).reverse().find((d) => (counts[d] || 0) >= RING_GOAL);
-  const n0 = counts[TODAY] || 0, left = Math.max(0, RING_GOAL - n0);
+  const lastFull = days.slice(0, 6).reverse().find((d) => LBG.ringPct(T[d]) >= 1);
+  const t0 = T[TODAY] || { done: 0, committed: 0 }, n0 = t0.done, left = t0.committed - t0.done;
   const grew = ringLast != null && n0 > ringLast; ringLast = n0;
-  const msg = !left ? `Today's ring is closed. That's ${n0 >= RING_GOAL + 2 ? 'a big' : 'a full'} day.`
-    : n0 ? `${left} more to close today's ring.`
-    : `Finish ${RING_GOAL} today to close the ring.${lastFull ? ` Last full one: ${diffDays(lastFull, TODAY) === 1 ? 'yesterday' : WD[dow(lastFull)]}.` : ''}`;
+  const msg = !t0.committed ? `Nothing due today. Anything you finish fills the ring.${lastFull ? ` Last full one: ${diffDays(lastFull, TODAY) === 1 ? 'yesterday' : WD[dow(lastFull)]}.` : ''}`
+    : left <= 0 ? `Today's ring is closed: ${n0} of ${t0.committed} done.`
+    : `${n0} of ${t0.committed} done. ${left} more to close today's ring.`;
   const cells = days.map((d) => {
-    const n = counts[d] || 0, f = Math.min(n / RING_GOAL, 1), today = d === TODAY, full = f >= 1;
+    const x = T[d] || { done: 0, committed: 0 }, n = x.done, f = LBG.ringPct(x) || 0, today = d === TODAY, full = f >= 1;
     return `<li class="wr ${ringStep(f)}${today ? ' now' : ''}${today && grew ? ' grew' : ''}${full ? ' full' : ''}"><span class="wl">${today ? 'Today' : WD3[dow(d)]}</span>
-      <span class="wc"><svg viewBox="0 0 40 40" aria-hidden="true"><circle class="wt" cx="20" cy="20" r="16"/><circle class="wa" cx="20" cy="20" r="16" stroke-dasharray="${C}" stroke-dashoffset="${(C - C * f).toFixed(1)}" transform="rotate(-90 20 20)"/></svg><b class="num">${n}</b></span>
-      <span class="sr">${plural(n, 'task')} done${full ? ', ring closed' : ''}</span></li>`;
+      <span class="wc"><svg viewBox="0 0 40 40" aria-hidden="true"><circle class="wt" cx="20" cy="20" r="16"/><circle class="wa" cx="20" cy="20" r="16" stroke-dasharray="${C}" stroke-dashoffset="${(C - C * f).toFixed(1)}" transform="rotate(-90 20 20)"/></svg><b class="num${(String(n) + (x.committed || '')).length > 3 ? ' sm' : ''}"><span>${n}${x.committed ? `<small>/${x.committed}</small>` : ''}</span></b></span>
+      <span class="sr">${n} of ${x.committed} done${full ? ', ring closed' : ''}</span></li>`;
   }).join('');
-  return `<section class="sec z-now" aria-label="Tasks finished, last seven days"><div class="card rings"><ol class="wrow">${cells}</ol><p class="wmsg">${esc(msg)}</p></div></section>`;
+  return `<section class="sec z-now" aria-label="Tasks done of tasks committed, last seven days"><div class="card rings"><ol class="wrow">${cells}</ol><p class="wmsg">${esc(msg)}</p></div></section>`;
 }
 
 /* Schedule (graft from Daily paper): live Now line, proportional free gaps, past fades and shrinks */
@@ -997,14 +1055,16 @@ function viewLife() {
 /* all-habits streak: weeks in a row where every habit met its floor (this week counts once it's met) */
 /* weekly check: the week that just closed, habit by habit. Streaks are computed from on-time sessions, so a miss resets on its own. */
 function weekCheck() {
-  const lw = addDays(mondayOf(TODAY), -7), pw = addDays(lw, -7);
+  const lw = addDays(weekOf(TODAY), -7), pw = addDays(lw, -7);
   const rows = S.habits.map((h) => {
     const ss = S.sessions.filter((x) => x.h === h.key || x.h === h.id);
-    const n = (m) => ss.filter((x) => mondayOf(x.date) === m).length;
-    let before = 0; for (let m = pw; n(m) >= h.floor && before < 520; m = addDays(m, -7)) before++;
-    const got = n(lw), kept = got >= h.floor;
-    const ex = ss.filter((x) => x.ex && mondayOf(x.date) === lw).length;
-    return { h, got, kept, before, after: kept ? before + 1 : 0, ex, status: kept ? (got >= h.target ? 'hit' : 'kept') : before ? 'reset' : 'miss' };
+    const n = (m) => ss.filter((x) => weekOf(x.date) === m).length;
+    const day = (d) => ss.filter((x) => x.date === d).length;
+    const met = (m, lvl) => (h.daily ? [0, 1, 2, 3, 4, 5, 6].every((i) => day(addDays(m, i)) >= lvl) : n(m) >= lvl);
+    let before = 0; for (let m = pw; met(m, h.floor) && before < 520; m = addDays(m, -7)) before++;
+    const got = n(lw), kept = met(lw, h.floor);
+    const ex = ss.filter((x) => x.ex && weekOf(x.date) === lw).length;
+    return { h, got, kept, before, after: kept ? before + 1 : 0, ex, status: kept ? (met(lw, h.target) ? 'hit' : 'kept') : before ? 'reset' : 'miss' };
   });
   return { lw, rows, kept: rows.filter((r) => r.kept).length, reset: rows.filter((r) => r.status === 'reset').length, late: S.voidSessions.length };
 }
@@ -1015,30 +1075,30 @@ function habitVerdict(h, st) {
   const past = st.weeks.slice(0, -1), first = past.findIndex((w) => w.n > 0), wks = first < 0 ? [] : past.slice(first);
   const n = wks.length;
   if (n < 4) return { v: 'new', vt: 'Too early', n, hit: null, flr: null, avg: null, tr: 0, why: '' };
-  const hit = wks.filter((w) => w.n >= h.target).length / n, flr = wks.filter((w) => w.n >= h.floor).length / n;
+  const T = h.daily ? 7 * h.target : h.target, F = h.daily ? 7 * h.floor : h.floor;
+  const hit = wks.filter((w) => w.n >= T).length / n, flr = wks.filter((w) => w.n >= F).length / n;
   const avg = wks.reduce((a, w) => a + w.n, 0) / n;
   const l4 = past.slice(-4), p4 = past.slice(-8, -4);
   const tr = n >= 8 ? l4.reduce((a, w) => a + w.n, 0) / 4 - p4.reduce((a, w) => a + w.n, 0) / 4 : 0;
   const pc = (x) => Math.round(x * 100) + '%';
   let v = 'ok', vt = 'On track', why = '';
-  if (hit >= 0.8 && avg >= h.target * 1.3) { v = 'raise'; vt = `Raise to ${Math.round(avg)}/wk`; why = `Averaging ${avg.toFixed(1)} a week against a target of ${h.target}.`; }
+  if (hit >= 0.8 && avg >= T * 1.3) { v = 'raise'; vt = `Raise to ${Math.round(avg)}/wk`; why = `Averaging ${avg.toFixed(1)} a week against a target of ${h.target}.`; }
   else if (flr < 0.5) { v = 'lower'; vt = `Lower to ${Math.max(1, Math.round(avg + 0.5))}/wk`; why = `Floor met in only ${pc(flr)} of weeks. ${h.target} a week isn't realistic right now.`; }
   else if (hit < 0.5 && tr < -0.4) { v = 'work'; vt = 'Slipping'; why = `Down ${Math.abs(tr).toFixed(1)} a week from the month before. Target hit in ${pc(hit)} of weeks.`; }
   else if (hit < 0.5) { v = 'work'; vt = 'Needs work'; why = `Floor is holding, but the target was hit in only ${pc(hit)} of weeks.`; }
   return { v, vt, n, hit, flr, avg, tr, why };
 }
-/* Grow → Garden: one stats band, one Records card (habits | rings), and with Labs on the shelf and logbook.
-   Rings: completed = tasks finished that day; committed = tasks whose current due/deadline date is that day
-   (a rescheduled task only keeps its latest date, so older weeks are approximate). */
+/* Grow → Garden: one stats band, one Records card (habits | rings), and with the game on the shelf and logbook.
+   Rings: done ÷ committed per day (LBG.ringTally; a rescheduled task only keeps its latest date, so older weeks are approximate). */
 function ringHistory(weeks = 12) {
-  const done = {}, due = {};
-  S.tasks.forEach((t) => { if (t.done && t.doneAt) { const d = LB.laDateOf(t.doneAt); done[d] = (done[d] || 0) + 1; } const e = eff(t); if (e) due[e] = (due[e] || 0) + 1; });
-  const wk = mondayOf(TODAY), rows = [];
+  const T = ringTally(), done = {}, due = {};
+  Object.entries(T).forEach(([d, x]) => { done[d] = x.done; due[d] = x.committed; });
+  const wk = weekOf(TODAY), rows = [];
   for (let i = weeks - 1; i >= 0; i--) {
     const m = addDays(wk, -7 * i), days = [];
     for (let k = 0; k < 7; k++) { const d = addDays(m, k); days.push({ d, n: done[d] || 0, due: due[d] || 0, future: d > TODAY, today: d === TODAY }); }
     const past = days.filter((x) => !x.future);
-    rows.push({ m, cur: i === 0, days, closed: past.filter((x) => x.n >= RING_GOAL).length, done: past.reduce((n, x) => n + x.n, 0), due: past.reduce((n, x) => n + x.due, 0) });
+    rows.push({ m, cur: i === 0, days, closed: past.filter((x) => x.due && x.n >= x.due).length, done: past.reduce((n, x) => n + x.n, 0), due: past.reduce((n, x) => n + x.due, 0) });
   }
   return rows;
 }
@@ -1051,7 +1111,7 @@ function growBand(g) {
   const tiles = [
     { n: `${hDone}<small>/${hTot}</small>`, l: 'Habit sessions', s: `${safe} of ${hs.length} streaks safe` },
     { n: cur.closed, l: 'Rings closed', s: `this week · avg ${avg((r) => r.closed)}` },
-    { n: `${cur.done}<small>/${cur.due}</small>`, l: 'Done / due', s: `this week · avg ${avg((r) => r.done)} done` },
+    { n: `${cur.done}<small>/${cur.due}</small>`, l: 'Done / committed', s: `this week · avg ${avg((r) => r.done)} done` },
     { n: dueT.length ? Math.round((met / dueT.length) * 100) + '<small>%</small>' : '–', l: 'Due tasks done', s: `${met} of ${dueT.length}, 12 weeks` },
     ...(g ? LBGarden.gardenTiles(g).map((t) => ({ ...t, n: t.n, s: esc(t.s) })) : []),
   ];
@@ -1064,7 +1124,7 @@ function recordsCard() {
   if (mode === 'habits') {
     const R = S.habits.map((h) => { const st = habitStats(h, S.sessions); return { h, st, ...habitVerdict(h, st) }; });
     const ord = { work: 0, lower: 1, raise: 2 }, attn = R.filter((r) => ord[r.v] != null).sort((a, b) => ord[a.v] - ord[b.v]);
-    const lvl = (h, n) => (n <= 0 ? 0 : n < h.floor ? 1 : n < h.target ? 2 : n === h.target ? 3 : 4);
+    const lvl = (h, n) => { const f = h.daily ? 7 * h.floor : h.floor, t = h.daily ? 7 * h.target : h.target; return n <= 0 ? 0 : n < f ? 1 : n < t ? 2 : n === t ? 3 : 4; };
     const arrow = (r) => (r.n < 8 ? '<span class="trf">–</span>' : r.tr > 0.4 ? '<span class="tru" title="Trending up">↑</span>' : r.tr < -0.4 ? '<span class="trd" title="Trending down">↓</span>' : '<span class="trf" title="Steady">→</span>');
     const pc = (x) => (x == null ? '–' : Math.round(x * 100) + '%');
     const wk0 = R[0].st.weeks;
@@ -1074,27 +1134,29 @@ function recordsCard() {
     </div>
     <div class="legend" style="margin-top:10px"><span><i></i>None</span><span><i class="l1"></i>Below floor</span><span><i class="floor"></i>Floor</span><span><i class="hit"></i>Target</span><span><i class="l4"></i>Above target</span></div>
     ${attn.length ? `<ul class="recn">${attn.map((r) => `<li><span class="vchip ${r.v}">${esc(r.vt)}</span><span><b>${esc(r.h.name)}</b> ${esc(r.why)} <button type="button" class="link" data-act="edit-habit" data-id="${r.h.id}">Adjust</button></span></li>`).join('')}</ul>` : ''}
-    <p class="wcnote">Hit % and suggestions use closed weeks since each habit's first session. Weeks close Sunday night.</p>`;
+    <p class="wcnote">Hit % and suggestions use closed weeks since each habit's first session. Weeks close ${wkLast()} night.</p>`;
   } else {
-    const R = ringHistory(12), lv = (x) => (x.future ? ' fut' : x.n <= 0 ? '' : x.n < RING_GOAL ? ' l1' : x.n <= RING_GOAL + 1 ? ' l3' : ' l4');
+    const R = ringHistory(12), lv = (x) => (x.future ? ' fut' : !x.due ? '' : x.n <= 0 ? ' l0' : x.n < x.due ? ' l1' : ' l3');
     body = `<div class="tg rg" role="table" aria-label="Tasks finished per day, last 12 weeks">
       <span></span>${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => `<span class="h">${d}</span>`).join('')}<span class="h">rings</span><span class="h">done/due</span>
-      ${R.map((r) => `<span class="nm">${r.cur ? 'This week' : `${MON3[toD(r.m).getMonth()]} ${toD(r.m).getDate()}`}</span>${r.days.map((x) => `<span class="c${lv(x)}${x.today ? ' cur' : ''}" title="${x.d}: ${x.n} done, ${x.due} due">${x.future ? '' : x.n || ''}</span>`).join('')}<span class="s">${r.closed}</span><span class="s${r.done >= r.due ? ' good' : ''}">${r.done}/${r.due}</span>`).join('')}
+      ${R.map((r) => `<span class="nm">${r.cur ? 'This week' : `${MON3[toD(r.m).getMonth()]} ${toD(r.m).getDate()}`}</span>${r.days.map((x) => `<span class="c${lv(x)}${x.today ? ' cur' : ''}" title="${x.d}: ${x.n} of ${x.due} done">${x.future ? '' : x.n || ''}</span>`).join('')}<span class="s">${r.closed}</span><span class="s${r.done >= r.due ? ' good' : ''}">${r.done}/${r.due}</span>`).join('')}
     </div>
-    <div class="legend" style="margin-top:10px"><span><i></i>None</span><span><i class="l1"></i>Under ${RING_GOAL}</span><span><i class="hit"></i>Ring closed</span><span><i class="l4"></i>${RING_GOAL + 2}+</span></div>
-    <p class="wcnote">A ring closes at ${RING_GOAL} tasks finished in a day. Due counts each task on its current due or deadline date, so older weeks are approximate.</p>`;
+    <div class="legend" style="margin-top:10px"><span><i></i>None</span><span><i class="l1"></i>Part done</span><span><i class="hit"></i>Ring closed</span></div>
+    <p class="wcnote">A ring closes when everything committed that day is done: tasks due that day, plus anything you finish. Overdue tasks count once you move them to a day. Older weeks are approximate (a rescheduled task only keeps its latest date).</p>`;
   }
   return `<section class="sec"><div class="sec-h"><h3 class="sec-t">Records <span class="ct">12 weeks</span></h3>${seg}</div><div class="card tgc">${body}</div></section>`;
 }
-function labsLogbook(g) {
+function gameLogbook(g) {
   const items = LBGarden.logbookItems(g);
   return fold('logbook', 'Logbook', { def: false, ct: items.length, sum: items[0] ? `${LBGarden.fmt(items[0].d)} · ${esc(items[0].t)}` : '', body: `<div class="card pad">${LBGarden.logbookHTML(items.slice(0, 40))}</div>` });
 }
 function viewGrow() {
   let body = '';
-  if (U.grow === 'collection') body = labsCollectionHTML();
+  if (U.grow === 'collection') body = gameCollectionHTML();
   else if (U.grow === 'habits') {
-    body = S.habits.length ? labsGrowHTML() : `<div class="card pad" style="margin-top:14px"><p class="empty" style="padding:0 4px 10px">No habits yet. Give one a weekly target and a lower floor that keeps the streak alive.</p><button class="btn primary" data-act="new-habit">${ic('plus', 18)}Add a habit</button></div>`;
+    body = S.habits.length ? gardenGrowHTML() : `<div class="card pad" style="margin-top:14px"><p class="empty" style="padding:0 4px 10px">No habits yet. Give one a weekly target and a lower floor that keeps the streak alive.</p><button class="btn primary" data-act="new-habit">${ic('plus', 18)}Add a habit</button></div>`;
+    const hid = S.hiddenHabits || [];
+    if (hid.length) body += `<div class="card pad hidh" style="margin-top:14px"><p class="qhint" style="margin:0 0 8px">Hidden habits: off the board, history kept.</p>${hid.map((h) => `<div class="hidrow"><span>${esc(h.name)}</span><button type="button" class="btn sm ghost" data-act="habit-unhide" data-id="${h.id}">Unhide</button></div>`).join('')}</div>`;
   } else {
     const years = [...new Set(S.goals.map((g) => +g.year))].sort((a, b) => b - a);
     const curQ = Math.ceil(+TODAY.slice(5, 7) / 3), curY = +TODAY.slice(0, 4);
@@ -1311,8 +1373,9 @@ function renderSheet() {
   } else if (c.kind === 'habit') {
     title = eh ? `Edit ${esc(eh.name)}` : 'New habit'; submit = eh ? 'Save' : 'Add habit';
     fields = `<label class="fld"><span>Habit</span><input name="name" required ${eh ? '' : 'autofocus '}autocomplete="off" placeholder="e.g. Drumming" value="${esc(eh ? eh.name : c.name || '')}"></label>
-      <div class="two"><label class="fld"><span>Target a week</span><input type="number" name="target" min="1" max="14" value="${eh ? eh.target : 3}" inputmode="numeric" ${eh ? 'autofocus' : ''}></label><label class="fld"><span>Floor a week</span><input type="number" name="floor" min="1" max="14" value="${eh ? eh.floor : 1}" inputmode="numeric"></label></div>
-      <p class="qhint">Hitting the floor keeps the streak alive, even in a slow week.${eh ? ' Changes re-score past weeks too (streaks, plants).' : ''}</p>
+      <fieldset class="fld"><legend>Counts</legend><div class="radios">${[['week', 'Per week'], ['day', 'Per day']].map(([v, l]) => `<label><input type="radio" name="cadence" value="${v}"${(eh && eh.daily ? 'day' : 'week') === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></fieldset>
+      <div class="two"><label class="fld"><span>Target</span><input type="number" name="target" min="1" max="14" value="${eh ? eh.target : 3}" inputmode="numeric" ${eh ? 'autofocus' : ''}></label><label class="fld"><span>Floor</span><input type="number" name="floor" min="1" max="14" value="${eh ? eh.floor : 1}" inputmode="numeric"></label></div>
+      <p class="qhint">Per week: hit the floor by the week's end to keep the streak. Per day: hit it every day; one missed day ends the week's streak and withers the plant.${eh ? ' Changes re-score past weeks too (streaks, plants).' : ''}</p>
       <label class="fld"><span>Notes</span><textarea name="notes" placeholder="What counts as a session">${eh ? esc(eh.notes) : ''}</textarea></label>`;
   } else if (c.kind === 'chat') {
     const t = S.tasks.find((x) => x.id === c.taskId);
@@ -1333,7 +1396,7 @@ function renderSheet() {
   sh.innerHTML = `<div class="grab" aria-hidden="true"></div><form data-form="sheet" novalidate style="display:contents">
     <div class="sh-h"><h2 id="sheetT">${title}</h2><button type="button" class="iconbtn" data-act="sheet-close" aria-label="Close">${ic('x')}</button></div>
     <div class="sh-b">${kinds}${fields}</div>
-    ${submit ? `<div class="sh-f">${editing ? `<button type="button" class="btn" data-act="sheet-del" data-id="${editing.id}" aria-label="Delete task">${ic('trash', 18)}</button>` : ''}<button type="submit" class="btn primary" id="sheetSubmit">${submit}</button></div>` : ''}
+    ${submit ? `<div class="sh-f">${editing ? `<button type="button" class="btn" data-act="sheet-del" data-id="${editing.id}" aria-label="Delete task">${ic('trash', 18)}</button>` : ''}${eh ? `<button type="button" class="btn" data-act="habit-del" data-id="${eh.id}" aria-label="Remove habit ${esc(eh.name)}">${ic('trash', 18)}Remove</button><button type="button" class="btn" data-act="habit-hide" data-id="${eh.id}" aria-label="Hide habit ${esc(eh.name)}">Hide</button>` : ''}<button type="submit" class="btn primary" id="sheetSubmit">${submit}</button></div>` : ''}
   </form>`;
   quickSync(true);
 }
@@ -1377,10 +1440,10 @@ function submitSheet(form) {
     U.tab = 'grow'; U.grow = 'goals';
   } else if (c.kind === 'habit') {
     const name = (f.name || '').trim(); if (!name) { toast('Name the habit first'); return; }
-    const target = Math.max(1, Math.min(14, Math.round(+f.target) || 1)), floor = Math.max(1, Math.min(target, Math.round(+f.floor) || 1));
-    if (c.id) { act((rec) => W.patch('habits', c.id, { name, target_per_week: target, streak_floor_per_week: floor, notes: (f.notes || '').trim() }, rec), `${name}: floor ${floor}, target ${target}`); closeSheet(); render(); return; }
+    const target = Math.max(1, Math.min(14, Math.round(+f.target) || 1)), floor = Math.max(1, Math.min(target, Math.round(+f.floor) || 1)), cadence = f.cadence === 'day' ? 'day' : 'week';
+    if (c.id) { act((rec) => W.patch('habits', c.id, { name, cadence, target_per_week: target, streak_floor_per_week: floor, notes: (f.notes || '').trim() }, rec), `${name}: floor ${floor}, target ${target} a ${cadence}`); closeSheet(); render(); return; }
     const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'habit';
-    act((rec) => W.create('habits', { key: S.habits.some((h) => h.key === key) ? key + '-' + Date.now().toString(36) : key, name, target_per_week: target, streak_floor_per_week: floor, notes: (f.notes || '').trim(), sort_order: (S.habits.length + 1) * 10 }, rec), 'Habit added');
+    act((rec) => W.create('habits', { key: S.habits.some((h) => h.key === key) ? key + '-' + Date.now().toString(36) : key, name, cadence, target_per_week: target, streak_floor_per_week: floor, notes: (f.notes || '').trim(), sort_order: (S.habits.length + 1) * 10 }, rec), 'Habit added');
     U.tab = 'grow'; U.grow = 'habits';
   }
   closeSheet(); render();
@@ -1397,8 +1460,9 @@ function renderPop() {
   const t = document.documentElement.dataset.theme || 'auto';
   const grp = (label, act, opts, cur) => `<p class="pop-l">${label}</p><div class="kinds" style="grid-template-columns:repeat(${opts.length},1fr)" role="group" aria-label="${label}">${opts.map(([v, l, i]) => `<button type="button" data-act="${act}" data-val="${v}" aria-pressed="${cur === v}">${i ? ic(i, 16) + ' ' : ''}${l}</button>`).join('')}</div>`;
   pop.innerHTML = grp('Theme', 'set-theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']], t)
-    + grp('Labs: habitat &amp; garden', 'set-labs', [['off', 'Off'], ['on', 'On']], labsOn() ? 'on' : 'off')
-    + (LABS.forced && !UI.labs ? '<p class="pop-n">On for this visit (link).</p>' : '');
+    + grp('Ecosystem', 'set-eco', [['off', 'Off'], ['on', 'On']], ecoOn() ? 'on' : 'off')
+    + grp('Garden', 'set-garden', [['off', 'Off'], ['on', 'On']], gardenOn() ? 'on' : 'off')
+    + (GAME.forced && !UI.eco ? '<p class="pop-n">Ecosystem on for this visit (link).</p>' : '');
 }
 function setPop(open, btn) {
   ['themeBtn', 'barTheme'].forEach((id) => document.getElementById(id).setAttribute('aria-expanded', String(open && btn && btn.id === id)));
@@ -1425,8 +1489,8 @@ function schedule() {
 }
 main.addEventListener('focusout', () => setTimeout(() => { if (pendingRender && !busy()) render(); }, 0));
 function render() {
-  { const ci = GROW.findIndex((x) => x[0] === 'collection'); /* with Labs on, Grow gets a third view: dioramas + pressed plants */
-    if (labsOn() && ci < 0) GROW.push(['collection', 'Collection', 'star']); else if (!labsOn() && ci >= 0) { GROW.splice(ci, 1); if (U.grow === 'collection') U.grow = 'habits'; } }
+  { const ci = GROW.findIndex((x) => x[0] === 'collection'); /* with the game on, Grow gets a third view: dioramas + pressed plants */
+    if (gameOn() && ci < 0) GROW.push(['collection', 'Collection', 'star']); else if (!gameOn() && ci >= 0) { GROW.splice(ci, 1); if (U.grow === 'collection') U.grow = 'habits'; } }
   pendingRender = false;
   if (LB.todayStr() !== TODAY) { TODAY = LB.todayStr(); watchCal(); }
   const a = document.activeElement, fk = a && a.dataset && a.dataset.act ? [a.dataset.act, a.dataset.id || a.dataset.val || a.dataset.key || a.dataset.d || ''] : null;
@@ -1449,7 +1513,7 @@ function render() {
   if (!pop.hidden) renderPop();
   const lt = document.getElementById('ltitle'); const subName = U.tab === 'lists' ? (listDefs().find((l) => l.key === U.list) || BASE_LISTS[0]).title : U.tab === 'life' ? LIFE.find((x) => x[0] === U.life)[1] : U.tab === 'grow' ? GROW.find((x) => x[0] === U.grow)[1] : ''; document.getElementById('barT').innerHTML = !ready ? '' : U.tab === 'today' ? sumHTML(daySummary()) : esc(lt ? lt.textContent : '') + (subName ? ' · ' + esc(subName) : '');
   if (fk) { const sel = `[data-act="${fk[0]}"]` + (fk[1] ? `[data-id="${CSS.escape(fk[1])}"],[data-act="${fk[0]}"][data-val="${CSS.escape(fk[1])}"],[data-act="${fk[0]}"][data-key="${CSS.escape(fk[1])}"],[data-act="${fk[0]}"][data-d="${CSS.escape(fk[1])}"]` : ''); const el = document.querySelector(sel); if (el && el !== document.activeElement) el.focus({ preventScroll: true }); }
-  labsAfterRender();
+  gameAfterRender();
   if (scrollY !== sy) scrollTo(0, sy);
   onScroll();
 }
@@ -1470,7 +1534,7 @@ function toggleTask(id, btn) {
   const go = () => {
     if (t.done) { act((rec) => W.patch('tasks', id, { status: 'open', completed_at: null }, rec), 'Marked not done'); return; }
     const next = d.recurrence_rule && !d.recurrence_spawned ? nextDueOf(d) : null;
-    labsFeed();
+    ecoFeed();
     act((rec) => Promise.all([W.patch('tasks', id, { status: 'done', completed_at: Date.now() }, rec), next ? spawnSuccessor(d, TODAY, rec) : null]),
       next ? `Done. Next one ${relDate(next)}` : 'Done. Nice.');
   };
@@ -1503,14 +1567,14 @@ function moveTask(id, dir) {
 }
 function logHabit(id, date = TODAY, exception = null) {
   const h = S.habits.find((x) => x.id === id); if (!h) return;
-  if (date < mondayOf(TODAY) && !validException(exception)) { toast('That week is closed. Add a reason and evidence to log it.'); return; }
-  if (date >= mondayOf(TODAY)) U.pulse = { id, d: 1, w: habitStats(h, S.sessions).week + 1 };
+  if (date < weekOf(TODAY) && !validException(exception)) { toast('That week is closed. Add a reason and evidence to log it.'); return; }
+  if (date >= weekOf(TODAY)) U.pulse = { id, d: 1, w: habitStats(h, S.sessions).week + 1 };
   act((rec) => W.create('habit_sessions', exception ? { habit_id: h.key, date, exception: { ...exception, at: Date.now() } } : { habit_id: h.key, date }, rec), () => { const st = habitStats(h, S.sessions); return `Logged ${h.name}${date !== TODAY ? ' for ' + relDate(date).toLowerCase() : ''} · ${st.week}/${h.target} this week${st.week === h.target ? '. Target hit!' : ''}`; });
 }
 /* undo an accidental log: removes this week's most recent session of the habit */
 function unlogHabit(id) {
   const h = S.habits.find((x) => x.id === id); if (!h) return;
-  const wk = mondayOf(TODAY);
+  const wk = h.daily ? TODAY : weekOf(TODAY);
   const ss = S.sessions.filter((x) => (x.h === h.key || x.h === h.id) && x.date >= wk && x.date <= TODAY)
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (b.created || 0) - (a.created || 0)));
   if (!ss.length) return;
@@ -1581,9 +1645,10 @@ document.addEventListener('click', (e) => {
     case 'set-theme': {
       if (val === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = val;
       try { localStorage.setItem('lb-theme', val); } catch (er) { /* ignore */ }
-      render(); break;
+      savePrefs({ theme: val }); render(); break;
     }
-    case 'set-labs': UI.labs = val === 'on'; LABS.forced = false; saveUI(); if (labsOn()) loadLabs(); render(); break;
+    case 'set-eco': UI.eco = val === 'on'; GAME.forced = false; saveUI(); savePrefs({ eco: UI.eco }); if (gameOn()) loadGame(); render(); break;
+    case 'set-garden': UI.garden = val === 'on'; saveUI(); savePrefs({ garden: UI.garden }); if (gameOn()) loadGame(); render(); break;
     case 'fold': UI.fold[b.dataset.key] = b.getAttribute('aria-expanded') !== 'true'; saveUI(); render(); break;
     case 'fab': if (LBDB.state.status === 'ready') openSheet(fabConfig().sheet); break;
     case 'new-habit': openSheet({ kind: 'habit' }); break;
@@ -1592,11 +1657,14 @@ document.addEventListener('click', (e) => {
     case 'sheet-kind': { const f = document.querySelector('#sheet [name=quick], #sheet [name=title], #sheet [name=name]'); U.sheet = { kind: val, list: U.tab === 'lists' ? U.list : 'groceries', name: f ? f.value : '' }; renderSheet(); const n = document.querySelector('#sheet [autofocus]'); n && n.focus(); break; }
     case 'quick-date': { const i = document.getElementById('fDue'); if (i) i.value = val; if (U.sheet && U.sheet.touched) U.sheet.touched.due = true; quickSync(false); break; }
     case 'q-try': { const q = document.querySelector('#sheet [name=quick]'); if (q) { q.value = val; quickSync(true); q.focus(); } break; }
+    case 'habit-hide': { const h = S.habits.find((x) => x.id === id); closeSheet(); if (h) act((rec) => W.patch('habits', id, { hidden: true }, rec), `Hid “${h.name}”. Unhide it at the bottom of Grow.`); break; }
+    case 'habit-unhide': { const h = (S.hiddenHabits || []).find((x) => x.id === id); if (h) act((rec) => W.patch('habits', id, { hidden: false }, rec), `“${h.name}” is back`); break; }
+    case 'habit-del': { const h = S.habits.find((x) => x.id === id); closeSheet(); if (h) delDoc('habits', id, `Removed “${h.name}” (sessions kept)`); break; }
     case 'sheet-del': { const t = S.tasks.find((x) => x.id === id); closeSheet(); if (t) delDoc('tasks', id, `Deleted “${t.title}”`); break; }
     case 'log-pick': {
       const d = document.getElementById('logDate'); const date = d && isDate(d.value) && d.value <= TODAY ? d.value : TODAY;
       let ex = null;
-      if (date < mondayOf(TODAY)) {
+      if (date < weekOf(TODAY)) {
         const r = (document.getElementById('exReason') || {}).value || '', ev = (document.getElementById('exEvidence') || {}).value || '';
         ex = { reason: r.trim(), evidence: ev.trim() };
         if (!validException(ex)) { toast(ex.reason.length < 20 ? 'Write a real reason (at least a sentence).' : 'Add evidence: a link, photo or record.'); const f = document.getElementById(ex.reason.length < 20 ? 'exReason' : 'exEvidence'); f && f.focus(); break; }
@@ -1677,7 +1745,7 @@ document.addEventListener('submit', (e) => {
   else if (kind === 'adj') { const v = f.v.value.trim(); if (v) adjustSuggestion(f.dataset.id, v); }
   else if (kind === 'les-recall') { const v = f.v.value.trim(), l = LES.lessons[LES.deck[LES.i]]; if (v && l) lessonAct(lesRight(v, lesRung(l).answer) ? 'advance' : 'wrong', v); }
   else if (kind === 'les-apply') { const v = f.v.value.trim(); if (v) lessonAct('advance', v); else f.v.focus(); }
-  else if (kind === 'keep') labsKeepSave(f.dataset.id, f.dataset.kind, f.querySelector('[name=title]').value.trim(), f.querySelector('[name=note]').value.trim());
+  else if (kind === 'keep') keepSave(f.dataset.id, f.dataset.kind, f.querySelector('[name=title]').value.trim(), f.querySelector('[name=note]').value.trim());
   else if (kind === 'q') { const v = f.querySelector('textarea').value.trim(); const id = f.dataset.id, q = +f.dataset.q; U.editQ = null; act((rec) => W.patch('goals', id, { ['progress_q' + q]: v }, rec), `Q${q} note saved`); render(); }
 });
 document.addEventListener('input', (e) => {
@@ -1687,7 +1755,7 @@ document.addEventListener('input', (e) => {
   else if (['title', 'due'].includes(n) || (n && n.startsWith('r_'))) { if (U.sheet.touched && n === 'title') U.sheet.touched.title = true; if (U.sheet.touched && n === 'due') U.sheet.touched.due = true; const form = e.target.form; if (n.startsWith('r_')) { const r = readRule(form), h = form.querySelector('#rechelp'); if (h) h.textContent = r ? LB.describeRule(r) : ''; } quickSync(false); }
 });
 document.addEventListener('change', (e) => {
-  if (e.target.id === 'logDate') { const x = document.getElementById('logEx'); if (x) x.hidden = !(isDate(e.target.value) && e.target.value < mondayOf(TODAY)); }
+  if (e.target.id === 'logDate') { const x = document.getElementById('logEx'); if (x) x.hidden = !(isDate(e.target.value) && e.target.value < weekOf(TODAY)); }
   if (e.target.matches('select[data-sort]')) { const k = e.target.dataset.sort; UI.sort[k] = e.target.value; saveUI(); render(); const n = document.querySelector(`select[data-sort="${CSS.escape(k)}"]`); n && n.focus(); return; }
   if (U.sheet && e.target.closest('#sheet') && e.target.name === 'rec') { if (U.sheet.touched) U.sheet.touched.rec = true; syncRec(e.target.form, ruleFor(e.target.value, e.target.form.querySelector('[name=due]').value)); quickSync(false); }
   if (U.sheet && e.target.closest('#sheet') && e.target.name === 'due') { if (U.sheet.touched) U.sheet.touched.due = true; quickSync(false); }
@@ -1743,113 +1811,113 @@ addEventListener('scroll', () => { if (!pop.hidden && popFrom && popFrom.id === 
 addEventListener('resize', () => setPop(false));
 setInterval(() => { if (!U.sheet && !drag && document.visibilityState === 'visible' && U.tab === 'today' && !document.activeElement.matches('input,textarea')) render(); }, 60000);
 
-/* ---------- Labs: habitat & garden preview (off by default; per-viewer in lb-ui) ----------
-   Off: nothing below loads or runs (no three.js, no game derivation). #labs or a visitor test link
-   (?visitor=<id>, #visitor=<id>, #labs-visitor-<id>) turns it on for one visit. */
-const LABS = { forced: false, loading: null, ready: false, game: null, gameKey: null, metSeen: null, keeps: {} };
-function labsFromUrl(href) { try { const u = new URL(href), h = u.hash.slice(1); return h === 'labs' || h === 'labs-preview' || /^labs-visitor-[\w-]+$/.test(h) || /(^|[&/])visitor=/.test(h) || u.searchParams.has('visitor'); } catch (e) { return false; } }
-const labsOn = () => UI.labs === true || LABS.forced;
-function loadLabs() {
-  if (LABS.loading) return LABS.loading;
+/* ---------- Game: Ecosystem & Garden (each on by default, own toggle; synced via checks/ui_prefs) ----------
+   Off: nothing below loads or runs (no three.js, no game derivation). #eco or a visitor test link
+   (?visitor=<id>, #visitor=<id>, #visitor-<id>) turns the Ecosystem on for one visit. */
+const GAME = { forced: false, loading: null, ready: false, game: null, gameKey: null, metSeen: null, keeps: {} };
+function gameFromUrl(href) { try { const u = new URL(href), h = u.hash.slice(1); return h === 'eco' || h === 'labs' || /^(?:labs-)?visitor-[\w-]+$/.test(h) || /(^|[&/])visitor=/.test(h) || u.searchParams.has('visitor'); } catch (e) { return false; } }
+const ecoOn = () => UI.eco === true || GAME.forced, gardenOn = () => UI.garden === true, gameOn = () => ecoOn() || gardenOn();
+function loadGame() {
+  if (GAME.loading) return GAME.loading;
   const one = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
-  LABS.loading = Promise.all([one('garden.js'), one('habitat.js')])
-    .then(() => { LABS.ready = true; schedule(); })
-    .catch((e) => { console.warn('[labs] load failed', e); LABS.loading = null; });
-  return LABS.loading;
+  GAME.loading = Promise.all([one('garden.js'), one('habitat.js')])
+    .then(() => { GAME.ready = true; schedule(); })
+    .catch((e) => { console.warn('[game] load failed', e); GAME.loading = null; });
+  return GAME.loading;
 }
 /* pure inputs for LBGarden.deriveGame, recomputed when the data changes */
-function labsGame() {
-  if (!LABS.ready || LBDB.state.status !== 'ready') return null;
-  if (LABS.start === undefined) { labsStart(); return null; }
+function currentGame() {
+  if (!GAME.ready || LBDB.state.status !== 'ready') return null;
+  { const d = LBDB.get('game_state', 'game'); if (d && d.started) GAME.start = d.started; }
+  if (GAME.start === undefined) { gameStart(); return null; }
   const key = S, pool = LBGarden.plantPool(), pv = LBGarden.poolVersion();
-  if (LABS.gameKey === key && LABS.poolV === pv && LABS.game && LABS.game.today === TODAY) return LABS.game;
+  if (GAME.gameKey === key && GAME.poolV === pv && GAME.game && GAME.game.today === TODAY) return GAME.game;
   const tasks = S.tasks.map((t) => ({ eff: eff(t), done: t.done, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null }));
-  const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target }));
+  const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target, daily: h.daily, since: h._d && h._d.created_at ? LB.laDateOf(h._d.created_at) : null }));
   const sessions = S.sessions.map((x) => { const h = S.habits.find((k) => k.key === x.h || k.id === x.h); return { h: h ? h.key : x.h, date: x.date }; });
   const breakSkips = LBDB.all('logs').filter((l) => l.kind === 'break' && l.label === 'skip').map((l) => l.date);
   const lessonDates = LBDB.all('logs').filter((l) => l.kind === 'lesson').map((l) => l.date);
   const br = LBDB.get('checks', 'break_rules'), skipCost = br && br.value && br.value.skipCost != null ? +br.value.skipCost : undefined;
-  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions, start: LABS.start, breakSkips, skipCost, lessonDates, plantPool: pool }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
-  LABS.gameKey = key; LABS.poolV = pv;
-  return LABS.game;
+  try { GAME.game = LBGarden.deriveGame({ today: TODAY, tasks, habits, sessions, start: GAME.start, breakSkips, skipCost, lessonDates, plantPool: pool, weekStart: WS }); } catch (e) { console.warn('[game] derive', e); GAME.game = null; }
+  GAME.gameKey = key; GAME.poolV = pv;
+  return GAME.game;
 }
-/* the game starts at 0 on the day Labs is first turned on: labs_state/game.started, written once, shared across devices */
-let labsStartP = null;
-function labsStart() {
-  if (labsStartP) return labsStartP;
-  labsStartP = (async () => {
-    try {
-      const db = await window.claude.use('db'); if (!db) throw new Error('no db');
-      const col = db.collection('labs_state');
-      const got = await new Promise((res) => { let off = null; off = col.onSnapshot((snap) => { const d = snap.docs.find((x) => x.id === 'game'); res(d ? (d.data ? d.data() : d) : null); off && off(); }, () => res(null)); });
-      if (got && got.started) LABS.start = got.started;
-      else { const body = { started: TODAY, created_at: Date.now() }; if (!LBS.validate('labs_state', body)) await col.doc('game').set(body); LABS.start = TODAY; }
-    } catch (e) { LABS.start = TODAY; /* no db: start today for this page */ }
-    LABS.gameKey = null; schedule();
-  })();
-  return labsStartP;
+/* the game starts at 0 on the day it is first turned on: game_state/game.started, written once, shared across devices.
+   game_state is a store-tracked collection, so it is read only once the db has fully loaded: never overwrite a start
+   that exists (an early empty read used to reset it to today on every load). */
+let gameStartP = null;
+function gameStart() {
+  const d = LBDB.get('game_state', 'game');
+  if (d && d.started) { GAME.start = d.started; return; }
+  if (gameStartP || LBDB.state.status !== 'ready') return;
+  const body = { started: TODAY, created_at: Date.now() };
+  gameStartP = LBDB.put('game_state', 'game', body).then(() => { GAME.start = TODAY; }).catch(() => { GAME.start = TODAY; /* no db: start today for this page */ })
+    .finally(() => { GAME.gameKey = null; schedule(); });
 }
-function labsGrowHTML() {
-  const g = labsOn() ? labsGame() : null;
-  if (g) labsKeeps();
-  return growBand(g) + recordsCard() + (g ? labsLogbook(g) : '');
+function gardenGrowHTML() {
+  const g = gameOn() ? currentGame() : null;
+  if (g) listenKeeps();
+  return growBand(g) + recordsCard() + (g ? gameLogbook(g) : '');
 }
-function labsCollectionHTML() {
-  const g = labsOn() ? labsGame() : null;
-  if (g) labsKeeps();
-  return g ? LBGarden.collectionHTML(g, LABS.keeps, U.editKeep, U.inspect, U.kmAnim, U.coll) : '<div class="card pad" style="margin-top:14px"><p class="empty">Loading the collection…</p></div>';
+function gameCollectionHTML() {
+  const g = gameOn() ? currentGame() : null;
+  if (g) listenKeeps();
+  return g ? LBGarden.collectionHTML(g, GAME.keeps, U.editKeep, U.inspect, U.kmAnim, U.coll) : '<div class="card pad" style="margin-top:14px"><p class="empty">Loading the collection…</p></div>';
 }
-/* shelf titles and notes: labs_keepsakes/<keepsake id> = { kind, title, note, updated_at }. Listens only with Labs on. */
-let labsKeepsP = null;
-function labsKeeps() {
-  if (labsKeepsP) return labsKeepsP;
-  labsKeepsP = (async () => {
+/* shelf titles and notes: keepsakes/<keepsake id> = { kind, title, note, updated_at }. Listens only with the game on. */
+let keepsP = null;
+function listenKeeps() {
+  if (keepsP) return keepsP;
+  keepsP = (async () => {
     try {
       const db = await window.claude.use('db'); if (!db) return;
-      db.collection('labs_keepsakes').onSnapshot((snap) => { const o = {}; snap.docs.forEach((d) => { o[d.id] = d.data ? d.data() : d; }); LABS.keeps = o; schedule(); }, () => {});
+      db.collection('keepsakes').onSnapshot((snap) => { const o = {}; snap.docs.forEach((d) => { o[d.id] = d.data ? d.data() : d; }); GAME.keeps = o; schedule(); }, () => {});
     } catch (e) { /* no db: titles stay local to this page */ }
   })();
-  return labsKeepsP;
+  return keepsP;
 }
-async function labsKeepSave(id, kind, title, note) {
+async function keepSave(id, kind, title, note) {
   const body = { kind, title, note, updated_at: Date.now() };
   U.editKeep = null;
-  LABS.keeps = { ...LABS.keeps, [id]: body }; render();
-  try { if (LBS.validate('labs_keepsakes', body)) throw new Error(LBS.validate('labs_keepsakes', body)); const db = await window.claude.use('db'); await db.collection('labs_keepsakes').doc(id).set(body); toast('Saved to the shelf'); } catch (e) { toast('Could not save that note'); }
+  GAME.keeps = { ...GAME.keeps, [id]: body }; render();
+  try { if (LBS.validate('keepsakes', body)) throw new Error(LBS.validate('keepsakes', body)); const db = await window.claude.use('db'); await db.collection('keepsakes').doc(id).set(body); toast('Saved to the shelf'); } catch (e) { toast('Could not save that note'); }
 }
-function labsAfterRender() {
-  if (!labsOn() || !LABS.ready || !window.Habitat) return;
-  const slot = document.querySelector('.labs-slot[data-labs="habitat"]');
+function gameAfterRender() {
+  if (!gameOn() || !GAME.ready) return;
+  if (!ecoOn() || !window.Habitat) { const g0 = currentGame(); if (g0) ecoStatus(g0); return; }
+  const slot = document.querySelector('.eco-slot');
   if (slot) Habitat.mount(slot);
   /* lesson chip + inline deck sit on the water: move them into the scene box */
   { const hab = slot && slot.querySelector('.hab'); if (hab) { hab.querySelectorAll(':scope > .les-chip, :scope > .les-pop').forEach((e) => e.remove()); } if (hab) slot.parentElement.querySelectorAll(':scope > .les-chip, :scope > .les-pop').forEach((e) => hab.appendChild(e)); }
-  const g = labsGame();
-  if (g) { Habitat.setState(g); labsVisitor(g); labsReefStatus(g); }
+  const g = currentGame();
+  if (g) { Habitat.setState(g); gameVisitor(g); ecoStatus(g); }
 }
-/* checks/labs_reef: the habitat's biome/phase for Claude's weekly run (weekly-visitor reads it to know when a
-   biome is finished and the next one needs designing), and the garden season for season-seeds (plots = plants to make,
-   crosses = last season's hybrid parent pairs, last = species last season, now = species now). Written only when it changes. */
-function labsReefStatus(g) {
-  const r = g.reef, se = g.season || {}, prev = (g.history || []).filter((h) => h.season === se.index - 1);
-  const crosses = [...new Set(prev.filter((h) => h.earned && h.earned.hybrid).map((h) => [h.species, h.earned.hybrid].sort().join('|')))].map((x) => x.split('|'));
-  const garden = { season: se.index, from: se.from, week: se.week, of: se.of, opens: se.opens || null, biome: se.biome, plots: (g.plots || []).length,
-    crosses, last: [...new Set(prev.map((h) => h.species))], now: [...new Set((g.plots || []).map((p) => p.species))] };
+/* checks/game_status: the ecosystem's biome/phase for Claude's weekly run (weekly-visitor reads it to know when a
+   biome is finished and the next one needs designing), and the garden for season-seeds: `needs` = plots whose current plant
+   (habit key + gen) has no 3D model yet, i.e. a new habit or a plant pressed this week. Written only when it changes. */
+function ecoStatus(g) {
+  const r = g.reef, se = g.season || {}, last = (g.history || []).slice(-12);
+  /* the plant growing now when it has no model, plus the next one for a plot showing a bloom/withered plant (pressed when the week starts) */
+  const needs = (g.plots || []).flatMap((p) => p.upcoming ? (p.upcoming.made ? [] : [{ plot: p.key, habit: p.name, gen: p.upcoming.gen, rarity: p.upcoming.rarity, mutated: false, biome: se.biome, sown: 'next Monday' }])
+    : p.made ? [] : [{ plot: p.key, habit: p.name, gen: p.gen, rarity: p.rarity, mutated: p.mutated, biome: p.biome, sown: p.sown }]);
+  const garden = { season: se.name, from: se.from, ends: se.ends, opens: se.opens || null, biome: se.biome, plots: (g.plots || []).length, needs,
+    pressed: last.map((h) => ({ plot: h.key, gen: h.gen, species: h.species, bloomed: h.bloomed, earned: h.earned.rarity, to: h.to })) };
   const v = { biome: r.biome, phase: r.phase, phases: r.phases, bleached: !!r.bleached, dioramas: (r.dioramas || []).length, visitor: g.visitor || null, visitorWeek: g.visitorWeek || null, garden };
-  const cur = LBDB.get('checks', 'labs_reef'), key = JSON.stringify(v);
-  if (!LBDB.ready || (cur && JSON.stringify(cur.value) === key) || LABS.reefKey === key) return;
-  LABS.reefKey = key;
-  LBDB.put('checks', 'labs_reef', { value: v, updated_at: Date.now() }).catch((e) => console.warn('[labs] reef status', e));
+  const cur = LBDB.get('checks', 'game_status'), key = JSON.stringify(v);
+  if (!LBDB.ready || (cur && JSON.stringify(cur.value) === key) || GAME.reefKey === key) return;
+  GAME.reefKey = key;
+  LBDB.put('checks', 'game_status', { value: v, updated_at: Date.now() }).catch((e) => console.warn('[game] reef status', e));
 }
-const labsFeed = () => { if (labsOn() && window.Habitat) Habitat.feed(6); };
+const ecoFeed = () => { if (ecoOn() && window.Habitat) Habitat.feed(6); };
 /* a lesson card was answered: drops food, and logs logs kind 'lesson' once a day (days without one make the creatures hide) */
-function labsLessonDone() {
+function gameLessonDone() {
   if (LBDB.ready && !LBDB.all('logs').some((l) => l.kind === 'lesson' && l.date === TODAY)) LBDB.create('logs', { kind: 'lesson', label: 'done', date: TODAY }).catch((err) => console.warn('[lessons] log failed', err));
-  labsFeed();
+  ecoFeed();
 }
 
-/* ---------- Labs: lessons (SPEC.md Lessons) ----------
+/* ---------- Lessons (SPEC.md Lessons) ----------
    sources + lessons are written by the lesson-make skill; the deck writes each lesson's level/due/state and one
-   lesson_answers doc per action. Listened to only with Labs on, straight from the db (kept out of store.js). */
+   lesson_answers doc per action. Listened to only with the Ecosystem on, straight from the db (kept out of store.js). */
 const LES = { sources: {}, lessons: {}, got: 0, deck: null, i: 0, fb: null, n: 0, anim: false };
 const lesDay = (s) => Math.round(Date.parse(s + 'T00:00:00Z') / 864e5), lesDate = (n) => new Date(n * 864e5).toISOString().slice(0, 10);
 let lesP = null;
@@ -1888,10 +1956,10 @@ function lessonDeck() {
   const key = (id) => { let x = h; for (const c of id) x = ((x ^ c.charCodeAt(0)) * 16777619) >>> 0; return x; };
   return ids.sort((a, b) => key(a) - key(b));
 }
-/* Today (Labs): a "N lessons ▾" chip on the habitat while lessons are due; it drops the deck over the water
+/* Today (Ecosystem): a "N lessons ▾" chip on the habitat while lessons are due; it drops the deck over the water
    (full-screen modal on phones). Nothing due: no chip. */
 function lessonsChip() {
-  if (!labsOn()) return '';
+  if (!ecoOn()) return '';
   lessonsListen();
   if (LES.got !== 3) return '';
   const open = !!LES.deck, n = open ? LES.deck.length - LES.i : lessonDeck().length;
@@ -1933,7 +2001,7 @@ async function lessonAct(action, text) {
   LES.lessons[id] = { id, ...body };
   const ans = { lesson_id: id, source_id: l.source_id, action, format: r.format, date: TODAY, created_at: Date.now() };
   if (text) ans.text = text;
-  if (['advance', 'wrong', 'again'].includes(action)) { LES.n++; labsLessonDone(); }
+  if (['advance', 'wrong', 'again'].includes(action)) { LES.n++; gameLessonDone(); }
   if (action === 'advance' && body.state === 'graduated') toast('Lesson graduated');
   if (r.format === 'recall' && (action === 'advance' || action === 'wrong')) LES.fb = { r, right: action === 'advance' };
   else if (action !== 'flag') { LES.i++; LES.fb = null; }
@@ -1945,31 +2013,31 @@ async function lessonAct(action, text) {
     await db.collection('lesson_answers').doc().set(ans);
   } catch (e) { console.warn('[lessons] save failed', e); toast('Could not save that lesson'); }
 }
-window.LBLabs = { feed: labsFeed, lessonDone: labsLessonDone, game: () => LABS.game, render: () => render() };
+window.LBGame = { feed: ecoFeed, lessonDone: gameLessonDone, game: () => GAME.game, render: () => render() };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && LES.deck) { lessonClose(); return; } if (e.key === 'Escape' && U.inspect) { U.inspect = null; U.editKeep = null; render(); } });
-/* "a visitor arrived": one visitors_met doc per creature per week, written only with Labs on.
+/* "a visitor arrived": one visitors_met doc per creature per week, written only with the Ecosystem on.
    Talks to the db directly so the collection stays out of store.js's always-on listeners. */
-async function labsVisitor(g) {
-  if (!g.visitor || LABS.metSeen === g.visitorWeek) return;
+async function gameVisitor(g) {
+  if (!g.visitor || GAME.metSeen === g.visitorWeek) return;
   const who = Habitat.visitor;
   if (!who) return;
-  LABS.metSeen = g.visitorWeek;
+  GAME.metSeen = g.visitorWeek;
   try {
     const db = await window.claude.use('db'); if (!db) return;
     const id = (who + '-' + g.visitorWeek).replace(/[^\w-]/g, '_'), body = { creature: who, met_at: Date.now(), biome: g.reef.biome, week: g.visitorWeek, rarity: g.visitor };
     if (LBS.validate('visitors_met', body)) return;
     const col = db.collection('visitors_met');
     const seen = await new Promise((res) => { let off = null; off = col.onSnapshot((snap) => { res(snap.docs.some((d) => d.id === id)); off && off(); }, () => res(true)); });
-    if (!seen) { await col.doc(id).set(body); toast(`A visitor arrived on your reef: ${who}`); }
+    if (!seen) { await col.doc(id).set(body); toast(`A visitor arrived in your ecosystem: ${who}`); }
   } catch (e) { /* preview only: never block the board */ }
 }
 
 /* ---------- boot ---------- */
 try { const th = localStorage.getItem('lb-theme'); if (th === 'dark' || th === 'light') document.documentElement.dataset.theme = th; } catch (e) { /* ignore */ }
-LABS.forced = labsFromUrl(location.href);
-window.LB_LABS_HREF = location.href;
+GAME.forced = gameFromUrl(location.href);
+window.LB_GAME_HREF = location.href;
 readHash();
-if (labsOn()) loadLabs();
+if (gameOn()) loadGame();
 LBDB.start(() => { derive(); if (LBDB.state.status === 'ready') ensureRecurring(); schedule(); });
 render();
 startCal();

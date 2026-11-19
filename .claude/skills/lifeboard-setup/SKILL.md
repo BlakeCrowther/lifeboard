@@ -1,11 +1,11 @@
 ---
 name: lifeboard-setup
-description: Shared, any kind. One-time setup and health check for a fresh clone of lifeboard: model toolchain (Blender, ImageMagick, gltf-transform, optional Blender MCP) + doctor, local preview server, mockdata, Labs flag, publishing, the ?visitor= test hook, and the weekly scheduled-task template. Use on a new machine, when sharing the repo, or when any model skill fails with a tooling error.
+description: Shared, any kind. One-time setup and health check for a fresh clone of lifeboard: model toolchain (Blender, ImageMagick, gltf-transform, optional Blender MCP) + doctor, local preview server, mockdata, Ecosystem/Garden toggles, publishing, the ?visitor= test hook, and the weekly scheduled-task template. Use on a new machine, when sharing the repo, or when any model skill fails with a tooling error.
 ---
 
 # Lifeboard setup (fresh clone)
 
-Order: 1 toolchain + doctor → 2 local preview → 3 Labs flag → 4 publishing → 5 runtime test hook → 6 weekly scheduled task. Run the doctor first; it says exactly what is missing:
+Order: 1 toolchain + doctor → 2 local preview → 3 Ecosystem/Garden toggles → 4 publishing → 5 runtime test hook → 6 weekly scheduled task. Run the doctor first; it says exactly what is missing:
 
 ```bash
 models/shared/tools/doctor.sh          # check only
@@ -41,25 +41,28 @@ models/shared/tools/doctor.sh --fix    # install what brew can install
 - Load order for a local test page (also gitignored: `test.html`): copy `index.html` and insert `<script src="mockdata.js"></script><script src="mock.js"></script>` before `logic.js`.
 - `doctor.sh` checks that `.claude/launch.json` exists and reports `mockdata.js` as optional.
 
-## Labs flag
-The game (reef points, garden, visitors) starts at 0 on the day Labs is first turned on: that date is written once to db `labs_state/game.started` and earlier history is ignored. The reef/habitat counts from that day and never resets weekly; the garden runs Mon–Sun weeks from the first Monday on/after it (plots stay seeds until then). Delete that doc to restart from 0.
-The display-settings popover (sliders icon) has a **Labs** toggle (off by default, saved per viewer as `lb-ui.labs`) that shows the experimental habitat (creatures) and garden (plants) cards. Turn it on to see models in the page; the rest of lifeboard works without it. With Labs on, Grow gets a third view, **Collection**: one diorama per finished biome (plus the one growing now; tap to inspect dates, stats, signature and visitors) and the pressed habit plants.
+## Ecosystem and Garden toggles
+The game (reef points, garden, visitors) starts at 0 on the day the game is first turned on: that date is written once to db `game_state/game.started` and earlier history is ignored. The reef/habitat counts from that day and never resets weekly; the garden runs Mon–Sun weeks from the first Monday on/after it (plots stay seeds until then). Delete that doc to restart from 0.
+The display-settings popover (sliders icon) has **Ecosystem** and **Garden** toggles (both on by default; they and the theme are saved board-wide in db `checks/ui_prefs` as `{eco, garden, theme}` so every device matches, newest change wins) that shows the experimental habitat (creatures) and garden (plants) cards. Turn it on to see models in the page; the rest of lifeboard works without it. With either on, Grow gets a third view, **Collection**: one diorama per finished biome (plus the one growing now; tap to inspect dates, stats, signature and visitors) and the pressed habit plants.
 
 **Biome identity.** `models/biomes.json` gives every biome a `look` (shape language, palette, owned motifs, creature/plant style, motion) under shared `identity_rules`. creature-brief and plant-brief design to it, habitat.js builds its scene frame and pieces from the same identity, and the Collection diorama draws from its palette. A new biome needs a `look`, a `scene` builder in habitat.js `tiers` + `FRAME` + `LOOKS`, and a diorama `MOTIF` in garden.js.
 
 ## Publishing
-- The page is one claude.ai Artifact with the `db` capability, published with the Artifact tool to the **existing** lifeboard artifact URL (never a new URL; AGENTS.md). Files: `index.html` + its scripts (`logic.js`, `schema.js`, `store.js`, `app.js`, `game.js`, `habitat.js`, `garden.js`; check `index.html` for the current list) **plus** `models/roster.json`, `models/biomes.json`, every roster `js` asset (`models/assets/*-glb.js`) and optionally each roster `spec` json (gives locomotion/name; default swim). three.js r170 loads from cdn.jsdelivr.net via the importmap in `index.html`, only when Labs is on. Optional db collection `visitors_met` is written only with Labs on. Creature and plant assets ship with the page; there is no separate model artifact.
+- The page is one claude.ai Artifact with the `db` capability, published with the Artifact tool to the **existing** lifeboard artifact URL (never a new URL; AGENTS.md). Files: `index.html` + its scripts (`logic.js`, `schema.js`, `store.js`, `app.js`, `game.js`, `habitat.js`, `garden.js`; check `index.html` for the current list) **plus** `models/roster.json`, `models/biomes.json`, every roster `js` asset (`models/assets/*-glb.js`) and optionally each roster `spec` json (gives locomotion/name; default swim). three.js r170 loads from cdn.jsdelivr.net via the importmap in `index.html`, only when the Ecosystem is on. Optional db collection `visitors_met` is written only with the Ecosystem on. Creature and plant assets ship with the page; there is no separate model artifact.
 - Never publish `mock.js`, `mockdata.js`, `test.html` or anything under `models/out/`.
 - Someone cloning the repo publishes to an artifact of their own (first publish creates it; reuse that URL afterwards).
 
 ## Runtime test hook
-`habitat.js` supports `?visitor=<id>`, `#visitor=<id>` and `#labs-visitor-<id>` (use the last one in the published artifact, which only passes plain `#name` hashes); any of them turns Labs on for that visit only. It it injects a candidate creature (from `window.LB_CREATURES[<id>]`, e.g. a wrapped `models/out/<id>/<id>-glb.js`) into the habitat so G6 (model-verify) can check it in the real page before it ships.
+`habitat.js` supports `?visitor=<id>`, `#visitor=<id>` and `#visitor-<id>` (use the last one in the published artifact, which only passes plain `#name` hashes); any of them turns the Ecosystem on for that visit only. `#eco` turns it on without a visitor. It it injects a candidate creature (from `window.LB_CREATURES[<id>]`, e.g. a wrapped `models/out/<id>/<id>-glb.js`) into the habitat so G6 (model-verify) can check it in the real page before it ships.
 
-## Weekly scheduled task (template, not registered)
-`.claude/scheduled/weekly-visitor.md` holds the prompt text and a suggested cron (Sunday 06:00). It is not registered on purpose. The Mac must be awake at run time. Register it later from the Claude desktop app → Scheduled, following the steps in that file.
+## Weekly scheduled task (the weekly check)
+`.claude/scheduled/weekly-visitor.md` holds the prompt and the cron shape (`0 <hour> * * <day>`). The weekly check makes the visitor and the garden plants that bloomed or died that week need (SPEC.md Weekly job).
+1. **Ask which day the week starts** (one question, with AskUserQuestion when available): the day habit streaks reset, garden plants grow, and the weekly check runs (early that morning, so the week that just closed is in). Options: "Monday (Recommended)", "Today (<weekday>)", "Sunday", or another day. Write it to the board: `ArtifactData` set `checks/week_start` = `{value: <0 Sun .. 6 Sat>, updated_at: <ms>}` on the lifeboard artifact (skip if it already holds that day). Ask the time only if they care (default 06:00).
+2. Check nothing is registered yet (scheduled-tasks list; or ask). Then, on their yes, register it with the cron for that day and hour (`0 <hour> * * <day>`, same day as `checks/week_start`), the prompt from the template and working directory = this repo (scheduled-tasks create, or the desktop app → Scheduled). Never register without that yes.
+3. The Mac must be awake at run time (the template says how). Changing the day later: re-run this step and update the existing task; don't add a second one.
 
 ## Repo hygiene
 - `models/out/` (builds, QA renders, run ledgers, quarantine) is gitignored local work; `models/assets/` + `models/roster.json` are what ships.
 
 ## Sharing checklist
-Someone cloning this repo needs: the tools above, `doctor.sh` passing, their own `mockdata.js` for local preview, a lifeboard artifact of their own (see AGENTS.md + Publishing), and (optionally) the scheduled task registered from the template.
+Someone cloning this repo needs: the tools above, `doctor.sh` passing, their own `mockdata.js` for local preview, a lifeboard artifact of their own (see AGENTS.md + Publishing), and (optionally) the weekly check registered on the day they chose.

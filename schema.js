@@ -49,7 +49,7 @@
       urgent_sort_order: [T.num], created_at: [T.num], icon_key: [T.str], recurrence_spawned: [T.bool],
       recurrence_series_id: [T.str], recurrence_parent_task_id: [T.str], suggested: [T.bool], project: [T.str],
     },
-    habits: { name: [T.str, 1], key: [T.str], target_per_week: [T.num, 1], streak_floor_per_week: [T.num], sort_order: [T.num], notes: [T.str], icon_key: [T.str], created_at: [T.num] },
+    habits: { name: [T.str, 1], key: [T.str], cadence: [oneOf('week', 'day')], target_per_week: [T.num, 1], streak_floor_per_week: [T.num], sort_order: [T.num], notes: [T.str], icon_key: [T.str], hidden: [T.bool], created_at: [T.num] },
     habit_sessions: { habit_id: [T.str, 1], date: [T.date, 1], created_at: [T.num] },
     groceries: { name: [T.str, 1], group_name: [T.str], checked: [T.bool], sort_order: [T.num], created_at: [T.num] },
     recipes: { name: [T.str, 1], mood: [T.str], url: [T.str], notes: [T.str], status: [oneOf('planned', 'archived')], cooked_at: [T.num], ingredients: [T.arr], time: [T.str], sort_order: [T.num], created_at: [T.num] },
@@ -61,17 +61,17 @@
     checks: { value: [T.any], updated_at: [T.num], week: [T.date] },
     snapshots: { fetched_at: [T.num], weather: [T.obj], surf: [T.obj], tides: [T.arr], events: [T.arr], quote: [T.obj] },
     countdowns: { kind: [T.str, 1], title: [T.str, 1], date: [T.date, 1], detail: [T.str], when: [T.str], gift: [T.str], links: [T.arr], match: [T.arr] },
-    /* Labs (optional): one doc per creature per week when a reef visitor arrives. Written only with Labs on;
+    /* game (optional): one doc per creature per week when a reef visitor arrives. Written only with the Ecosystem on;
        not in COLLECTIONS, so store.js never listens to it. */
-    labs_state: { started: [T.date, 1], created_at: [T.num] },
-    labs_keepsakes: { kind: [oneOf('plant', 'reef'), 1], title: [T.str], note: [T.str], updated_at: [T.num] },
-    /* Labs lessons (SPEC.md Lessons): written by the lesson-make skill; the deck writes level/due/state and answers */
+    game_state: { started: [T.date, 1], created_at: [T.num] }, /* store-tracked: the game's start day */
+    keepsakes: { kind: [oneOf('plant', 'reef'), 1], title: [T.str], note: [T.str], updated_at: [T.num] },
+    /* lessons (SPEC.md Lessons): written by the lesson-make skill; the deck writes level/due/state and answers */
     sources: { title: [T.str, 1], type: [oneOf('book', 'video', 'post', 'article', 'talk', 'podcast', 'course', 'note'), 1], author: [T.str], url: [T.str], size: [T.num], salience: [T.num], ladder: [ladder, 1], intervals: [(v) => Array.isArray(v) && v.length > 0 && v.every((n) => Number.isInteger(n) && n >= 1 && n <= 365)], summary: [T.str], status: [oneOf('active', 'paused', 'finished')], created_at: [T.num] },
     lessons: { source_id: [T.str, 1], level: [T.num, 1], due: [T.date, 1], state: [oneOf('active', 'graduated', 'dropped'), 1], rungs: [rungs, 1], order: [T.num], flagged: [T.bool], created_at: [T.num], updated_at: [T.num] },
     lesson_answers: { lesson_id: [T.str, 1], source_id: [T.str], action: [oneOf('advance', 'wrong', 'again', 'drop', 'skip', 'flag'), 1], format: [T.str], text: [T.str], date: [T.date, 1], created_at: [T.num] },
-    visitors_met: { creature: [T.str, 1], met_at: [T.num, 1], biome: [T.num], week: [T.date], rarity: [oneOf('common', 'rare', 'legendary')] },
+    visitors_met: { creature: [T.str, 1], met_at: [T.num, 1], biome: [T.num], week: [T.date], rarity: [oneOf('common', 'rare', 'exotic', 'legendary')] /* 'legendary' = old name for exotic */ },
   };
-  const OPTIONAL = ['visitors_met', 'labs_state', 'labs_keepsakes', 'sources', 'lessons', 'lesson_answers'];
+  const OPTIONAL = ['visitors_met', 'keepsakes', 'sources', 'lessons', 'lesson_answers'];
 
   function validate(col, doc) {
     const sch = S[col];
