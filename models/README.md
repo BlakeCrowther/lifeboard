@@ -1,6 +1,6 @@
 # Model pipeline (creatures + plants)
 
-Autonomous pipelines that design, build, animate, verify and ship 3D models for lifeboard, with no human in the loop. Two **kinds** share one toolchain: **creatures** (weekly reef/habitat visitors) and **plants** (garden seed species per biome; first archetype `stem_bloom` built, runtime hookup not yet). A model ships only after every gate passes; otherwise the run falls back to a safe variant or ships nothing.
+Autonomous pipelines that design, build, animate, verify and ship 3D models for lifeboard, with no human in the loop. Two **kinds** share one toolchain: **creatures** (weekly reef/habitat visitors) and **plants** (garden seed species per biome; first archetype `stem_bloom`; garden.js plots show them). A model ships only after every gate passes; otherwise the run falls back to a safe variant or ships nothing.
 
 ```
 models/
