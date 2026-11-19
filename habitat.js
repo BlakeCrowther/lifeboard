@@ -684,7 +684,7 @@ attribute float aTip; varying float vTip;
       const o = st.cloudiness, al = st.algae, bleached = st.reef.bleached;
       const now = new Date(), h = now.getHours() + now.getMinutes() / 60;
       const elev = Math.sin(((h - 6) / 12) * Math.PI), day = Math.max(0, elev), night = 1 - smooth(-0.1, 0.25, elev), dusk = Math.max(0, 1 - Math.abs(elev) / 0.3) * (1 - night * 0.6);
-      const nightK = water ? 0.9 : 0.75;
+      const nightK = water ? 0.72 : 0.6; /* how far night pulls the colours toward NIGHT_*: moonlit, still readable */
       const lk = LOOKS[sk] || LOOKS.reef; U.uShallow.value.set(lk.s); U.uDeep.value.set(lk.d);
       U.uShallow.value.lerp(MURK_S, o * 0.65).lerp(ALGAE, al * 0.35).lerp(DUSK, dusk * 0.3).lerp(NIGHT_S, night * nightK);
       U.uDeep.value.lerp(MURK_D, o * 0.6).lerp(NIGHT_D, night * nightK);
@@ -696,10 +696,10 @@ attribute float aTip; varying float vTip;
       const az = ((h - 6) / 12) * Math.PI, sd = new V(Math.cos(az) * 0.55, Math.max(0.35, elev) + 0.5, -0.35).normalize();
       sun.position.copy(sd).multiplyScalar(18); sun.target.position.set(0, 0, -1);
       sun.color.set(night > 0.5 ? 0x8fb8ff : dusk > 0.4 ? 0xffc79a : 0xfff6e8);
-      sun.intensity = (night > 0.5 ? 0.35 : 0.2 + day * (water ? 3.2 : 2.6)) * lightK;
-      domeU.uSunDir.value.copy(sd); domeU.uSunCol.value.set(night > 0.5 ? 0x5a7ab0 : dusk > 0.4 ? 0xffb07a : 0xfff4dc).multiplyScalar((night > 0.5 ? 0.25 : 0.4 + day) * lightK);
+      sun.intensity = (night > 0.5 ? 0.75 : 0.2 + day * (water ? 3.2 : 2.6)) * lightK;
+      domeU.uSunDir.value.copy(sd); domeU.uSunCol.value.set(night > 0.5 ? 0x5a7ab0 : dusk > 0.4 ? 0xffb07a : 0xfff4dc).multiplyScalar((night > 0.5 ? 0.4 : 0.4 + day) * lightK);
       domeU.uSurfCol.value.copy(U.uShallow.value).lerp(C(0xffffff), 0.5).multiplyScalar(water ? (0.25 + day * 0.9) * lightK : 0);
-      scene.environmentIntensity = 0.4 + day * 0.2; hemi.intensity = (0.15 + day * 0.65) * lightK;
+      scene.environmentIntensity = 0.4 + day * 0.2 + night * 0.15; hemi.intensity = (0.15 + day * 0.65 + night * 0.2) * lightK;
       rayU.uRay.value = (water ? 0.16 : 0.24) * day * (1 - o * 0.7);
       if (snowMat) { snowMat.uniforms.uOp.value = water ? 0.45 + o * 0.5 : 0.25; snowMat.uniforms.uCol.value.set(water && night > 0.5 ? 0x7af0ff : fr.mote); }
       if (rockMat) rockMat.color.set(0xffffff).lerp(C(0x9aa060), Math.max(o, al) * 0.6);
@@ -718,7 +718,7 @@ attribute float aTip; varying float vTip;
       coralMats.forEach((m) => { m.emissive = m.emissive || new THREE.Color(); m.emissive.set(bleached ? 0x5a5a58 : 0x000000); });
       grade.uniforms.sat.value = bleached ? 0.35 : st.breaks && st.breaks.sad ? 0.75 : 1.15;
       grade.uniforms.tint.value.set(1, 1, 1).lerp(C(0xd8f0b0), al * 0.5);
-      renderer.toneMappingExposure = water ? 1.05 : 1.0;
+      renderer.toneMappingExposure = (water ? 1.05 : 1.0) + night * 0.2;
       if (stats.bloom) { bloom.strength = 0.28 + night * 0.55; bloom.threshold = 0.9 - night * 0.5; }
       envDirty = true; kick();
     }
