@@ -47,10 +47,29 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
     var postponeButton: NSButton?
     var keyMonitor: Any?
 
+    /* menu-bar clownfish: a template image (follows light/dark menu bar). Stripes and eye are holes (even-odd). */
+    static let clownfish: NSImage? = {
+        let svg = """
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 22 16">
+        <path fill="black" fill-rule="evenodd" d="M2 8.5C2 5 5.4 2.6 9.5 2.6c1.2-1.4 3-2 4.4-1.4-.6.7-.9 1.5-.9 2.3C14.6 4.4 15.8 5.6 16.6 6.8L20.6 3.4c.5 1.6.5 3.3 0 4.9.5 1.6.5 3.3 0 4.9L16.6 9.8C15.4 12 12.6 13.9 9.5 13.9 5.4 13.9 2 11.6 2 8.5Z
+          M6 4.4c.9 1.1 1.3 2.6 1.3 4.1s-.4 3-1.3 4.1c-.9-.4-1.5-.9-1.5-.9.6-.9.9-2 .9-3.2s-.3-2.3-.9-3.2c0 0 .6-.5 1.5-.9Z
+          M11.2 3.1c1 1.4 1.5 3.4 1.5 5.4s-.5 4-1.5 5.4h-1.8c1-1.4 1.6-3.4 1.6-5.4s-.6-4-1.6-5.4Z
+          M4 7.2a.9.9 0 1 0 0 .01Z"/>
+        <path fill="black" d="M8 13.6c.6 1.2 1.6 1.8 2.8 1.6-.5-.5-.8-1-.9-1.7Z"/>
+        </svg>
+        """
+        guard let img = NSImage(data: Data(svg.utf8)) else { return nil }
+        img.size = NSSize(width: 22, height: 16)
+        img.isTemplate = true
+        return img
+    }()
+
     func applicationDidFinishLaunching(_ n: Notification) {
         Settings.register()
         NSApp.setActivationPolicy(.accessory)
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        status.button?.image = Self.clownfish
+        status.button?.imagePosition = .imageLeft
         buildMenu()
         resetWorkTimer()
         let ws = NSWorkspace.shared.notificationCenter
@@ -94,7 +113,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
                                                            eventType: CGEventType(rawValue: ~0)!)
         if idle >= Settings.brk { resetWorkTimer() }
         let left = nextBreak.timeIntervalSince(now)
-        status.button?.title = "🐟 \(Int((left / 60).rounded(.up)))m"
+        status.button?.title = " \(Int((left / 60).rounded(.up)))m"
         if left <= 0 { startBreak() }
     }
 
@@ -151,7 +170,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
         breakStarted = Date()
         homeRedirects = 0
         breakEnds = breakStarted.addingTimeInterval(Settings.brk)
-        status.button?.title = "🐟 break"
+        status.button?.title = " break"
 
         let main = NSScreen.main ?? NSScreen.screens[0]
         for screen in NSScreen.screens {
