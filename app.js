@@ -1070,10 +1070,10 @@ function recordsCard() {
     const wk0 = R[0].st.weeks;
     body = `<div class="tg" role="table" aria-label="Sessions per week, last 12 weeks">
       <span></span>${wk0.map((w, i) => `<span class="h">${w.cur ? 'now' : (11 - i) % 4 === 0 ? `${MON3[toD(w.m).getMonth()]} ${toD(w.m).getDate()}` : ''}</span>`).join('')}<span class="h">hit</span><span class="h">trend</span>
-      ${R.map((r) => `<span class="nm" title="${esc(r.h.name)}: target ${r.h.target}, floor ${r.h.floor}${r.st.streak ? `, ${r.st.streak}-week streak (best ${r.st.best})` : ''}">${esc(r.h.name)}</span>${r.st.weeks.map((w) => `<span class="c l${lvl(r.h, w.n)}${w.cur ? ' cur' : ''}" title="Week of ${MON3[toD(w.m).getMonth()]} ${toD(w.m).getDate()}: ${w.n} of ${r.h.target}">${w.n || ''}</span>`).join('')}<span class="s${r.hit == null ? '' : r.hit >= 0.7 ? ' good' : r.hit < 0.4 ? ' bad' : ''}">${pc(r.hit)}</span><span class="tr">${arrow(r)}</span>`).join('')}
+      ${R.map((r) => `<button type="button" class="nm" data-act="edit-habit" data-id="${r.h.id}" title="${esc(r.h.name)}: target ${r.h.target}, floor ${r.h.floor}${r.st.streak ? `, ${r.st.streak}-week streak (best ${r.st.best})` : ''}. Tap to edit.">${esc(r.h.name)}</button>${r.st.weeks.map((w) => `<span class="c l${lvl(r.h, w.n)}${w.cur ? ' cur' : ''}" title="Week of ${MON3[toD(w.m).getMonth()]} ${toD(w.m).getDate()}: ${w.n} of ${r.h.target}">${w.n || ''}</span>`).join('')}<span class="s${r.hit == null ? '' : r.hit >= 0.7 ? ' good' : r.hit < 0.4 ? ' bad' : ''}">${pc(r.hit)}</span><span class="tr">${arrow(r)}</span>`).join('')}
     </div>
     <div class="legend" style="margin-top:10px"><span><i></i>None</span><span><i class="l1"></i>Below floor</span><span><i class="floor"></i>Floor</span><span><i class="hit"></i>Target</span><span><i class="l4"></i>Above target</span></div>
-    ${attn.length ? `<ul class="recn">${attn.map((r) => `<li><span class="vchip ${r.v}">${esc(r.vt)}</span><span><b>${esc(r.h.name)}</b> ${esc(r.why)}</span></li>`).join('')}</ul>` : ''}
+    ${attn.length ? `<ul class="recn">${attn.map((r) => `<li><span class="vchip ${r.v}">${esc(r.vt)}</span><span><b>${esc(r.h.name)}</b> ${esc(r.why)} <button type="button" class="link" data-act="edit-habit" data-id="${r.h.id}">Adjust</button></span></li>`).join('')}</ul>` : ''}
     <p class="wcnote">Hit % and suggestions use closed weeks since each habit's first session. Weeks close Sunday night.</p>`;
   } else {
     const R = ringHistory(12), lv = (x) => (x.future ? ' fut' : x.n <= 0 ? '' : x.n < RING_GOAL ? ' l1' : x.n <= RING_GOAL + 1 ? ' l3' : ' l4');
@@ -1268,7 +1268,9 @@ function renderSheet() {
   const sh = document.getElementById('sheet'), c = U.sheet; if (!c) return;
   const editing = c.kind === 'task' && c.id ? S.tasks.find((t) => t.id === c.id) : null;
   if (c.kind === 'task' && c.id && !editing) { closeSheet(); return; }
-  const kinds = !editing && c.kind !== 'chat' ? `<div class="kinds" role="group" aria-label="What to add">${[['task', 'Task'], ['item', 'List item'], ['goal', 'Goal'], [S.habits.length ? 'log' : 'habit', 'Habit']].map(([k, l]) => `<button type="button" data-act="sheet-kind" data-val="${k}" aria-pressed="${c.kind === k || (l === 'Habit' && (c.kind === 'log' || c.kind === 'habit'))}">${l}</button>`).join('')}</div>` : '';
+  const eh = c.kind === 'habit' && c.id ? S.habits.find((h) => h.id === c.id) : null;
+  if (c.kind === 'habit' && c.id && !eh) { closeSheet(); return; }
+  const kinds = !editing && !eh && c.kind !== 'chat' ? `<div class="kinds" role="group" aria-label="What to add">${[['task', 'Task'], ['item', 'List item'], ['goal', 'Goal'], [S.habits.length ? 'log' : 'habit', 'Habit']].map(([k, l]) => `<button type="button" data-act="sheet-kind" data-val="${k}" aria-pressed="${c.kind === k || (l === 'Habit' && (c.kind === 'log' || c.kind === 'habit'))}">${l}</button>`).join('')}</div>` : '';
   let title = '', fields = '', submit = 'Save';
   if (c.kind === 'task') {
     const t = editing || { title: '', notes: '', project: '', group: 'Personal', due: TODAY, deadline: '', rule: null, icon: null, ...(c.defaults || {}) };
@@ -1307,11 +1309,11 @@ function renderSheet() {
       <label class="fld"><span>Year</span><input type="number" name="year" value="${TODAY.slice(0, 4)}" inputmode="numeric"></label>
       <label class="fld"><span>Notes</span><textarea name="notes"></textarea></label>`;
   } else if (c.kind === 'habit') {
-    title = 'New habit'; submit = 'Add habit';
-    fields = `<label class="fld"><span>Habit</span><input name="name" required autofocus autocomplete="off" placeholder="e.g. Drumming" value="${esc(c.name || '')}"></label>
-      <div class="two"><label class="fld"><span>Target a week</span><input type="number" name="target" min="1" max="14" value="3" inputmode="numeric"></label><label class="fld"><span>Floor a week</span><input type="number" name="floor" min="1" max="14" value="1" inputmode="numeric"></label></div>
-      <p class="qhint">Hitting the floor keeps the streak alive, even in a slow week.</p>
-      <label class="fld"><span>Notes</span><textarea name="notes" placeholder="What counts as a session"></textarea></label>`;
+    title = eh ? `Edit ${esc(eh.name)}` : 'New habit'; submit = eh ? 'Save' : 'Add habit';
+    fields = `<label class="fld"><span>Habit</span><input name="name" required ${eh ? '' : 'autofocus '}autocomplete="off" placeholder="e.g. Drumming" value="${esc(eh ? eh.name : c.name || '')}"></label>
+      <div class="two"><label class="fld"><span>Target a week</span><input type="number" name="target" min="1" max="14" value="${eh ? eh.target : 3}" inputmode="numeric" ${eh ? 'autofocus' : ''}></label><label class="fld"><span>Floor a week</span><input type="number" name="floor" min="1" max="14" value="${eh ? eh.floor : 1}" inputmode="numeric"></label></div>
+      <p class="qhint">Hitting the floor keeps the streak alive, even in a slow week.${eh ? ' Changes re-score past weeks too (streaks, plants).' : ''}</p>
+      <label class="fld"><span>Notes</span><textarea name="notes" placeholder="What counts as a session">${eh ? esc(eh.notes) : ''}</textarea></label>`;
   } else if (c.kind === 'chat') {
     const t = S.tasks.find((x) => x.id === c.taskId);
     title = 'Ask Claude'; submit = '';
@@ -1376,6 +1378,7 @@ function submitSheet(form) {
   } else if (c.kind === 'habit') {
     const name = (f.name || '').trim(); if (!name) { toast('Name the habit first'); return; }
     const target = Math.max(1, Math.min(14, Math.round(+f.target) || 1)), floor = Math.max(1, Math.min(target, Math.round(+f.floor) || 1));
+    if (c.id) { act((rec) => W.patch('habits', c.id, { name, target_per_week: target, streak_floor_per_week: floor, notes: (f.notes || '').trim() }, rec), `${name}: floor ${floor}, target ${target}`); closeSheet(); render(); return; }
     const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'habit';
     act((rec) => W.create('habits', { key: S.habits.some((h) => h.key === key) ? key + '-' + Date.now().toString(36) : key, name, target_per_week: target, streak_floor_per_week: floor, notes: (f.notes || '').trim(), sort_order: (S.habits.length + 1) * 10 }, rec), 'Habit added');
     U.tab = 'grow'; U.grow = 'habits';
@@ -1584,6 +1587,7 @@ document.addEventListener('click', (e) => {
     case 'fold': UI.fold[b.dataset.key] = b.getAttribute('aria-expanded') !== 'true'; saveUI(); render(); break;
     case 'fab': if (LBDB.state.status === 'ready') openSheet(fabConfig().sheet); break;
     case 'new-habit': openSheet({ kind: 'habit' }); break;
+    case 'edit-habit': if (S.habits.some((h) => h.id === id)) openSheet({ kind: 'habit', id }); break;
     case 'sheet-close': closeSheet(); break;
     case 'sheet-kind': { const f = document.querySelector('#sheet [name=quick], #sheet [name=title], #sheet [name=name]'); U.sheet = { kind: val, list: U.tab === 'lists' ? U.list : 'groceries', name: f ? f.value : '' }; renderSheet(); const n = document.querySelector('#sheet [autofocus]'); n && n.focus(); break; }
     case 'quick-date': { const i = document.getElementById('fDue'); if (i) i.value = val; if (U.sheet && U.sheet.touched) U.sheet.touched.due = true; quickSync(false); break; }
