@@ -16,12 +16,15 @@ Runs unattended. Do not ask the user anything; decide, log, and report.
 `python3 models/shared/tools/ledger.py start <run_id> --builds 6 --minutes 90` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).
 
 ## 1. Should a visitor come?
-Read the game state from the lifeboard artifact db (see AGENTS.md / `game.js`):
+Read the game state from the lifeboard artifact db (see AGENTS.md / `game.js`). The board writes the habitat's status to `checks/labs_reef` whenever it changes: `value = { biome, phase, phases, bleached, dioramas, visitor, visitorWeek }` (ArtifactData `get`). If it's missing (Labs never opened), use biome 0 and common.
 - current `biome`;
-- this week's visitor result (`weekVisitor` → `rare`, or common by default);
+- this week's visitor result (`value.visitor`: `rare`, `common`, or null when bleached);
 - overdue drops (`overdueReward` → `rare` or `legendary`, capped per week and per biome).
 
 The most rare earned this week wins. If the game says no visitor (for example the habitat is bleached), skip and report why.
+
+## 1b. New biome?
+If `models/biomes.json` has no entry for `biome`, or `phase == phases - 1` (final phase) and there is no entry for `biome + 1`: run **biome-brief** for that id first (it validates with `check_biome.py`). It doesn't count toward the build budget. If it fails twice, report it and brief this week's creature for the current biome as usual. A biome brief needs no visitor: run it even when the habitat is bleached.
 
 ## 2. Pipeline (each step is its own skill; pass ids and paths, not prose)
 ```

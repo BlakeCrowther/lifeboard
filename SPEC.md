@@ -64,7 +64,7 @@ The season's random rolls are seeded from the habit key, so every reload agrees.
 
 ## Habitat (rings and tasks)
 
-**Status:** Partly built. Built: Growth from the ring, adaptive phases, 8 biomes, dioramas, weekly visitor, murk, algae, bleaching. Not built: ring = done ÷ committed (the ring is still done ÷ a fixed goal of 3), overdue visitor drops, Claude-invented biomes, Claude-written diorama titles.
+**Status:** Partly built. Built: Growth from the ring, adaptive phases, 8 biomes, dioramas, weekly visitor, murk, algae, bleaching. Not built: ring = done ÷ committed (the ring is still done ÷ a fixed goal of 3), overdue visitor drops, Claude-written diorama titles. Claude-invented biomes: built as the `biome-brief` skill, run by `weekly-visitor`.
 
 Every day earns **Growth** from the day's ring %, and Growth moves the current biome through its phases. Biomes take as long as they take, independent of the garden calendar.
 
@@ -93,7 +93,7 @@ Every day earns **Growth** from the day's ring %, and Growth moves the current b
 | 6 | Cloud canopy | air |
 | 7 | Jungle understory | land |
 
-Each biome owns its shapes, palette, creatures and plants (`look` in `biomes.json`; rules in `models/STYLE.md`), and each phase adds that biome's own things. *Planned:* when the list runs out, the weekly job invents a new biome.
+Each biome owns its shapes, palette, creatures and plants (`look` in `biomes.json`; rules in `models/STYLE.md`), and each phase adds that biome's own things. When the list runs out, the weekly job invents the next biome (`biome-brief`, validated by `models/shared/tools/check_biome.py`): it runs when the habitat is on its final phase and the next biome has no entry, or the habitat is already in a biome with no entry. The board reports its biome and phase to `checks/labs_reef` for this. Restarting with fresh biomes (`game-reset`) keeps only biome 0 so every later one is invented.
 
 Finishing the last phase saves the biome as a **diorama** (biome, days taken, full days, Growth earned) and starts the next. Dioramas show in Grow → Collection with a title and note you can edit. *Planned:* Claude names the run and sums it up.
 

@@ -1820,7 +1820,16 @@ function labsAfterRender() {
   /* lesson chip + inline deck sit on the water: move them into the scene box */
   { const hab = slot && slot.querySelector('.hab'); if (hab) { hab.querySelectorAll(':scope > .les-chip, :scope > .les-pop').forEach((e) => e.remove()); } if (hab) slot.parentElement.querySelectorAll(':scope > .les-chip, :scope > .les-pop').forEach((e) => hab.appendChild(e)); }
   const g = labsGame();
-  if (g) { Habitat.setState(g); labsVisitor(g); }
+  if (g) { Habitat.setState(g); labsVisitor(g); labsReefStatus(g); }
+}
+/* checks/labs_reef: the habitat's biome/phase for Claude's weekly run (weekly-visitor reads it to know when a
+   biome is finished and the next one needs designing). Written only when it changes. */
+function labsReefStatus(g) {
+  const r = g.reef, v = { biome: r.biome, phase: r.phase, phases: r.phases, bleached: !!r.bleached, dioramas: (r.dioramas || []).length, visitor: g.visitor || null, visitorWeek: g.visitorWeek || null };
+  const cur = LBDB.get('checks', 'labs_reef'), key = JSON.stringify(v);
+  if (!LBDB.ready || (cur && JSON.stringify(cur.value) === key) || LABS.reefKey === key) return;
+  LABS.reefKey = key;
+  LBDB.put('checks', 'labs_reef', { value: v, updated_at: Date.now() }).catch((e) => console.warn('[labs] reef status', e));
 }
 const labsFeed = () => { if (labsOn() && window.Habitat) Habitat.feed(6); };
 /* a lesson card was answered: drops food, and logs logs kind 'lesson' once a day (days without one make the creatures hide) */
