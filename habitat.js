@@ -59,8 +59,8 @@
     $('phase').textContent = `Phase ${Math.min(r.phase + 1, r.phases)} of ${r.phases}${r.bleached ? ' · bleached' : ''}`;
     const span = (r.next ?? r.pts) - r.prev, f = span > 0 ? (r.pts - r.prev) / span : 1;
     $('bar').style.width = Math.round(Math.max(0, Math.min(1, f)) * 100) + '%';
-    const t = gm.todayTide, bits = [gm.pf != null ? `preview: day ${Math.round(gm.pf * 31.5)} of ~32` : `${Math.round(r.pts)} / ${r.next ?? '–'} tide points`];
-    bits.push(t ? `today ${Math.round(t.pct * 100)}%${t.full ? ', full tide' : ''}` : 'today neutral');
+    const t = gm.todayTide, bits = [gm.pf != null ? `preview: day ${Math.round(gm.pf * 31.5)} of ~32` : `${Math.round(r.pts)} / ${r.next ?? '–'} growth`];
+    bits.push(t ? `today ${Math.round(t.pct * 100)}%${t.full ? ', full day' : ''}` : 'today neutral');
     if (engine && engine.newToday.length) bits.push(`new today: ${engine.newToday.join(', ')}`);
     else if (engine && engine.nextUp) bits.push(`next: ${engine.nextUp}`);
     if (gm.overdue) bits.push(`${gm.overdue} overdue clouding the water`);

@@ -339,7 +339,7 @@
     let art, kicker, head, sub, body = '';
     if (reef) {
       const b = biomeOf(k.biome), L = b.look || {}, vis = visitorsOf(k.biome);
-      const stats = now ? [['Phase', `${k.phase + 1} / ${k.phases}`], ['Started', k.from ? fmt(k.from) : '—'], ['Tide points', Math.round(k.pts)]] : [['Days', k.days], ['Full days', k.full ?? '—'], ['Tide points', k.pts ?? '—']];
+      const stats = now ? [['Phase', `${k.phase + 1} / ${k.phases}`], ['Started', k.from ? fmt(k.from) : '—'], ['Growth', Math.round(k.pts)]] : [['Days', k.days], ['Full days', k.full ?? '—'], ['Growth', k.pts ?? '—']];
       art = dioramaSVG(b, 240); kicker = `${now ? 'In progress' : 'Diorama'} · ${b.medium || 'water'}`;
       head = now ? `<p class="dio-h">${esc(b.name)}</p>` : nameRow(k, n, 'reef', b.name, editing, 'dio-h');
       sub = `${n.title ? `${esc(b.name)} · ` : ''}${esc(span(k))}`;
