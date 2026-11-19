@@ -7,7 +7,7 @@
     tide: { perPct: 10, fullBonus: 5, phases: 5, targetWeeks: 4.5, defaultDaily: 9, trailingDays: 28, cloudyAt: 10, algaeAfter: 7, algaeAt: 10 },
     visitor: { fullDaysForRare: 6, rareOverdue: 7, legendaryOverdue: 30, overdueDropsPerWeek: 1, legendaryPerBiome: 1 },
     bleach: { days: 14, below: 0.25, recoverDays: 7, recoverAt: 0.5 },
-    lessons: { intervals: [3, 7, 21], deck: 5 },
+    lessons: { intervals: [3, 7, 21], deck: 5, hideAfter: 3 }, /* hideAfter: days without a lesson before creatures hide */
     /* break overlay: each skipped break costs this much growth (never below the current phase); the fish sulk that day */
     breaks: { skipCost: 5 },
   };

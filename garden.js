@@ -27,6 +27,12 @@
   const SPECIES = ['daisy', 'tulip', 'sunflower', 'mushroom', 'cactus', 'fern', 'bonsai', 'lavender'];
   const hash = (s) => { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return h; };
 
+  /* lessons: creatures hide after RULES.lessons.hideAfter days with no lesson. Dormant until the first lesson is logged. */
+  function lessonState(dates, today, dn, LBG) {
+    const last = (dates || []).filter(Boolean).map(dn).filter((d) => d <= today).reduce((a, b) => Math.max(a, b), -Infinity);
+    if (!isFinite(last)) return { daysSince: null, hide: false };
+    const n = today - last; return { daysSince: n, hide: n >= ((LBG.RULES.lessons && LBG.RULES.lessons.hideAfter) || 3) };
+  }
   function deriveGame(input, LBG) {
     LBG = LBG || G.LBG;
     const today = dn(input.today), goal = Math.max(1, input.ringGoal || 3);
@@ -106,6 +112,7 @@
       day: today - first, today: input.today,
       reef: { biome: reef.biome, phase: reef.phase, phases: LBG.RULES.tide.phases, pts: reef.pts, next: reef.th[reef.phase] ?? null, prev: reef.phase ? reef.th[reef.phase - 1] : 0, bleached: reef.bleached, from: ds(first + reef.startDay), dioramas: reef.dioramas.map((d) => ({ ...d, from: d.start != null ? ds(first + d.start) : null, to: d.end != null ? ds(first + d.end) : null })) },
       todayTide, weekTides, events,
+      lessons: lessonState(input.lessonDates, today, dn, LBG),
       breaks: { skipsToday: skipOn[today] || 0, skipCost, lost: Math.round(lost), sad: (skipOn[today] || 0) > 0 },
       overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), algae: LBG.algae(overdueAges),
       visitor: reef.bleached ? null : wv || 'common', visitorWeek: ds(wk),

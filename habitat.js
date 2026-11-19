@@ -64,6 +64,7 @@
     if (engine && engine.newToday.length) bits.push(`new today: ${engine.newToday.join(', ')}`);
     if (gm.overdue) bits.push(`${gm.overdue} overdue clouding the water`);
     if (gm.breaks && gm.breaks.sad) bits.push(`skipped ${gm.breaks.skipsToday > 1 ? gm.breaks.skipsToday + ' breaks' : 'a break'} · the fish noticed${gm.breaks.lost ? ` (−${gm.breaks.lost} growth)` : ''}`);
+    if (gm.lessons && gm.lessons.hide) bits.push(`no lessons in ${gm.lessons.daysSince} days · the fish are hiding`);
     $('line').textContent = bits.join(' · ');
     const v = $('visitor'); const who = forced || (engine && engine.visitorName);
     v.hidden = !who; const vi = engine && engine.visitorInfo, RR = { rare: 'rare', legendary: 'legendary' };
@@ -546,7 +547,8 @@ attribute float aTip; varying float vTip;
       if (sulk) sulk.timeScale = ts;
       const loco = (entry.locomotion || spec.locomotion || 'swim').toLowerCase(), i = pathSeed++;
       const P = { c: [[1.4, 1.2], [-0.6, 0.4], [0.8, -0.6], [-1.8, 1.0]][i % 4], r: [R(1.1, 1.7), R(0.6, 1.0)], y: R(0.7, 1.4), sp: R(0.28, 0.4) * (loco === 'drift' ? 0.4 : loco === 'walk' || loco === 'crawl' ? 0.35 : 1), ph: R(0, 6.28), dir: i % 2 ? -1 : 1 };
-      const c = { id: entry.id, holder, root, mouth, mixer, idle, feed, sulk, rest: idle, loco, P, a: P.ph, len, footY: -bb.min.y, pos: new V(), prev: new V(), yaw: 0, pitch: 0, state: 'roam', target: null, eatEnd: 0, eaten: 0 };
+      const hab = spec.habitat || {}, shelter = hab.shelter || hab.anchor || 'rock';
+      const c = { id: entry.id, holder, root, mouth, mixer, idle, feed, sulk, rest: idle, shelter, loco, P, a: P.ph, len, footY: -bb.min.y, pos: new V(), prev: new V(), yaw: 0, pitch: 0, state: 'roam', target: null, eatEnd: 0, eaten: 0 };
       c.pos.copy(pathPos(c, c.a));
       if (enter && loco !== 'rooted') { c.state = 'enter'; c.pos.x = (k % 2 ? -1 : 1) * 9; c.pos.y += 0.6; } /* swims/flies in from the edge */
       if (entry.rarity === 'legendary') { const gl = new THREE.PointLight(0xffd36a, 1.2, 1.6 + len * 2); holder.add(gl); } /* legendary: a soft golden glow */
@@ -600,11 +602,26 @@ attribute float aTip; varying float vTip;
       const floor = H(c.pos.x, c.pos.z) + (c.loco === 'walk' || c.loco === 'crawl' ? c.footY : c.len * 0.35);
       if (c.pos.y < floor) c.pos.y = floor;
     }
+    /* a spot on the far side of the nearest shelter (as seen from the camera), low, fanned out per creature */
+    function shelterSpot(c) {
+      const live = (k) => colliders.filter((o) => o.kind === k && o.obj.visible);
+      const L = live(c.shelter).length ? live(c.shelter) : live('rock');
+      if (!L.length) { const x = c.i % 2 ? -3.5 : 3.5, z = -4; return new V(x, H(x, z) + c.len * 0.6, z); }
+      const o = L.reduce((a, b) => (a.p.distanceTo(c.pos) <= b.p.distanceTo(c.pos) ? a : b));
+      const away = new V(o.p.x - camera.position.x, 0, o.p.z - camera.position.z).normalize().applyAxisAngle(new V(0, 1, 0), ((c.i % 3) - 1) * 0.6);
+      const p = o.p.clone().addScaledVector(away, Math.max(o.r.x, o.r.z) + c.len * 0.8);
+      p.y = H(p.x, p.z) + (c.loco === 'walk' || c.loco === 'crawl' ? c.footY : c.len * 0.6);
+      return p;
+    }
     function stepCreatures(dt, t, m) {
-      const sad = !!(view() && view().breaks && view().breaks.sad);
+      const v = view(), sad = !!(v && v.breaks && v.breaks.sad), hiding = !!(v && v.lessons && v.lessons.hide);
+      creatures.forEach((c, i) => { c.i = i; });
       for (const c of creatures) {
-        /* mood: the resting loop is 'sulk' (the creature's own mope, from the model pipeline) while sad, else 'idle' */
-        const want = sad && c.sulk ? c.sulk : c.idle;
+        /* mood: the resting loop is 'sulk' (the creature's own mope, from the model pipeline) while sad or hiding, else 'idle' */
+        const want = (sad || hiding) && c.sulk ? c.sulk : c.idle;
+        /* no lessons for days: tuck in by the creature's shelter (spec.habitat.shelter/anchor, else a rock); food (a lesson) brings it out */
+        if (hiding && c.state === 'roam' && c.loco !== 'rooted' && !food.length) { c.state = 'hide'; c.spot = shelterSpot(c); }
+        if (c.state === 'hide' && (!hiding || food.length)) { c.state = 'roam'; c.spot = null; }
         if (want && c.rest && want !== c.rest && c.state !== 'eat') { want.reset().play(); c.rest.crossFadeTo(want, 1.2, false); c.rest = want; }
         c.mixer.update(dt * m);
         if (c.state === 'roam' && food.length && c.eaten < 4 && c.loco !== 'rooted') {
@@ -626,6 +643,8 @@ attribute float aTip; varying float vTip;
         } else if (c.state === 'eat') {
           desired = c.pos.clone();
           if (t >= c.eatEnd) { if (c.feed && c.rest) { c.rest.reset().play(); c.feed.crossFadeTo(c.rest, 0.3, false); } c.state = 'roam'; }
+        } else if (c.state === 'hide') {
+          desired = c.spot.clone().add(new V(Math.sin(t * 0.35 + c.P.ph) * c.len * 0.4, Math.sin(t * 0.25 + c.P.ph) * c.len * 0.15, 0));
         } else if (c.state === 'enter') {
           c.a += dt * m * c.P.sp; const goal = pathPos(c, c.a), v = goal.clone().sub(c.pos), d = v.length();
           desired = d < 0.25 ? goal : c.pos.clone().addScaledVector(v, Math.min(1, (1.3 * dt * m) / d)); if (d < 0.25) c.state = 'roam';
@@ -633,7 +652,7 @@ attribute float aTip; varying float vTip;
           c.a += dt * m * c.P.sp; desired = pathPos(c, c.a);
           if (!food.length) c.eaten = 0;
         }
-        const k = c.state === 'enter' ? 1 : c.state === 'seek' ? 1 - Math.exp(-dt * 2.2) : 1 - Math.exp(-dt * 3);
+        const k = c.state === 'enter' ? 1 : c.state === 'seek' ? 1 - Math.exp(-dt * 2.2) : c.state === 'hide' ? 1 - Math.exp(-dt * 0.7) : 1 - Math.exp(-dt * 3);
         c.prev.copy(c.pos); c.pos.lerp(desired, k * m || (m ? 0 : 1));
         if (c.state === 'seek') { const v = desired.clone().sub(c.pos), d = v.length(), sp = 1.4 * dt; if (d > sp) c.pos.addScaledVector(v, sp / d); }
         if (c.loco !== 'rooted') keepClear(c);

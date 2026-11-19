@@ -1756,8 +1756,9 @@ function labsGame() {
   const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target }));
   const sessions = S.sessions.map((x) => { const h = S.habits.find((k) => k.key === x.h || k.id === x.h); return { h: h ? h.key : x.h, date: x.date }; });
   const breakSkips = LBDB.all('logs').filter((l) => l.kind === 'break' && l.label === 'skip').map((l) => l.date);
+  const lessonDates = LBDB.all('logs').filter((l) => l.kind === 'lesson').map((l) => l.date);
   const br = LBDB.get('checks', 'break_rules'), skipCost = br && br.value && br.value.skipCost != null ? +br.value.skipCost : undefined;
-  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions, start: LABS.start, breakSkips, skipCost }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
+  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions, start: LABS.start, breakSkips, skipCost, lessonDates }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
   LABS.gameKey = key;
   return LABS.game;
 }
@@ -1813,8 +1814,13 @@ function labsAfterRender() {
   if (g) { Habitat.setState(g); labsVisitor(g); }
 }
 const labsFeed = () => { if (labsOn() && window.Habitat) Habitat.feed(6); };
-/* hook for the lesson flow when it lands in app.js: call this when a lesson is answered/completed */
-window.LBLabs = { feed: labsFeed, lessonDone: labsFeed, game: () => LABS.game, render: () => render() };
+/* hook for the lesson flow when it lands in app.js: call this when a lesson is answered/completed.
+   Logs it (logs kind 'lesson'; days without one make the creatures hide) and drops food. */
+function labsLessonDone() {
+  if (LBDB.ready) LBDB.create('logs', { kind: 'lesson', label: 'done', date: TODAY }).catch((err) => console.warn('[lessons] log failed', err));
+  labsFeed();
+}
+window.LBLabs = { feed: labsFeed, lessonDone: labsLessonDone, game: () => LABS.game, render: () => render() };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && U.inspect) { U.inspect = null; U.editKeep = null; render(); } });
 /* "a visitor arrived": one visitors_met doc per creature per week, written only with Labs on.
    Talks to the db directly so the collection stays out of store.js's always-on listeners. */
