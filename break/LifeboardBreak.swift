@@ -29,7 +29,7 @@ final class OverlayWindow: NSWindow {
 }
 
 @MainActor
-final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
+final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDelegate, WKNavigationDelegate {
     var status: NSStatusItem!
     var tick: Timer?
     var nextBreak = Date()
@@ -39,6 +39,8 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
     var pausedUntil: Date?
     var windows: [NSWindow] = []
     var web: WKWebView?
+    var popup: WKWebView?
+    var homeRedirects = 0
     var countdown: NSTextField?
     var skipButton: NSButton?
     var postponeButton: NSButton?
@@ -107,9 +109,34 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
         m.addItem(withTitle: "Reset timer", action: #selector(resetNow), keyEquivalent: "r")
         m.addItem(withTitle: "Pause 1 hour", action: #selector(pauseHour), keyEquivalent: "p")
         m.addItem(.separator())
+        m.addItem(choiceMenu("Work", key: "workMinutes", options: [25, 30, 45, 50, 60, 90]))
+        m.addItem(choiceMenu("Break", key: "breakMinutes", options: [2, 3, 5, 10, 15]))
+        m.addItem(.separator())
         m.addItem(withTitle: "Quit", action: #selector(quit), keyEquivalent: "q")
-        for i in m.items { i.target = self }
+        for i in m.items where i.submenu == nil { i.target = self }
         status.menu = m
+    }
+
+    func choiceMenu(_ title: String, key: String, options: [Double]) -> NSMenuItem {
+        let cur = Settings.d.double(forKey: key)
+        let item = NSMenuItem(title: "\(title): \(Int(cur)) min", action: nil, keyEquivalent: "")
+        let sub = NSMenu()
+        for o in options {
+            let i = NSMenuItem(title: "\(Int(o)) min", action: #selector(choose(_:)), keyEquivalent: "")
+            i.target = self
+            i.representedObject = [key: o]
+            i.state = o == cur ? .on : .off
+            sub.addItem(i)
+        }
+        item.submenu = sub
+        return item
+    }
+
+    @objc func choose(_ i: NSMenuItem) {
+        guard let kv = i.representedObject as? [String: Double], let (k, v) = kv.first else { return }
+        Settings.d.set(v, forKey: k)
+        if k == "workMinutes" { resetWorkTimer() }
+        buildMenu()
     }
     @objc func breakNow() { startBreak() }
     @objc func resetNow() { pausedUntil = nil; resetWorkTimer() }
@@ -121,6 +148,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
     func startBreak() {
         guard breakEnds == nil else { return }
         breakStarted = Date()
+        homeRedirects = 0
         breakEnds = breakStarted.addingTimeInterval(Settings.brk)
         status.button?.title = "🐟 break"
 
@@ -165,6 +193,10 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
         let wv = WKWebView(frame: NSRect(x: 0, y: barH, width: frame.width, height: frame.height - barH),
                            configuration: cfg)
         wv.autoresizingMask = [.width, .height]
+        // Look like Safari so sign-in pages don't reject the embedded view.
+        wv.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+        wv.uiDelegate = self
+        wv.navigationDelegate = self
         wv.setValue(false, forKey: "drawsBackground")
         if let u = URL(string: Settings.url), !Settings.url.isEmpty {
             wv.load(URLRequest(url: u))
@@ -220,7 +252,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
         web?.configuration.userContentController.removeScriptMessageHandler(forName: "lifeboardBreak")
         for w in windows { w.orderOut(nil) }
         windows.removeAll()
-        web = nil; countdown = nil; skipButton = nil; postponeButton = nil
+        popup = nil; web = nil; countdown = nil; skipButton = nil; postponeButton = nil
         log(reason)
         resetWorkTimer()
     }
@@ -233,6 +265,45 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
         let line = "\(ISO8601DateFormatter().string(from: Date()))\t\(reason)\n"
         if let h = try? FileHandle(forWritingTo: f) { h.seekToEndOfFile(); h.write(line.data(using: .utf8)!); try? h.close() }
         else { try? line.write(to: f, atomically: true, encoding: .utf8) }
+    }
+
+    // Sign-in popups (window.open): real child view on top, so window.opener works.
+    func webView(_ wv: WKWebView, createWebViewWith c: WKWebViewConfiguration,
+                 for action: WKNavigationAction, windowFeatures f: WKWindowFeatures) -> WKWebView? {
+        popup?.removeFromSuperview()
+        let p = WKWebView(frame: wv.frame.insetBy(dx: wv.frame.width * 0.25, dy: wv.frame.height * 0.1),
+                          configuration: c)
+        p.customUserAgent = wv.customUserAgent
+        p.uiDelegate = self
+        p.navigationDelegate = self
+        p.autoresizingMask = [.minXMargin, .maxXMargin, .minYMargin, .maxYMargin]
+        wv.superview?.addSubview(p)
+        popup = p
+        return p
+    }
+
+    func webViewDidClose(_ wv: WKWebView) {
+        guard wv == popup else { return }
+        wv.removeFromSuperview(); popup = nil
+        goHomeIfLost()
+    }
+
+    // After sign-in claude.ai lands somewhere other than the lifeboard: go back to it.
+    func webView(_ wv: WKWebView, didFinish nav: WKNavigation!) {
+        log("nav\t\(wv == web ? "main" : "popup")\t\(wv.url?.absoluteString ?? "-")")
+        if wv == web { goHomeIfLost() }
+    }
+
+    func goHomeIfLost() {
+        guard let wv = web, let target = URL(string: Settings.url), !Settings.url.isEmpty,
+              let cur = wv.url, cur.host == target.host else { return }
+        let path = cur.path.lowercased()
+        let authy = ["login", "logout", "auth", "oauth", "magic", "verify", "callback", "sso"]
+        if path.contains("artifact") || authy.contains(where: { path.contains($0) }) { return }
+        guard homeRedirects < 2 else { return }  // never loop
+        homeRedirects += 1
+        log("redirect-home\t\(cur.absoluteString)")
+        wv.load(URLRequest(url: target))
     }
 
     // MARK: JS bridge — page can call window.lifeboardBreak.skip() / .postpone() / .done()
