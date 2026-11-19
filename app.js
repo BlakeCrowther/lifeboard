@@ -1827,9 +1827,14 @@ function labsAfterRender() {
   if (g) { Habitat.setState(g); labsVisitor(g); labsReefStatus(g); }
 }
 /* checks/labs_reef: the habitat's biome/phase for Claude's weekly run (weekly-visitor reads it to know when a
-   biome is finished and the next one needs designing). Written only when it changes. */
+   biome is finished and the next one needs designing), and the garden season for season-seeds (plots = plants to make,
+   crosses = last season's hybrid parent pairs, last = species last season, now = species now). Written only when it changes. */
 function labsReefStatus(g) {
-  const r = g.reef, v = { biome: r.biome, phase: r.phase, phases: r.phases, bleached: !!r.bleached, dioramas: (r.dioramas || []).length, visitor: g.visitor || null, visitorWeek: g.visitorWeek || null };
+  const r = g.reef, se = g.season || {}, prev = (g.history || []).filter((h) => h.season === se.index - 1);
+  const crosses = [...new Set(prev.filter((h) => h.earned && h.earned.hybrid).map((h) => [h.species, h.earned.hybrid].sort().join('|')))].map((x) => x.split('|'));
+  const garden = { season: se.index, from: se.from, week: se.week, of: se.of, opens: se.opens || null, biome: se.biome, plots: (g.plots || []).length,
+    crosses, last: [...new Set(prev.map((h) => h.species))], now: [...new Set((g.plots || []).map((p) => p.species))] };
+  const v = { biome: r.biome, phase: r.phase, phases: r.phases, bleached: !!r.bleached, dioramas: (r.dioramas || []).length, visitor: g.visitor || null, visitorWeek: g.visitorWeek || null, garden };
   const cur = LBDB.get('checks', 'labs_reef'), key = JSON.stringify(v);
   if (!LBDB.ready || (cur && JSON.stringify(cur.value) === key) || LABS.reefKey === key) return;
   LABS.reefKey = key;
