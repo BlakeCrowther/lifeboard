@@ -27,6 +27,15 @@ Finding the url: never hardcode one in this repo. Run Artifact `list` and pick t
 
 Work and break lengths can also be changed from the 🐟 menu without this skill.
 
+### Skip penalty (lives in the lifeboard db, not on this Mac)
+The page logs every break end to `logs` (`kind: 'break'`, `label: skip|done|postpone`). Each skip costs growth in the Labs game (never below the current phase) and the fish sulk for the rest of that day. Ask what a skip should cost; suggest these:
+
+- 0: free, the fish still sulk
+- 5 (default): about half a good day's growth
+- 10: about a full day's growth
+
+Write it with ArtifactData `set` on the user's live lifeboard: collection `checks`, doc `break_rules`, data `{ "value": { "skipCost": <n> }, "updated_at": <ms now> }`. Deleting the doc falls back to `RULES.breaks.skipCost` in `game.js`. The fish only show with Labs on (display menu, or `#labs` on the link).
+
 ## 2. Apply
 ```bash
 defaults write com.lifeboard.break workMinutes -float 45

@@ -64,6 +64,7 @@
     if (engine && engine.newToday.length) bits.push(`new today: ${engine.newToday.join(', ')}`);
     else if (engine && engine.nextUp) bits.push(`next: ${engine.nextUp}`);
     if (gm.overdue) bits.push(`${gm.overdue} overdue clouding the water`);
+    if (gm.breaks && gm.breaks.sad) bits.push(`skipped ${gm.breaks.skipsToday > 1 ? gm.breaks.skipsToday + ' breaks' : 'a break'} · the fish noticed${gm.breaks.lost ? ` (−${gm.breaks.lost} growth)` : ''}`);
     $('line').textContent = bits.join(' · ');
     const v = $('visitor'); const who = forced || (engine && engine.visitorName);
     v.hidden = !who; const vi = engine && engine.visitorInfo, RR = { rare: 'rare', legendary: 'legendary' };
@@ -711,7 +712,7 @@ attribute float aTip; varying float vTip;
       const nxt = growth.filter((g) => g.userData.u > f + 1e-9).sort((a, b) => a.userData.u - b.userData.u)[0];
       nextUp = nxt ? nameOf(nxt) + (nxt.userData.landmark ? ' (landmark)' : '') : null;
       coralMats.forEach((m) => { m.emissive = m.emissive || new THREE.Color(); m.emissive.set(bleached ? 0x5a5a58 : 0x000000); });
-      grade.uniforms.sat.value = bleached ? 0.35 : 1.15;
+      grade.uniforms.sat.value = bleached ? 0.35 : st.breaks && st.breaks.sad ? 0.75 : 1.15;
       grade.uniforms.tint.value.set(1, 1, 1).lerp(C(0xd8f0b0), al * 0.5);
       renderer.toneMappingExposure = water ? 1.05 : 1.0;
       if (stats.bloom) { bloom.strength = 0.28 + night * 0.55; bloom.threshold = 0.9 - night * 0.5; }
@@ -740,7 +741,8 @@ attribute float aTip; varying float vTip;
       growth.forEach((g) => { const t0 = g.userData.t0; if (!t0) return; const k = Math.min(1, (t - t0) / 1600), e = k < 1 ? 1 - Math.pow(1 - k, 3) * (1 - Math.sin(k * 9) * 0.15) : 1;
         g.scale.copy(g.userData.base).multiplyScalar(Math.max(0.01, e)); if (k >= 1) g.userData.t0 = 0; });
       rays.forEach((r, i) => { r.lookAt(camera.position.x, r.position.y, camera.position.z); r.rotateZ(r.userData.slant + m * Math.sin(s * 0.2 + i) * 0.04); });
-      stepCreatures(reduce ? 0.016 : dt, s, reduce ? (food.length ? 1 : 0) : 1);
+      const sulk = (view() && view().breaks && view().breaks.sad) ? 0.45 : 1; /* skipped a break today: the fish mope */
+      stepCreatures((reduce ? 0.016 : dt) * sulk, s, reduce ? (food.length ? 1 : 0) : 1);
       composer.render(dt);
       /* fps over ~2 s after a warm-up; below 40 drops bloom for good */
       if (!fpsChecked && !reduce && ++warm > 45) { fpsN++; fpsT += dt; if (fpsT > 2 && fpsN > 20) { stats.fps = Math.round(fpsN / fpsT); fpsChecked = true; if (stats.fps < 40) { bloom.enabled = false; stats.bloom = false; } } }

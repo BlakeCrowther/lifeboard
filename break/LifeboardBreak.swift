@@ -41,6 +41,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
     var web: WKWebView?
     var popup: WKWebView?
     var homeRedirects = 0
+    var frames: [WKFrameInfo] = []  // every frame that loaded the bridge (the lifeboard runs in an iframe)
     var countdown: NSTextField?
     var skipButton: NSButton?
     var postponeButton: NSButton?
@@ -80,7 +81,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
             let skipIn = Settings.skipDelay - now.timeIntervalSince(breakStarted)
             skipButton?.isEnabled = skipIn <= 0
             skipButton?.title = skipIn > 0 ? "Skip (\(Int(skipIn.rounded(.up))))" : "Skip"
-            web?.evaluateJavaScript("window.lifeboardBreak && window.lifeboardBreak._tick(\(Int(left)))")
+            toFrames("window.lifeboardBreak && window.lifeboardBreak._tick(\(Int(left)))")
             return
         }
         if let p = pausedUntil {
@@ -245,13 +246,17 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
 
     func endBreak(reason: String) {
         guard breakEnds != nil else { return }
-        web?.evaluateJavaScript("window.dispatchEvent(new CustomEvent('lifeboardbreakend',{detail:'\(reason)'}))")
+        toFrames("window.dispatchEvent(new CustomEvent('lifeboardbreakend',{detail:'\(reason)'}))")
         breakEnds = nil
         if let m = keyMonitor { NSEvent.removeMonitor(m); keyMonitor = nil }
         NSApp.presentationOptions = []
-        web?.configuration.userContentController.removeScriptMessageHandler(forName: "lifeboardBreak")
         for w in windows { w.orderOut(nil) }
-        windows.removeAll()
+        let old = windows, oldWeb = web
+        windows.removeAll(); frames.removeAll()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {  // let the page save the end event first
+            oldWeb?.configuration.userContentController.removeScriptMessageHandler(forName: "lifeboardBreak")
+            _ = old
+        }
         popup = nil; web = nil; countdown = nil; skipButton = nil; postponeButton = nil
         log(reason)
         resetWorkTimer()
@@ -316,10 +321,20 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
       done() { webkit.messageHandlers.lifeboardBreak.postMessage('done') },
       _tick(s) { this.secondsLeft = s; window.dispatchEvent(new CustomEvent('lifeboardbreaktick', {detail: s})) }
     };
+    webkit.messageHandlers.lifeboardBreak.postMessage('hello');
     """
+
+    func toFrames(_ js: String) {
+        guard let wv = web else { return }
+        if frames.isEmpty { wv.evaluateJavaScript(js); return }
+        for f in frames { wv.evaluateJavaScript(js, in: f, in: .page, completionHandler: nil) }
+    }
 
     func userContentController(_ c: WKUserContentController, didReceive msg: WKScriptMessage) {
         switch msg.body as? String ?? "" {
+        case "hello":
+            frames.removeAll { $0.request.url == msg.frameInfo.request.url && $0.isMainFrame == msg.frameInfo.isMainFrame }
+            frames.append(msg.frameInfo)
         case "skip": endBreak(reason: "skip-page")
         case "postpone": postponeBreak()
         case "done": endBreak(reason: "done-page")

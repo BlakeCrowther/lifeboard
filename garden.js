@@ -44,11 +44,16 @@
     });
     sessions.forEach((s) => { first = Math.min(first, dn(s.date)); });
     first = Math.max(from(first), today - 365);
+    /* skipped breaks (dates) cost growth on their day; cost from input or RULES */
+    const skipCost = input.skipCost != null ? +input.skipCost : (LBG.RULES.breaks ? LBG.RULES.breaks.skipCost : 0), skipOn = {};
+    (input.breakSkips || []).forEach((s) => { if (s && (start == null || dn(s) >= start)) { const d = dn(s); skipOn[d] = (skipOn[d] || 0) + 1; } });
+    let lost = 0;
     const reef = LBG.newReef(), events = [], tides = [];
     for (let d = first; d <= today; d++) {
       const done = doneOn[d] || 0, tide = done || dueOn[d] ? LBG.dayTide(goal, done) : null;
       tides.push(tide);
       const ev = LBG.reefDay(reef, d - first, tide);
+      if (skipOn[d] && skipCost > 0) { const floor = reef.phase ? reef.th[reef.phase - 1] : 0, before = reef.pts; reef.pts = Math.max(floor, reef.pts - skipOn[d] * skipCost); if (d === today) lost += before - reef.pts; }
       if (ev.length) events.push({ date: ds(d), ev });
     }
     const wk = monday(today), weekTides = tides.slice(Math.max(0, tides.length - (today - wk + 1)));
@@ -101,6 +106,7 @@
       day: today - first, today: input.today,
       reef: { biome: reef.biome, phase: reef.phase, phases: LBG.RULES.tide.phases, pts: reef.pts, next: reef.th[reef.phase] ?? null, prev: reef.phase ? reef.th[reef.phase - 1] : 0, bleached: reef.bleached, from: ds(first + reef.startDay), dioramas: reef.dioramas.map((d) => ({ ...d, from: d.start != null ? ds(first + d.start) : null, to: d.end != null ? ds(first + d.end) : null })) },
       todayTide, weekTides, events,
+      breaks: { skipsToday: skipOn[today] || 0, skipCost, lost: Math.round(lost), sad: (skipOn[today] || 0) > 0 },
       overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), algae: LBG.algae(overdueAges),
       visitor: reef.bleached ? null : wv || 'common', visitorWeek: ds(wk),
       season: { week: (weeksDone % sw) + 1, of: sw, index: si, opens: waiting ? ds(gStart) : null, from: ds(firstWeek + si * sw * 7), ends: ds(firstWeek + (si + 1) * sw * 7 - 1) },

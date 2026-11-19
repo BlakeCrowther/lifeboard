@@ -1755,7 +1755,9 @@ function labsGame() {
   const tasks = S.tasks.map((t) => ({ eff: eff(t), done: t.done, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null }));
   const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target }));
   const sessions = S.sessions.map((x) => { const h = S.habits.find((k) => k.key === x.h || k.id === x.h); return { h: h ? h.key : x.h, date: x.date }; });
-  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions, start: LABS.start }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
+  const breakSkips = LBDB.all('logs').filter((l) => l.kind === 'break' && l.label === 'skip').map((l) => l.date);
+  const br = LBDB.get('checks', 'break_rules'), skipCost = br && br.value && br.value.skipCost != null ? +br.value.skipCost : undefined;
+  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions, start: LABS.start, breakSkips, skipCost }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
   LABS.gameKey = key;
   return LABS.game;
 }
@@ -1840,3 +1842,12 @@ if (labsOn()) loadLabs();
 LBDB.start(() => { derive(); if (LBDB.state.status === 'ready') ensureRecurring(); schedule(); });
 render();
 startCal();
+/* break overlay (break/ app): it injects window.lifeboardBreak and fires lifeboardbreakend with how the break ended.
+   Each end is logged (logs kind 'break'); skips cost growth in the game (RULES.breaks, checks/break_rules). */
+if (window.lifeboardBreak) {
+  window.addEventListener('lifeboardbreakend', (e) => {
+    const r = String(e.detail || ''), label = ['skip', 'skip-page', 'escape'].includes(r) ? 'skip' : r.startsWith('done') ? 'done' : r === 'postpone' ? 'postpone' : null;
+    if (!label || !LBDB.ready) return;
+    LBDB.create('logs', { kind: 'break', label, value: r, date: TODAY }).catch((err) => console.warn('[break] log failed', err));
+  });
+}

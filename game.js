@@ -8,6 +8,8 @@
     visitor: { fullDaysForRare: 6, rareOverdue: 7, legendaryOverdue: 30, overdueDropsPerWeek: 1, legendaryPerBiome: 1 },
     bleach: { days: 14, below: 0.25, recoverDays: 7, recoverAt: 0.5 },
     lessons: { intervals: [3, 7, 21], deck: 5 },
+    /* break overlay: each skipped break costs this much growth (never below the current phase); the fish sulk that day */
+    breaks: { skipCost: 5 },
   };
 
   /* ---------- garden ---------- */
