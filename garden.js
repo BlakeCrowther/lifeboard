@@ -7,7 +7,7 @@
      tasks:    [{ eff: due-or-deadline date | null, done: bool, doneDate: date | null }]
      habits:   [{ key, name, floor, target }]
      sessions: [{ h: habit key, date }]
-     plantPool (optional): { n: biome count, byBiome: { <biome id>: [roster plant ids] } } (3D species, roster kind 'plant')
+     plantPool (optional): { n: biome count, byBiome: { <biome id>: [roster plant ids] }, plants: { <id>: { added, parents } } } (3D species, roster kind 'plant')
    Choices where game.js leaves the mapping open (see the Labs report):
    - Tide day = the Today ring: dayTide(ringGoal, tasks completed that day). A day with nothing done
      and nothing due is neutral (null). Days run from the first task/session date (max 365 back) to today.
@@ -79,18 +79,7 @@
     /* history: one entry per plot per finished season (the gallery's keepsakes), oldest first */
     const history = [], N = SPECIES.length, used = new Set(), speciesOf = {};
     habits.forEach((h) => { if (used.size >= N) used.clear(); let i = ((hash(h.key) % N) + N) % N; while (used.has(SPECIES[i])) i = (i + 1) % N; used.add(SPECIES[i]); speciesOf[h.key] = SPECIES[i]; });
-    /* 3D species: each season, plots (habit order) take distinct species from the roster plants of the biome current on the
-       season's first day; species used last season go last. Short pool: the rest keep their SVG species (speciesOf). */
-    const pool = input.plantPool || null, seasonSpecies = [];
-    const biomeOn = (d) => (biomeAt[d] != null ? biomeAt[d] : d < first ? 0 : reef.biome);
-    for (let s = 0; s <= Math.floor(weeksDone / sw); s++) {
-      const b = biomeOn(firstWeek + s * sw * 7), bb = pool && (pool.byBiome[b] || pool.byBiome[b % Math.max(1, pool.n)]) || [];
-      const prev = new Set(Object.values(seasonSpecies[s - 1] || {})), rng = mulberry(hash('season' + s));
-      const shuf = (a) => { a = a.slice().sort(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-      const order = [...shuf(bb.filter((x) => !prev.has(x))), ...shuf(bb.filter((x) => prev.has(x)))], m = {};
-      habits.forEach((h, i) => { m[h.key] = order[i] || speciesOf[h.key]; });
-      seasonSpecies.push(m);
-    }
+    const si = Math.floor(weeksDone / sw), seasonSpecies = [];
     const plots = habits.map((h) => {
       const counts = {};
       gSessions.forEach((s) => { if (s.h === h.key) { const m = monday(dn(s.date)); counts[m] = (counts[m] || 0) + 1; } });
@@ -101,27 +90,54 @@
         if ((w + 1) % sw === 0) {
           const r = LBG.endSeason([p], rng).plots[0], s0 = firstWeek + (w + 1 - sw) * 7;
           let n = 0; for (let k = 0; k < sw; k++) n += counts[s0 + k * 7] || 0;
-          history.push({ id: `plant-${h.key}-s${seasons}`, kind: 'plant', key: h.key, name: h.name, species: seasonSpecies[seasons][h.key], hi: habits.indexOf(h), season: seasons, from: ds(s0), to: ds(s0 + sw * 7 - 1),
+          history.push({ id: `plant-${h.key}-s${seasons}`, kind: 'plant', key: h.key, name: h.name, species: null, hi: habits.indexOf(h), season: seasons, from: ds(s0), to: ds(s0 + sw * 7 - 1),
             stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], bloomed: r.bloomed, died: r.died, score: r.score, sessions: n, seed: p.seed, earned: r.seed });
           p = LBG.newPlant(r.seed, r.compost); seasons++;
         }
       }
       const week = counts[wk] || 0, need = Math.max(1, h.floor) - week;
-      return { key: h.key, name: h.name, species: seasonSpecies[seasons][h.key], stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], alive: p.alive, wilted: !!p.wilted,
+      return { key: h.key, name: h.name, species: null, stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], alive: p.alive, wilted: !!p.wilted,
         thirsty: !waiting && p.alive && p.stage > 0 && need > 0 && daysLeft <= need + 2, week, floor: h.floor, target: h.target, seed: p.seed, seasons, plant: p,
         /* this week's floor met: the plant grows a stage when the week closes */
         grows: !waiting && p.alive && need <= 0, next: LBG.RULES.garden.stages[Math.min(4, p.stage + 1)], need: Math.max(0, need), waiting };
     });
-    /* hybrids: neighbouring plots (habit order) that both bloom in a season cross; the seed each earns carries the other's species
-       (earned is the next season's seed object, so the new plant shows it too) */
+    /* Species, season by season (growth above doesn't depend on species).
+       3D species: season-seeds builds each season's plants (SPEC.md Garden "Species per season"); a plot can use roster plants
+       added by the end of its season's first week (week 1 is the seed week), from the biome current on the season's first day.
+       Order per plot: the hybrid of last season's cross (roster `parents` = both species), then a distinct species not used
+       last season, then one used last season, then a repeat (short pool or a habit added mid-season); no 3D plant in the biome:
+       its SVG species (speciesOf).
+       Hybrids: neighbouring plots (habit order) that both bloom in a season cross; the seed each earns carries the other's
+       species (earned is the next season's seed object, so the new plant shows it too). */
     const bySeason = {};
     history.forEach((e) => { (bySeason[e.season] = bySeason[e.season] || {})[e.hi] = e; });
-    Object.values(bySeason).forEach((row) => Object.keys(row).forEach((k) => { const a = row[k], b = row[+k + 1]; if (b && a.bloomed && b.bloomed) { a.earned.hybrid = a.earned.hybrid || b.species; b.earned.hybrid = b.earned.hybrid || a.species; } }));
+    const pool = input.plantPool || null, meta = (pool && pool.plants) || {};
+    const biomeOn = (d) => (biomeAt[d] != null ? biomeAt[d] : d < first ? 0 : reef.biome);
+    for (let s = 0; s <= si; s++) {
+      const s0 = firstWeek + s * sw * 7, cut = s0 + 6, b = biomeOn(s0), row = bySeason[s - 1] || {};
+      const ok = (id) => !meta[id] || !meta[id].added || dn(meta[id].added) <= cut;
+      const bb = (pool && (pool.byBiome[b] || pool.byBiome[b % Math.max(1, pool.n)]) || []).filter(ok);
+      const prev = new Set(Object.values(seasonSpecies[s - 1] || {})), rng = mulberry(hash('season' + s)), taken = new Set(), m = {};
+      const shuf = (a) => { a = a.slice().sort(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+      const fresh = shuf(bb.filter((x) => !prev.has(x))), old = shuf(bb.filter((x) => prev.has(x)));
+      habits.forEach((h, i) => {
+        const e = row[i], pa = e && e.earned.hybrid ? [e.species, e.earned.hybrid].sort().join('|') : null;
+        const hy = pa && Object.keys(meta).sort().find((id) => !taken.has(id) && ok(id) && meta[id].parents && meta[id].parents.slice().sort().join('|') === pa);
+        if (hy) { m[h.key] = hy; taken.add(hy); }
+      });
+      const rest = [...fresh, ...old].filter((x) => !taken.has(x));
+      let k = 0;
+      habits.forEach((h) => { if (m[h.key]) return; const x = rest.shift(); if (x) { m[h.key] = x; taken.add(x); } else m[h.key] = bb.length ? [...fresh, ...old][k++ % bb.length] : speciesOf[h.key]; });
+      seasonSpecies.push(m);
+      const cur = bySeason[s] || {};
+      habits.forEach((h, i) => { if (cur[i]) cur[i].species = m[h.key]; });
+      Object.keys(cur).forEach((q) => { const a = cur[q], c = cur[+q + 1]; if (c && a.bloomed && c.bloomed) { a.earned.hybrid = a.earned.hybrid || c.species; c.earned.hybrid = c.earned.hybrid || a.species; } });
+    }
+    plots.forEach((p) => { p.species = seasonSpecies[si][p.key]; });
     history.sort((a, b) => (a.to < b.to ? -1 : a.to > b.to ? 1 : 0));
     const gardenStats = { seasons: Math.floor(weeksDone / sw), blooms: history.filter((x) => x.bloomed).length, withered: history.filter((x) => x.died).length,
       heirloom: history.filter((x) => x.earned.rarity === 'heirloom').length, exotic: history.filter((x) => x.earned.rarity === 'exotic').length,
       mutated: history.filter((x) => x.earned.mutated).length, hybrids: history.filter((x) => x.earned.hybrid).length, sessions: gSessions.length, weeks: weeksDone };
-    const si = Math.floor(weeksDone / sw);
     return {
       day: today - first, today: input.today,
       reef: { biome: reef.biome, phase: reef.phase, phases: LBG.RULES.tide.phases, pts: reef.pts, next: reef.th[reef.phase] ?? null, prev: reef.phase ? reef.th[reef.phase - 1] : 0, bleached: reef.bleached, from: ds(first + reef.startDay), dioramas: reef.dioramas.map((d) => ({ ...d, from: d.start != null ? ds(first + d.start) : null, to: d.end != null ? ds(first + d.end) : null })) },
@@ -130,7 +146,7 @@
       breaks: { skipsToday: skipOn[today] || 0, skipCost, lost: Math.round(lost), sad: (skipOn[today] || 0) > 0 },
       overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), algae: LBG.algae(overdueAges),
       visitor: reef.bleached ? null : wv || 'common', visitorWeek: ds(wk),
-      season: { week: (weeksDone % sw) + 1, of: sw, index: si, opens: waiting ? ds(gStart) : null, from: ds(firstWeek + si * sw * 7), ends: ds(firstWeek + (si + 1) * sw * 7 - 1) },
+      season: { week: (weeksDone % sw) + 1, of: sw, index: si, biome: biomeOn(firstWeek + si * sw * 7), opens: waiting ? ds(gStart) : null, from: ds(firstWeek + si * sw * 7), ends: ds(firstWeek + (si + 1) * sw * 7 - 1) },
       start: start != null ? ds(start) : null,
       plots, history, gardenStats,
     };
@@ -310,9 +326,9 @@
     if (!P3.pool) {
       P3.pool = { n: 1, byBiome: {} };
       Promise.all([fetch('models/roster.json').then((r) => r.json()), fetch('models/biomes.json').then((r) => r.json()).catch(() => null)]).then(([r, b]) => {
-        const pl = (r.models || []).filter((m) => m.kind === 'plant'), by = {};
-        pl.forEach((m) => { P3.entries[m.id] = m; SPN[m.id] = m.name || m.id.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()); (by[m.biome] = by[m.biome] || []).push(m.id); });
-        P3.pool = { n: (b && b.biomes && b.biomes.length) || 1, byBiome: by }; P3.v++;
+        const pl = (r.models || []).filter((m) => m.kind === 'plant'), by = {}, meta = {};
+        pl.forEach((m) => { P3.entries[m.id] = m; SPN[m.id] = m.name || m.id.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()); (by[m.biome] = by[m.biome] || []).push(m.id); meta[m.id] = { added: m.added || null, parents: m.parents || null }; });
+        P3.pool = { n: (b && b.biomes && b.biomes.length) || 1, byBiome: by, plants: meta }; P3.v++;
         if (pl.length && G.LBLabs && G.LBLabs.render) G.LBLabs.render();
       }).catch(() => {});
     }

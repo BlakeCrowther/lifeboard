@@ -26,6 +26,9 @@ The most rare earned this week wins. If the game says no visitor (for example th
 ## 1b. New biome?
 If `models/biomes.json` has no entry for `biome`, or `phase == phases - 1` (final phase) and there is no entry for `biome + 1`: run **biome-brief** for that id first (it validates with `check_biome.py`). It doesn't count toward the build budget. If it fails twice, report it and brief this week's creature for the current biome as usual. A biome brief needs no visitor: run it even when the habitat is bleached.
 
+## 1c. New garden season?
+If `checks/labs_reef` `value.garden.week == 1` (the season's first week, including the week before the garden opens): after this week's visitor (or the no-visitor branch), run **season-seeds** for that season. It has its own ledger runs (`seeds-<garden.from>-<n>`), so it doesn't spend the visitor's budget, and it stops on its own if this season's plants already shipped. Commit its plants on the same branch; one republish covers both. Missed week 1: run it anyway; the plants serve next season.
+
 ## 2. Pipeline (each step is its own skill; pass ids and paths, not prose)
 ```
 creature-brief(biome, rarity) → id

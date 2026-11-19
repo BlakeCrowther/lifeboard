@@ -31,7 +31,7 @@ Each input drives exactly one thing, so no system can game another.
 
 ## Garden (habits)
 
-**Status:** Built (3D species per biome built Nov 18). Not built: rarity looks on 3D plants, herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), seed placement menu, grace token.
+**Status:** Built (3D species per biome built Nov 18; plants made each season, Nov 19). Not built: rarity looks on 3D plants, herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), seed placement menu, grace token.
 
 One plant per habit. Species: the current biome's 3D plants first (below), otherwise one SVG species per habit (`daisy`, `tulip`, `sunflower`, `mushroom`, `cactus`, `fern`, `bonsai`, `lavender`, no repeats until all are used). It grows one stage per week you hit the floor, and dies the first week you don't.
 
@@ -60,7 +60,14 @@ One plant per habit. Species: the current biome's 3D plants first (below), other
 
 The season's random rolls are seeded from the habit key, so every reload agrees.
 
-**Species per season (3D plants).** On each season's first day, plots (habit order) take distinct species from the 3D plants (`models/roster.json`, `kind: "plant"`) of the biome current that day; species the plot row used last season go last, so the garden rotates. A biome change mid-season doesn't touch growing plants. If the biome has fewer plants than there are habits, the remaining plots keep their SVG species (the list above). The plant pipeline (`season-seeds`) therefore keeps each biome stocked with a few more species than habits. Seeds, rarity, mutation, hybrids and pressed plants work the same for either kind (hybrids name the neighbour's species).
+**Species per season (3D plants).** Each season Claude makes that season's plants (`season-seeds`, run by the weekly task in the season's first week): one per plot, for the biome current on the season's first day. That is a hybrid model for each pair of species that crossed last season (roster `parents`), then new species for the other plots. A plot can use 3D plants (`models/roster.json`, `kind: "plant"`) added by the end of its season's first week (every plot is a seed that week); a plant added later waits for the next season. Plots (habit order) pick:
+
+1. a plot whose seed is a hybrid takes the 3D hybrid of its two species, if one exists and isn't taken;
+2. otherwise a distinct species of that biome not used last season, then one used last season;
+3. when those run out (a build failed, or a habit was added mid-season), a species another plot already has this season;
+4. with no 3D plant in that biome at all, its SVG species (the list above).
+
+A biome change mid-season doesn't touch growing plants. Seeds, rarity, mutation, hybrids and pressed plants work the same for either kind (hybrids name the neighbour's species). The board reports the season (plots, last season's crosses and species) in `checks/labs_reef` for the weekly run.
 
 **3D plots.** A plot whose species is a 3D plant shows its model at the plot's stage (`stage_<n>`, `sway_<n>` idle, `tend` when a session is logged); thirsty and withered plots, and any plot before its model loads, use the plant's SVG fallback shape (roster `svg`). Rarity, mutation and hybrid recolours show on the SVG shapes only.
 
