@@ -31,7 +31,7 @@ Each input drives exactly one thing, so no system can game another.
 
 ## Garden (habits)
 
-**Status:** Built. Not built: herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), seed placement menu, grace token.
+**Status:** Built. Not built: 3D seed species in plots (generator built), herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), seed placement menu, grace token.
 
 One plant per habit, one species per habit (`daisy`, `tulip`, `sunflower`, `mushroom`, `cactus`, `fern`, `bonsai`, `lavender`, no repeats until all are used). It grows one stage per week you hit the floor, and dies the first week you don't.
 
@@ -60,7 +60,9 @@ One plant per habit, one species per habit (`daisy`, `tulip`, `sunflower`, `mush
 
 The season's random rolls are seeded from the habit key, so every reload agrees.
 
-**Not built:** pick-your-seed placement (random for now), grace token (off for season 1; revisit after seeing how often weeks get missed), Claude-written titles and notes for pressed plants.
+**3D seed species vs the SVG plots.** Plots stay 2D SVG (`garden.js` `specimen`/`plotSVG`): small, cheap, and they carry looks the 3D files don't (thirsty, withered, rarity/mutation/hybrid recolour). 3D plants (`models/plant/`, roster entries `kind: "plant"`) are **biome seed species**: `season-seeds` designs them for the current biome (`look.plants`), so a new biome (including after `game-reset`) brings its own seeds. *Planned:* the species pool = the 8 SVG species plus the current biome's roster plants; a plot whose species is a roster plant shows its glb at the plot's stage (`stage_<n>` visible, `sway_<n>` idle, `tend` when a session is logged) through the `specimen` seam, falling back to an SVG shape for thirsty/withered and when the glb hasn't loaded. A 3D species grows, scores, seeds and crosses exactly like an SVG one; hybrids of two 3D parents blend their specs (`models/plant/CONTRACT.md`). Generator built (`stem_bloom` archetype); runtime hookup not built.
+
+**Not built:** 3D seed species in plots (see above), pick-your-seed placement (random for now), grace token (off for season 1; revisit after seeing how often weeks get missed), Claude-written titles and notes for pressed plants.
 
 ## Habitat (rings and tasks)
 

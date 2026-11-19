@@ -1,9 +1,10 @@
-# Plant contract (DRAFT)
+# Plant contract
 
-Status: draft. No plant generator exists yet; `models/plant/qa.py` encodes these rules so the first archetype has a target. Shared rules are **not repeated here**: units, meters, Blender scene scale, glTF export settings, materials/texture/bake, ≤ 4 weights normalized, no pops, eased Bezier motion, file-size optimize + `-glb.js` shipping format and the G4 export gate all follow `models/creature/CONTRACT.md` and `models/STYLE.md`. Lines marked ✓ are checked by `models/shared/tools/verify.sh` (shared gates + `plant/qa.py`).
+Status: first generator built (`archetypes/stem_bloom.py`, example `specs/mermaids_cup.json`, passes `verify.sh`). Still open: a plant golden + `qa_calibration.json`, the runtime hookup in `garden.js` (see SPEC.md Garden, "3D seed species"), hybrid blending code. `models/plant/qa.py` encodes the ✓ rules. Shared rules are **not repeated here**: units, meters, Blender scene scale, glTF export settings, materials/texture/bake, ≤ 4 weights normalized, no pops, eased Bezier motion, file-size optimize + `-glb.js` shipping format and the G4 export gate all follow `models/creature/CONTRACT.md` and `models/STYLE.md`. Lines marked ✓ are checked by `models/shared/tools/verify.sh` (shared gates + `plant/qa.py`).
 
 ## One glb per species, five stages
-- ✓ Stage nodes `stage_0` … `stage_4`, matching `game.js RULES.garden.stages`: `seed`, `sprout`, `leafy`, `bud`, `bloom`. Each is an empty (or mesh root) whose children are that stage's geometry.
+- ✓ Stage nodes `stage_0` … `stage_4`, matching `game.js RULES.garden.stages`: `seed`, `sprout`, `leafy`, `bud`, `bloom`. Each is an empty (or mesh root) whose children are that stage's geometry. `stem_bloom` ships each stage as one skinned mesh named `stage_<n>`, all sharing one baked material/texture.
+- Every action's frame 0 is the rest pose (each stage's bones are its own, `s<n>_*`), so `tend` crossfades with any `sway_<n>`.
 - Exactly one stage is visible at a time; the runtime toggles visibility. The glb ships all five, all visible at rest (QA measures the union).
 - Stages may share one armature (preferred: one rig, bones unused by early stages stay still) or have per-stage rigs under their stage node.
 - Mesh count: ≤ 3 meshes per stage.

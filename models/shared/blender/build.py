@@ -35,7 +35,8 @@ p = os.path.join(ROOT, kind, "archetypes", spec["archetype"] + ".py")
 if not os.path.exists(p): sys.exit(f"BUILD FAIL: no archetype {spec['archetype']} (novel path: write models/{kind}/archetypes/{spec['archetype']}.py)")
 ms = importlib.util.spec_from_file_location(spec["archetype"], p); arch = importlib.util.module_from_spec(ms); ms.loader.exec_module(arch)
 
-L = spec["size"]["length_m"]
+L = spec["size"].get("length_m", spec["size"].get("height_m"))   # plants: height
+C = (0, 0, L / 2) if kind == "plant" else (0, 0, 0)   # plants are rooted at the soil point
 if hasattr(arch, "blockout"):          # optional cheap silhouette check (side + top), before any detail work
     lib.reset(); arch.blockout(spec)
     print("BUILD blockout", lib.silhouette_renders(os.path.join(out, "blockout"), L))
@@ -55,7 +56,7 @@ lib.bake_to_single_material(mesh, sid, spec.get("budget", {}).get("texture", 102
 json.dump({"id": sid, "archetype": spec["archetype"], "tris": lib.tris(mesh), "roughness": rough, "coat": coat,
            "eyes": lib.EYES, "eye_range": lib.EYE_RANGE, "mouth_parts": mouth_meta}, open(os.path.join(out, "build_meta.json"), "w"), indent=1)
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, f"{sid}_model.blend"))
-lib.quick_render(os.path.join(out, "model.png"), L)
+lib.quick_render(os.path.join(out, "model.png"), L, C)
 print("BUILD model", sid, "tris", lib.tris(mesh))
 if stage == "model": sys.exit(0)
 
