@@ -25,6 +25,7 @@ Ask at most 3 short questions, one message:
 ## 4. Rate and size
 - **size** 1–3 (short post … long book), **salience** 1–3 (how much it matters to the user).
 - Lesson count by type (SPEC table): post/short video 3–5; long article/talk/podcast 4–8; book 10–25. Scale within the range by size × salience.
+- **intervals** (optional, days between reviews; default `[3,7,21]`; it graduates after the last): quotes/inspiration `[7,30,90]`; ideas from books `[3,7,21]` (omit); language/facts `[1,3,7,14]`. Ask if unsure. Ladder `["tap"]` alone makes a quote card.
 - **ladder**: formats the lessons climb, in order, from `tap | recall | apply`. Ideas/books: `["tap","recall","apply"]`. Skills/language/facts: `["recall","apply"]`. Never more than 3 rungs.
 
 ## 5. Write lessons
@@ -37,13 +38,16 @@ Write in plain words, no jargon the source didn't teach. Show the user the list 
 
 ## 6. Write rows
 ArtifactData `batch` on the live board:
-- `sources/<slug>`: `{ title, type, author?, url?, size, salience, ladder, summary (2–3 sentences), status: "active", created_at: <ms> }`. `type` ∈ book, video, post, article, talk, podcast, course, note.
+- `sources/<slug>`: `{ title, type, author?, url?, size, salience, ladder, intervals?, summary (2–3 sentences), status: "active", created_at: <ms> }`. `type` ∈ book, video, post, article, talk, podcast, course, note.
 - `lessons/<slug>-<nn>`: `{ source_id: "<slug>", level: 0, due: "<today YYYY-MM-DD>", state: "active", rungs: [...], order: <n>, created_at: <ms> }`.
 
 Every doc must pass `LBS.validate` (check with `node -e` against `schema.js` before writing). The board skips invalid docs silently.
 
 ## 7. Report
 Source added, lesson count, ladder, and when they start showing (new lessons fill the deck after due reviews, 5 a day). Lessons appear only with Labs on.
+
+## Deck size
+Board-wide cards per day: ArtifactData `set` `checks/lesson_rules` `{ "value": { "deck": <n> }, "updated_at": <ms> }` (default 5).
 
 ## Pausing / removing
 Pause a source: set `sources/<id>.status = "paused"` (its lessons leave the deck). Rewrite a flagged lesson (`flagged: true`) in place and clear the flag.

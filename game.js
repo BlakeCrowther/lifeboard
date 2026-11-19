@@ -115,9 +115,9 @@
     const fresh = act.filter((l) => l.level === 0);
     return rev.concat(fresh).slice(0, n);
   }
-  /* action: advance | wrong | again | drop | skip */
-  function answer(l, action, day) {
-    const iv = RULES.lessons.intervals;
+  /* action: advance | wrong | again | drop | skip. Graduates after the last interval. */
+  /* iv: the source's own intervals when it sets them (sources.intervals), else RULES.lessons.intervals */
+  function answer(l, action, day, iv = RULES.lessons.intervals) {
     if (action === 'drop') l.state = 'dropped';
     else if (action === 'skip') l.due = day + 1;
     else if (action === 'again') l.due = day + iv[Math.max(0, l.level - 1)];

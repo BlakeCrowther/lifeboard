@@ -66,7 +66,7 @@
     labs_state: { started: [T.date, 1], created_at: [T.num] },
     labs_keepsakes: { kind: [oneOf('plant', 'reef'), 1], title: [T.str], note: [T.str], updated_at: [T.num] },
     /* Labs lessons (SPEC.md Lessons): written by the lesson-make skill; the deck writes level/due/state and answers */
-    sources: { title: [T.str, 1], type: [oneOf('book', 'video', 'post', 'article', 'talk', 'podcast', 'course', 'note'), 1], author: [T.str], url: [T.str], size: [T.num], salience: [T.num], ladder: [ladder, 1], summary: [T.str], status: [oneOf('active', 'paused', 'finished')], created_at: [T.num] },
+    sources: { title: [T.str, 1], type: [oneOf('book', 'video', 'post', 'article', 'talk', 'podcast', 'course', 'note'), 1], author: [T.str], url: [T.str], size: [T.num], salience: [T.num], ladder: [ladder, 1], intervals: [(v) => Array.isArray(v) && v.length > 0 && v.every((n) => Number.isInteger(n) && n >= 1 && n <= 365)], summary: [T.str], status: [oneOf('active', 'paused', 'finished')], created_at: [T.num] },
     lessons: { source_id: [T.str, 1], level: [T.num, 1], due: [T.date, 1], state: [oneOf('active', 'graduated', 'dropped'), 1], rungs: [rungs, 1], order: [T.num], flagged: [T.bool], created_at: [T.num], updated_at: [T.num] },
     lesson_answers: { lesson_id: [T.str, 1], source_id: [T.str], action: [oneOf('advance', 'wrong', 'again', 'drop', 'skip', 'flag'), 1], format: [T.str], text: [T.str], date: [T.date, 1], created_at: [T.num] },
     visitors_met: { creature: [T.str, 1], met_at: [T.num, 1], biome: [T.num], week: [T.date], rarity: [oneOf('common', 'rare', 'legendary')] },

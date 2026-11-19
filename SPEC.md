@@ -117,7 +117,7 @@ Overdue drops are capped: `visitor.overdueDropsPerWeek = 1` a week and `visitor.
 
 ## Lessons
 
-**Status:** Partly built. Built: formats, ladder, daily deck, spaced repetition, card actions, the Today card and deck modal (Labs), feeding/hiding, the lesson-making skill (`.claude/skills/lesson-make`). Planned: perfect lesson week, finish rewards, Collection trophy, book species, weekly rewrite of flagged lessons, pollinators.
+**Status:** Partly built. Built: formats, ladder, daily deck, spaced repetition (per-source intervals), card actions, the habitat chip and deck (Labs), feeding/hiding, the lesson-making skill (`.claude/skills/lesson-make`). Planned: perfect lesson week, finish rewards, Collection trophy, book species, weekly rewrite of flagged lessons, pollinators.
 
 Short daily lessons from books, videos, posts, courses and notes, resurfacing on a spaced schedule; doing them brings the scenes to life.
 
@@ -133,11 +133,11 @@ Later candidate: **Scenario** (a short situation; pick which idea applies). Drop
 
 **Ladder per source:** each source picks which formats its lessons climb through, in order, and a lesson's format follows its level instead of staying fixed. A book might go Tap → Recall → Apply; Spanish skips Tap and goes Recall → Apply. A new lesson starts on the first rung; advancing moves it up a rung and lengthens the interval; a miss drops it a rung and brings it back sooner. The lesson-making skill sets the ladder and writes a prompt for every rung of every lesson.
 
-**Daily deck:** `lessons.deck = 5` lessons, shuffled. Reviews that are due come first, then new lessons. Never more than the deck size.
+**Daily deck:** `lessons.deck = 5` lessons, shuffled (per-board override: `checks/lesson_rules` `{ value: { deck } }`). Reviews that are due come first, then new lessons. Never more than the deck size.
 
-**Spaced repetition:** each lesson tracks its level. Advancing brings it back after `lessons.intervals = [3,7,21]` days for levels 1, 2 and 3; advancing past the last level **graduates** it. A missed Recall drops a level (never below the first rung) and comes back after that level's interval, or tomorrow on the first rung.
+**Spaced repetition:** each lesson tracks its level. Advancing brings it back after `lessons.intervals = [3,7,21]` days for levels 1, 2 and 3; advancing past the last level **graduates** it. A source can set its own `intervals` (any length, e.g. quotes `[7,30,90]`, a language `[1,3,7,14]`); the lesson-make skill picks them by type. A missed Recall drops a level (never below the first rung) and comes back after that level's interval, or tomorrow on the first rung.
 
-**Where it shows:** a small "N lessons due" card on Today (Labs). Tapping it opens the deck in a near-full-screen modal, one card at a time, about 2 minutes for 5 cards. Each answered card feeds the scene. With nothing due, the card says when the next review is.
+**Where it shows:** a "N lessons ▾" chip on the habitat (Labs) while any are due. Tapping it drops the deck over the water, one card at a time, about 2 minutes for 5 cards (a full-screen modal on phones). Each answered card feeds the scene. Nothing due: no chip.
 
 **Perfect lesson week:** finishing the deck every day Monday to Sunday guarantees next week's visitor is rare or better. It adds to the full-ring rule, so a week can earn it either way.
 
