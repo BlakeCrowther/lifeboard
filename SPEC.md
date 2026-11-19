@@ -31,9 +31,9 @@ Each input drives exactly one thing, so no system can game another.
 
 ## Garden (habits)
 
-**Status:** Built. Not built: herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), seed placement menu, grace token.
+**Status:** Built (3D species per biome built Nov 18). Not built: rarity looks on 3D plants, herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), seed placement menu, grace token.
 
-One plant per habit, one species per habit (`daisy`, `tulip`, `sunflower`, `mushroom`, `cactus`, `fern`, `bonsai`, `lavender`, no repeats until all are used). It grows one stage per week you hit the floor, and dies the first week you don't.
+One plant per habit. Species: the current biome's 3D plants first (below), otherwise one SVG species per habit (`daisy`, `tulip`, `sunflower`, `mushroom`, `cactus`, `fern`, `bonsai`, `lavender`, no repeats until all are used). It grows one stage per week you hit the floor, and dies the first week you don't.
 
 **Inputs** come from fields habits already have: `streak_floor_per_week` (floor) and `target_per_week` (target).
 
@@ -60,7 +60,11 @@ One plant per habit, one species per habit (`daisy`, `tulip`, `sunflower`, `mush
 
 The season's random rolls are seeded from the habit key, so every reload agrees.
 
-**Not built:** pick-your-seed placement (random for now), grace token (off for season 1; revisit after seeing how often weeks get missed), Claude-written titles and notes for pressed plants.
+**Species per season (3D plants).** On each season's first day, plots (habit order) take distinct species from the 3D plants (`models/roster.json`, `kind: "plant"`) of the biome current that day; species the plot row used last season go last, so the garden rotates. A biome change mid-season doesn't touch growing plants. If the biome has fewer plants than there are habits, the remaining plots keep their SVG species (the list above). The plant pipeline (`season-seeds`) therefore keeps each biome stocked with a few more species than habits. Seeds, rarity, mutation, hybrids and pressed plants work the same for either kind (hybrids name the neighbour's species).
+
+**3D plots.** A plot whose species is a 3D plant shows its model at the plot's stage (`stage_<n>`, `sway_<n>` idle, `tend` when a session is logged); thirsty and withered plots, and any plot before its model loads, use the plant's SVG fallback shape (roster `svg`). Rarity, mutation and hybrid recolours show on the SVG shapes only.
+
+**Not built:** rarity/mutation/hybrid looks on 3D plants, pick-your-seed placement (random for now), grace token (off for season 1; revisit after seeing how often weeks get missed), Claude-written titles and notes for pressed plants.
 
 ## Habitat (rings and tasks)
 

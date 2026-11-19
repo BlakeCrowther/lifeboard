@@ -1,6 +1,6 @@
 # Model pipeline (creatures + plants)
 
-Autonomous pipelines that design, build, animate, verify and ship 3D models for lifeboard, with no human in the loop. Two **kinds** share one toolchain: **creatures** (weekly reef/habitat visitors) and **plants** (garden seed species, per season; contract drafted, no generator yet). A model ships only after every gate passes; otherwise the run falls back to a safe variant or ships nothing.
+Autonomous pipelines that design, build, animate, verify and ship 3D models for lifeboard, with no human in the loop. Two **kinds** share one toolchain: **creatures** (weekly reef/habitat visitors) and **plants** (garden seed species per biome; first archetype `stem_bloom`; garden.js plots show them). A model ships only after every gate passes; otherwise the run falls back to a safe variant or ships nothing.
 
 ```
 models/
@@ -9,7 +9,7 @@ models/
   shared/blender/  lib.py  build.py  qa_structural.py (shared gates)  qa_render.py
   shared/tools/    doctor.sh  verify.sh  check_spec.py  optimize.sh  ledger.py
   creature/  CONTRACT.md  archetypes/  specs/  qa.py (creature gates)  qa_calibration.json (golden judge scores)
-  plant/     CONTRACT.md (draft)  archetypes/README.md  specs/  qa.py (plant gates, draft)
+  plant/     CONTRACT.md  archetypes/stem_bloom.py  specs/mermaids_cup.json  qa.py (plant gates)
 ```
 
 Every spec has `kind` (`creature` default | `plant`). Shared code dispatches on it: `build.py` loads `models/<kind>/archetypes/<archetype>.py`; `qa_structural.py` runs the shared gates (tris, materials, texture, NaN, armature, weights, eye meta, rest-pose bbox) and then `models/<kind>/qa.py` (creature: body-plan axes/symmetry, mouth, idle/feed/reach; plant: soil origin, stage nodes, sway/tend); `check_spec.py` and `verify.sh` likewise.
@@ -18,7 +18,7 @@ Skills (`.claude/skills/`), shared steps reused by every kind, kind steps isolat
 ```
 shared:   lifeboard-setup · model-build · model-verify · model-ship
 creature: weekly-visitor (orchestrator) → creature-brief → model-build → creature-animate → model-verify → model-ship
-plant:    season-seeds (orchestrator) → plant-brief → model-build → plant-grow → model-verify → model-ship   (outline only)
+plant:    season-seeds (orchestrator) → plant-brief → model-build → plant-grow → model-verify → model-ship
 ```
 Each step is its own skill, so steps can be re-run alone (e.g. re-animate without re-modeling).
 

@@ -20,7 +20,7 @@ echo "== G2/G3 blender"; blender -b --factory-startup --python "$ROOT/shared/ble
 python3 -c "import json,sys;r=json.load(open('$OUT/g23.json'));[print(('  ok  ' if c['pass'] else '  FAIL'),c['gate'],c['check'],'|',c['detail']) for c in r['checks']];sys.exit(0 if r['pass'] else 1)" || rc=1
 echo "== G4 export";
 RAR=$(python3 -c "import json;print(json.load(open('$SPEC'))['rarity'])")
-LIMIT=$(python3 -c "print({'common':400,'rare':600,'legendary':1200}['$RAR']*1024)")
+LIMIT=$(python3 -c "print({'common':400,'rare':600,'legendary':1200,'heirloom':600,'exotic':1200}['$RAR']*1024)")
 # G4 runs on what ships: optimize exactly like model-ship, then validate + size the optimized file (G2/G3 stay on the source)
 TEXSZ=$(python3 -c "import json;print(json.load(open('$SPEC')).get('budget',{}).get('texture',1024))")
 OPT="$OUT/optimized.glb"; rm -f "$OPT"
@@ -50,6 +50,8 @@ shopt -s nullglob
 if ls "$OUT"/renders/turn_*.png >/dev/null 2>&1; then
   magick montage "$OUT"/renders/turn_*.png -tile 8x1 -geometry 192x192+2+2 -background '#0b2230' "$OUT/row_turn.png"
   IFS=, read -r -a CL <<< "$CLIPS"; rows=("$OUT/row_turn.png"); mot=()
+  if ls "$OUT"/renders/stage_[0-9].png >/dev/null 2>&1; then   # plants: growth strip, seed -> bloom at one scale
+    magick montage "$OUT"/renders/stage_[0-9].png -tile 5x1 -geometry 256x256+2+2 -background '#0b2230' "$OUT/row_stages.png"; rows+=("$OUT/row_stages.png"); fi
   for c in "${CL[@]}"; do   # one strip per clip (creature: idle, feed, sulk; plant: sway_4, tend)
     magick montage "$OUT"/renders/${c}_[0-9].png -tile 6x1 -geometry 256x256+2+2 -background '#0b2230' "$OUT/row_${c}.png"; rows+=("$OUT/row_${c}.png")
     # motion onion-skin: frame 0 opaque + 5 later poses at 40% opacity, one image per clip

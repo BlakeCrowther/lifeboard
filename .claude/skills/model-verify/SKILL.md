@@ -27,6 +27,7 @@ One judge is noisy (the same model scored 3.2–4.0 across judges), so G5 = **3 
 ```json
 {"species_read":1-5,"anatomy":1-5,"style_match":1-5,"artifacts":1-5,"idle_readable":1-5,"feed_readable":1-5,"mouth_correct":true,"notes":["..."],"fix":["..."]}
 ```
+- Plants: images `<qa>/contact.png` (row 2 = growth strip) + `renders/motion_{sway_4,tend}.png`; criteria `species_read, anatomy, style_match, artifacts, growth_readable, sway_readable, tend_readable` (no mouth); anchor + bar from `models/plant/qa_calibration.json` (golden `mermaids_cup`).
 - `species_read`: would someone recognise the reference animal?
 - `artifacts`: 5 = no holes, stretching, flipped normals, floating parts, texture seams or z-fighting, and no part passing through another part in any idle/feed frame (fin through body, arm through arm).
 - Aggregate: per criterion the **median** of the 3 judges; `mouth_correct` = true in ≥ 2 of 3.
@@ -34,7 +35,7 @@ One judge is noisy (the same model scored 3.2–4.0 across judges), so G5 = **3 
 - `report.json.judge` holds the medians plus `judges: [{agent_id, scores}, ×3]`; fix notes come from notes ≥ 2 judges agree on.
 
 ## G6: runtime (in the habitat page)
-1. Wrap: `printf 'window.LB_CREATURES=window.LB_CREATURES||{};window.LB_CREATURES["<id>"]="%s";' "$(base64 -i out/<id>/<id>.glb | tr -d '\n')" > out/<id>/<id>-glb.js` (plants: proposed `window.LB_PLANTS`).
+1. Wrap: `printf 'window.LB_CREATURES=window.LB_CREATURES||{};window.LB_CREATURES["<id>"]="%s";' "$(base64 -i out/<id>/<id>.glb | tr -d '\n')" > out/<id>/<id>-glb.js` (plants: `window.LB_PLANTS`, runtime check in the garden plots, see season-seeds).
 2. Open the habitat page (the card for the creature's biome) with the candidate injected (`?visitor=<id>` test hook) in the built-in browser via `preview_start` (launch config "scratch" or a repo config), at desktop and 375 px widths.
 3. Check:
    - console has no errors;

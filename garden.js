@@ -7,6 +7,7 @@
      tasks:    [{ eff: due-or-deadline date | null, done: bool, doneDate: date | null }]
      habits:   [{ key, name, floor, target }]
      sessions: [{ h: habit key, date }]
+     plantPool (optional): { n: biome count, byBiome: { <biome id>: [roster plant ids] } } (3D species, roster kind 'plant')
    Choices where game.js leaves the mapping open (see the Labs report):
    - Tide day = the Today ring: dayTide(ringGoal, tasks completed that day). A day with nothing done
      and nothing due is neutral (null). Days run from the first task/session date (max 365 back) to today.
@@ -54,13 +55,14 @@
     const skipCost = input.skipCost != null ? +input.skipCost : (LBG.RULES.breaks ? LBG.RULES.breaks.skipCost : 0), skipOn = {};
     (input.breakSkips || []).forEach((s) => { if (s && (start == null || dn(s) >= start)) { const d = dn(s); skipOn[d] = (skipOn[d] || 0) + 1; } });
     let lost = 0;
-    const reef = LBG.newReef(), events = [], tides = [];
+    const reef = LBG.newReef(), events = [], tides = [], biomeAt = {};
     for (let d = first; d <= today; d++) {
       const done = doneOn[d] || 0, tide = done || dueOn[d] ? LBG.dayTide(goal, done) : null;
       tides.push(tide);
       const ev = LBG.reefDay(reef, d - first, tide);
       if (skipOn[d] && skipCost > 0) { const floor = reef.phase ? reef.th[reef.phase - 1] : 0, before = reef.pts; reef.pts = Math.max(floor, reef.pts - skipOn[d] * skipCost); if (d === today) lost += before - reef.pts; }
       if (ev.length) events.push({ date: ds(d), ev });
+      biomeAt[d] = reef.biome;
     }
     const wk = monday(today), weekTides = tides.slice(Math.max(0, tides.length - (today - wk + 1)));
     const overdueAges = tasks.filter((t) => !t.done && t.eff && dn(t.eff) < today).map((t) => today - dn(t.eff));
@@ -77,6 +79,18 @@
     /* history: one entry per plot per finished season (the gallery's keepsakes), oldest first */
     const history = [], N = SPECIES.length, used = new Set(), speciesOf = {};
     habits.forEach((h) => { if (used.size >= N) used.clear(); let i = ((hash(h.key) % N) + N) % N; while (used.has(SPECIES[i])) i = (i + 1) % N; used.add(SPECIES[i]); speciesOf[h.key] = SPECIES[i]; });
+    /* 3D species: each season, plots (habit order) take distinct species from the roster plants of the biome current on the
+       season's first day; species used last season go last. Short pool: the rest keep their SVG species (speciesOf). */
+    const pool = input.plantPool || null, seasonSpecies = [];
+    const biomeOn = (d) => (biomeAt[d] != null ? biomeAt[d] : d < first ? 0 : reef.biome);
+    for (let s = 0; s <= Math.floor(weeksDone / sw); s++) {
+      const b = biomeOn(firstWeek + s * sw * 7), bb = pool && (pool.byBiome[b] || pool.byBiome[b % Math.max(1, pool.n)]) || [];
+      const prev = new Set(Object.values(seasonSpecies[s - 1] || {})), rng = mulberry(hash('season' + s));
+      const shuf = (a) => { a = a.slice().sort(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+      const order = [...shuf(bb.filter((x) => !prev.has(x))), ...shuf(bb.filter((x) => prev.has(x)))], m = {};
+      habits.forEach((h, i) => { m[h.key] = order[i] || speciesOf[h.key]; });
+      seasonSpecies.push(m);
+    }
     const plots = habits.map((h) => {
       const counts = {};
       gSessions.forEach((s) => { if (s.h === h.key) { const m = monday(dn(s.date)); counts[m] = (counts[m] || 0) + 1; } });
@@ -87,13 +101,13 @@
         if ((w + 1) % sw === 0) {
           const r = LBG.endSeason([p], rng).plots[0], s0 = firstWeek + (w + 1 - sw) * 7;
           let n = 0; for (let k = 0; k < sw; k++) n += counts[s0 + k * 7] || 0;
-          history.push({ id: `plant-${h.key}-s${seasons}`, kind: 'plant', key: h.key, name: h.name, species: speciesOf[h.key], hi: habits.indexOf(h), season: seasons, from: ds(s0), to: ds(s0 + sw * 7 - 1),
+          history.push({ id: `plant-${h.key}-s${seasons}`, kind: 'plant', key: h.key, name: h.name, species: seasonSpecies[seasons][h.key], hi: habits.indexOf(h), season: seasons, from: ds(s0), to: ds(s0 + sw * 7 - 1),
             stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], bloomed: r.bloomed, died: r.died, score: r.score, sessions: n, seed: p.seed, earned: r.seed });
           p = LBG.newPlant(r.seed, r.compost); seasons++;
         }
       }
       const week = counts[wk] || 0, need = Math.max(1, h.floor) - week;
-      return { key: h.key, name: h.name, species: speciesOf[h.key], stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], alive: p.alive, wilted: !!p.wilted,
+      return { key: h.key, name: h.name, species: seasonSpecies[seasons][h.key], stage: p.stage, stageName: LBG.RULES.garden.stages[p.stage], alive: p.alive, wilted: !!p.wilted,
         thirsty: !waiting && p.alive && p.stage > 0 && need > 0 && daysLeft <= need + 2, week, floor: h.floor, target: h.target, seed: p.seed, seasons, plant: p,
         /* this week's floor met: the plant grows a stage when the week closes */
         grows: !waiting && p.alive && need <= 0, next: LBG.RULES.garden.stages[Math.min(4, p.stage + 1)], need: Math.max(0, need), waiting };
@@ -250,7 +264,7 @@
   };
   const SP_DEF = Object.keys(DRAW);
   function renderPlant(stage, look, p) {
-    const lk = look || {}, kind = DRAW[lk.kind] ? lk.kind : 'daisy', rar = PET[lk.rarity] ? lk.rarity : 'common', mut = !!lk.mutated;
+    const lk = look || {}, k3 = P3.entries[lk.kind], kind = DRAW[lk.kind] ? lk.kind : k3 && DRAW[k3.svg] ? k3.svg : 'daisy', rar = PET[lk.rarity] ? lk.rarity : 'common', mut = !!lk.mutated;
     const base = rar === 'common' ? SP_ACC[kind] : PET[rar], alt = mut ? 'pmu' : lk.hybrid && SP_ACC[lk.hybrid] && SP_ACC[lk.hybrid] !== base ? SP_ACC[lk.hybrid] : lk.hybrid ? 'pmu' : null;
     const A = (i) => `url(#${p}${alt && i % 2 ? alt : base})`, L1 = `url(#${p}l1)`, L2 = `url(#${p}${mut ? 'pmu' : 'l2'})`;
     const spark = rar === 'exotic' ? `<g fill="#fff6c8"><path d="M56 -22 l1 2.6 l2.6 1 l-2.6 1 l-1 2.6 l-1 -2.6 l-2.6 -1 l2.6 -1z"/><path d="M23 -14 l.7 1.8 l1.8 .7 l-1.8 .7 l-.7 1.8 l-.7 -1.8 l-1.8 -.7 l1.8 -.7z"/><circle cx="54" cy="0" r=".9"/><circle cx="26" cy="-2" r=".7"/></g>` : '';
@@ -276,9 +290,90 @@
   const fmt = (d) => (d ? `${MON[+d.slice(5, 7) - 1]} ${+d.slice(8, 10)}` : '');
   function specimen(stage, look, w = 72, label = '') {
     const p = 'gp' + uid++ + '-';
-    return `<svg class="gplot" viewBox="0 -26 80 92" width="${w}" height="${Math.round((w * 92) / 80)}" role="img" aria-label="${esc(label || LABEL[stage] + ' plant')}">${DEFS(p)}${BED(p)}${renderPlant(stage, look, p)}<path d="M40 7 L3 26 L40 45 L77 26z" fill="url(#${p}gl)" opacity=".5"/></svg>`;
+    return `<svg class="gplot" viewBox="0 -26 80 92" width="${w}" height="${Math.round((w * 92) / 80)}" role="img" aria-label="${esc(label || LABEL[stage] + ' plant')}">${DEFS(p)}${BED(p)}<g class="gpl">${renderPlant(stage, look, p)}</g><path d="M40 7 L3 26 L40 45 L77 26z" fill="url(#${p}gl)" opacity=".5"/></svg>`;
   }
-  const plotSVG = (pl, w) => { const st = visual(pl); return specimen(st, lookOf(pl), w, `${pl.name}: ${LABEL[st].toLowerCase()} ${(SPN[pl.species] || 'plant').toLowerCase()}`); };
+  const plotSVG = (pl, w) => {
+    const st = visual(pl), svg = specimen(st, lookOf(pl), w, `${pl.name}: ${LABEL[st].toLowerCase()} ${(SPN[pl.species] || 'plant').toLowerCase()}`);
+    if (!P3.entries[pl.species] || !STAGES.includes(st)) return svg;            /* thirsty/withered keep the SVG shape */
+    const h = Math.round((w * 92) / 80), dpr = Math.min(2, G.devicePixelRatio || 1); setTimeout(kick3D);
+    return `<span class="gp3w" style="width:${w}px;height:${h}px">${svg}<canvas class="gp3" aria-hidden="true" data-p3="${esc(pl.species)}" data-st="${STAGES.indexOf(st)}" width="${Math.round(w * dpr)}" height="${Math.round(h * dpr)}"></canvas></span>`;
+  };
+
+  /* ---------- 3D plots: roster kind 'plant' (models/plant/CONTRACT.md) ----------
+     plantPool() feeds deriveGame (loads models/roster.json once, then re-renders). A plot whose species is a roster plant
+     gets a canvas over its SVG bed: one shared offscreen WebGL renderer draws each plot (stage_<n> visible, sway_<n> loop,
+     tend once when the tile was just logged) and copies the frame in; the SVG plant (roster `svg` shape) shows until then.
+     Same viewBox scale as the SVG plants: soil point at (40, 28), the bloom ~46 units tall. ~20 fps, paused off-screen. */
+  const P3 = { pool: null, v: 0, entries: {}, ready: {}, loads: {}, K: null, kLoad: null, insts: new WeakMap(), raf: 0, last: 0 };
+  const reduce3 = G.matchMedia ? G.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  function plantPool() {
+    if (!P3.pool) {
+      P3.pool = { n: 1, byBiome: {} };
+      Promise.all([fetch('models/roster.json').then((r) => r.json()), fetch('models/biomes.json').then((r) => r.json()).catch(() => null)]).then(([r, b]) => {
+        const pl = (r.models || []).filter((m) => m.kind === 'plant'), by = {};
+        pl.forEach((m) => { P3.entries[m.id] = m; SPN[m.id] = m.name || m.id.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()); (by[m.biome] = by[m.biome] || []).push(m.id); });
+        P3.pool = { n: (b && b.biomes && b.biomes.length) || 1, byBiome: by }; P3.v++;
+        if (pl.length && G.LBLabs && G.LBLabs.render) G.LBLabs.render();
+      }).catch(() => {});
+    }
+    return P3.pool;
+  }
+  const loadJS = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  function three() {
+    if (!P3.kLoad) P3.kLoad = Promise.all([import('three'), import('three/addons/loaders/GLTFLoader.js'), import('three/addons/utils/SkeletonUtils.js')]).then(([THREE, GL, SU]) => {
+      const r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); r.outputColorSpace = THREE.SRGBColorSpace; r.setClearColor(0x000000, 0);
+      const scene = new THREE.Scene(), sun = new THREE.DirectionalLight(0xfff4e0, 2.4); sun.position.set(3, 5, 2);
+      scene.add(new THREE.HemisphereLight(0xf4fbff, 0x5a3a22, 1.5), sun);
+      const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100); cam.position.set(0.92, 0.36, 0.42).multiplyScalar(20); cam.lookAt(0, 0, 0);
+      P3.K = { THREE, GL, SU, r, scene, cam };
+    });
+    return P3.kLoad;
+  }
+  function loadPlant(id) {
+    if (!P3.loads[id]) P3.loads[id] = (async () => {
+      await three(); const e = P3.entries[id];
+      if (!(G.LB_PLANTS && G.LB_PLANTS[id])) await loadJS('models/' + e.js);
+      const bin = Uint8Array.from(atob(G.LB_PLANTS[id]), (c) => c.charCodeAt(0)).buffer;
+      P3.ready[id] = await new P3.K.GL.GLTFLoader().parseAsync(bin, ''); kick3D();
+    })().catch((err) => console.warn('[garden] plant', id, err));
+    return P3.loads[id];
+  }
+  function inst3(cv) {
+    let it = P3.insts.get(cv); if (it) return it;
+    const id = cv.dataset.p3, g = P3.ready[id]; if (!g) { loadPlant(id); return null; }
+    const { THREE, SU } = P3.K, root = SU.clone(g.scene), n = +cv.dataset.st;
+    root.traverse((o) => { const m = /^stage_(\d)/.exec(o.name); if (m) o.visible = +m[1] === n; if (o.isMesh) o.frustumCulled = false; });
+    const box = new THREE.Box3().setFromObject(root), mixer = new THREE.AnimationMixer(root), clip = (nm) => g.animations.find((a) => a.name === nm);
+    const sway = clip('sway_' + n) ? mixer.clipAction(clip('sway_' + n)) : null, tend = cv.closest('.add') && clip('tend') ? mixer.clipAction(clip('tend')) : null;
+    if (tend) { tend.setLoop(THREE.LoopOnce, 1); tend.play(); mixer.addEventListener('finished', () => { tend.stop(); if (sway) sway.reset().play(); }); } /* tend ends on rest = sway frame 0 */
+    else if (sway) { sway.play(); sway.time = Math.random() * sway.getClip().duration; }
+    it = { root, mixer, H: Math.max(1e-3, box.max.y - box.min.y), drawn: false }; P3.insts.set(cv, it); return it;
+  }
+  function draw3(cv, it, dt) {
+    const { r, scene, cam } = P3.K, W = cv.width, H = cv.height, s = it.H / 46;
+    if (r.domElement.width !== W || r.domElement.height !== H) r.setSize(W, H, false);
+    it.mixer.update(dt);
+    Object.assign(cam, { left: -40 * s, right: 40 * s, top: 54 * s, bottom: -38 * s }); cam.updateProjectionMatrix();
+    scene.add(it.root); r.render(scene, cam); scene.remove(it.root);
+    const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H); ctx.drawImage(r.domElement, 0, 0);
+    if (!it.drawn) { it.drawn = true; cv.parentNode.classList.add('on'); }
+  }
+  function kick3D() { if (!P3.raf && typeof requestAnimationFrame !== 'undefined') P3.raf = requestAnimationFrame(tick3D); }
+  function tick3D(t) {
+    P3.raf = 0;
+    const cvs = [...document.querySelectorAll('canvas.gp3')]; if (!cvs.length) { P3.last = 0; return; }
+    if (!P3.K) { three().then(kick3D, (e) => console.warn('[garden] three', e)); return; }
+    if (P3.last && t - P3.last < 45) { P3.raf = requestAnimationFrame(tick3D); return; }
+    const dt = P3.last ? Math.min(0.1, (t - P3.last) / 1000) : 0; P3.last = t;
+    let pending = false;
+    for (const cv of cvs) {
+      const it = inst3(cv); if (!it) { pending = true; continue; }
+      if (reduce3.matches && it.drawn) continue;
+      const box = cv.getBoundingClientRect(); if (it.drawn && (box.bottom < 0 || box.top > innerHeight)) continue;
+      draw3(cv, it, reduce3.matches ? 0 : dt);
+    }
+    if (!reduce3.matches || pending) P3.raf = requestAnimationFrame(tick3D);
+  }
 
   /* ---- Grow → Collection (dioramas + pressed plants, each with a title and note), stats, logbook ---- */
   let biomeNames = null;
@@ -399,6 +494,6 @@
     return log.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
   }
   const logbookHTML = (items) => `<ol class="lbk">${items.map((x) => `<li class="${x.c}"><span class="num">${fmt(x.d)}</span><span>${esc(x.t)}</span></li>`).join('')}</ol>`;
-  Object.assign(API, { SPN, renderPlant, specimen, plotSVG, visual, collectionHTML, gardenTiles, logbookItems, logbookHTML, LABEL, fmt });
+  Object.assign(API, { plantPool, poolVersion: () => P3.v, SPN, renderPlant, specimen, plotSVG, visual, collectionHTML, gardenTiles, logbookItems, logbookHTML, LABEL, fmt });
   G.LBGarden = API;
 })(typeof window !== 'undefined' ? window : globalThis);

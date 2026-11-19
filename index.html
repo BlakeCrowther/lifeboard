@@ -801,6 +801,7 @@ button.nm{background:none;border:0;padding:0 4px 0 0;margin:0;font:inherit;font-
 @media (hover:hover){.hab-chips,.hab-info{opacity:0;transition:opacity .25s}.hab:hover .hab-chips,.hab:hover .hab-info,.hab:focus-within .hab-chips,.hab:focus-within .hab-info{opacity:1}}
 .hab-msg{position:absolute;inset:auto 12px 50% 12px;margin:0;text-align:center;color:#fff;font-size:13px}
 .gplot{flex:none;overflow:visible}
+.gp3w{position:relative;display:inline-block;line-height:0}.gp3w .gplot{display:block}.gp3{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.gp3w.on .gpl{display:none}
 /* Labs Today: habits as a garden, full width above both columns */
 #main>.today>.gwide{grid-column:1/-1}
 .gwh{display:flex;justify-content:space-between;gap:8px;margin:0 2px 8px;font-size:13px;font-weight:600}
@@ -822,7 +823,7 @@ button.nm{background:none;border:0;padding:0 4px 0 0;margin:0;font:inherit;font-
 .gs-m{color:var(--muted)}.gs-m:hover{color:var(--text)}.gs-m[disabled]{opacity:.3;cursor:default}
 .gs-p{background:var(--accent);color:var(--on)}.gt.met .gs-p{background:var(--good)}
 .gs-n{font-weight:700;font-size:15px}.gs-n small{font-size:12px;font-weight:600;color:var(--muted)}
-.gt.add .gtp svg{animation:gtGrow .5s cubic-bezier(.3,1.6,.5,1)}.gt.sub .gtp svg{animation:gtShrink .35s ease-out}
+.gt.add .gtp .gp3w{animation:gtGrow .5s cubic-bezier(.3,1.6,.5,1)}.gt.add .gtp .gp3w svg{animation:none}.gt.add .gtp svg{animation:gtGrow .5s cubic-bezier(.3,1.6,.5,1)}.gt.sub .gtp svg{animation:gtShrink .35s ease-out}
 .gt.add .ptp i.hot{animation:pipIn .45s cubic-bezier(.3,1.6,.5,1)}.gt.sub .ptp i.hot{animation:pipOut .4s ease-out}
 .gt.add .gs-n{animation:numUp .35s ease-out}.gt.sub .gs-n{animation:numDown .35s ease-out}
 @keyframes gtGrow{40%{transform:scale(1.08) translateY(-3px)}}@keyframes gtShrink{40%{transform:scale(.95)}}

@@ -1761,16 +1761,16 @@ function loadLabs() {
 function labsGame() {
   if (!LABS.ready || LBDB.state.status !== 'ready') return null;
   if (LABS.start === undefined) { labsStart(); return null; }
-  const key = S;
-  if (LABS.gameKey === key && LABS.game && LABS.game.today === TODAY) return LABS.game;
+  const key = S, pool = LBGarden.plantPool(), pv = LBGarden.poolVersion();
+  if (LABS.gameKey === key && LABS.poolV === pv && LABS.game && LABS.game.today === TODAY) return LABS.game;
   const tasks = S.tasks.map((t) => ({ eff: eff(t), done: t.done, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null }));
   const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target }));
   const sessions = S.sessions.map((x) => { const h = S.habits.find((k) => k.key === x.h || k.id === x.h); return { h: h ? h.key : x.h, date: x.date }; });
   const breakSkips = LBDB.all('logs').filter((l) => l.kind === 'break' && l.label === 'skip').map((l) => l.date);
   const lessonDates = LBDB.all('logs').filter((l) => l.kind === 'lesson').map((l) => l.date);
   const br = LBDB.get('checks', 'break_rules'), skipCost = br && br.value && br.value.skipCost != null ? +br.value.skipCost : undefined;
-  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions, start: LABS.start, breakSkips, skipCost, lessonDates }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
-  LABS.gameKey = key;
+  try { LABS.game = LBGarden.deriveGame({ today: TODAY, ringGoal: RING_GOAL, tasks, habits, sessions, start: LABS.start, breakSkips, skipCost, lessonDates, plantPool: pool }); } catch (e) { console.warn('[labs] derive', e); LABS.game = null; }
+  LABS.gameKey = key; LABS.poolV = pv;
   return LABS.game;
 }
 /* the game starts at 0 on the day Labs is first turned on: labs_state/game.started, written once, shared across devices */

@@ -111,6 +111,15 @@ cam = rig(L, C)
 r = play(objs, CLIPS[0]); s0 = r[0] if r else 1; sc.frame_set(s0)
 for i in range(8):
     aim(cam, C, L, 360 * i / 8); fit(cam, silhouette_pts(objs)); shot(f"{OUT}/turn_{i}.png")
+# plants: a growth strip (each stage_<n> alone, side view, one shared framing so growth reads at true scale), then
+# the clip strips and onions show the bloom stage only (the union of five overlapping stages is unjudgeable)
+STG = {o.name.split(".")[0]: o for o in objs if o.type == "MESH" and o.name.startswith("stage_")}
+def solo(keep):
+    for nm, o in STG.items(): o.hide_render = o.hide_viewport = nm != keep
+if STG:
+    aim(cam, C, L, 0, 4); fit(cam, silhouette_pts(objs))
+    for nm in sorted(STG): solo(nm); shot(f"{OUT}/{nm}.png")
+    solo(sorted(STG)[-1])
 for name in CLIPS:
     r = play(objs, name); fr = [int(r[0] + (r[1] - r[0]) * i / 5) for i in range(6)] if r else [s0] * 6
     aim(cam, C, L, 0, 4); fit(cam, frames_pts(objs, fr))

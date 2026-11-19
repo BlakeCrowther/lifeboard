@@ -1,9 +1,10 @@
-# Plant contract (DRAFT)
+# Plant contract
 
-Status: draft. No plant generator exists yet; `models/plant/qa.py` encodes these rules so the first archetype has a target. Shared rules are **not repeated here**: units, meters, Blender scene scale, glTF export settings, materials/texture/bake, ≤ 4 weights normalized, no pops, eased Bezier motion, file-size optimize + `-glb.js` shipping format and the G4 export gate all follow `models/creature/CONTRACT.md` and `models/STYLE.md`. Lines marked ✓ are checked by `models/shared/tools/verify.sh` (shared gates + `plant/qa.py`).
+Status: first generator built (`archetypes/stem_bloom.py`, example `specs/mermaids_cup.json`, passes `verify.sh`). Runtime hookup built (`garden.js`, SPEC.md Garden "Species per season"). Still open: a plant golden + `qa_calibration.json`. `models/plant/qa.py` encodes the ✓ rules. Shared rules are **not repeated here**: units, meters, Blender scene scale, glTF export settings, materials/texture/bake, ≤ 4 weights normalized, no pops, eased Bezier motion, file-size optimize + `-glb.js` shipping format and the G4 export gate all follow `models/creature/CONTRACT.md` and `models/STYLE.md`. Lines marked ✓ are checked by `models/shared/tools/verify.sh` (shared gates + `plant/qa.py`).
 
 ## One glb per species, five stages
-- ✓ Stage nodes `stage_0` … `stage_4`, matching `game.js RULES.garden.stages`: `seed`, `sprout`, `leafy`, `bud`, `bloom`. Each is an empty (or mesh root) whose children are that stage's geometry.
+- ✓ Stage nodes `stage_0` … `stage_4`, matching `game.js RULES.garden.stages`: `seed`, `sprout`, `leafy`, `bud`, `bloom`. Each is an empty (or mesh root) whose children are that stage's geometry. `stem_bloom` ships each stage as one skinned mesh named `stage_<n>`, all sharing one baked material/texture.
+- Every action's frame 0 is the rest pose (each stage's bones are its own, `s<n>_*`), so `tend` crossfades with any `sway_<n>`.
 - Exactly one stage is visible at a time; the runtime toggles visibility. The glb ships all five, all visible at rest (QA measures the union).
 - Stages may share one armature (preferred: one rig, bones unused by early stages stay still) or have per-stage rigs under their stage node.
 - Mesh count: ≤ 3 meshes per stage.
@@ -36,4 +37,4 @@ Rarity comes from the garden (`game.js` `rarityOf`: heirloom ≥ 4, exotic ≥ 7
 `kind: "plant"`, `id`, `name`, `biome`, `rarity` (common|heirloom|exotic), `archetype`, `reference`, `size.height_m`, `palette`, `motion.sway {frames, cycles, amp_deg}`, `motion.tend {frames}`, `budget`, `parents` (hybrids only). `check_spec.py` enforces the shared fields plus sway/tend ranges.
 
 ## Shipping
-Same as creatures: `assets/<id>.glb` + `assets/<id>-glb.js`, roster entry with `"kind": "plant"`. Proposed JS global: `window.LB_PLANTS['<id>']` (runtime owner to confirm; creatures use `window.LB_CREATURES`).
+Same as creatures: `assets/<id>.glb` + `assets/<id>-glb.js` setting `window.LB_PLANTS['<id>']` (base64 glb). Roster entry: `{id, name, kind: "plant", spec, glb, js, biome, rarity, svg, golden, added}`; `name` is shown in the garden, `svg` = the SVG species shape used for thirsty/withered/loading (one of garden.js `SPECIES`). Runtime: `garden.js` (`plantPool`, 3D plots); the board scales the bloom to ~46 SVG units, so thin stems read as hairlines in an 84 px tile: prefer `stem.radius_ratio` ≥ 0.035 and chunky heads.
