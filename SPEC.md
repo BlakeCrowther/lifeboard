@@ -93,7 +93,7 @@ Every day earns **Growth** from the day's ring %, and Growth moves the current b
 | 6 | Cloud canopy | air |
 | 7 | Jungle understory | land |
 
-Each biome owns its shapes, palette, creatures and plants (`look` in `biomes.json`; rules in `models/STYLE.md`), and each phase adds that biome's own things. When the list runs out, the weekly job invents the next biome (`biome-brief`, validated by `models/shared/tools/check_biome.py`): it runs when the habitat is on its final phase and the next biome has no entry, or the habitat is already in a biome with no entry. The board reports its biome and phase to `checks/labs_reef` for this. Restarting with fresh biomes (`game-reset`) keeps only biome 0 so every later one is invented.
+Each biome owns its shapes, palette, creatures and plants (`look` in `biomes.json`; rules in `models/STYLE.md`), and each phase adds that biome's own things. When the list runs out, the weekly job invents the next biome (`biome-brief`, validated by `models/shared/tools/check_biome.py`): it runs when the habitat is on its final phase and the next biome has no entry, or the habitat is already in a biome with no entry. The board reports its biome and phase to `checks/labs_reef` for this. Restarting with fresh biomes (`game-reset`) archives every biome and creature (`models/*.archive.json`) so every one is invented, biome 0 included; until then the habitat shows a plain "Uncharted" water scene. Biome design needs no Blender; creatures do.
 
 Finishing the last phase saves the biome as a **diorama** (biome, days taken, full days, Growth earned) and starts the next. Dioramas show in Grow → Collection with a title and note you can edit. *Planned:* Claude names the run and sums it up.
 
