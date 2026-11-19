@@ -9,6 +9,8 @@ Personal life dashboard, published as a claude.ai Artifact with the `db` capabil
 - `app.js`: views and actions.
 - `mock.js` + `mockdata.js`: local `window.claude.use('db')` stub for testing. `mockdata.js` holds a real-data snapshot and is gitignored.
 
+Live vs repo: the owner's published lifeboard artifact is the live copy; this repo is the template others clone. They drift when the live artifact is edited directly. Rule: before changing either, `read` the live artifact's files and diff them against `main`; port any live-only changes into the repo first (they win unless a Labs/game change replaces them), then make the change here, test with `test.html`, and publish from the repo. Never edit the live artifact without landing the same change in the repo. Others who clone own their copy from that point; only the owner keeps the two in sync.
+
 Publish: Artifact tool with `index.html` and the four scripts as `files`, to the existing lifeboard artifact URL. Data lives in the artifact db, not this repo.
 
 Game layer derives state from db history on load (habit_sessions, checks).

@@ -518,7 +518,7 @@ function viewToday() {
   const gw = labsHabits(hs, hDone, hTot, daysLeft);
   const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow }) : '';
   return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}, there. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}, there.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
-    <div class="today">${gw}<div class="col a">${weekRings()}${labsOn() ? '<div class="labs-slot" data-labs="habitat"></div>' : ''}${gw ? '' : habitRings(hs, hDone, hTot, daysLeft)}${schedule}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
+    <div class="today"><div class="col a">${weekRings()}${labsOn() ? '<div class="labs-slot" data-labs="habitat"></div>' : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${schedule}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
 }
 /* Habit rings: one per habit, filling toward the weekly target. The dot on each ring is the floor that keeps the streak alive. */
 const habitLast = {}; /* sessions this week per habit at the last render: a ring sweeps only when it grows */
@@ -550,31 +550,33 @@ function habitRings(hs, done, tot, daysLeft) {
 function labsHabits(hs, done, tot, daysLeft) {
   if (!labsOn() || !hs.length) return '';
   const g = labsGame(); if (!g) return '';
-  const GD = LBGarden, by = Object.fromEntries(g.plots.map((p) => [p.key, p]));
+  const GD = LBGarden, by = Object.fromEntries(g.plots.map((p) => [p.key, p])), pz = U.pulse;
   const tiles = hs.map(({ h, st, met, low }) => {
+    const anim = pz && !pz.used && pz.id === h.id && pz.w === st.week ? (pz.used = true, pz.d > 0 ? ' add' : ' sub') : '';
     const pl0 = by[h.key]; if (!pl0) return '';
     const pl = pl0, vis = GD.visual(pl);
     let p = '';
-    for (let i = 0; i < h.target; i++) p += `<i class="${i < st.week ? 'on' : ''}${i < h.floor ? ' fl' : ''}"></i>`;
-    for (let i = h.target; i < st.week; i++) p += '<i class="bonus"></i>';
-    const status = pl.waiting ? `Plants Mon ${GD.fmt(g.season.opens)}`
+    const hot = anim ? (pz.d > 0 ? st.week - 1 : st.week) : -1;
+    for (let i = 0; i < h.target; i++) p += `<i class="${i < st.week ? 'on' : ''}${i < h.floor ? ' fl' : ''}${i === hot ? ' hot' : ''}"></i>`;
+    for (let i = h.target; i < st.week; i++) p += `<i class="bonus${i === hot ? ' hot' : ''}"></i>`;
+    const status = pl.waiting ? 'Seed · goes in Monday'
       : !pl.alive ? 'Withered · new seed next season'
       : vis === 'wilt' ? `Thirsty · ${pl.need} more by Sunday`
       : pl.grows ? (pl.stage >= 4 ? (met ? 'In full bloom' : 'Blooming') : `Grows to ${GD.LABEL[pl.next].toLowerCase()} Monday`)
       : pl.stage === 0 ? `${plural(pl.need, 'session')} to sprout` : `${pl.need} more to grow`;
     const cls = !pl.alive || vis === 'wilt' ? ' warn' : pl.grows ? ' good' : '';
     const label = `Log a ${h.name} session today. ${st.week} of ${h.target} this week. Plant: ${GD.LABEL[vis].toLowerCase()}. ${status}.`;
-    return `<li class="gt${met ? ' met' : ''}${low ? ' low' : ''}"><button class="gtp" data-act="log" data-id="${h.id}" aria-label="${esc(label)}">${GD.plotSVG(pl, 84)}</button>
+    return `<li class="gt${met ? ' met' : ''}${low ? ' low' : ''}${anim}"><button class="gtp" data-act="log" data-id="${h.id}" aria-label="${esc(label)}">${GD.plotSVG(pl, 84)}</button>
       <div class="gtm"><span class="ptt"><span class="ptn">${esc(h.name)}</span>${flameBadge(st, low)}</span><span class="ptp" aria-hidden="true">${p}</span><span class="gts${cls}">${esc(status)}</span></div>
-      <div class="gtb"><button class="hminus" data-act="unlog" data-id="${h.id}" aria-label="Remove a ${esc(h.name)} session from this week"${st.week ? '' : ' disabled'}>${ic('minus', 13)}</button><button class="btn sm gtl" data-act="log" data-id="${h.id}" aria-hidden="true" tabindex="-1">${ic('plus', 16)}${st.week}/${h.target}</button></div></li>`;
+      <div class="gstep"><button class="gs-m" data-act="unlog" data-id="${h.id}" aria-label="Remove a ${esc(h.name)} session from this week"${st.week ? '' : ' disabled'}>${ic('minus', 15)}</button><span class="gs-n num" aria-hidden="true">${st.week}<small>/${h.target}</small></span><button class="gs-p" data-act="log" data-id="${h.id}" aria-label="Log a ${esc(h.name)} session today">${ic('plus', 17)}</button></div></li>`;
   }).join('');
   const lowN = hs.filter((x) => x.low).length;
   const wc = dow(TODAY) === 1 || dow(TODAY) === 2 ? weekCheck() : null, last = wc && wc.rows.length ? `Last week: ${wc.kept} of ${wc.rows.length} streaks kept${wc.reset ? `, ${wc.reset} reset` : ''}. ` : '';
-  const msg0 = g.season.opens ? `Seeds go in Monday ${GD.fmt(g.season.opens)}. Sessions this week still count for streaks.` : hs.every((x) => x.met) ? 'Perfect week. Every plant is drinking its fill.' : hs.every((x) => x.st.week >= x.h.floor) ? 'Every plant grows on Monday. The rest is bonus.'
+  const msg0 = g.season.opens ? 'Sessions this week still count for streaks.' : hs.every((x) => x.met) ? 'Perfect week. Every plant is drinking its fill.' : hs.every((x) => x.st.week >= x.h.floor) ? 'Every plant grows on Monday. The rest is bonus.'
     : lowN ? `${plural(lowN, 'plant')} need${lowN === 1 ? 's' : ''} water in the next ${plural(daysLeft, 'day')}.` : 'Tap a plant to log a session. Meet the floor and it grows a stage on Monday.';
-  const sea = g.season.opens ? `Seeds plant Mon ${GD.fmt(g.season.opens)}` : `Season ${g.season.index + 1} · week ${g.season.week} of ${g.season.of}`;
-  return `<section class="sec z-now habitsec gwide">${secH('Habits', goLink('History', 'grow/habits'), 2, `${done}/${tot}`)}
-    <div class="card"><p class="gwh"><span>${esc(sea)}</span>${g.season.opens ? '' : `<span class="muted">ends ${GD.fmt(g.season.ends)}</span>`}</p><ul class="gtiles">${tiles}</ul></div><p class="wmsg">${esc(last + msg0)}</p></section>`;
+  const sea = g.season.opens ? `Season ${g.season.index + 1} starts Mon ${GD.fmt(g.season.opens)}` : `Season ${g.season.index + 1} · week ${g.season.week} of ${g.season.of}`;
+  return `<section class="sec z-now habitsec">${secH('Habits', goLink('History', 'grow/habits'), 2, `${done}/${tot}`)}
+    <div class="card gcard"><p class="gwh"><span>${esc(sea)}</span>${g.season.opens ? '' : `<span class="muted">ends ${GD.fmt(g.season.ends)}</span>`}</p><ul class="gtiles">${tiles}</ul></div><p class="wmsg">${esc(last + msg0)}</p></section>`;
 }
 /* streak badge: solid = safe this week, outlined = still needs the floor, red = at risk */
 function flameBadge(st, low) {
@@ -1206,6 +1208,7 @@ function render() {
   pendingRender = false;
   if (LB.todayStr() !== TODAY) TODAY = LB.todayStr();
   const a = document.activeElement, fk = a && a.dataset && a.dataset.act ? [a.dataset.act, a.dataset.id || a.dataset.val || a.dataset.key || a.dataset.d || ''] : null;
+  const sy = scrollY; /* re-rendering main must not move the page (a log tap used to jump it) */
   writeHash();
   document.getElementById('tabs').innerHTML = TABS.map((t) => `<button class="tab k-${t.id === 'life' ? U.life : t.id === 'grow' ? U.grow : t.id}" data-act="tab" data-val="${t.id}" ${U.tab === t.id ? 'aria-current="page"' : ''}><span class="pill">${ic(t.icon, 23)}</span>${t.label}</button>`).join('');
   const st = LBDB.state.status, ready = st === 'ready';
@@ -1224,8 +1227,9 @@ function render() {
   if (!pop.hidden) renderPop();
   const lt = document.getElementById('ltitle'); const subName = U.tab === 'lists' ? (listDefs().find((l) => l.key === U.list) || BASE_LISTS[0]).title : U.tab === 'life' ? LIFE.find((x) => x[0] === U.life)[1] : U.tab === 'grow' ? GROW.find((x) => x[0] === U.grow)[1] : ''; document.getElementById('barT').innerHTML = !ready ? '' : U.tab === 'today' ? sumHTML(daySummary()) : esc(lt ? lt.textContent : '') + (subName ? ' · ' + esc(subName) : '');
   if (fk) { const sel = `[data-act="${fk[0]}"]` + (fk[1] ? `[data-id="${CSS.escape(fk[1])}"],[data-act="${fk[0]}"][data-val="${CSS.escape(fk[1])}"],[data-act="${fk[0]}"][data-key="${CSS.escape(fk[1])}"],[data-act="${fk[0]}"][data-d="${CSS.escape(fk[1])}"]` : ''); const el = document.querySelector(sel); if (el && el !== document.activeElement) el.focus({ preventScroll: true }); }
-  onScroll();
   labsAfterRender();
+  if (scrollY !== sy) scrollTo(0, sy);
+  onScroll();
 }
 function go(tab, anchor) {
   const [t, sub] = tab.split('/');
@@ -1278,6 +1282,7 @@ function moveTask(id, dir) {
 function logHabit(id, date = TODAY, exception = null) {
   const h = S.habits.find((x) => x.id === id); if (!h) return;
   if (date < mondayOf(TODAY) && !validException(exception)) { toast('That week is closed. Add a reason and evidence to log it.'); return; }
+  if (date >= mondayOf(TODAY)) U.pulse = { id, d: 1, w: habitStats(h, S.sessions).week + 1 };
   act((rec) => W.create('habit_sessions', exception ? { habit_id: h.key, date, exception: { ...exception, at: Date.now() } } : { habit_id: h.key, date }, rec), () => { const st = habitStats(h, S.sessions); return `Logged ${h.name}${date !== TODAY ? ' for ' + relDate(date).toLowerCase() : ''} · ${st.week}/${h.target} this week${st.week === h.target ? '. Target hit!' : ''}`; });
 }
 /* undo an accidental log: removes this week's most recent session of the habit */
@@ -1287,6 +1292,7 @@ function unlogHabit(id) {
   const ss = S.sessions.filter((x) => (x.h === h.key || x.h === h.id) && x.date >= wk && x.date <= TODAY)
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (b.created || 0) - (a.created || 0)));
   if (!ss.length) return;
+  U.pulse = { id, d: -1, w: habitStats(h, S.sessions).week - 1 };
   act((rec) => W.remove('habit_sessions', ss[0].id, rec), () => `Removed a ${h.name} session · ${habitStats(h, S.sessions).week}/${h.target} this week`);
 }
 /* Adjust a suggestion: Claude rewrites it from a short instruction. Without Claude in this view,

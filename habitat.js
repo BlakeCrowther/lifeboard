@@ -37,37 +37,8 @@
   card.innerHTML = `<div class="sec-h"><h3 class="sec-t">Habitat <span class="ct num">Labs</span></h3><span class="hab-ph" data-h="phase"></span></div>
     <div class="hab"><canvas aria-hidden="true"></canvas><div class="hab-chips"><span class="hab-chip" data-h="biome"></span><span class="hab-chip" data-h="visitor" hidden></span></div>
     <div class="hab-info"><div class="hab-bar"><div data-h="bar"></div></div><p data-h="line"></p></div><p class="hab-msg" data-h="msg">Habitat loads when you scroll here.</p></div>`;
-  /* preview: #labs-preview (or ?preview) adds a panel to try phases, overdue, bleaching, biomes and feeding
-     on top of the real state. View-only: nothing is saved. */
-  const PREVIEW = (() => { try { const u = new URL(G.LB_LABS_HREF || location.href); return u.hash === '#labs-preview' || u.searchParams.has('preview'); } catch (e) { return false; } })();
-  const pv = { phase: null, overdue: null, bleached: null, biome: null, pf: null, pf0: null };
-  if (PREVIEW) {
-    const bar = document.createElement('div'); bar.className = 'hab-pv';
-    const btn = (label, fn) => `<button type="button" class="chip" data-pv="${fn}">${label}</button>`;
-    bar.innerHTML = '<span>Preview</span>' + [1, 2, 3, 4, 5].map((n) => btn('Phase ' + n, 'phase:' + (n - 1))).join('')
-      + btn('+1 day', 'day') + btn('+1 week', 'week') + btn('Overdue 0', 'overdue:0') + btn('Overdue 5', 'overdue:5') + btn('Overdue 15', 'overdue:15') + btn('Bleach', 'bleach') + btn('Next biome', 'biome') + btn('Feed', 'feed') + btn('Reset', 'reset');
-    card.appendChild(bar);
-    bar.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-pv]'); if (!b) return; const [k, v] = b.dataset.pv.split(':');
-      const day = 1 / 31.5; /* targetWeeks 4.5 × 7 days per biome */
-      if (k === 'phase') { pv.phase = +v; pv.pf = null; }
-      else if (k === 'day' || k === 'week') { const v0 = view(); const fe = pv.pf ?? (engine ? engine.progress(v0) : 0); pv.pf0 = fe; pv.pf = Math.min(1, fe + (k === 'week' ? 7 : 1) * day); pv.phase = Math.min(4, Math.floor(pv.pf * 5)); } else if (k === 'overdue') pv.overdue = +v; else if (k === 'bleach') pv.bleached = !(view() && view().reef.bleached);
-      else if (k === 'biome') pv.biome = ((pv.biome ?? (game ? game.reef.biome : 0)) + 1) % ((biomes && biomes.biomes.length) || 1);
-      else if (k === 'feed') return Habitat.feed(6); else Object.keys(pv).forEach((x) => { pv[x] = null; });
-      Habitat.setState(game);
-    });
-  }
   /* the state the scene draws: the real game, with preview overrides on top */
-  function view() {
-    if (!game || !PREVIEW) return game;
-    const L = G.LBG, g = { ...game, reef: { ...game.reef } };
-    if (pv.phase != null) { g.reef.phase = pv.phase; if (pv.pf == null) g.pvPhase = true; }
-    if (pv.pf != null) { g.pf = pv.pf; g.pf0 = pv.pf0; }
-    if (pv.bleached != null) g.reef.bleached = pv.bleached;
-    if (pv.biome != null) g.reef.biome = pv.biome;
-    if (pv.overdue != null && L) { g.overdue = pv.overdue; g.cloudiness = L.cloudiness(pv.overdue); g.algae = L.algae(Array(pv.overdue).fill(14)); }
-    return g;
-  }
+  const view = () => game;
   const $ = (k) => card.querySelector(`[data-h="${k}"]`);
   const canvas = card.querySelector('canvas');
   let game = null, biomes = null, roster = null, base = null, forced = visitorOverride(G.LB_LABS_HREF);
