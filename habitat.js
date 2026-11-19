@@ -45,11 +45,11 @@
   const stats = { fps: null, bloom: true, pixelRatio: null, creatures: 0, loadMs: null, base: null };
   let engine = null, starting = false, inView = false;
 
-  function biomeOf(id) { const L = (biomes && biomes.biomes) || [{ id: 0, name: 'Coral shallows', medium: 'water' }]; return L.find((b) => b.id === id) || L[((id % L.length) + L.length) % L.length]; }
+  function biomeOf(id) { const L = (biomes && biomes.biomes && biomes.biomes.length) ? biomes.biomes : [{ id: 0, name: biomes ? 'Uncharted' : 'Coral shallows', medium: 'water' }]; return L.find((b) => b.id === id) || L[((id % L.length) + L.length) % L.length]; }
   function sceneBiomeId() {
     const fc = forced && roster && roster.creatures.find((c) => c.id === forced);
     if (fc && fc.biome != null) return fc.biome;
-    const n = (biomes && biomes.biomes.length) || 1;
+    const n = (biomes && biomes.biomes && biomes.biomes.length) || 1;
     const v = view(); return v ? v.reef.biome % n : 0;
   }
   function paintInfo() {
