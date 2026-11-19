@@ -133,7 +133,7 @@ Later candidate: **Scenario** (a short situation; pick which idea applies). Drop
 
 **Ladder per source:** each source picks which formats its lessons climb through, in order, and a lesson's format follows its level instead of staying fixed. A book might go Tap → Recall → Apply; Spanish skips Tap and goes Recall → Apply. A new lesson starts on the first rung; advancing moves it up a rung and lengthens the interval; a miss drops it a rung and brings it back sooner. The lesson-making skill sets the ladder and writes a prompt for every rung of every lesson.
 
-**Daily deck:** `lessons.deck = 5` lessons, shuffled (per-board override: `checks/lesson_rules` `{ value: { deck } }`). Reviews that are due come first, then new lessons. Never more than the deck size.
+**Daily deck:** `lessons.deck = 5` lessons, shuffled (per-board override: `checks/lesson_rules` `{ value: { deck } }`). Reviews that are due come first, then new lessons. Never more than the deck size a day: cards answered earlier that day count toward it.
 
 **Spaced repetition:** each lesson tracks its level. Advancing brings it back after `lessons.intervals = [3,7,21]` days for levels 1, 2 and 3; advancing past the last level **graduates** it. A source can set its own `intervals` (any length, e.g. quotes `[7,30,90]`, a language `[1,3,7,14]`); the lesson-make skill picks them by type. A missed Recall drops a level (never below the first rung) and comes back after that level's interval, or tomorrow on the first rung.
 
