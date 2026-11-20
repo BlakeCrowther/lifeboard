@@ -848,12 +848,12 @@ button.nm{background:none;border:0;padding:0 4px 0 0;margin:0;font:inherit;font-
 .hab-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.25)}.hab-bar>div{height:6px;border-radius:3px;background:#8fe3f5;width:0}
 /* overlay (name, visitor, growth) only on hover; touch screens without hover keep it */
 @media (hover:hover){.hab-chips,.hab-info{opacity:0;transition:opacity .25s}.hab:hover .hab-chips,.hab:hover .hab-info,.hab:focus-within .hab-chips,.hab:focus-within .hab-info{opacity:1}}
-.hab{cursor:zoom-in}.hab.open{cursor:auto}
+.hab{cursor:zoom-in}.hab.open{cursor:grab}.hab.open canvas{touch-action:none}.hab.open .hab-fs{width:44px;height:44px}
 .hab.open{position:fixed;inset:0;z-index:1000;max-height:none;aspect-ratio:auto;width:100vw;height:100vh;height:100dvh;border-radius:0}
 .hab.open .hab-chips{top:max(10px,env(safe-area-inset-top))}.hab.open .hab-info{padding-bottom:max(12px,env(safe-area-inset-bottom))}
 html.hab-lock,html.hab-lock body{overflow:hidden}
 .hab-fs{position:absolute;bottom:10px;right:10px;z-index:2;width:36px;height:36px;border:0;border-radius:999px;color:#fff;background:rgba(0,20,35,.45) center/18px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5'/%3E%3C/svg%3E");backdrop-filter:blur(6px);cursor:pointer}
-.hab.open .hab-fs{top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));bottom:auto;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5'/%3E%3C/svg%3E")}
+.hab.open .hab-fs{top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));bottom:auto;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E")}
 .hab.open .hab-chips{right:56px}
 .hab-info{padding-right:56px}
 .hab-msg{position:absolute;inset:auto 12px 50% 12px;margin:0;text-align:center;color:#fff;font-size:13px}

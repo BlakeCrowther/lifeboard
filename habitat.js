@@ -44,7 +44,7 @@
   card.className = 'sec eco-card';
   card.setAttribute('aria-label', 'Ecosystem');
   card.innerHTML = `<div class="sec-h"><h3 class="sec-t">Ecosystem</h3><span class="hab-ph" data-h="phase"></span></div>
-    <div class="hab"><canvas aria-hidden="true"></canvas><button type="button" class="hab-fs" data-h="fs" aria-label="Expand ecosystem to full screen" aria-pressed="false"></button><div class="hab-chips"><span class="hab-chip" data-h="biome"></span><span class="hab-chip" data-h="visitor" hidden></span></div>
+    <div class="hab"><canvas aria-hidden="true"></canvas><button type="button" class="hab-fs" data-h="fs" aria-label="Open ecosystem full screen"></button><div class="hab-chips"><span class="hab-chip" data-h="biome"></span><span class="hab-chip" data-h="visitor" hidden></span></div>
     <div class="hab-info"><div class="hab-bar"><div data-h="bar"></div></div><p data-h="line"></p></div><p class="hab-msg" data-h="msg">Ecosystem loads when you scroll here.</p></div>`;
   /* the state the scene draws: the real game, with preview overrides on top */
   const forcedScene = hookOf('scene', G.LB_GAME_HREF), forcedPhase = +hookOf('phase', G.LB_GAME_HREF) || null;
@@ -75,22 +75,31 @@
   const stats = { fps: null, bloom: true, pixelRatio: null, creatures: 0, loadMs: null, base: null };
   let engine = null, starting = false, inView = false;
 
-  /* ---------- full screen: tap the scene to expand; button / Esc / back to minimize.
-     Real Fullscreen API where allowed, else a fixed overlay (iPhone, sandboxed iframes). resize() follows the canvas size. ---------- */
+  /* ---------- full screen: one tap on the scene opens it over the whole page; the close button or Esc closes it.
+     A fixed overlay, not the Fullscreen API (inside the artifact frame that API took the whole page first). ---------- */
   const hab = card.querySelector('.hab'), fsBtn = $('fs');
   const isOpen = () => hab.classList.contains('open');
+  const look = { yaw: 0, pitch: 0, drag: null }; /* drag to look around while open */
   function setFs(on) {
     if (on === isOpen()) return;
     hab.classList.toggle('open', on); document.documentElement.classList.toggle('hab-lock', on);
-    fsBtn.setAttribute('aria-pressed', String(on)); fsBtn.setAttribute('aria-label', on ? 'Minimize ecosystem' : 'Expand ecosystem to full screen');
-    if (on && hab.requestFullscreen && !document.fullscreenElement) hab.requestFullscreen().catch(() => {});
-    if (!on && document.fullscreenElement === hab) document.exitFullscreen().catch(() => {});
+    fsBtn.setAttribute('aria-label', on ? 'Close full screen' : 'Open ecosystem full screen');
+    if (!on) { look.yaw = 0; look.pitch = 0; }
     if (engine) engine.kick();
   }
   fsBtn.addEventListener('click', (e) => { e.stopPropagation(); setFs(!isOpen()); });
   hab.addEventListener('click', () => { if (!isOpen()) setFs(true); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) setFs(false); });
-  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && isOpen()) setFs(false); });
+  canvas.addEventListener('pointerdown', (e) => { if (!isOpen()) return; look.drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointermove', (e) => {
+    const d = look.drag; if (!d) return;
+    const k = 2.2 / Math.max(320, canvas.clientWidth);
+    look.yaw = Math.max(-1, Math.min(1, d.yaw - (e.clientX - d.x) * k));
+    look.pitch = Math.max(-0.25, Math.min(0.35, d.pitch + (e.clientY - d.y) * k * 0.5));
+    if (engine) engine.kick();
+  });
+  const endDrag = () => { look.drag = null; };
+  canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 
   function biomeOf(id) { const L = (biomes && biomes.biomes && biomes.biomes.length) ? biomes.biomes : [{ id: 0, name: biomes ? 'Uncharted' : 'Coral shallows', medium: 'water' }]; return L.find((b) => b.id === id) || L[((id % L.length) + L.length) % L.length]; }
   function sceneBiomeId() {
@@ -837,10 +846,12 @@ attribute float aTip; varying float vTip;
 
     /* ===== loop: runs only while visible; reduced motion renders single frames ===== */
     let raf = 0, last = 0, envTick = 0, fpsN = 0, fpsT = 0, fpsChecked = false, warm = 0; /* skip shader-compile frames */
+    /* 45° vertical at 4:3 and wider; narrower (portrait) screens keep that horizontal view and see more above and below */
+    function fovFor(a) { const base = 45 * Math.PI / 180, ref = 4 / 3; return a >= ref ? 45 : Math.min(90, 2 * Math.atan(Math.tan(base / 2) * ref / a) * 180 / Math.PI); }
     function resize() {
       const w = canvas.clientWidth, h = canvas.clientHeight, p = renderer.getPixelRatio();
       if (!w || !h) return false;
-      if (canvas.width !== Math.round(w * p) || canvas.height !== Math.round(h * p)) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); composer.setPixelRatio(p); composer.setSize(w, h); if (snowMat) snowMat.uniforms.uPx.value = h * p * 0.022; }
+      if (canvas.width !== Math.round(w * p) || canvas.height !== Math.round(h * p)) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = fovFor(w / h); camera.updateProjectionMatrix(); composer.setPixelRatio(p); composer.setSize(w, h); if (snowMat) snowMat.uniforms.uPx.value = h * p * 0.022; }
       return true;
     }
     function frame(t) {
@@ -851,7 +862,7 @@ attribute float aTip; varying float vTip;
       U.uTime.value = reduce ? 3 : s;
       if (envDirty && t - envTick > 120) { bakeEnv(); envDirty = false; envTick = t; }
       const a0 = m * Math.sin(s * 0.1) * 0.22;
-      camera.position.set(Math.sin(a0) * 7.4, 2.1 + m * Math.sin(s * 0.3) * 0.08, Math.cos(a0) * 7.4); camera.lookAt(0, 1.0, -0.6);
+      const a1 = a0 + look.yaw; camera.position.set(Math.sin(a1) * 7.4, 2.1 + look.pitch * 6 + m * Math.sin(s * 0.3) * 0.08, Math.cos(a1) * 7.4); camera.lookAt(0, 1.0, -0.6);
       dome.position.copy(camera.position);
       propMixers.forEach((mx) => mx.update(reduce ? 0 : dt));
       ambient.forEach((a) => { if (a.visible) a.userData.tick(m ? s : 3); });
