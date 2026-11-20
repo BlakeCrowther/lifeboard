@@ -26,12 +26,26 @@ Every subagent a skill spawns uses `model: "sonnet"`, judge-panel judges include
 
 ## Improve as you go (verify → fix the cause → log)
 Every task and every skill run in this repo ends with this loop. It's how the prompts, skills and gates get better instead of the same mistake repeating.
-1. **Verify before saying done**, with the cheapest check that proves it: `node tools/spec-check.js` (game rules), `node sim/run.js` (balance), `node --check` on touched scripts, the `test.html` preview (UI), `verify.sh` + judges (models). Say what you couldn't check.
+1. **Verify before saying done**, with the cheapest check that proves it: `node tools/spec-check.js` (game rules), `node sim/run.js` (balance), `node --check` on touched scripts, `tools/check-doc-frontmatter` (ADRs and design docs; needs `uv`), the `test.html` preview (UI), `verify.sh` + judges (models). Say what you couldn't check.
 2. **Retro**: list each thing that went wrong or wasted time (a failed gate, a wrong assumption, a retry, a user correction).
 3. **Fix the cause where it lives**, in the same commit: the skill step, prompt wording, gate threshold or tool that let it happen, not just this instance. Prefer a check that fails loudly (a gate, an assert, spec-check) over a sentence of advice.
 4. **Log it**: one line in `LESSONS.md` (date, what happened, what changed). Read `LESSONS.md` before starting a skill run or a big change.
 5. **Re-verify** the fix on the thing that failed (re-run the gate, the sim, the skill step). If it still fails, go round again; after three rounds, stop and report.
 Unattended runs (the weekly check) do steps 1–5 themselves and list the fixes in their report; they never change game numbers; they do publish (pre-approved, see Publish).
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on this repo, with the epic/feature/task labels and Dev Board. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context; ADRs use OKF frontmatter. See `docs/agents/domain.md`.
 
 <!-- dev-home:standards:start -->
 <!-- Managed by dev-home sync-standards.sh. Edit repo-rules.md in dev-home, not here. -->
