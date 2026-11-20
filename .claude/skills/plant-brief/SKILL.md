@@ -1,6 +1,6 @@
 ---
 name: plant-brief
-description: Kind: plant. Design a seed species as a plant spec (models/plant/specs/<id>.json, kind "plant") for one garden plant (a habit's plot, gen n) in the current biome and calendar season; rare seeds get a playful accessory tied to the habit. Step 1 of the plant pipeline (season-seeds); validated by shared check_spec.py (G1), then shared model-build.
+description: Kind: plant. Design a seed species as a plant spec (models/plant/specs/<id>.json, kind "plant") for one garden plant (a habit's plot, gen n) in the current biome and calendar season; rare seeds get a playful accessory tied to the habit. Step 1 of the plant pipeline (season-seeds); validated by shared check_spec.py (spec-check), then shared model-build.
 ---
 
 # Plant brief

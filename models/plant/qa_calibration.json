@@ -12,22 +12,22 @@
   "tend_readable"
  ],
  "judge": {
-  "species_read": 3,
-  "anatomy": 3,
-  "style_match": 3,
-  "artifacts": 3,
+  "species_read": 4,
+  "anatomy": 4,
+  "style_match": 4,
+  "artifacts": 4,
   "growth_readable": 4,
   "sway_readable": 4,
   "tend_readable": 3
  },
- "golden_median3_mean": 3.29,
+ "golden_median3_mean": 3.86,
  "pass_rule": {
   "floor": 3,
   "margin": 0.3,
-  "bar": 2.99
+  "bar": 3.56
  },
  "passes_g5": true,
- "status": "First plant golden (2026-11-18), judged without an anchor (no plant existed): median-of-3 mean 3.29 -> bar 2.99. Weak golden: replace with a stronger plant and re-judge when one ships.",
+ "status": "Sonnet recalibration (2026-11-19): golden median-of-3 mean 3.86 -> bar 3.56 (opus said 3.29 -> 2.99).",
  "history": [
   {
    "run": 1,
@@ -63,5 +63,6 @@
   "hair whorls read as spikes",
   "stalk barely bends in sway (cap leads)",
   "tend still close to sway"
- ]
+ ],
+ "judge_model": "sonnet"
 }

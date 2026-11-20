@@ -4,7 +4,7 @@
 
    deriveGame(input, G) -> game state. Input (plain data, dates 'YYYY-MM-DD'):
      today,
-     tasks:    [{ eff: due-or-deadline date | null, done: bool, doneDate: date | null }]
+     tasks:    [{ eff: due-or-deadline date | null, done: bool, doneDate: date | null, days?: committed dates }]
      habits:   [{ key, name, floor, target, daily: floor/target are per day (optional), since: created date (optional) }]
      weekStart (optional): 0 Sun .. 6 Sat, the day weeks (garden and streaks) start; default 1 Monday
      sessions: [{ h: habit key, date }]
@@ -12,9 +12,10 @@
    Choices where game.js leaves the mapping open (see SPEC.md):
    - Tide day = the Today ring: dayTide(committed, done) from LBG.ringTally. A day with nothing committed
      is neutral (null). Days run from the first task/session date (max 365 back) to today.
-   - Overdue = open tasks whose effective date < today; cloudiness/algae use their ages. Rescheduled
-     tasks only keep their current date, so history is approximate.
-   - Visitor this week = weekVisitor(Mon..today tides) || 'common' (sim's assumption), none while bleached.
+   - Overdue = open tasks whose effective date < today; cloudiness counts them. Algae uses the age of every open task
+     since it was first committed (rescheduling doesn't reset it); tasks without committed days use their current date.
+   - Visitor this week = the better of weekVisitor(Mon..today tides) and an aged-task drop this week, else 'common';
+     none while bleached.
    - Garden: weeks are Mondays from the garden start; each habit's plot runs plotWeek on finished weeks only (the current
      week is still open). A plant blooms or dies, shows that a week, is pressed, and the plot's next seed (gen + 1) goes in.
      "Thirsty" = this week below floor with <= need+2 days left (same rule as the habit rings). Seasons = real calendar seasons.
@@ -49,7 +50,7 @@
   function deriveGame(input, LBG) {
     LBG = LBG || G.LBG;
     WS = Number.isInteger(input.weekStart) && input.weekStart >= 0 && input.weekStart <= 6 ? input.weekStart : 1;
-    const today = dn(input.today), tally = LBG.ringTally(input.tasks.map((t) => ({ eff: t.eff || null, doneDate: t.done && t.doneDate ? t.doneDate : null })));
+    const today = dn(input.today), tally = LBG.ringTally(input.tasks.map((t) => ({ eff: t.eff || null, doneDate: t.done && t.doneDate ? t.doneDate : null, days: t.days })));
     /* input.start ('YYYY-MM-DD', optional): the game begins that day at 0; history before it is ignored and
        tasks already overdue then count as overdue from the start date. */
     const start = input.start ? dn(input.start) : null, from = (d) => (start != null ? Math.max(d, start) : d);
@@ -79,7 +80,20 @@
     }
     const wk = monday(today), weekTides = tides.slice(Math.max(0, tides.length - (today - wk + 1)));
     const overdueAges = tasks.filter((t) => !t.done && t.eff && dn(t.eff) < today).map((t) => today - dn(t.eff));
-    const wv = LBG.weekVisitor(weekTides);
+    /* age = days since a task was first committed (game.js firstCommit), counted from the game start at the earliest */
+    const ageAt = (t, d) => { const f = LBG.firstCommit(t); return f && dn(f) < d ? d - from(dn(f)) : 0; };
+    const neglectAges = tasks.filter((t) => !t.done).map((t) => ageAt(t, today)).filter((a) => a > 0);
+    /* finishing a long-pushed task brings a rare/exotic visitor (overdueReward: capped per week, exotic per biome) */
+    const bStart = first + reef.startDay, drops = { weekDrops: 0, exotics: 0 };
+    let dropWeek = null, weekDrop = null;
+    tasks.filter((t) => t.done && t.doneDate && dn(t.doneDate) >= bStart).sort((a, b) => (a.doneDate < b.doneDate ? -1 : 1)).forEach((t) => {
+      const d = dn(t.doneDate), w = monday(d);
+      if (w !== dropWeek) { dropWeek = w; drops.weekDrops = 0; }
+      const got = LBG.overdueReward(drops, ageAt(t, d));
+      if (got && w === wk) weekDrop = got;
+    });
+    const RANK = { common: 0, rare: 1, exotic: 2 };
+    const wv0 = LBG.weekVisitor(weekTides), wv = weekDrop && RANK[weekDrop] > RANK[wv0 || 'common'] ? weekDrop : wv0;
     const todayTide = tides[tides.length - 1];
     /* ---- garden ---- */
     /* garden weeks run Mon..Sun: with a start date the garden opens the first Monday on/after it; until then every plot is a seed.
@@ -144,7 +158,7 @@
       todayTide, weekTides, events,
       lessons: lessonState(input.lessonDates, today, dn, LBG),
       breaks: { skipsToday: skipOn[today] || 0, skipCost, lost: Math.round(lost), sad: (skipOn[today] || 0) > 0 },
-      overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), algae: LBG.algae(overdueAges),
+      overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), algae: LBG.algae(neglectAges), agedDrop: weekDrop,
       visitor: reef.bleached ? null : wv || 'common', visitorWeek: ds(wk),
       season: { ...sea, biome: reef.biome, opens: waiting ? ds(gStart) : null },
       start: start != null ? ds(start) : null,

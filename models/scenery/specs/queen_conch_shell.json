@@ -1,0 +1,25 @@
+{
+  "kind": "scenery",
+  "id": "queen_conch_shell",
+  "name": "Queen conch shell",
+  "lore": "An empty palace; small fish move in.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "solid",
+  "reference": "Empty Strombus gigas shell lying on its side on sand: pointed stepped spire at one end, big body whorl with a ring of blunt shoulder spines, wide flared glossy pink-orange outer lip, tapering siphonal canal at the other end; tan-cream exterior",
+  "size": { "height_m": 0.13, "footprint_m": 0.24 },
+  "shape": {
+    "axis": "lying",
+    "axis_m": 0.22,
+    "profile": [[0, 0.01], [0.08, 0.06], [0.25, 0.15], [0.4, 0.26], [0.55, 0.25], [0.75, 0.16], [0.92, 0.07], [1, 0.03]],
+    "cross": { "flatten": 0.85, "segs": 16 },
+    "cap": 0.3,
+    "ridges": { "count": 4, "from": 0.0, "to": 0.38, "depth": 0.18 },
+    "knobs": { "count": 7, "at": 0.42, "size_ratio": 0.07, "arc": 200, "tilt_deg": 30 },
+    "lip": { "from": 0.36, "to": 0.92, "flare_ratio": 0.28, "side": 1 }
+  },
+  "palette": { "main": ["#e0b878", "#b07a4a"], "accent": "#ff9a6e" },
+  "material": { "roughness": 0.35, "coat": 0.4 },
+  "pass_through": false,
+  "budget": { "tris": 2500, "texture": 512 }
+}

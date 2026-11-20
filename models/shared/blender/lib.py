@@ -71,7 +71,7 @@ def sphere(name, radius, at, segs=16):
     bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=segs, v_segments=segs // 2, radius=radius)
     o = mesh_from_bmesh(name, bm); o.location = at; return o
 
-EYES = []          # filled by eye(); build.py writes it to build_meta.json so G2 can check eye size after the join
+EYES = []          # filled by eye(); build.py writes it to build_meta.json so shape-check can check eye size after the join
 EYE_RANGE = (0.08, 0.12)   # STYLE: eye diameter as a fraction of body height
 
 def eye_material():

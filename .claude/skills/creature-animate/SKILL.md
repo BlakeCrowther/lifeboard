@@ -22,7 +22,7 @@ Write keys with Python on pose bones; Bezier interpolation, auto-clamped handles
 **idle**: exactly `spec.motion.idle.frames`, a seamless loop:
 - Each periodic motion is `sin(2π·k·t/frames + φ)` with whole-number `k` (use `cycles`, and 2×cycles for fast flutter). That guarantees seamlessness.
 - Follow-through: each bone down a chain lags its parent by `chain_lag_frames` (phase φ += lag) and amplitude grows ~1.3× per bone toward the tip.
-- Peak rotation ≤ 30°, but readable: some vertex must move ≥ 4% body length from frame 0 (G3). Add one slow, low-amplitude secondary motion (breathing, gill, bell pulse, hover bob) with k = 1.
+- Peak rotation ≤ 30°, but readable: some vertex must move ≥ 4% body length from frame 0 (motion-check). Add one slow, low-amplitude secondary motion (breathing, gill, bell pulse, hover bob) with k = 1.
 - Personality from spec decides the mix (lazy = slow spine sway; busy = quick appendage flutter).
 - No self-intersection: fins, arms, tentacles and tails must never pass through the body or each other at any frame (check the extremes of every swing; cut amplitude or add a counter-rotation on the parent before going over). The feed strike must not drive the head through the body's own appendages.
 - Key the first and last frame identically, then add a Cycles F-modifier to every curve.
@@ -30,15 +30,15 @@ Write keys with Python on pose bones; Bezier interpolation, auto-clamped handles
 **feed**: `spec.motion.feed.frames`, starts and ends on idle frame-0 pose:
 - Beats as fractions of length: anticipate 0–20% (pull back, mouth closes) → strike 20–35%, the fastest beat (head/arm/claw toward +X; mouth must move ≥ 5% body length forward) → grab/bite 35–50% (jaw/tentacle close) → chew/swallow 50–80% (2 small pulses) → settle 80–100%, ease back to idle pose.
 - Mouth opens/closes on the bite beats: `lib.key_mouth(arm, [(t, opening), ...], frames=M)` keys the `jaw` scale (≥ 2 bites; closed at t=0 and t=1).
-- Follow `spec.motion.feed.technique` for what moves. Peak rotation ≤ 60°; some vertex must move ≥ 12% body length from frame 0 (G3).
+- Follow `spec.motion.feed.technique` for what moves. Peak rotation ≤ 60°; some vertex must move ≥ 12% body length from frame 0 (motion-check).
 
 **sulk**: `spec.motion.sulk.frames`, a seamless loop (same whole-cycle rules as idle), follows `spec.motion.sulk.technique`:
-- A held posture (droop/slump/retract, never through the body) plus a slow, small loop; max speed must stay below idle's (G3).
-- Posture differs from idle frame 0 by ≥ 4% body length. Front mouths frown: add `lib.mouth_corner_bones()` to the rig, skin the mouth with `lib.mouth_weights(co)`, key `lib.frown_locs(spec.motion.sulk.frown)` as locs every frame (G3: corners drop ≥ 15% mouth width).
+- A held posture (droop/slump/retract, never through the body) plus a slow, small loop; max speed must stay below idle's (motion-check).
+- Posture differs from idle frame 0 by ≥ 4% body length. Front mouths frown: add `lib.mouth_corner_bones()` to the rig, skin the mouth with `lib.mouth_weights(co)`, key `lib.frown_locs(spec.motion.sulk.frown)` as locs every frame (motion-check: corners drop ≥ 15% mouth width).
 
 Optional `swim_fast` (same rules as idle, higher k) and `react` (startle) when the spec asks.
 
 ## 3. Export
 - Push each action to its own NLA track named exactly `idle`, `feed`, `sulk`, …
 - Export: `export_format='GLB'`, `export_animations=True`, `export_animation_mode='NLA_TRACKS'`, `export_image_format='WEBP'`, `export_skins=True`, `export_yup=True`.
-- Run `models/shared/tools/verify.sh <id>` locally; if G2/G3 fail, fix and re-export before handing off (verify will run again independently).
+- Run `models/shared/tools/verify.sh <id>` locally; if shape-check/motion-check fail, fix and re-export before handing off (verify will run again independently).

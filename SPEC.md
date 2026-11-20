@@ -25,10 +25,10 @@ Each input drives exactly one thing, so no system can game another.
 
 - **Week start.** Habit weeks (streaks, the garden, the weekly check message) start on one board-wide day, `checks/week_start` (0 Sunday … 6 Saturday, default 1 Monday). `lifeboard-setup` asks for it; it's usually the same day as the weekly check. Every habit uses it, so nothing is asked per habit.
 - **Game start.** The game starts at zero on the day the game is first turned on (`game_state/game.started`, written once and never overwritten; `game_state` is store-tracked so it is read only after the db fully loads). History before that is ignored; tasks already overdue then count as overdue from that day. The garden opens on the first week-start day on or after the start; until then every plot is a seed and the Habits card says when the garden opens.
-- **Derived, not stored.** All game state (plants, seeds, ecosystem phase, biomes, dioramas, visitors due) is recomputed from db history on every load by `deriveGame` in `garden.js`. Only things that can't be recomputed are stored: the start date, titles and notes you write (`keepsakes`), and visitors met (`visitors_met`). *Planned:* freezing closed days and weeks (`days`, `week_results`) so later edits, like a rescheduled task or a changed floor, never rewrite the past. Until then, a changed floor or target re-scores past weeks.
+- **Derived, not stored.** All game state (plants, seeds, ecosystem phase, biomes, dioramas, visitors due) is recomputed from db history on every load by `deriveGame` in `garden.js`. Only things that can't be recomputed are stored: the start date, titles and notes you write (`keepsakes`), and visitors met (`visitors_met`). Task commitments are recorded as they happen (`tasks.committed_days`, see Ring %), so rescheduling never rewrites a past day's ring. *Planned:* freezing closed weeks (`week_results`) so a changed floor or target never re-scores past weeks.
 - **Surprises are decoration only.** They show up at reward moments and never change numbers.
 - **Claude suggests, never changes.** Weekly-job suggestions need a tap to apply.
-- **Display:** (Ecosystem and Garden each have an on/off toggle in the display menu, both on by default, synced board-wide via `checks/ui_prefs`) the ecosystem scene sits at the top of Today, with the habit plants under it in the same column. Grow → Collection holds dioramas and pressed plants (and, when built, finished lesson sources).
+- **Display:** (Ecosystem and Garden each have an on/off toggle in the display menu, both on by default, synced board-wide via `checks/ui_prefs`) Today's first column is the ring card, which holds the task lists (tap a day's ring for that day: today's lists, or a past day's Done and Missed); the second column has the Lessons card, the ecosystem scene right under it, then the habit plants. On phones the task lists start folded so the scene stays near the top. Grow → Collection holds dioramas and pressed plants (and, when built, finished lesson sources).
 
 ## Garden (habits)
 
@@ -75,14 +75,18 @@ Each habit tile shows its week at a glance (`habitPips` in app.js). Daily and we
 
 ## Ecosystem (rings and tasks)
 
-**Status:** Partly built. Built: Growth from the ring, ring = done ÷ committed, adaptive phases, 8 biomes, dioramas, weekly visitor, murk, algae, bleaching. Not built: overdue visitor drops, Claude-written diorama titles. Claude-invented biomes: built as the `biome-brief` skill, run by `weekly-visitor`.
+**Status:** Partly built. Built: Growth from the ring, ring = done ÷ committed with recorded commitments (`tasks.committed_days`) and the commitment lock, adaptive phases, 8 biomes, dioramas, weekly visitor, aged-task visitor drops, murk, algae from task age, bleaching. Not built: Claude-written diorama titles. Claude-invented biomes: built as the `biome-brief` skill, run by `weekly-visitor`.
 
 Every day earns **Growth** from the day's ring %, and Growth moves the current biome through its phases. Biomes take as long as they take, independent of the garden calendar.
 
 **Ring % = done ÷ committed** (built: `LBGame.ringTally` / `ringPct` in `game.js`, used by the rings, ring history and Life points; no fixed goal).
 
-- Committed for a day = tasks scheduled (due) that day that weren't finished earlier + every task finished that day.
-- Overdue tasks don't count against any day. To commit one, reschedule it to today (pull-in = reschedule; there's no `committed_on` field yet).
+- **Commitment.** A task is committed to a day when that day arrives with the task due on it (its due date, or its deadline if that's earlier), or when it's put on today. The board records each such date in `tasks.committed_days`, so moving a task later never erases the day it was committed to. Putting a task on a day in the future commits nothing until that day comes (moving it from next month to next week changes nothing).
+- **Commit lock** (`checks/ui_prefs.commitLock`, asked by `lifeboard-setup`): how long after a task lands on today you can still move it off without it counting as missed: minutes (`0` = locked at once, the default; e.g. `5`, `180`), or `"end"` (never locks during the day). A task already due when the day begins lands at midnight; one put on today lands when you put it there. Today's tasks inside the window show "Locks in 2h 10m".
+- Committed for a day = tasks committed to that day that weren't finished earlier + every task finished that day. Tasks with no recorded commitments (older ones) use their current date.
+- Overdue tasks don't count against today. To commit one to today, reschedule it to today.
+- **Day statuses** (shown per day in the ring card): **Done** (finished that day) and **Missed** (committed, not finished that day). A missed task is now one of: **Done late**, **Moved** (has a new date), **Slipped** (due date passed, deadline still ahead) or **Overdue** (deadline passed, or due date passed with no deadline).
+- **Age** = days since a task was first committed (its earliest `committed_days`); pushing it to another day never resets it. Open tasks show it as "Missed Nd" (plus "pushed N×" when moved), whether they sat overdue or kept getting pushed. Only the days a task was committed to count against the ring: a task left overdue doesn't count against later days (murk and algae cover the backlog), so a long backlog can't sink every ring.
 - Adding a task for today raises committed, so today's % drops until it's done. A task added and finished the same day adds 1 to both sides (3/4 = 75% becomes 4/5 = 80%).
 - A day with nothing due where you finish anything is a full ring.
 - A day with nothing committed is neutral: no Growth, no penalty, ignored by bleaching.
@@ -115,20 +119,20 @@ Finishing the last phase saves the biome as a **diorama** (biome, days taken, fu
 | Common | Any week the ecosystem isn't bleached | Built |
 | Rare | `visitor.fullDaysForRare = 6` full rings in a Mon–Sun week | Built |
 | Rare | A perfect lesson week (see Lessons) | Planned |
-| Rare | Finishing a task `visitor.rareOverdue = 7`+ days overdue | Planned (rule in `game.js`, not wired) |
-| Exotic | Finishing a task `visitor.exoticOverdue = 30`+ days overdue | Planned (rule in `game.js`, not wired) |
+| Rare | Finishing a task `visitor.rareOverdue = 7`+ days after it was first committed (age; pushes don't reset it) | Built |
+| Exotic | Finishing a task `visitor.exoticOverdue = 30`+ days after it was first committed | Built |
 
-Overdue drops are capped: `visitor.overdueDropsPerWeek = 1` a week and `visitor.exoticPerBiome = 1` exotic per biome.
+Aged-task drops are capped: `visitor.overdueDropsPerWeek = 1` a week and `visitor.exoticPerBiome = 1` exotic per biome.
 
 **Water and algae** (both gradual, both reverse as you clear tasks):
 
 - **Murk** = how many tasks are overdue: each tints the water, fully murky at `tide.cloudyAt = 10` (1 task 10%, 5 tasks 50%).
-- **Algae** = how long tasks have been neglected: tasks overdue `tide.algaeAfter = 7`+ days grow algae; `tide.algaeAt = 10` such tasks cover it.
+- **Algae** = how long tasks have been neglected: open tasks first committed `tide.algaeAfter = 7`+ days ago grow algae, whether they sit overdue or keep getting pushed; `tide.algaeAt = 10` such tasks cover it.
 - **Bleaching** (separate) = your rings, not your backlog. An average ring below `bleach.below = 0.25` over `bleach.days = 14` days bleaches the scene grey; it recovers when the average over `bleach.recoverDays = 7` days reaches `bleach.recoverAt = 0.5`. No visitors while bleached. It never dies.
 
 ## Lessons
 
-**Status:** Partly built. Built: formats, ladder, daily deck, spaced repetition (per-source intervals), card actions, the ecosystem chip and deck, feeding/hiding, the lesson-making skill (`.claude/skills/lesson-make`). Planned: perfect lesson week, finish rewards, Collection trophy, book species, weekly rewrite of flagged lessons, pollinators.
+**Status:** Partly built. Built: formats, ladder, daily deck, spaced repetition (per-source intervals), card actions, the Lessons card above the ecosystem (the deck is answered inside it, so the scene stays in view), feeding/hiding, the lesson-making skill (`.claude/skills/lesson-make`). Planned: perfect lesson week, finish rewards, Collection trophy, book species, weekly rewrite of flagged lessons, pollinators.
 
 Short daily lessons from books, videos, posts, courses and notes, resurfacing on a spaced schedule; doing them brings the scenes to life.
 
@@ -236,6 +240,7 @@ Everything sits in the lifeboard artifact db; no hippocampus dependency. Claude 
 | `habit_sessions` | Sessions by date (existing) |
 | `tasks` | Due, deadline, status, completed_at (existing) |
 | `game_state` | `game.started`: the day the game began |
+| `tasks.committed_days` | Dates each task was committed to (Ring %); its first date is the task's age start |
 | `keepsakes` | Your title and note per diorama or pressed plant |
 | `visitors_met` | One doc per creature per week: creature, biome, week, rarity |
 | `sources` | Book, video, post, course or note: title, type, size, salience, ladder, summary, status (active / paused / finished) |
@@ -246,8 +251,6 @@ Everything sits in the lifeboard artifact db; no hippocampus dependency. Claude 
 
 | Collection | Holds |
 | --- | --- |
-| `tasks.committed_on` (new field) | Dates the task was pulled into Today |
-| `days` | Frozen per day: committed ids, done ids, ring %, Growth |
 | `week_results` | Frozen per habit per week: count, floor, target, result (died / floor / target / above) |
 | `reports` | Weekly and season reports, notes, events |
 

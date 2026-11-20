@@ -302,14 +302,19 @@ async function allowCal() {
 function vmTask(d) {
   return { id: d.id, title: d.title, group: GROUPS.includes(d.category) ? d.category : (d.category || 'Personal'), icon: iconOf(d.icon_key || LB.autoIcon(d.title)),
     project: typeof d.project === 'string' ? d.project.trim() : '', notes: d.notes || '', due: d.due_date || null, deadline: d.deadline_date || null, rule: d.recurrence_rule || null,
-    done: d.status === 'done', doneAt: d.completed_at || null, created: d.created_at || 0,
+    done: d.status === 'done', doneAt: d.completed_at || null, created: d.created_at || 0, days: Array.isArray(d.committed_days) ? d.committed_days.filter(isDate) : [],
     duet: d.duet_request && typeof d.duet_request === 'object' ? d.duet_request.status || 'queued' : null, _d: d };
 }
+let PROFILE = { place: 'Local conditions', pets: [] };
 const validException = (e) => !!e && typeof e === 'object' && typeof e.reason === 'string' && e.reason.trim().length >= 20 && typeof e.evidence === 'string' && e.evidence.trim().length >= 3;
 function derive() {
   const A = (c) => LBDB.all(c);
   applyPrefs();
   { const w = LBDB.get('checks', 'week_start'), v = w ? +w.value : NaN; WS = Number.isInteger(v) && v >= 0 && v <= 6 ? v : 1; }
+  /* checks/profile: the owner's own labels (conditions place, pet names) live in their board, never in the repo */
+  { const pr = LBDB.get('checks', 'profile'), v = pr && pr.value && typeof pr.value === 'object' ? pr.value : {};
+    PROFILE = { place: typeof v.place === 'string' && v.place.trim() ? v.place.trim() : 'Local conditions',
+      pets: (Array.isArray(v.pets) ? v.pets : []).filter((x) => x && typeof x.name === 'string' && x.name.trim()).map((x) => ({ key: x.name.trim().toLowerCase(), name: x.name.trim(), icon: ['dog', 'cat'].includes(x.kind) ? x.kind : 'paw' })) }; }
   const s = emptyS();
   const allT = A('tasks').map(vmTask), isSug = (t) => t._d.suggested === true && !t.done;
   s.suggested = allT.filter(isSug).sort((a, b) => b.created - a.created);
@@ -390,7 +395,7 @@ function eventsOn(evs, d) {
 /* ---------- UI state ---------- */
 const U = {
   tab: 'today', life: 'health', grow: 'habits', list: 'groceries',
-  open: null, adjust: null, adjBusy: null, exp: {}, showDone: false, showTomorrow: false, wishFilter: 'all', petFilter: 'all', script: false,
+  open: null, ringDay: TODAY, adjust: null, adjBusy: null, exp: {}, showDone: false, showTomorrow: false, wishFilter: 'all', petFilter: 'all', script: false,
   calSel: TODAY, calMonth: TODAY.slice(0, 7) + '-01', editQ: null, editKeep: null, inspect: null, coll: 'dioramas', rec: 'habits',
   timer: { len: 2, end: null, msg: '' }, quote: (diffDays('2026-01-01', TODAY) % 7 + 7) % 7, sheet: null,
 };
@@ -420,6 +425,7 @@ const sortOf = (k) => { const o = sortOpts(k), v = UI.sort[k]; return o.some((x)
 const sortCtl = (k, title) => `<label class="sortc"><span>Sort</span><select data-sort="${esc(k)}" aria-label="Sort ${esc(title)}">${sortOpts(k).map(([v, l]) => `<option value="${v}"${sortOf(k) === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`;
 const sortBy = (arr, mode, nm) => (mode === 'az' ? arr.slice().sort((a, b) => nm(a).localeCompare(nm(b), undefined, { sensitivity: 'base' })) : mode === 'new' ? arr.slice().reverse() : arr.slice());
 const isOpen = (k, def) => (k in UI.fold ? !!UI.fold[k] : def);
+const setOpen = (k, v) => { UI.fold[k] = !!v; saveUI(); };
 const PHONE = matchMedia('(max-width:699px)');
 function readHash() {
   const [a, b] = location.hash.slice(1).split('/');
@@ -471,6 +477,30 @@ function spawnSuccessor(d, completedOn, rec) {
 }
 function nextDueOf(d) { return LB.nextDue(d.recurrence_rule, d, TODAY); }
 let ensured = false;
+/* Commitments (SPEC.md "Ring %"): an open task is committed to its day when that day arrives (or it's put on today),
+   recorded in tasks.committed_days so moving it later never erases the miss. Commit lock (checks/ui_prefs.commitLock):
+   minutes after a task lands on today during which moving it off today undoes today's commitment (0 = locked at once,
+   'end' = never locks). Tasks already due when the day began land at midnight; ones put on today land when the board sees it. */
+const commitLockMins = () => { const d = LBDB.get('checks', 'ui_prefs'), v = d && d.value && d.value.commitLock; return v === 'end' ? Infinity : Number.isFinite(+v) && +v > 0 ? +v : 0; };
+const lockLabel = (m) => { if (m === Infinity) return 'end of day'; m = Math.max(1, Math.ceil(m)); return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`; };
+const laMidnight = (d) => { const g = Date.parse(d + 'T00:00:00Z'); return g + ((1440 - LB.minsOfDay(new Date(g).toISOString())) % 1440) * 6e4; };
+/* minutes left before today's commitment on t locks, or 0 */
+const lockLeft = (t) => { const L = commitLockMins(); if (!L || t.done || !t.days.includes(TODAY)) return 0; return L === Infinity ? Infinity : Math.max(0, L - (Date.now() - (t._d.committed_at || laMidnight(TODAY))) / 6e4); };
+let commitDay = null; /* the day this board last ran the pass: commitments it finds missing on its first pass of a day date from midnight */
+function commitPass() {
+  const first = commitDay !== TODAY; commitDay = TODAY;
+  S.tasks.forEach((t) => {
+    if (t.done || t._d.suggested === true) return;
+    const e = eff(t), has = new Set(t.days);
+    if (e && e <= TODAY && !has.has(e)) {
+      const p = { committed_days: [...t.days, e].sort() };
+      if (e === TODAY) p.committed_at = first ? laMidnight(TODAY) : Date.now();
+      W.patch('tasks', t.id, p).catch((err) => console.warn('[commit]', err));
+    } else if (has.has(TODAY) && (!e || e > TODAY) && lockLeft(t) > 0) {
+      W.patch('tasks', t.id, { committed_days: t.days.filter((d) => d !== TODAY), committed_at: null }).catch((err) => console.warn('[commit]', err));
+    }
+  });
+}
 function ensureRecurring() {
   if (ensured) return; ensured = true;
   LBDB.all('tasks').filter((d) => d.status === 'done' && d.recurrence_rule && !d.recurrence_spawned)
@@ -525,7 +555,8 @@ function fold(key, title, o) {
 
 function taskMeta(t, opts = {}) {
   const st = tstate(t), e = eff(t), bits = [];
-  if (t.done) bits.push(`<span class="m">${ic('check', 15)}Done</span>`);
+  if (opts.status) bits.push(opts.status);
+  else if (t.done) bits.push(`<span class="m">${ic('check', 15)}Done</span>`);
   else if (e) {
     if (st.overdue) bits.push(`<span class="m bad">Overdue · ${relDate(e)}</span>`);
     else if (st.slipped) bits.push(`<span class="m hot">Slipped from ${relDate(t.due)}</span><span class="m">Due by ${relDate(t.deadline)}</span>`);
@@ -534,6 +565,13 @@ function taskMeta(t, opts = {}) {
     if (t.deadline && t.due && t.deadline !== t.due && !st.slipped && e !== t.deadline) bits.push(`<span class="m">Deadline ${relDate(t.deadline)}</span>`);
   }
   if (t.rule) bits.push(`<span class="m">${ic('repeat')}${esc(recShort(t.rule))}</span>`);
+  /* missed: days since first committed, whether it sat overdue or kept getting pushed (SPEC.md aged tasks) */
+  if (!t.done) {
+    const f = t.days[0] || (e && e < TODAY ? e : null), age = f ? diffDays(f, TODAY) : 0, pushes = t.days.length - 1;
+    if (age > 0) bits.push(`<span class="chip${age >= LBG.RULES.tide.algaeAfter ? ' bad' : ''}" title="First committed ${relDate(f)}; it hasn't been done since">Missed ${age}d${pushes > 0 ? ` · pushed ${pushes}×` : ''}</span>`);
+    const left = e === TODAY ? lockLeft(t) : 0;
+    if (left > 0 && left !== Infinity) bits.push(`<span class="chip" title="Moving it off today before then won't count as missed">${ic('snooze', 13)}Locks in ${lockLabel(left)}</span>`);
+  }
   if (!opts.hideGroup) bits.push(`<span class="chip gm" title="Group">${art(GROUP_IC[t.group] || 'spark', 15)}${esc(t.group)}</span>`);
   if (t.project) bits.push(`<span class="chip" title="Project">${ic('folder', 13)}${esc(t.project)}</span>`);
   if (t.duet && !t.done) bits.push(`<span class="chip hot" title="Handed to Duet">${ic('chat', 13)}Sent to Duet</span>`);
@@ -635,23 +673,27 @@ function viewToday() {
   const doneToday = S.tasks.filter((t) => t.done && t.doneAt && LB.laDateOf(t.doneAt) === TODAY).sort((a, b) => a.doneAt - b.doneAt);
   const rows = (l, o = { grip: true }) => l.map((t) => taskRow(t, o)).join('');
   const none = !S.tasks.length;
-  /* tier 1: needs me now. Carried over (anything past its day) and Today, each its own list */
+  /* tier 1: needs me now. Past their day: Overdue (deadline, or due date with no deadline, passed) and Slipped (due date
+     passed, deadline still ahead); then Today. Neither past list counts against today's ring until pulled into today. */
   const carried = B.urgent.filter((t) => eff(t) < TODAY), dueToday = B.urgent.filter((t) => eff(t) >= TODAY);
+  const late = carried.filter((t) => tstate(t).overdue), slipped = carried.filter((t) => !tstate(t).overdue);
   const moveAll = carried.length ? `<button class="link" data-act="carry-all">Move all ${ic('arrow', 16)} Tomorrow</button>` : '';
-  const carriedSec = carried.length ? `<section class="sec t1 z-due carried">${secH('Carried over', moveAll, 1, carried.length)}
-    <div class="card"><ul class="list" data-bucket="urgent">${rows(carried)}</ul></div></section>` : '';
-  const due = `${carriedSec}<section class="sec t1 z-due" id="tasks">${secH('Today', '', 1, dueToday.length)}
-    <div class="card">${dueToday.length ? `<ul class="list" data-bucket="urgent">${rows(dueToday)}</ul>` : `<p class="empty">${none ? 'No tasks yet. The + button adds your first one, with a date if it has one.' : carried.length ? 'Nothing else due today.' : 'Nothing overdue or due today. Nice.'}</p>`}</div></section>`;
+  /* every list in the ring card folds; closed, its header shows the first task */
+  const firstOf = (a) => (a[0] ? `<b>${esc(a[0].title)}</b>${a.length > 1 ? ` +${a.length - 1}` : ''}` : 'nothing here');
+  const pastSec = (key, title, a, link) => a.length ? fold(key, title, { tier: 1, z: 'z-due carried', id: 'sec-' + key, ct: a.length, sum: firstOf(a), link,
+    body: `<div class="card"><ul class="list" data-bucket="urgent">${rows(a)}</ul></div>` }) : '';
+  const carriedSec = pastSec('overdue', 'Overdue', late, moveAll) + pastSec('slipped', 'Slipped', slipped, late.length ? '' : moveAll);
+  const due = carriedSec + fold('today', 'Today', { tier: 1, z: 'z-due', id: 'tasks', ct: dueToday.length, sum: firstOf(dueToday),
+    body: `<div class="card">${dueToday.length ? `<ul class="list" data-bucket="urgent">${rows(dueToday)}</ul>` : `<p class="empty">${none ? 'No tasks yet. The + button adds your first one, with a date if it has one.' : carried.length ? 'Nothing else due today.' : 'Nothing overdue or due today. Nice.'}</p>`}</div>` });
   /* suggestions from Claude: kept out of every list until the owner keeps one */
   /* soonest first; one shows, the rest sit behind a toggle (the one being adjusted always shows) */
   const sg = (S.suggested || []).slice().sort((a, b) => (eff(a) || '9999') < (eff(b) || '9999') ? -1 : (eff(a) || '9999') > (eff(b) || '9999') ? 1 : b.created - a.created);
   const sgShow = U.exp.sug ? sg : sg.filter((t, i) => i === 0 || t.id === U.adjust);
   const sgWhen = (t) => [t.due ? (t.due < TODAY ? `<b class="bad">${esc(relDate(t.due))}</b>` : esc(relDate(t.due))) : '', t.deadline && t.deadline !== t.due ? `by ${esc(relDate(t.deadline))}` : '', t.rule ? `${ic('repeat', 13)}${esc(recShort(t.rule))}` : ''].filter(Boolean).join(' · ');
-  const sug = sg.length ? `<section class="sec t1 z-sug" id="suggested">${secH('Suggested', '', 1, sg.length)}
-    <div class="card"><ul class="list sugl">${sgShow.map((t) => `<li class="sg"><div class="sgt">${art(t.icon || 'spark', 22)} <span>${esc(t.title)}</span>${sgWhen(t) ? ` <span class="sgd">${sgWhen(t)}</span>` : ''}</div>${t.notes ? `<p class="sgw">${esc(t.notes)}</p>` : ''}
+  const sug = sg.length ? fold('sug', 'Suggested', { tier: 1, z: 'z-sug', id: 'suggested', ct: sg.length, sum: firstOf(sg), body: `<div class="card"><ul class="list sugl">${sgShow.map((t) => `<li class="sg"><div class="sgt">${art(t.icon || 'spark', 22)} <span>${esc(t.title)}</span>${sgWhen(t) ? ` <span class="sgd">${sgWhen(t)}</span>` : ''}</div>${t.notes ? `<p class="sgw">${esc(t.notes)}</p>` : ''}
       ${t._d.adjust_request && U.adjust !== t.id ? `<p class="sgw sgq">${ic('spark', 14)} Waiting on Claude: “${esc(t._d.adjust_request)}”</p>` : ''}
       ${U.adjust === t.id ? `<form class="sgf" data-form="adj" data-id="${t.id}"><label for="adj-${t.id}">Change it, or dismiss it and say why</label><span class="sgfr"><input id="adj-${t.id}" name="v" autocomplete="off" placeholder="e.g. make it Saturday · or: dismiss, I don't need recruiter follow-ups"${U.adjBusy === t.id ? 'disabled' : ''}><button class="btn primary" type="submit" ${U.adjBusy === t.id ? 'disabled' : ''}>${U.adjBusy === t.id ? 'Adjusting…' : 'Adjust'}</button></span></form>` : ''}
-      <div class="sga"><button class="btn sm" data-act="sug-keep" data-id="${t.id}">${ic('arrow', 18)}Keep</button><button class="btn sm" data-act="sug-done" data-id="${t.id}" title="Already did this: marks it done and logs it">${ic('check', 18)}Done</button><button class="btn sm${U.adjust === t.id ? ' on' : ''}" data-act="sug-adjust" data-id="${t.id}" aria-expanded="${U.adjust === t.id}">${ic('edit', 18)}${U.adjust === t.id ? 'Cancel' : 'Adjust'}</button><button class="btn sm ghost" data-act="sug-drop" data-id="${t.id}">Dismiss</button></div></li>`).join('')}</ul>${sg.length > 1 ? `<button class="disc" data-act="exp" data-val="sug" aria-expanded="${!!U.exp.sug}">${ic(U.exp.sug ? 'chevD' : 'chevR', 16)}${U.exp.sug ? 'Show less' : `${sg.length - 1} more suggestion${sg.length > 2 ? 's' : ''}`}</button>` : ''}</div></section>` : '';
+      <div class="sga"><button class="btn sm" data-act="sug-keep" data-id="${t.id}">${ic('arrow', 18)}Keep</button><button class="btn sm" data-act="sug-done" data-id="${t.id}" title="Already did this: marks it done and logs it">${ic('check', 18)}Done</button><button class="btn sm${U.adjust === t.id ? ' on' : ''}" data-act="sug-adjust" data-id="${t.id}" aria-expanded="${U.adjust === t.id}">${ic('edit', 18)}${U.adjust === t.id ? 'Cancel' : 'Adjust'}</button><button class="btn sm ghost" data-act="sug-drop" data-id="${t.id}">Dismiss</button></div></li>`).join('')}</ul>${sg.length > 1 ? `<button class="disc" data-act="exp" data-val="sug" aria-expanded="${!!U.exp.sug}">${ic(U.exp.sug ? 'chevD' : 'chevR', 16)}${U.exp.sug ? 'Show less' : `${sg.length - 1} more suggestion${sg.length > 2 ? 's' : ''}`}</button>` : ''}</div>` }) : '';
   /* tier 2: working through. This week stays open; the rest fold to a one-line summary */
   /* Today and Tomorrow show every task; This week and Later show CAP, the rest behind "Show N more" */
   const CAP = 5, TMR = addDays(TODAY, 1);
@@ -659,7 +701,7 @@ function viewToday() {
   const nextOf = (a) => (a[0] ? `next <b>${esc(a[0].title)}</b>${eff(a[0]) ? ', ' + relDate(eff(a[0])) : ''}` : 'nothing here');
   const capped = (k, bucket, a, empty) => { const show = U.exp[k] ? a : a.slice(0, CAP);
     return `<div class="card">${a.length ? `<ul class="list" data-bucket="${bucket}">${rows(show)}</ul>${a.length > CAP ? `<button class="disc" data-act="exp" data-val="${k}" aria-expanded="${!!U.exp[k]}">${ic(U.exp[k] ? 'chevD' : 'chevR', 16)}${U.exp[k] ? 'Show fewer' : 'Show ' + (a.length - CAP) + ' more'}</button>` : ''}` : `<p class="empty">${empty}</p>`}</div>`; };
-  const tomorrow = `<section class="sec t2 z-week" id="tomorrow">${secH('Tomorrow', '', 2, tmr.length)}<div class="card">${tmr.length ? `<ul class="list" data-bucket="week">${rows(tmr)}</ul>` : '<p class="empty">Nothing due tomorrow.</p>'}</div></section>`;
+  const tomorrow = fold('tomorrow', 'Tomorrow', { z: 'z-week', id: 'tomorrow', ct: tmr.length, sum: firstOf(tmr), body: `<div class="card">${tmr.length ? `<ul class="list" data-bucket="week">${rows(tmr)}</ul>` : '<p class="empty">Nothing due tomorrow.</p>'}</div>` });
   const week = fold('week', 'This week', { z: 'z-week', ct: wk.length, sum: nextOf(wk), body: capped('week', 'week', wk, 'Nothing else this week.') });
   const lst = (k, a, o) => `<div class="card">${a.length ? `<ul class="list" data-bucket="${k}">${rows(a, o)}</ul>` : '<p class="empty">Nothing here.</p>'}</div>`;
   const more = fold('later', 'Later', { z: 'z-more', ct: B.later.length, sum: nextOf(B.later), body: capped('later', 'later', B.later, 'Nothing later.') })
@@ -685,7 +727,7 @@ function viewToday() {
   if (sf) cells.push(`<span><span class="k">Surf</span><span class="v num">${vv(sf.wave_ft)}<small style="font-size:12px"> ft</small></span><span class="s">${sf.period_s ? esc(sf.period_s) + 's ' : ''}${esc(sf.direction || '')}</span></span>`);
   if (sf && sf.water_temp_f != null) cells.push(`<span><span class="k">Water</span><span class="v num">${vv(sf.water_temp_f, '°')}</span><span class="s">Local</span></span>`);
   if (nextTide) cells.push(`<span><span class="k">Tide</span><span class="v num">${esc(nextTide.type)}</span><span class="s">${esc(nextTide.time)}</span></span>`);
-  const condGrid = cells.length ? `<button class="card cond" style="grid-template-columns:repeat(${cells.length},1fr)" data-act="go" data-to="life/hobbies" aria-label="Local conditions conditions. Open Hobbies for details.">${cells.join('')}</button>` : '';
+  const condGrid = cells.length ? `<button class="card cond" style="grid-template-columns:repeat(${cells.length},1fr)" data-act="go" data-to="life/hobbies" aria-label="${esc(PROFILE.place)} conditions. Open Hobbies for details.">${cells.join('')}</button>` : '';
   const wedRow = wed ? `<button class="wedrow" data-act="go" data-to="life/home" data-anchor="weddings"><b class="num">${wd}</b><span>days to ${esc(wed.title)}</span>${ic('chevR', 16)}</button>` : '';
   const glanceUp = S.glance.filter((g) => g.date >= TODAY);
   const glanceRows = glanceUp.map((g) => { const n = diffDays(TODAY, g.date); return `<div class="wedrow" title="${esc(g.detail)}"><b class="num">${n}</b><span>days to ${esc(g.title)}</span></div>`; }).join('');
@@ -698,7 +740,7 @@ function viewToday() {
   const gw = gardenHabits(hs, hDone, hTot, daysLeft);
   const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow + glanceRows }) : '';
   return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}, there. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}, there.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
-    <div class="today"><div class="col a">${upnext}${weekRings()}${ecoOn() ? `<div class="les-wrap"><div class="eco-slot"></div>${lessonsChip()}${lessonModal(true)}</div>` : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div><div class="col b">${due}${sug}${tomorrow}${week}${more}</div></div>`;
+    <div class="today"><div class="col a">${upnext}${weekRings({ html: due + sug + tomorrow + week + more, tiles: [{ k: 'overdue', n: late.length, l: 'overdue', c: 'bad', id: 'sec-overdue' }, { k: 'slipped', n: slipped.length, l: 'slipped', c: 'hot', id: 'sec-slipped' }, { k: 'today', n: dueToday.length, l: 'today', id: 'tasks', always: 1 }, { k: 'tomorrow', n: tmr.length, l: 'tomorrow', id: 'tomorrow', always: 1 }, { k: 'sug', n: sg.length, l: 'suggested', id: 'suggested' }] })}</div><div class="col b">${ecoOn() ? `<div class="les-wrap">${lessonCard()}<div class="eco-slot"></div></div>` : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div></div>`;
 }
 /* Habit rings: one per habit, filling toward the weekly target. The dot on each ring is the floor that keeps the streak alive. */
 const habitLast = {}; /* sessions this week per habit at the last render: a ring sweeps only when it grows */
@@ -798,10 +840,34 @@ function flameBadge(st, low) {
 let ringLast = null; /* today's done count at the last render: the ring sweeps only when it grows */
 /* completion step for ring color: p1 under a third, p2 under two thirds, p3 almost there, p4 done */
 const ringStep = (f) => (f >= 1 ? 'p4' : f >= 2 / 3 ? 'p3' : f >= 1 / 3 ? 'p2' : 'p1');
-const ringTally = () => LBG.ringTally(S.tasks.map((t) => ({ eff: eff(t) || null, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null })));
-function weekRings() {
+const ringTally = () => LBG.ringTally(S.tasks.map((t) => ({ eff: eff(t) || null, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null, days: t.days })));
+/* tasks a past day committed to (committed_days, else its current date for tasks never tracked) */
+const committedOn = (t, d) => (t.days.length ? t.days.includes(d) : eff(t) === d);
+/* a missed task's status now: done late, moved to another date, or still sitting on a past date (overdue/slipped) */
+function missStatus(t, d) {
+  if (t.done) return `<span class="m">${ic('check', 15)}Done late · ${relDate(LB.laDateOf(t.doneAt))}</span>`;
+  const e = eff(t), st = tstate(t);
+  if (!e) return '<span class="m hot">Moved · no date</span>';
+  if (e !== d && e >= TODAY) return `<span class="m hot">Moved ${ic('arrow', 13)} ${relDate(e)}</span>`;
+  return `<span class="m bad">${e !== d ? `Moved ${ic('arrow', 13)} ${relDate(e)} · ` : ''}${st.overdue ? 'Overdue' : 'Slipped'}</span>`;
+}
+/* a past day's tasks: what got done that day, then what it committed to and missed */
+function pastDayTasks(d) {
+  const doneOn = (t) => t.done && t.doneAt && LB.laDateOf(t.doneAt) === d;
+  const done = S.tasks.filter(doneOn).sort((a, b) => a.doneAt - b.doneAt);
+  const missed = S.tasks.filter((t) => !doneOn(t) && committedOn(t, d) && !(t.done && t.doneAt && LB.laDateOf(t.doneAt) < d));
+  const list = (title, a, o, empty) => `<section class="sec t1">${secH(title, '', 1, a.length)}<div class="card">${a.length ? `<ul class="list">${a.map((t) => taskRow(t, o(t))).join('')}</ul>` : `<p class="empty">${empty}</p>`}</div></section>`;
+  return list('Done', done, () => ({}), 'Nothing finished that day.') + list('Missed', missed, (t) => ({ status: missStatus(t, d) }), 'Nothing missed.');
+}
+/* fold the ring card's task panel and bring the card back into view (the panel can run several screens long) */
+function collapseTasks() {
+  setOpen('rtasks', false); render();
+  setTimeout(() => { const c = document.querySelector('.card.rings'), y = c && c.getBoundingClientRect().top; if (c && y < 60) scrollTo(0, Math.max(0, scrollY + y - 60)); }, 0);
+}
+function weekRings(panel) {
   const T = ringTally(), C = 100.5, days = [];
   for (let i = 6; i >= 0; i--) days.push(addDays(TODAY, -i));
+  const sel = days.includes(U.ringDay) ? U.ringDay : TODAY, open = isOpen('rtasks', !PHONE.matches);
   const lastFull = days.slice(0, 6).reverse().find((d) => LBG.ringPct(T[d]) >= 1);
   const t0 = T[TODAY] || { done: 0, committed: 0 }, n0 = t0.done, left = t0.committed - t0.done;
   const grew = ringLast != null && n0 > ringLast; ringLast = n0;
@@ -810,11 +876,15 @@ function weekRings() {
     : `${n0} of ${t0.committed} done. ${left} more to close today's ring.`;
   const cells = days.map((d) => {
     const x = T[d] || { done: 0, committed: 0 }, n = x.done, f = LBG.ringPct(x) || 0, today = d === TODAY, full = f >= 1;
-    return `<li class="wr ${ringStep(f)}${today ? ' now' : ''}${today && grew ? ' grew' : ''}${full ? ' full' : ''}"><span class="wl">${today ? 'Today' : WD3[dow(d)]}</span>
-      <span class="wc"><svg viewBox="0 0 40 40" aria-hidden="true"><circle class="wt" cx="20" cy="20" r="16"/><circle class="wa" cx="20" cy="20" r="16" stroke-dasharray="${C}" stroke-dashoffset="${(C - C * f).toFixed(1)}" transform="rotate(-90 20 20)"/></svg><b class="num${(String(n) + (x.committed || '')).length > 3 ? ' sm' : ''}"><span>${n}${x.committed ? `<small>/${x.committed}</small>` : ''}</span></b></span>
-      <span class="sr">${n} of ${x.committed} done${full ? ', ring closed' : ''}</span></li>`;
+    return `<li class="wr ${ringStep(f)}${today ? ' now' : ''}${today && grew ? ' grew' : ''}${full ? ' full' : ''}${open && d === sel ? ' sel' : ''}"><button class="wb" data-act="ring-day" data-val="${d}" aria-pressed="${open && d === sel}" aria-label="${today ? 'Today' : WD[dow(d)]}: ${n} of ${x.committed} done${full ? ', ring closed' : ''}. Show tasks"><span class="wl">${today ? 'Today' : WD3[dow(d)]}</span>
+      <span class="wc"><svg viewBox="0 0 40 40" aria-hidden="true"><circle class="wt" cx="20" cy="20" r="16"/><circle class="wa" cx="20" cy="20" r="16" stroke-dasharray="${C}" stroke-dashoffset="${(C - C * f).toFixed(1)}" transform="rotate(-90 20 20)"/></svg><b class="num${(String(n) + (x.committed || '')).length > 3 ? ' sm' : ''}"><span>${n}${x.committed ? `<small>/${x.committed}</small>` : ''}</span></b></span></button></li>`;
   }).join('');
-  return `<section class="sec z-now" aria-label="Tasks done of tasks committed, last seven days"><div class="card rings"><ol class="wrow">${cells}</ol><p class="wmsg">${esc(msg)}</p></div></section>`;
+  /* count tiles: today's lists at a glance; tapping one opens the panel at that list */
+  const tiles = (panel.tiles || []).filter((x) => x.n || x.always).map((x) => `<button class="rt-tile${x.c ? ' ' + x.c : ''}${x.n ? '' : ' zero'}" data-act="ring-tile" data-val="${x.k}" data-id="${x.id}" aria-label="${x.n} ${x.l}. Show them"><b class="num">${x.n}</b><span>${x.l}</span></button>`).join('');
+  const what = sel === TODAY ? 'Today' : relDate(sel) === 'yesterday' ? 'Yesterday' : WD[dow(sel)];
+  const tog = `<div class="rt-tiles">${tiles}</div><button class="rt-b" data-act="ring-tasks" aria-expanded="${open}" aria-controls="rtasks"><span class="rt-t">${open ? (sel === TODAY ? 'Hide tasks' : `Hide ${what}'s tasks`) : 'All tasks'}</span>${ic(open ? 'up' : 'chevD', 16)}${open ? '<kbd class="rt-k">Esc</kbd>' : ''}</button>`;
+  const body = open ? `<div class="rt-body" id="rtasks">${sel === TODAY ? panel.html : pastDayTasks(sel)}</div>` : '';
+  return `<section class="sec z-now" aria-label="Tasks done of tasks committed, last seven days"><div class="card rings${open ? ' open' : ''}"><ol class="wrow">${cells}</ol><p class="wmsg">${esc(msg)}</p>${tog}${body}</div></section>`;
 }
 
 /* Schedule (graft from Daily paper): live Now line, proportional free gaps, past fades and shrinks */
@@ -1013,14 +1083,14 @@ function viewLife() {
   } else if (U.life === 'home') {
     const terms = S.weddings.flatMap((w) => w.match.length ? w.match : [w.title.split("'")[0]]).map((x) => x.toLowerCase().trim()).filter(Boolean).concat(['wedding']);
     const isWed = (t) => t.group === 'Social' && terms.some((s) => t.title.toLowerCase().includes(s));
-    const pf = U.petFilter;
+    const pf = PROFILE.pets.some((p) => p.key === U.petFilter) ? U.petFilter : 'all';
     const petMatch = (t) => pf === 'all' || t.title.toLowerCase().includes(pf) || (/\band\b/.test(t.title) && t.title.toLowerCase().includes(pf));
     body = (S.weddings.length ? `<section class="sec" id="weddings">${secH('Weddings')}<div class="cards2">${S.weddings.map((w) => { const n = diffDays(TODAY, w.date); return `<div class="card pad hcard"><div class="wcard"><span class="stat num">${n >= 0 ? n : '✓'}</span><span class="small muted">${n === 0 ? 'Today!' : n > 0 ? 'days to go' : 'Celebrated'}</span><h4 style="margin:0;font-size:17px">${esc(w.title)}</h4></div>
         <p class="small" style="margin:10px 0 0">${longDate(w.date)}${w.where ? ' · ' + esc(w.where) : ''}</p>${w.gift ? `<p class="small muted" style="margin:4px 0 0">Gift: ${esc(w.gift)}</p>` : ''}</div>`; }).join('')}</div>
         <div class="group-l">Wedding tasks</div>${groupTasks(isWed, 'No wedding tasks open.')}</section>` : '')
       + `      <section class="sec">${secH('Home')}${groupTasks((t) => t.group === 'Home', 'No home tasks open.')}</section>
-      <section class="sec">${secH('Pets')}<div class="scroller" role="group" aria-label="Filter pets" style="margin-bottom:10px">${[['all', 'All pets'], ['biscuit', 'Biscuit'], ['pepper', 'Pepper']].map(([k, l]) => `<button class="seg" data-act="pet" data-val="${k}" aria-pressed="${pf === k}">${ic(k === 'pepper' ? 'cat' : k === 'biscuit' ? 'dog' : 'paw', 17)}${l}</button>`).join('')}</div>
-        ${groupTasks((t) => t.group === 'Pets' && petMatch(t), pf === 'all' ? 'No pet tasks open.' : 'Nothing open for ' + (pf === 'biscuit' ? 'Biscuit' : 'Pepper') + '.')}</section>
+      <section class="sec">${secH('Pets')}${PROFILE.pets.length > 1 ? `<div class="scroller" role="group" aria-label="Filter pets" style="margin-bottom:10px">${[{ key: 'all', name: 'All pets', icon: 'paw' }, ...PROFILE.pets].map((p) => `<button class="seg" data-act="pet" data-val="${esc(p.key)}" aria-pressed="${pf === p.key}">${ic(p.icon, 17)}${esc(p.name)}</button>`).join('')}</div>` : ''}
+        ${groupTasks((t) => t.group === 'Pets' && petMatch(t), pf === 'all' ? 'No pet tasks open.' : 'Nothing open for ' + esc((PROFILE.pets.find((p) => p.key === pf) || { name: pf }).name) + '.')}</section>
       <section class="sec">${secH('Personal')}${groupTasks((t) => t.group === 'Personal', 'No personal tasks open.')}</section>
       <section class="sec">${secH('Work')}${groupTasks((t) => t.group === 'Work', 'No work tasks open.')}</section>`;
   } else {
@@ -1034,16 +1104,15 @@ function viewLife() {
     const surfCard = sf ? `<div class="card pad"><span class="group-l" style="margin:0 0 4px">Surf</span><div class="stat num">${vv(sf.wave_ft)}<small style="font-size:18px"> ft</small></div><p class="small" style="margin:4px 0 8px">${sf.period_s ? esc(sf.period_s) + 's ' : ''}${esc(sf.direction || '')}<br><span class="muted">Water ${vv(sf.water_temp_f, '°')}</span></p>
           <div class="kv small"><span class="muted">Swell</span><span class="num">${vv(sf.swell_ft, ' ft')} @ ${vv(sf.swell_period_s, 's')}</span></div><div class="kv small"><span class="muted">Wind</span><span>${vv(sf.wind)}</span></div>${Array.isArray(sf.sessions) && sf.sessions.length ? `<div class="kv small"><span class="muted">Today</span><span class="num">${sf.sessions.map((x) => esc((x && x.label) || '') + ' ' + vv(x && x.wave_ft)).join(' · ')}</span></div>` : ''}</div>` : '';
     const fc = w && Array.isArray(w.forecast) ? w.forecast.filter(Boolean) : [];
-    const conds = C && (w || sf || C.tides.length) ? `<section class="sec">${secH('Local conditions', upd)}${wxCard || surfCard ? `<div class="wx"${wxCard && surfCard ? '' : ' style="grid-template-columns:1fr"'}>${wxCard}${surfCard}</div>` : ''}
+    const conds = C && (w || sf || C.tides.length) ? `<section class="sec">${secH(esc(PROFILE.place), upd)}${wxCard || surfCard ? `<div class="wx"${wxCard && surfCard ? '' : ' style="grid-template-columns:1fr"'}>${wxCard}${surfCard}</div>` : ''}
       ${C.tides.length ? `<div class="card" style="margin-top:8px">${C.tides.map((t) => `<div class="kv"><b>${esc(t.type)} tide</b><span class="num muted">${vv(t.ft, ' ft')}</span><span class="num">${esc(t.time)}</span></div>`).join('')}</div>` : ''}
       ${fc.length ? `<div class="card" style="margin-top:8px">${fc.map((f) => `<div class="kv"><b>${esc(f.day || '')}</b><span class="muted">${esc(f.condition || '')}</span><span class="num">${vv(f.high_f, '°')} / ${vv(f.low_f, '°')}</span></div>`).join('')}</div>` : ''}
-      <p class="tiny muted" style="margin:8px 4px 0">Open-Meteo forecast and marine swell, NOAA tides station 9410170.</p></section>`
-      : `<section class="sec">${secH('Local conditions')}<div class="card"><p class="empty">No conditions report yet. Weather, surf and tides show here once a report is saved. Nothing is guessed.</p></div></section>`;
+      <p class="tiny muted" style="margin:8px 4px 0">Open-Meteo forecast and marine swell, NOAA tides.</p></section>`
+      : `<section class="sec">${secH(esc(PROFILE.place))}<div class="card"><p class="empty">No conditions report yet. Weather, surf and tides show here once a report is saved. Nothing is guessed.</p></div></section>`;
     body = `${conds}
       <section class="sec">${secH('Climbing & recovery', goLink('Goals', 'grow/goals'))}<div class="card">${climbs.length ? climbs.map((g) => `<div class="kv" style="align-items:flex-start;padding:10px 0"><span>${ic('mountain', 18)} <b>${esc(g.title)}</b><br><span class="small muted">Q${q}: ${esc(g.q[q - 1] || 'No note yet')}</span></span></div>`).join('') : '<p class="empty">No active climbing goals.</p>'}
         <p class="small muted" style="margin:0;padding:0 0 10px">Recovery work (massage, mobility) lives in Health as tasks.</p></div></section>
-      <section class="sec">${secH('Time outside')}${outside.length ? `<div class="hgrid" style="grid-template-columns:1fr 1fr">${outside.map((h) => { const st = habitStats(h, S.sessions); return `<div class="htile"><span class="hn">${ic(h.icon, 17)}<span>${esc(h.name)}</span></span><button class="logbtn" data-act="log" data-id="${h.id}" aria-label="Log a ${esc(h.name)} session today">${ic('plus', 20)}</button><span class="hc num">${st.month}<small> this month</small></span><span class="streak">${st.week}/${h.target} this week</span></div>`; }).join('')}</div>` : '<div class="card"><p class="empty">No surfing or running habit yet. Add one in Grow → Habits.</p></div>'}
-        <p class="small muted" style="margin:10px 4px 0">Dog-beach days with Biscuit are tasks in Home & Pets.</p></section>`;
+      <section class="sec">${secH('Time outside')}${outside.length ? `<div class="hgrid" style="grid-template-columns:1fr 1fr">${outside.map((h) => { const st = habitStats(h, S.sessions); return `<div class="htile"><span class="hn">${ic(h.icon, 17)}<span>${esc(h.name)}</span></span><button class="logbtn" data-act="log" data-id="${h.id}" aria-label="Log a ${esc(h.name)} session today">${ic('plus', 20)}</button><span class="hc num">${st.month}<small> this month</small></span><span class="streak">${st.week}/${h.target} this week</span></div>`; }).join('')}</div>` : '<div class="card"><p class="empty">No surfing or running habit yet. Add one in Grow → Habits.</p></div>'}</section>`;
   }
   const lf = LIFE.find((x) => x[0] === U.life);
   return `${phead(U.life, lf[2], 'Life', 'Health, money, home, pets and the fun stuff.')}
@@ -1492,7 +1561,7 @@ function render() {
   { const ci = GROW.findIndex((x) => x[0] === 'collection'); /* with the game on, Grow gets a third view: dioramas + pressed plants */
     if (gameOn() && ci < 0) GROW.push(['collection', 'Collection', 'star']); else if (!gameOn() && ci >= 0) { GROW.splice(ci, 1); if (U.grow === 'collection') U.grow = 'habits'; } }
   pendingRender = false;
-  if (LB.todayStr() !== TODAY) { TODAY = LB.todayStr(); watchCal(); }
+  if (LB.todayStr() !== TODAY) { TODAY = LB.todayStr(); watchCal(); if (LBDB.state.status === 'ready') { derive(); commitPass(); } }
   const a = document.activeElement, fk = a && a.dataset && a.dataset.act ? [a.dataset.act, a.dataset.id || a.dataset.val || a.dataset.key || a.dataset.d || ''] : null;
   const sy = scrollY; /* re-rendering main must not move the page (a log tap used to jump it) */
   writeHash();
@@ -1501,7 +1570,7 @@ function render() {
   const html = ready ? { today: viewToday, plan: viewPlan, lists: viewLists, life: viewLife, grow: viewGrow }[U.tab]() : statusView(st);
   const sq = S.cond && S.cond.quote, q = sq ? [str(sq.text), str(sq.author) || 'Unknown'] : QUOTES[U.quote % QUOTES.length];
   const sk = LBDB.skipped();
-  main.innerHTML = html + lessonModal() + `<footer class="quote"><p>“${esc(q[0])}”</p><div class="by">${esc(q[1])}${sq ? '' : ' · <button class="link" style="display:inline-flex;min-height:44px" data-act="quote">Another</button>'}</div>
+  main.innerHTML = html + `<footer class="quote"><p>“${esc(q[0])}”</p><div class="by">${esc(q[1])}${sq ? '' : ' · <button class="link" style="display:inline-flex;min-height:44px" data-act="quote">Another</button>'}</div>
     ${sk.n ? `<p class="skipnote" title="${esc(Object.entries(sk.by).map(([c, n]) => `${c}: ${n}`).join(', '))}">${plural(sk.n, 'item')} skipped because the saved data didn't match the expected shape.</p>` : ''}</footer>`;
   document.body.classList.toggle('km-open', !!main.querySelector('.kmodal'));
   const fc = fabConfig();
@@ -1687,6 +1756,9 @@ document.addEventListener('click', (e) => {
     case 'sug-drop': { const t = (S.suggested || []).find((x) => x.id === id); if (t) delDoc('tasks', id, `Dismissed “${t.title}”`); break; }
     case 'del': { const t = S.tasks.find((x) => x.id === id); if (t) delDoc('tasks', id, `Deleted “${t.title}”`); break; }
     case 'tomorrow': U.showTomorrow = !U.showTomorrow; render(); break;
+    case 'ring-day': { const wasOpen = isOpen('rtasks', !PHONE.matches); if (wasOpen && U.ringDay === val) setOpen('rtasks', false); else { U.ringDay = val; if (!wasOpen) setOpen('rtasks', true); } render(); break; }
+    case 'ring-tasks': if (isOpen('rtasks', !PHONE.matches)) collapseTasks(); else { setOpen('rtasks', true); render(); } break;
+    case 'ring-tile': { U.ringDay = TODAY; setOpen('rtasks', true); setOpen(val, true); render(); const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
     case 'exp': U.exp[val] = !U.exp[val]; render(); break;
     case 'log': logHabit(id); break;
     case 'unlog': unlogHabit(id); break;
@@ -1764,6 +1836,7 @@ document.addEventListener('change', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !pop.hidden) { setPop(false); return; }
   if (e.key === 'Escape' && U.sheet) { closeSheet(); return; }
+  if (e.key === 'Escape' && U.tab === 'today' && !LES.deck && !U.inspect && isOpen('rtasks', !PHONE.matches) && !(e.target.closest && e.target.closest('input, textarea, select'))) { collapseTasks(); return; }
   if (U.sheet && e.key === 'Tab') { const f = [...document.querySelectorAll('#sheet button, #sheet input, #sheet select, #sheet textarea')].filter((x) => !x.disabled && x.offsetParent !== null); if (!f.length) return; const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
   const g = e.target.closest && e.target.closest('[data-drag]');
   if (g && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) { e.preventDefault(); moveTask(g.dataset.drag, e.key === 'ArrowUp' ? -1 : 1); }
@@ -1832,7 +1905,7 @@ function currentGame() {
   if (GAME.start === undefined) { gameStart(); return null; }
   const key = S, pool = LBGarden.plantPool(), pv = LBGarden.poolVersion();
   if (GAME.gameKey === key && GAME.poolV === pv && GAME.game && GAME.game.today === TODAY) return GAME.game;
-  const tasks = S.tasks.map((t) => ({ eff: eff(t), done: t.done, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null }));
+  const tasks = S.tasks.map((t) => ({ eff: eff(t), done: t.done, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null, days: t.days }));
   const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target, daily: h.daily, since: h._d && h._d.created_at ? LB.laDateOf(h._d.created_at) : null }));
   const sessions = S.sessions.map((x) => { const h = S.habits.find((k) => k.key === x.h || k.id === x.h); return { h: h ? h.key : x.h, date: x.date }; });
   const breakSkips = LBDB.all('logs').filter((l) => l.kind === 'break' && l.label === 'skip').map((l) => l.date);
@@ -1887,9 +1960,8 @@ function gameAfterRender() {
   if (!ecoOn() || !window.Habitat) { const g0 = currentGame(); if (g0) ecoStatus(g0); return; }
   const slot = document.querySelector('.eco-slot');
   if (slot) Habitat.mount(slot);
-  /* lesson chip + inline deck sit on the water: move them into the scene box */
-  { const hab = slot && slot.querySelector('.hab'); if (hab) { hab.querySelectorAll(':scope > .les-chip, :scope > .les-pop').forEach((e) => e.remove()); } if (hab) slot.parentElement.querySelectorAll(':scope > .les-chip, :scope > .les-pop').forEach((e) => hab.appendChild(e)); }
   const g = currentGame();
+  if (Habitat.setWeather) Habitat.setWeather(S.cond && S.cond.w ? { condition: S.cond.w.condition, at: S.cond.at } : null);
   if (g) { Habitat.setState(g); gameVisitor(g); ecoStatus(g); }
 }
 /* checks/game_status: the ecosystem's biome/phase for Claude's weekly run (weekly-visitor reads it to know when a
@@ -1956,25 +2028,25 @@ function lessonDeck() {
   const key = (id) => { let x = h; for (const c of id) x = ((x ^ c.charCodeAt(0)) * 16777619) >>> 0; return x; };
   return ids.sort((a, b) => key(a) - key(b));
 }
-/* Today (Ecosystem): a "N lessons ▾" chip on the habitat while lessons are due; it drops the deck over the water
-   (full-screen modal on phones). Nothing due: no chip. */
-function lessonsChip() {
+/* Today (Ecosystem): a Lessons card right above the habitat while lessons are due. Opening it answers the deck inside the
+   card, so the scene (creatures feeding) stays in view. Nothing due and no deck open: no card. */
+function lessonCard() {
   if (!ecoOn()) return '';
   lessonsListen();
   if (LES.got !== 3) return '';
   const open = !!LES.deck, n = open ? LES.deck.length - LES.i : lessonDeck().length;
   if (!open && !n) return '';
-  return `<button class="les-chip${open ? ' on' : ''}" data-act="${open ? 'les-close' : 'les-open'}" aria-expanded="${open}">${ic('book', 16)}<span>${open ? 'Lessons' : plural(n, 'lesson')}</span><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="${open ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'}" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></button>`;
+  const hs = `<span class="les-hs">${open ? 'Feeding the habitat below' : `${plural(n, 'card')} ready · each one feeds the habitat`}</span>`;
+  const head = open
+    ? `<div class="les-h">${ic('book', 18)}<h3 class="les-t">Lessons</h3>${hs}<button class="km-x les-x" data-act="les-close" aria-label="Close lessons"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>`
+    : `<button class="les-h les-row" data-act="les-open" aria-label="Start lessons: ${plural(n, 'card')} ready">${ic('book', 18)}<span class="les-t">Lessons</span><span class="ct num">${n}</span>${hs}<span class="les-go" aria-hidden="true">Start${ic('chevR', 16)}</span></button>`;
+  return `<section class="sec z-les" aria-label="Lessons"><div class="card les-in${open ? ' on' : ''}">${head}${open ? lessonBody() : ''}</div></section>`;
 }
-const lesInline = () => !PHONE.matches;
 const lesNorm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
 const lesRight = (got, ans) => String(ans).split('|').some((a) => lesNorm(a) === lesNorm(got));
-function lessonModal(inline = false) {
-  if (!LES.deck || inline !== lesInline()) return '';
-  const X = `<button class="km-x" data-act="les-close" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`;
-  const wrap = (inner, label) => inline ? `<div class="les-pop" role="dialog" aria-label="${label}">${X}${inner}</div>` : `<div class="kmodal les-m${LES.anim ? ' in' : ''}" role="dialog" aria-modal="true" aria-label="${label}"><button class="km-bg" data-act="les-close" aria-label="Close" tabindex="-1"></button><article class="km-card les-card">${X}${inner}</article></div>`;
+function lessonBody() {
   const tot = LES.deck.length, l = LES.lessons[LES.deck[LES.i]];
-  if (LES.i >= tot || !l) return wrap(`<div class="les-body les-done"><p class="dio-k">Deck done</p><p class="les-p">${LES.n ? `${plural(LES.n, 'card')} answered. The fish are fed.` : 'Nothing answered this time.'}</p><div class="les-acts"><button class="btn primary" data-act="les-close">Close</button></div></div>`, 'Lessons done');
+  if (LES.i >= tot || !l) return (`<div class="les-body les-done"><p class="dio-k">Deck done</p><p class="les-p">${LES.n ? `${plural(LES.n, 'card')} answered. The fish are fed.` : 'Nothing answered this time.'}</p><div class="les-acts"><button class="btn primary" data-act="les-close">Close</button></div></div>`);
   const src = LES.sources[l.source_id] || {}, fb = LES.fb, r = fb ? fb.r : lesRung(l), f = r.format;
   const dots = LES.deck.map((_, k) => `<i class="${k < LES.i ? 'on' : k === LES.i ? 'cur' : ''}"></i>`).join('');
   const kick = `<p class="dio-k">${esc(src.title || 'Lesson')} · ${f === 'tap' ? 'Read' : f === 'recall' ? 'Recall' : 'Apply'}</p>`;
@@ -1986,9 +2058,9 @@ function lessonModal(inline = false) {
     : `<form class="les-f" data-form="les-recall"><label class="sr" for="lesIn">Your answer</label><input id="lesIn" name="v" autocomplete="off" placeholder="Your answer" enterkeyhint="done"><span class="les-acts"><button class="btn primary" type="submit">Check</button><button class="btn" type="button" data-act="les-act" data-val="again">Again</button></span></form>`);
   else body = `<p class="les-p">${esc(r.prompt)}</p><form class="les-f" data-form="les-apply"><label class="sr" for="lesIn">Where could you use this?</label><textarea id="lesIn" name="v" rows="3" placeholder="One line: where could you use this today?"></textarea><span class="les-acts"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" data-act="les-act" data-val="again">Again</button></span></form>`;
   const more = fb ? '' : `<details class="les-more"><summary>More</summary><button class="link" data-act="les-act" data-val="skip">Skip today</button><button class="link" data-act="les-act" data-val="flag">${l.flagged ? 'Flagged' : 'Flag as unclear'}</button><button class="link" data-act="les-act" data-val="drop">Drop it</button></details>`;
-  return wrap(`<div class="les-body"><div class="les-dots" aria-label="Card ${LES.i + 1} of ${tot}">${dots}</div>${kick}${body}${more}</div>`, 'Lessons');
+  return (`<div class="les-body"><div class="les-dots" aria-label="Card ${LES.i + 1} of ${tot}">${dots}</div>${kick}${body}${more}</div>`);
 }
-function lessonOpen() { LES.deck = lessonDeck(); LES.i = 0; LES.fb = null; LES.n = 0; LES.anim = true; render(); LES.anim = false; lesFocus(); }
+function lessonOpen() { LES.deck = lessonDeck(); LES.i = 0; LES.fb = null; LES.n = 0; render(); lesFocus(); }
 function lessonClose() { LES.deck = null; LES.fb = null; render(); }
 function lesFocus() { const i = document.getElementById('lesIn'); if (i) i.focus(); }
 /* one action on the current card: game.js answer() moves level/due/state; writes the lesson and a lesson_answers doc */
@@ -2038,7 +2110,7 @@ GAME.forced = gameFromUrl(location.href);
 window.LB_GAME_HREF = location.href;
 readHash();
 if (gameOn()) loadGame();
-LBDB.start(() => { derive(); if (LBDB.state.status === 'ready') ensureRecurring(); schedule(); });
+LBDB.start(() => { derive(); if (LBDB.state.status === 'ready') { ensureRecurring(); commitPass(); } schedule(); });
 render();
 startCal();
 /* break overlay (break/ app): it injects window.lifeboardBreak and fires lifeboardbreakend with how the break ended.

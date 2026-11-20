@@ -1,0 +1,20 @@
+{
+  "kind": "scenery",
+  "id": "eelgrass_tuft",
+  "name": "Eelgrass tuft",
+  "lore": "Long ribbons that lean with every swell.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "clump",
+  "reference": "Zostera marina tuft: 8-10 long, very narrow ribbon blades (~1 cm wide) rising from a small sand mound, leaning out and arching over at the tips; grass green at the base to yellow-green tips with pale epiphyte speckle",
+  "size": { "height_m": 0.4 },
+  "shape": {
+    "blades": { "count": 9, "width_ratio": 0.026, "thick_ratio": 0.005, "spread": 0.06, "lean_deg": 12, "curl": 0.5, "tip": "point", "vary": 0.35, "segs": 8, "speckle": 0.5 },
+    "base": { "radius_ratio": 0.08, "height_ratio": 0.03 }
+  },
+  "palette": { "main": ["#3f8a3a", "#9cc84e"], "accent": "#d8cf8a", "base": "#c9b07a" },
+  "material": { "roughness": 0.45, "coat": 0.15 },
+  "motion": { "sway": { "frames": 96, "cycles": 2, "amp_deg": 5, "lag_frames": 6 } },
+  "pass_through": true,
+  "budget": { "tris": 2000, "texture": 512 }
+}

@@ -1,0 +1,22 @@
+{
+  "kind": "scenery",
+  "id": "sand_dollar",
+  "name": "Sand dollar",
+  "lore": "Bleached coins with a five-petal flower.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "solid",
+  "reference": "Bleached sand dollar test (Mellita / Dendraster) lying flat on sand: thin round disc with a softly domed top and a darker five-petal flower (petaloid) on the upper face; chalky off-white",
+  "size": { "height_m": 0.014, "footprint_m": 0.085 },
+  "shape": {
+    "axis": "up",
+    "profile": [[0, 2.6], [0.3, 3.04], [0.75, 2.9], [1, 2.2]],
+    "cross": { "flatten": 1, "segs": 24 },
+    "cap": 0.04,
+    "petals": { "count": 5, "length_ratio": 0.5, "width_ratio": 0.22 }
+  },
+  "palette": { "main": ["#ece4d8", "#d0c8bc"], "accent": "#8a7052" },
+  "material": { "roughness": 0.55, "coat": 0.05 },
+  "pass_through": false,
+  "budget": { "tris": 2500, "texture": 512 }
+}

@@ -1,6 +1,6 @@
 /* lifeboard: game rules for the garden (habits), reef (rings) and lessons. Pure, no DOM, no dates:
    days and weeks are plain integers so the same code runs in the page and in sim/run.js.
-   Spec: "Lifeboard Game Spec" doc. Every tunable number lives in RULES. */
+   Spec: SPEC.md. Every tunable number lives in RULES. */
 (function (G) {
   const RULES = {
     /* one plant at a time per plot (habit): it blooms or dies, shows that for bloomWeeks / restWeeks, is pressed, and a new seed goes in.
@@ -69,18 +69,21 @@
   }
 
   /* ---------- ring: done ÷ committed (SPEC.md "Ring %") ----------
-     tasks: [{ eff: 'YYYY-MM-DD' | null (current due/deadline), doneDate: 'YYYY-MM-DD' | null }]
-     committed on day D = tasks due D not finished before D, plus anything finished on D (a task added and finished
-     the same day adds 1 to both sides). Overdue tasks don't count until pulled into a day (rescheduled to it).
-     Returns { [date]: { done, committed } }. */
+     tasks: [{ eff: 'YYYY-MM-DD' | null (current due/deadline), doneDate: 'YYYY-MM-DD' | null, days?: ['YYYY-MM-DD'] }]
+     days = the dates the task was committed to (tasks.committed_days); without it, its current eff stands in.
+     committed on day D = tasks committed to D not finished before D, plus anything finished on D (a task added and
+     finished the same day adds 1 to both sides). Returns { [date]: { done, committed } }. */
   function ringTally(tasks) {
     const out = {}, at = (d) => out[d] || (out[d] = { done: 0, committed: 0 });
     tasks.forEach((t) => {
       if (t.doneDate) { const x = at(t.doneDate); x.done++; x.committed++; }
-      if (t.eff && (!t.doneDate || t.doneDate > t.eff)) at(t.eff).committed++;
+      const days = t.days && t.days.length ? t.days : t.eff ? [t.eff] : [];
+      days.forEach((d) => { if (!t.doneDate || t.doneDate > d) at(d).committed++; });
     });
     return out;
   }
+  /* a task's first committed day (its age counts from here; rescheduling never resets it) */
+  const firstCommit = (t) => (t.days && t.days.length ? t.days.reduce((a, b) => (a < b ? a : b)) : t.eff || null);
   const ringPct = (x) => (x && x.committed ? Math.min(1, x.done / x.committed) : null);
 
   /* ---------- reef ---------- */
@@ -120,20 +123,20 @@
     return ev;
   }
   const weekVisitor = (tides) => (tides.filter((t) => t && t.full).length >= RULES.visitor.fullDaysForRare ? 'rare' : null);
-  const overdueDrop = (daysOverdue) => (daysOverdue >= RULES.visitor.exoticOverdue ? 'exotic' : daysOverdue >= RULES.visitor.rareOverdue ? 'rare' : null);
-  /* reward for finishing an overdue task, capped per week (reset r.weekDrops on Monday) and exotic per biome */
-  function overdueReward(r, daysOverdue) {
+  const overdueDrop = (age) => (age >= RULES.visitor.exoticOverdue ? 'exotic' : age >= RULES.visitor.rareOverdue ? 'rare' : null);
+  /* reward for finishing a task age days after it was first committed (pushes don't reset age), capped per week (reset r.weekDrops on Monday) and exotic per biome */
+  function overdueReward(r, age) {
     const v = RULES.visitor;
     if (v.overdueDropsPerWeek != null && r.weekDrops >= v.overdueDropsPerWeek) return null;
-    let d = overdueDrop(daysOverdue);
+    let d = overdueDrop(age);
     if (d === 'exotic' && r.exotics >= v.exoticPerBiome) d = 'rare';
     if (d) { r.weekDrops++; if (d === 'exotic') r.exotics++; }
     return d;
   }
   /* water: each overdue task clouds it a little (0 clear .. 1 murky at cloudyAt tasks) */
   const cloudiness = (overdueCount) => Math.min(1, overdueCount / RULES.tide.cloudyAt);
-  /* algae: grows from neglect, i.e. tasks overdue algaeAfter+ days (0 none .. 1 overgrown at algaeAt such tasks) */
-  const algae = (overdueAges) => Math.min(1, overdueAges.filter((a) => a >= RULES.tide.algaeAfter).length / RULES.tide.algaeAt);
+  /* algae: grows from neglect, i.e. open tasks first committed algaeAfter+ days ago, pushed or not (0 none .. 1 overgrown at algaeAt such tasks) */
+  const algae = (ages) => Math.min(1, ages.filter((a) => a >= RULES.tide.algaeAfter).length / RULES.tide.algaeAt);
 
   /* ---------- lessons ---------- */
   function newLesson(id, sourceId, format, day) { return { id, sourceId, format, level: 0, due: day, state: 'active' }; }
@@ -165,7 +168,7 @@
   /* which rung of the source's ladder a lesson is on: its level, capped at the last rung */
   const rungOf = (level, rungs) => Math.min(level || 0, rungs - 1);
 
-  const API = { RULES, ringTally, ringPct, weekResult, newPlant, plantWeek, rarityOf, finishPlant, newPlot, plotWeek, dayTide, phaseThresholds, newReef, reefDay, weekVisitor, overdueDrop, overdueReward, cloudiness, algae, newLesson, buildDeck, answer, sourceDone, rungOf, feedingOf };
+  const API = { RULES, ringTally, firstCommit, ringPct, weekResult, newPlant, plantWeek, rarityOf, finishPlant, newPlot, plotWeek, dayTide, phaseThresholds, newReef, reefDay, weekVisitor, overdueDrop, overdueReward, cloudiness, algae, newLesson, buildDeck, answer, sourceDone, rungOf, feedingOf };
   G.LBG = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
 })(typeof window !== 'undefined' ? window : globalThis);

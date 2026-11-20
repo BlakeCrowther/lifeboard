@@ -2,6 +2,10 @@
 
 One line per lesson: date, what went wrong, what changed (file). Newest first. Read before a skill run or a big change (AGENTS.md "Improve as you go").
 
+- 2026-11-19 verify.sh used `ls glob` under nullglob to detect renders; with no match `ls` lists cwd and "succeeds", so non-plant sheets tried to montage missing stage rows. → array length checks (verify.sh).
+- 2026-11-19 Build quick render of a 1.4 cm sand dollar was empty (framed by height, camera clipped). → scenery frames by max(height, footprint) (build.py); G1 size check uses the same.
+- 2026-11-19 Judges flagged the conch's flat lip slab as clipping/floating twice (artifacts median 2); quarantined. → solid lip needs fusing to the body before another shell ships (open, scenery CONTRACT).
+
 - 2026-11-19 Rarity names differed (plants heirloom/exotic, creatures rare/legendary). → One set everywhere: common/rare/exotic; schema still accepts old 'legendary'.
 - 2026-11-19 season-seeds started all 8 per-seed ledgers up front; they expired together and nothing shipped. → Start each plant's ledger when that plant starts (season-seeds step 2).
 - 2026-11-19 Hybrids and 4-week seasons fought the per-habit design (plots finish at different times; new habits waited for a season). → Per-plot lifecycle, calendar seasons, no hybrids (game.js plotWeek, SPEC.md Garden).
@@ -9,3 +13,10 @@ One line per lesson: date, what went wrong, what changed (file). Newest first. R
 - 2026-11-18 Briefs defaulted to reusing archetypes; little variety. → Novel-first briefs, a generator per species, polish rounds after G5 (creature-brief, weekly-visitor).
 - 2026-11-18 A branch committed the artifact service's wrapper lines into index.html. → Strip wrapper lines before publishing/committing pages pulled from the live artifact.
 - 2026-11-19 The game start (`labs_state/game`) was a one-shot onSnapshot read; an early empty or error read rewrote it to today on many loads (version 58), so yesterday's life points vanished. → Start lives in store-tracked `game_state`, read only after the db is ready, and is only created when missing (app.js `gameStart`).
+- 2026-11-19: game reset left the board empty until the next weekly run, and biome-brief's "don't copy the archive" was advice only. Reset now ends with the weekly-visitor fill pass (game-reset 4b); biome-brief has an agent-led archive review (2b); check_biome fails archived names, warns on archived motifs.
+- 2026-11-19: scenery stopped at 3 builds with motifs missing (no polish loop, cap 3, quarantine dropped motif). Shared polish rounds in model-verify, scenery cap 5, missing ids stay (check_biome warns). Subagents default sonnet; judges pinned via judge_model.
+- 2026-11-19: weather/season habitat test judged screenshots of the main checkout (preview_start served it, not the worktree) for several rounds. → lifeboard-setup Local preview: serve the worktree on its own port and fetch-check the change first.
+- 2026-11-19: judges moved opus -> sonnet to save usage; goldens re-judged (creature mean 3.33, floor 2; plant 3.86; scenery 3.5). Sonnet scored the clownfish artifacts/feed 2: old opus scores are not comparable.
+- 2026-11-19: gates renamed from G1-G6 to spec-check/shape-check/motion-check/export-check/judge-panel/page-test (PIPELINE.md diagram). verify.sh export-check failed under node 18 (sharp needs >=20): noted in lifeboard-setup gotchas.
+- 2026-11-19: Rescheduling a task erased the day it was missed (ring derived from the current due date) and reset its overdue age. Fix: tasks.committed_days records each committed day (commit lock = minutes or "end" via checks/ui_prefs.commitLock, asked in lifeboard-setup); ring, algae and aged-task drops read it.
+- 2026-11-19: repo shipped the owner's place, pet names and home paths in code. → labels moved to checks/profile (board data), prototype paths relative; dev-home public-safe rule + public-check.sh.

@@ -1,0 +1,25 @@
+{
+ "golden": "eelgrass_tuft",
+ "contact": "out/eelgrass_tuft/qa/contact.png",
+ "date": "2026-11-19",
+ "judge_model": "sonnet",
+ "criteria": [
+  "reads_as",
+  "style_match",
+  "artifacts",
+  "sway_readable"
+ ],
+ "judge": {
+  "reads_as": 4,
+  "style_match": 3,
+  "artifacts": 3,
+  "sway_readable": 4
+ },
+ "golden_median3_mean": 3.5,
+ "pass_rule": {
+  "floor": 3,
+  "margin": null,
+  "bar": null
+ },
+ "status": "Sonnet recalibration (2026-11-19): golden median-of-3 mean 3.5; bar stays absolute (every median >= 3)."
+}

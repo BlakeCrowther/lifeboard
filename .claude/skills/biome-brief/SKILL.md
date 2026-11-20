@@ -19,7 +19,7 @@ Runs unattended when weekly-visitor calls it: decide, validate, report. Never as
 - The habitat's scene builders: the keys of `LOOKS` in `habitat.js` (today: reef, kelp, tidepool, mangrove, deep, meadow, canopy, jungle). `scene` must be one of these.
 
 ## 2. Design
-Pick a real-world habitat that makes a good next step: vary the medium: never three biomes in a row in the same medium, and the second biome of a fresh game (after a game-reset) should leave water. Read `models/biomes.archive.json` for past designs as inspiration but never copy one (new name, palette, owned motifs); `scene` may be reused (habitat.js has reef, kelp, tidepool, mangrove, deep, meadow, canopy, jungle), avoid repeating the previous biome's feel, and keep it reachable for a weekly creature pipeline (animals with clear silhouettes).
+Pick a real-world habitat that makes a good next step: vary the medium: never three biomes in a row in the same medium, and the second biome of a fresh game (after a game-reset) should leave water. Past games' biomes (`biomes.archive.json`) were already played: treat them as examples of the format and quality bar, not as a menu (see **2b**); avoid repeating the previous biome's feel, and keep it reachable for a weekly creature pipeline (animals with clear silhouettes).
 - **name**: 1–3 words, evocative and plain ("Salt marsh", "Desert spring").
 - **medium** water | land | air, **light** (a few words), **locomotion** (subset of swim, drift, crawl, rooted, walk, fly, climb, burrow, hop, glide).
 - **examples**: 4–6 real species with strong silhouettes; at least one rare-worthy and one exotic-worthy (the biome's icon).
@@ -28,7 +28,11 @@ Pick a real-world habitat that makes a good next step: vary the medium: never th
   - `shape`: one shape language no other biome uses as its main shape.
   - `palette`: 4 hex `[sky/water, depth/horizon, ground, accent]`, a hue family away from both neighbours (the validator warns within 15°).
   - `ground`, `owns` (3–5 motifs only this biome uses; never one another biome owns), `creatures`, `plants`, `motion`.
+- **scenery** (preferred over reusing a `scene` builder's props): 3–5 pieces from `look.owns`, as items `{id, count, spread: cluster|scatter|edge|back, scale: [min,max], phase | phases: [first,last], landmark?, pass_through?}` plus `frame: {ground, water: [shallow, deep], dens, light}`. Phases: phase 0 = sparse ground cover, later phases add bigger/rarer pieces, one `landmark` for a late phase; every phase 0–4 must add something (`check_biome.py` fails otherwise). `scene` stays as the fallback base (ground, light, motes). The fill pass (weekly-visitor 1b2 → scenery-make) builds the pieces; until a piece ships, `check_biome.py` fails on it, so brief and build in the same run.
 - Swap test against the two neighbours: if it would pass as either after a recolor, change it.
+
+## 2b. Archive review (your judgment, not a script)
+Read every entry in `models/biomes.archive.json`. Name the archived biome closest to your design and compare four things: real-world habitat, shape language (`look.shape`), palette family, owned motifs. If two or more match, it's a replay: redesign (a different habitat, not a recolor). One match is fine with a stated reason. Prefer habitats the archive never tried (deserts, caves, dunes, ice, salt marsh, alpine, rivers, savanna, …). Write the closest archived biome and what differs into the report. `check_biome.py` only catches the unambiguous cases (archived name = FAIL, archived owned motif = WARN).
 
 ## 3. Write + validate
 Append the entry to `biomes.json` (`id` = the next integer; keep ids 0..n-1 in order), then:
@@ -41,4 +45,4 @@ Fix every FAIL; fix WARN unless the reason is stated in the report. Max 2 redesi
 Commit `models/biomes.json` with the visitor (weekly-visitor's model-ship publishes `models/biomes.json` alongside the roster). By hand: commit on the working branch and republish the lifeboard artifact with `models/biomes.json` in `files` (lifeboard-setup "Publishing").
 
 ## 5. Report
-Name, medium, scene reused, palette swatches, owned motifs, example species, and any WARN kept. If the closest scene is a poor fit (a new structure like caves or dunes), say so: a new scene builder in `habitat.js` (`tiers` + `LOOKS`) is a human-reviewed follow-up, never done unattended.
+Name, medium, scene reused, closest archived biome and what differs, palette swatches, owned motifs, example species, and any WARN kept. List the scenery pieces with their phases. New structures (caves, dunes) need no page code: their props are scenery models.

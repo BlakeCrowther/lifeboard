@@ -22,12 +22,12 @@ Every shipped creature is one `.glb` that satisfies all of this. `models/shared/
 - ✓ One skinned mesh named `<id>` (eyes/shell may be extra meshes parented to bones; ≤3 meshes total).
 - ✓ One armature named `<id>_rig`; ≤ 32 bones (exotic ≤ 48); ≤ 4 weights per vertex, normalized.
 - ✓ Empty `mouth` parented to the head bone, placed at the mouth opening. Runtime aims food at it.
-- ✓ Visible mouth geometry, every archetype: a real mesh part named `mouth` built with `lib.mouth()` (dark recessed lip slit or round opening, sized from the head, coloured from `palette.lip`/`accent`), facing the spec's mouth direction (`front` +X, `underside` −Z), skinned to a `jaw` bone that opens/closes it on the `feed` bite beats, with `cornerL`/`cornerR` child bones at its ends (`lib.mouth_corner_bones`, weights `lib.mouth_weights`) so mood actions can bend it. A texture line alone does not count. The part is joined into the skinned mesh, so `build.py` records it in `build_meta.json` (`mouth_parts[]`: verts, tip, direction, size); G2 checks `part:mouth` exists (verts > 0) and the `mouth` empty sits at its tip (≤ 8% length).
+- ✓ Visible mouth geometry, every archetype: a real mesh part named `mouth` built with `lib.mouth()` (dark recessed lip slit or round opening, sized from the head, coloured from `palette.lip`/`accent`), facing the spec's mouth direction (`front` +X, `underside` −Z), skinned to a `jaw` bone that opens/closes it on the `feed` bite beats, with `cornerL`/`cornerR` child bones at its ends (`lib.mouth_corner_bones`, weights `lib.mouth_weights`) so mood actions can bend it. A texture line alone does not count. The part is joined into the skinned mesh, so `build.py` records it in `build_meta.json` (`mouth_parts[]`: verts, tip, direction, size); shape-check checks `part:mouth` exists (verts > 0) and the `mouth` empty sits at its tip (≤ 8% length).
 - ✓ Structural (bbox) checks — length, axes, symmetry, origin, mouth position — are measured with the armature at its **rest pose** (`pose_position='REST'`), not frame 0 of an action, so animation amplitude never reads as asymmetric modeling.
 - Optional empties: `eye_L`, `eye_R` (look-at), `belly` (shadow/contact point).
-- ✓ Eyes: built with `lib.eye()` (STYLE size, diameter 8–12% of body height). Eyes are joined into the skinned mesh, so the size can't be measured from the glb; `build.py` writes `out/<id>/build_meta.json` (`eyes[].diameter_m / body_height_m`) and G2 checks it. Missing `build_meta.json` = G2 FAIL. Eyeless body plans simply make no `lib.eye()` calls.
+- ✓ Eyes: built with `lib.eye()` (STYLE size, diameter 8–12% of body height). Eyes are joined into the skinned mesh, so the size can't be measured from the glb; `build.py` writes `out/<id>/build_meta.json` (`eyes[].diameter_m / body_height_m`) and shape-check checks it. Missing `build_meta.json` = shape-check FAIL. Eyeless body plans simply make no `lib.eye()` calls.
 
-## Visual gate (G5)
+## Visual gate (judge-panel)
 Median of 3 fresh judge subagents (each recorded in the run ledger): every median ≥ 3, mean of medians ≥ 4 (novel archetypes: every median ≥ 4), `mouth_correct` true in ≥ 2 of 3. See the model-verify skill.
 
 ## Animations (glTF animations = Blender actions)
@@ -47,10 +47,10 @@ Median of 3 fresh judge subagents (each recorded in the run ledger): every media
 ## Budgets
 | | common | rare | exotic |
 |---|---|---|---|
-| ✓ Triangles (hard cap, G1/G2) | ≤ 8k | ≤ 12k | ≤ 20k |
+| ✓ Triangles (hard cap, spec-check/shape-check) | ≤ 8k | ≤ 12k | ≤ 20k |
 | Default `budget.tris` in briefs (fits the file-size cap at 1024²) | 8k | 9k | 16k |
 | ✓ Texture | 1 × 1024² base color (+ optional roughness in same map's alpha or separate 512²) | same | 2048² allowed |
-| ✓ Final file (after optimize; G4 runs `shared/tools/optimize.sh` (gltf-transform quantize + resize to budget + webp, the same as model-ship; not `optimize`, which prunes the `mouth` empty) to `qa/optimized.glb` and validates + sizes that; G2/G3 run on the source glb) | ≤ 400 KB | ≤ 600 KB | ≤ 1.2 MB |
+| ✓ Final file (after optimize; export-check runs `shared/tools/optimize.sh` (gltf-transform quantize + resize to budget + webp, the same as model-ship; not `optimize`, which prunes the `mouth` empty) to `qa/optimized.glb` and validates + sizes that; shape-check/motion-check run on the source glb) | ≤ 400 KB | ≤ 600 KB | ≤ 1.2 MB |
 | ✓ Materials | ≤ 2 | ≤ 2 | ≤ 3 |
 
 ## Shipping format

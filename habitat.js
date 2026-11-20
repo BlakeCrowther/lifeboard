@@ -7,7 +7,7 @@
    - Habitat.setState(game)  game state from LBGarden.deriveGame
    - Habitat.feed(n)         drop n food particles; nearby creatures steer in, idle -> feed -> idle, mouth aimed at food
    - Habitat.stats           { fps, bloom, pixelRatio, creatures, loadMs }
-   Test hook (pipeline gate G6): force a roster creature into the scene, in its own biome:
+   Test hook (pipeline page-test gate): force a roster creature into the scene, in its own biome:
      ?visitor=<id>   #visitor=<id>   #visitor-<id>   (the artifact host passes only plain #name hashes,
      so use #visitor-<id> there; any of these also turns the Ecosystem on for that page load)
    Models: MODEL_BASES is tried in order for roster.json / biomes.json (roster v1 `creatures[]` or v2 `models[]`
@@ -29,6 +29,15 @@
     let m = h.match(/(?:^|[&/])visitor=([\w-]+)/) || h.match(/^(?:labs-)?visitor-([\w-]+)$/);
     return m ? m[1] : null;
   }
+  /* test-only hooks (preview / page-test): ?scene=<key> or #scene-<key> renders that builder with no biome scenery (old-biome check);
+     ?phase=<1-5> or #phase-<n> pins the habitat phase (shows that phase's scenery tiers complete);
+     ?weather=<condition text> and ?month=<1-12> pin the real-world look */
+  function hookOf(name, href) {
+    const u = new URL(href || location.href), q = u.searchParams.get(name);
+    if (q) return q;
+    const m = decodeURIComponent(u.hash.slice(1)).match(new RegExp('(?:^|[&/])' + name + '[=-](\\w+)'));
+    return m ? m[1] : null;
+  }
 
   /* ---------- card DOM (persistent across app renders) ---------- */
   const card = document.createElement('section');
@@ -38,7 +47,28 @@
     <div class="hab"><canvas aria-hidden="true"></canvas><div class="hab-chips"><span class="hab-chip" data-h="biome"></span><span class="hab-chip" data-h="visitor" hidden></span></div>
     <div class="hab-info"><div class="hab-bar"><div data-h="bar"></div></div><p data-h="line"></p></div><p class="hab-msg" data-h="msg">Ecosystem loads when you scroll here.</p></div>`;
   /* the state the scene draws: the real game, with preview overrides on top */
-  const view = () => game;
+  const forcedScene = hookOf('scene', G.LB_GAME_HREF), forcedPhase = +hookOf('phase', G.LB_GAME_HREF) || null;
+  const forcedWx = hookOf('weather', G.LB_GAME_HREF), forcedMonth = +hookOf('month', G.LB_GAME_HREF) || null;
+  let wx = null; /* real weather: {condition, at} from the board's conditions snapshot */
+  /* condition text -> 0..1 amounts. Older than 12 h counts as unknown (clear), so a stale report never darkens the scene. */
+  function wxLook() {
+    const raw = forcedWx != null ? { condition: forcedWx, at: Date.now() } : wx;
+    const at = raw && (typeof raw.at === 'number' ? raw.at : Date.parse(raw.at));
+    const t = raw && raw.condition && (forcedWx != null || (at && Date.now() - at < 12 * 3600e3)) ? String(raw.condition).toLowerCase() : '';
+    const has = (...k) => k.some((x) => t.includes(x));
+    const storm = has('thunder', 'storm') ? 1 : 0, snow = has('snow', 'sleet', 'flurr', 'ice') ? 1 : 0;
+    const rain = storm || has('heavy rain', 'downpour') ? 1 : has('rain', 'shower') ? 0.65 : has('drizzle') ? 0.35 : 0;
+    const fog = has('fog') ? 1 : has('mist', 'haze', 'smoke') ? 0.5 : 0;
+    const cloud = Math.max(rain, snow * 0.8, storm, has('overcast') ? 0.85 : has('mostly cloudy') ? 0.65 : has('cloud') ? 0.4 : 0);
+    return { cloud, rain, fog, snow, storm };
+  }
+  /* season -1 (winter solstice) .. 1 (summer solstice), from the month (mid-month) */
+  function seasonK() {
+    const now = new Date(), m = forcedMonth ? forcedMonth - 1 : now.getMonth();
+    const doy = forcedMonth ? m * 30.4 + 15 : (now - new Date(now.getFullYear(), 0, 1)) / 864e5;
+    return Math.cos((2 * Math.PI * (doy - 172)) / 365);
+  }
+  const view = () => (game && forcedPhase ? { ...game, reef: { ...game.reef, phase: Math.min(forcedPhase, game.reef.phases || 5) - 1 }, pvPhase: true } : game);
   const $ = (k) => card.querySelector(`[data-h="${k}"]`);
   const canvas = card.querySelector('canvas');
   let game = null, biomes = null, roster = null, base = null, forced = visitorOverride(G.LB_GAME_HREF);
@@ -81,7 +111,7 @@
         const raw = await r.json(); base = b; stats.base = b;
         /* v1: { creatures: [...] }; v2 (models/): { models: [...] } with kind creature|plant */
         const all = Array.isArray(raw) ? raw : raw.models || raw.creatures || []; /* v2 {models}, v1 {creatures}, or a flat array */
-        roster = { creatures: all.filter((m) => !m.kind || m.kind === 'creature'), plants: all.filter((m) => m.kind === 'plant') };
+        roster = { creatures: all.filter((m) => !m.kind || m.kind === 'creature'), plants: all.filter((m) => m.kind === 'plant'), scenery: all.filter((m) => m.kind === 'scenery') };
         try { const bj = await fetch(b + 'biomes.json', { cache: 'no-cache' }); if (bj.ok) biomes = await bj.json(); } catch (e) { /* default biome */ }
         return;
       } catch (e) { /* try the next base */ }
@@ -224,7 +254,7 @@ attribute float aTip; varying float vTip;
     };
     let world = null, medium = null, growth = [], ambient = [], coralMats = [], algaeInst = null, rays = [], rockMat = null, snowMat = null;
     /* scene key: biomes.json `scene`, else by medium. Each key has its own scenery + water/air look (LOOKS). */
-    const sceneOf = (b) => b.scene || ({ water: 'reef', land: 'meadow', air: 'canopy' })[b.medium || 'water'] || 'reef';
+    const sceneOf = (b) => forcedScene || b.scene || ({ water: 'reef', land: 'meadow', air: 'canopy' })[b.medium || 'water'] || 'reef';
     /* per-scene frame: the base layer every scene shares (ground, rocks, ground cover, light shafts, motes). Distinct per biome
        on purpose: identity comes from shape language + hue family (biomes.json identity_rules), not from tinting one set. */
     const ROCKS5 = [[1.9, -1.4, 1.3, 0.7], [-2.9, -2.6, 1.7, 0.75], [3.9, 0.5, 0.85, 0.6], [-0.4, -4.4, 2.3, 0.85], [-4.6, 0.6, 0.8, 0.55]];
@@ -238,11 +268,27 @@ attribute float aTip; varying float vTip;
       canopy: { g: '#4f6a3a', sp: [70, 100, 55, 0.7], rock: [0x5a5040, 0x3a3428, 0x6a8a4a, 0x5f8a3f, 0.8], rocks: [], cover: { c: [0.22, 0.3], n: 320, w: 0.05, h: 0.18, amp: 0.05 }, mote: 0xffffff },
       jungle: { g: '#3a2a1a', sp: [120, 72, 34, 0.75], rock: [0x5a5448, 0x2e2a24, 0x4a6a2a, 0x3f7a2f, 0.75], rocks: [[3.9, 0.5, 0.9, 0.6], [-4.6, 0.6, 0.8, 0.55]], cover: { c: [0.27, 0.36], n: 260, w: 0.13, h: 0.7, amp: 0.08, l: [0.18, 0.3] }, rays: 0xd8ffb0, mote: 0xfff4a0 },
     };
-    let sk = null, fr = FRAME.reef;
-    function buildWorld(med, key) {
+    let sk = null, fr = FRAME.reef, fx = {}, propMixers = [], passKinds = [], worldKey = null;
+    /* biome scenery (biomes.json `scenery`): roster glbs of kind scenery, decoded before the world is built */
+    const useProps = (b) => !forcedScene && Array.isArray(b.scenery) && b.scenery.length > 0;
+    async function loadProps(b) {
+      const out = {};
+      for (const id of [...new Set(b.scenery.map((s) => s.id))]) {
+        const entry = (roster.scenery || []).find((m) => m.id === id);
+        if (!entry) { console.warn('[habitat] scenery not in roster:', id); continue; }
+        try {
+          if (!(G.LB_SCENERY && G.LB_SCENERY[id])) await loadScript(base + entry.js);
+          const bin = Uint8Array.from(atob(G.LB_SCENERY[id]), (c) => c.charCodeAt(0)).buffer;
+          out[id] = { entry, gltf: await new K.GLTFLoader().parseAsync(bin, '') };
+        } catch (e) { console.warn('[habitat] scenery failed', id, e); }
+      }
+      return out;
+    }
+    function buildWorld(med, key, bio, props) {
       if (world) { scene.remove(world); world.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
-      world = new THREE.Group(); scene.add(world); medium = med; sk = key || (med === 'water' ? 'reef' : med === 'air' ? 'canopy' : 'meadow'); growth = []; ambient = []; coralMats = []; rays = []; seed = 7;
+      world = new THREE.Group(); scene.add(world); medium = med; sk = key || (med === 'water' ? 'reef' : med === 'air' ? 'canopy' : 'meadow'); growth = []; ambient = []; coralMats = []; rays = []; seed = 7; propMixers = []; passKinds = [];
       const water = med === 'water'; fr = FRAME[sk] || (water ? FRAME.reef : FRAME.meadow);
+      fx = (props && bio.frame) || {}; if (fx.ground) fr = { ...fr, g: fx.ground };
       const sandGeo = new THREE.PlaneGeometry(80, 80, 120, 120); sandGeo.rotateX(-Math.PI / 2);
       { const p = sandGeo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, H(p.getX(i), p.getZ(i))); sandGeo.computeVertexNormals(); }
       const map = groundTex(fr.g, (g) => `rgba(${(fr.sp[0] * g) | 0},${(fr.sp[1] * g) | 0},${(fr.sp[2] * g) | 0},${fr.sp[3]})`);
@@ -294,7 +340,8 @@ attribute float aTip; varying float vTip;
         for (let i = 0; i < n; i++) { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * 0.48; o.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); o.rotation.set(Math.sin(a) * r * 1.3, 0, -Math.cos(a) * r * 1.3); o.scale.setScalar(R(0.75, 1.15)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
         inst.position.set(x, H(x, z) + 0.02, z); inst.castShadow = true; world.add(inst); solid('anemone', inst); return inst;
       };
-      if (sk === 'reef') {
+      if (props) { /* biome scenery replaces the builder's own corals/bushes and tiers (they belong to another biome's look) */ }
+      else if (sk === 'reef') {
         branchy(-1.4, 0.5, 1.1, 0xc2384f, 0xffb3bf); brain(0.5, 1.2, 0.72, 0x8a5a1e, 0xf2b866);
         branchy(2.5, -2.7, 1.3, 0x6b2fa8, 0xd7a8ff, { trunks: 2 }); branchy(-3.6, -0.7, 0.95, 0xd3533c, 0xffc9a3, { spread: 0.55 });
         brain(-2.2, -3.8, 0.55, 0x3f6b2a, 0xb8de7a); branchy(0.2, -2.4, 0.8, 0x2a8f86, 0x9ff5df, { trunks: 3, depth: 2, len: 0.55 });
@@ -462,13 +509,36 @@ attribute float aTip; varying float vTip;
           tier(bigLeaves(4.4, 1.6, 1.3, 0x2f7a2a, 8), 4); tier(bigLeaves(-3.6, 2.0, 1.1, 0x4a9a2a), 4); tier(swarm(26, 0, 2.0, -0.6, 3.2, 0xfff06a, 'firefly', true), 4);
         },
       };
-      (tiers[sk] || (water ? tiers.reef : tiers.meadow))();
+      /* biome scenery: each roster prop placed `count` times by `spread` (seeded), on the phase(s) the biome gives it */
+      const placeProps = () => bio.scenery.forEach((it) => {
+        const pr = props[it.id]; if (!pr) return;
+        const n = it.count || 1, [s0, s1] = it.scale || [0.85, 1.15], ph = it.phases || [it.phase ?? 0, it.phase ?? 0], cl = [R(-4.5, 4.5), R(-3.5, 1.5)];
+        const clip = pr.gltf.animations.find((a) => a.name === 'sway'), pass = it.pass_through ?? pr.entry.pass_through;
+        if (pass) passKinds.push(it.id);
+        for (let k = 0; k < n; k++) {
+          let x, z, tries = 0;
+          do {
+            if (it.spread === 'cluster') { const a = R(0, 6.283), r = Math.sqrt(rnd()) * 1.1; x = cl[0] + Math.cos(a) * r; z = cl[1] + Math.sin(a) * r; }
+            else if (it.spread === 'edge') { x = (k % 2 ? -1 : 1) * R(4.2, 6.8); z = R(-5, 2); }
+            else if (it.spread === 'back') { x = R(-6, 6); z = R(-6.5, -3.8); }
+            else { x = R(-6, 6); z = R(-4.5, 3); }
+          } while (it.spread !== 'back' && Math.hypot(x, z + 1) < 1.8 && ++tries < 12);
+          const root = K.SU.clone(pr.gltf.scene), holder = new THREE.Group(); holder.add(root);
+          root.scale.setScalar(DISPLAY_SCALE * R(s0, s1)); root.rotation.y = R(0, 6.283);
+          root.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.frustumCulled = false; o.material = patch(o.material.clone()); } });
+          if (clip) { const mx = new THREE.AnimationMixer(root), act = mx.clipAction(clip); act.play(); act.time = R(0, clip.duration); act.timeScale = R(0.85, 1.1); propMixers.push(mx); }
+          holder.position.set(x, H(x, z) - 0.01, z); holder.userData.prop = true; holder.userData.nm = pr.entry.name || it.id.replace(/_/g, ' ');
+          if (it.landmark && k === n - 1) holder.userData.landmark = true;
+          world.add(holder); solid(it.id, holder, 0.8); tier(holder, ph[0] + Math.floor((k * (ph[1] - ph[0] + 1)) / n));
+        }
+      });
+      if (props) placeProps(); else (tiers[sk] || (water ? tiers.reef : tiers.meadow))();
       /* daily growth: each piece unlocks at its own share u of the biome's points (0..1). Pieces of phase k spread
          across that phase; the last one of each phase is the landmark, a bigger piece that lands as the phase completes. */
       { const P = 5, by = {}; growth.forEach((g) => { const k = g.userData.ph ?? 0; (by[k] = by[k] || []).push(g); });
         /* landmark = a swarm if the phase has one (a school/swarm arriving reads as an event), else its biggest piece */
         const size = (g) => { if (g.isInstancedMesh) return 0; const b = new THREE.Box3().setFromObject(g).getSize(new V()); return b.x * b.y * b.z; };
-        Object.values(by).forEach((list) => { const sw = list.find((g) => ambient.includes(g)), big = sw || list.slice().sort((a, b) => size(b) - size(a))[0]; list.splice(list.indexOf(big), 1); list.push(big); });
+        Object.values(by).forEach((list) => { const sw = list.find((g) => ambient.includes(g)), big = list.find((g) => g.userData.landmark) || sw || list.slice().sort((a, b) => size(b) - size(a))[0]; list.splice(list.indexOf(big), 1); list.push(big); });
         Object.entries(by).forEach(([k, list]) => list.forEach((g, i) => {
           const last = i === list.length - 1 && list.length > 1;
           g.userData.u = last ? (+k + 1) / P - 1e-4 : (+k + i / list.length) / P;
@@ -566,7 +636,8 @@ attribute float aTip; varying float vTip;
     async function loadCreatures() {
       creatures.splice(0).forEach((c) => scene.remove(c.holder)); visitorName = null;
       const bid = sceneBiomeId(), b = biomeOf(bid), med = b.medium || 'water';
-      if (med !== medium || sceneOf(b) !== sk) { buildWorld(med, sceneOf(b)); }
+      const props = useProps(b) ? await loadProps(b) : null, wk = sceneOf(b) + (props ? '#' + bid : '');
+      if (med !== medium || wk !== worldKey) { buildWorld(med, sceneOf(b), b, props); worldKey = wk; }
       const list = (roster.creatures || []).filter((c) => (forced ? c.id === forced : c.biome === bid || (c.biome == null && med === 'water')));
       if (forced && !list.length) console.warn('[habitat] visitor not in roster:', forced);
       const seen = (() => { try { return JSON.parse(localStorage.getItem('lb-hab-seen') || '[]'); } catch (e) { return []; } })();
@@ -588,7 +659,7 @@ attribute float aTip; varying float vTip;
     /* no passing through rocks, the ground or each other: project the body back outside after each move */
     function keepClear(c) {
       const pad = c.len * 0.55, q = new V();
-      const pass = biomeOf(sceneBiomeId()).pass_through || [];
+      const pass = (biomeOf(sceneBiomeId()).pass_through || []).concat(passKinds);
       for (const o of colliders) {
         if (pass.includes(o.kind) || !o.obj.visible) continue; /* hidden growth (not yet grown) isn't there */
         q.set((c.pos.x - o.p.x) / (o.r.x + pad), (c.pos.y - o.p.y) / (o.r.y + pad), (c.pos.z - o.p.z) / (o.r.z + pad));
@@ -605,7 +676,8 @@ attribute float aTip; varying float vTip;
     /* a spot on the far side of the nearest shelter (as seen from the camera), low, fanned out per creature */
     function shelterSpot(c) {
       const live = (k) => colliders.filter((o) => o.kind === k && o.obj.visible);
-      const L = live(c.shelter).length ? live(c.shelter) : live('rock');
+      const props = colliders.filter((o) => o.obj.userData.prop && o.obj.visible); /* biome scenery is shelter before bare rock */
+      const L = live(c.shelter).length ? live(c.shelter) : props.length ? props : live('rock');
       if (!L.length) { const x = c.i % 2 ? -3.5 : 3.5, z = -4; return new V(x, H(x, z) + c.len * 0.6, z); }
       const o = L.reduce((a, b) => (a.p.distanceTo(c.pos) <= b.p.distanceTo(c.pos) ? a : b));
       const away = new V(o.p.x - camera.position.x, 0, o.p.z - camera.position.z).normalize().applyAxisAngle(new V(0, 1, 0), ((c.i % 3) - 1) * 0.6);
@@ -702,25 +774,29 @@ attribute float aTip; varying float vTip;
       const st = view() || { reef: { phase: 2, phases: 5, bleached: false }, cloudiness: 0, algae: 0 }, water = medium === 'water';
       const o = st.cloudiness, al = st.algae, bleached = st.reef.bleached;
       const now = new Date(), h = now.getHours() + now.getMinutes() / 60;
-      const elev = Math.sin(((h - 6) / 12) * Math.PI), day = Math.max(0, elev), night = 1 - smooth(-0.1, 0.25, elev), dusk = Math.max(0, 1 - Math.abs(elev) / 0.3) * (1 - night * 0.6);
+      const W = wxLook(), sea = seasonK(); /* real weather + season: look only, no game effect */
+      const len = 12 + sea * 1.8, rise = 12 - len / 2; /* longer summer days, shorter winter ones */
+      const elev = Math.sin(((h - rise) / len) * Math.PI) * (0.85 + sea * 0.15), day = Math.max(0, elev), night = 1 - smooth(-0.1, 0.25, elev), dusk = Math.max(0, 1 - Math.abs(elev) / 0.3) * (1 - night * 0.6);
       const nightK = water ? 0.72 : 0.6; /* how far night pulls the colours toward NIGHT_*: moonlit, still readable */
-      const lk = LOOKS[sk] || LOOKS.reef; U.uShallow.value.set(lk.s); U.uDeep.value.set(lk.d);
-      U.uShallow.value.lerp(MURK_S, o * 0.65).lerp(ALGAE, al * 0.35).lerp(DUSK, dusk * 0.3).lerp(NIGHT_S, night * nightK);
-      U.uDeep.value.lerp(MURK_D, o * 0.6).lerp(NIGHT_D, night * nightK);
-      U.uDens.value = (water ? 0.042 : medium === 'air' ? 0.05 : 0.018) * (lk.dens || 1) * (1 + o * 1.4) * (1 + night * 0.25);
+      const lk = { ...(LOOKS[sk] || LOOKS.reef) }; /* biomes.json frame overrides: water [shallow, deep], dens, light */
+      if (fx.water) { lk.s = fx.water[0]; lk.d = fx.water[1]; } if (fx.dens) lk.dens = fx.dens; if (fx.light) lk.light = fx.light;
+      U.uShallow.value.set(lk.s); U.uDeep.value.set(lk.d);
+      U.uShallow.value.lerp(C(0x56626c), W.cloud * 0.45).lerp(C(0xc8d0d4), W.fog * 0.5).lerp(MURK_S, o * 0.65).lerp(ALGAE, al * 0.35).lerp(DUSK, dusk * 0.3).lerp(NIGHT_S, night * nightK);
+      U.uDeep.value.lerp(C(0x1e252b), W.cloud * 0.45).lerp(MURK_D, o * 0.6).lerp(NIGHT_D, night * nightK);
+      U.uDens.value = (water ? 0.042 : medium === 'air' ? 0.05 : 0.018) * (lk.dens || 1) * (1 + o * 1.4) * (1 + night * 0.25) * (1 + W.cloud * 0.3 + W.fog * 2 + W.rain * 0.4);
       U.uAbsorb.value.set(...(water ? [0.035, 0.012, 0.01] : [0, 0, 0])).multiplyScalar(1 + o * 0.5);
-      const lightK = (1 - o * 0.45) * (lk.light || 1);
-      U.uCaus.value = water ? 3.2 * Math.pow(day, 0.7) * (1 - o * 0.75) : 0;
+      const lightK = (1 - o * 0.45) * (lk.light || 1) * (1 - W.cloud * 0.35 - W.storm * 0.15) * (1 + sea * 0.06);
+      U.uCaus.value = water ? 3.2 * Math.pow(day, 0.7) * (1 - o * 0.75) * (1 - W.cloud * 0.6) : 0;
       U.uCausCol.value.set(dusk > 0.4 ? 0xffd6b0 : 0xf4fdff); U.uGlow.value = Math.max(night * 0.9, lk.glow || 0);
-      const az = ((h - 6) / 12) * Math.PI, sd = new V(Math.cos(az) * 0.55, Math.max(0.35, elev) + 0.5, -0.35).normalize();
+      const az = ((h - rise) / len) * Math.PI, sd = new V(Math.cos(az) * 0.55, Math.max(0.35, elev) + 0.5, -0.35).normalize();
       sun.position.copy(sd).multiplyScalar(18); sun.target.position.set(0, 0, -1);
-      sun.color.set(night > 0.5 ? 0x8fb8ff : dusk > 0.4 ? 0xffc79a : 0xfff6e8);
+      sun.color.set(night > 0.5 ? 0x8fb8ff : dusk > 0.4 ? 0xffc79a : 0xfff6e8).lerp(C(sea < 0 ? 0xcfe0ff : 0xffe2b0), Math.abs(sea) * 0.2).lerp(C(0xd8dde2), W.cloud * 0.5);
       sun.intensity = (night > 0.5 ? 0.75 : 0.2 + day * (water ? 3.2 : 2.6)) * lightK;
       domeU.uSunDir.value.copy(sd); domeU.uSunCol.value.set(night > 0.5 ? 0x5a7ab0 : dusk > 0.4 ? 0xffb07a : 0xfff4dc).multiplyScalar((night > 0.5 ? 0.4 : 0.4 + day) * lightK);
       domeU.uSurfCol.value.copy(U.uShallow.value).lerp(C(0xffffff), 0.5).multiplyScalar(water ? (0.25 + day * 0.9) * lightK : 0);
       scene.environmentIntensity = 0.4 + day * 0.2 + night * 0.15; hemi.intensity = (0.15 + day * 0.65 + night * 0.2) * lightK;
-      rayU.uRay.value = (water ? 0.16 : 0.24) * day * (1 - o * 0.7);
-      if (snowMat) { snowMat.uniforms.uOp.value = water ? 0.45 + o * 0.5 : 0.25; snowMat.uniforms.uCol.value.set(water && night > 0.5 ? 0x7af0ff : fr.mote); }
+      rayU.uRay.value = (water ? 0.16 : 0.24) * day * (1 - o * 0.7) * (1 - W.cloud * 0.7);
+      if (snowMat) { snowMat.uniforms.uOp.value = water ? 0.45 + o * 0.5 + W.rain * 0.25 : 0.25 + W.rain * 0.35 + W.snow * 0.6; snowMat.uniforms.uCol.value.set(water && night > 0.5 ? 0x7af0ff : !water && W.snow ? 0xffffff : fr.mote); }
       if (rockMat) rockMat.color.set(0xffffff).lerp(C(0x9aa060), Math.max(o, al) * 0.6);
       if (algaeInst) algaeInst.count = Math.round(al * 270);
       /* phase -> which tiers of coral/plant life are in (userData.ph) */
@@ -735,9 +811,9 @@ attribute float aTip; varying float vTip;
       const nxt = growth.filter((g) => g.userData.u > f + 1e-9).sort((a, b) => a.userData.u - b.userData.u)[0];
       nextUp = nxt ? nameOf(nxt) + (nxt.userData.landmark ? ' (landmark)' : '') : null;
       coralMats.forEach((m) => { m.emissive = m.emissive || new THREE.Color(); m.emissive.set(bleached ? 0x5a5a58 : 0x000000); });
-      grade.uniforms.sat.value = bleached ? 0.35 : st.breaks && st.breaks.sad ? 0.75 : 1.15;
+      grade.uniforms.sat.value = (bleached ? 0.35 : st.breaks && st.breaks.sad ? 0.75 : 1.15) * (1 - W.cloud * 0.3 - W.fog * 0.15);
       grade.uniforms.tint.value.set(1, 1, 1).lerp(C(0xd8f0b0), al * 0.5);
-      renderer.toneMappingExposure = (water ? 1.05 : 1.0) + night * 0.2;
+      renderer.toneMappingExposure = ((water ? 1.05 : 1.0) + night * 0.2) * (1 - W.cloud * 0.22 - W.storm * 0.1);
       if (stats.bloom) { bloom.strength = 0.28 + night * 0.55; bloom.threshold = 0.9 - night * 0.5; }
       envDirty = true; kick();
     }
@@ -760,6 +836,7 @@ attribute float aTip; varying float vTip;
       const a0 = m * Math.sin(s * 0.1) * 0.22;
       camera.position.set(Math.sin(a0) * 7.4, 2.1 + m * Math.sin(s * 0.3) * 0.08, Math.cos(a0) * 7.4); camera.lookAt(0, 1.0, -0.6);
       dome.position.copy(camera.position);
+      propMixers.forEach((mx) => mx.update(reduce ? 0 : dt));
       ambient.forEach((a) => { if (a.visible) a.userData.tick(m ? s : 3); });
       growth.forEach((g) => { const t0 = g.userData.t0; if (!t0) return; const k = Math.min(1, (t - t0) / 1600), e = k < 1 ? 1 - Math.pow(1 - k, 3) * (1 - Math.sin(k * 9) * 0.15) : 1;
         g.scale.copy(g.userData.base).multiplyScalar(Math.max(0.01, e)); if (k >= 1) g.userData.t0 = 0; });
@@ -793,6 +870,12 @@ attribute float aTip; varying float vTip;
       const b = sceneBiomeId();
       if (lastBiome !== null && b !== lastBiome) engine.loadCreatures().then(() => { engine.apply(); paintInfo(); });
       lastBiome = b; engine.apply(); paintInfo();
+    },
+    /* w: {condition, at} (board conditions snapshot) or null */
+    setWeather(w) {
+      const k = w && w.condition ? `${w.condition}|${w.at}` : '';
+      if (k === (wx ? `${wx.condition}|${wx.at}` : '')) return;
+      wx = w && w.condition ? { condition: w.condition, at: w.at } : null; if (engine) engine.apply();
     },
     feed(n = 6) { if (engine) engine.dropFood(n); else pendingFood += n; },
     visitorOverride,

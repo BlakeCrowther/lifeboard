@@ -1,7 +1,7 @@
-"""G1: validate a model spec (any kind; spec.kind default creature). Usage: python3 check_spec.py <kind>/specs/<id>.json  → JSON report on stdout, exit 1 on failure."""
+"""spec-check: validate a model spec (any kind; spec.kind default creature). Usage: python3 check_spec.py <kind>/specs/<id>.json  → JSON report on stdout, exit 1 on failure."""
 import json, re, sys, colorsys, os
 
-RARITY = {"creature": {"common", "rare", "exotic"}, "plant": {"common", "rare", "exotic"}}
+RARITY = {"creature": {"common", "rare", "exotic"}, "plant": {"common", "rare", "exotic"}, "scenery": {"common"}}
 TRIS = {"common": 8000, "rare": 12000, "exotic": 20000}
 
 def hsv(hexc):
@@ -13,10 +13,10 @@ def main(path):
     root = os.path.dirname(os.path.abspath(path))
     while root != "/" and not os.path.exists(os.path.join(root, "roster.json")): root = os.path.dirname(root)
     kind = s.get("kind", "creature")
-    if kind not in RARITY: return {"gate": "G1", "pass": False, "fails": [f"kind {kind} must be creature|plant"]}
-    need = ["id", "name", "biome", "rarity", "archetype", "reference", "size", "palette", "motion", "budget"] + (["locomotion"] if kind == "creature" else [])
+    if kind not in RARITY: return {"gate": "spec-check", "pass": False, "fails": [f"kind {kind} must be creature|plant|scenery"]}
+    need = ["id", "name", "biome", "rarity", "archetype", "reference", "size", "palette", "budget"] + (["motion"] if kind != "scenery" else []) + (["locomotion"] if kind == "creature" else [])
     fails += [f"missing {k}" for k in need if k not in s]
-    if fails: return {"gate": "G1", "pass": False, "fails": fails}
+    if fails: return {"gate": "spec-check", "pass": False, "fails": fails}
     if not re.fullmatch(r"[a-z][a-z0-9_]{2,31}", s["id"]): fails.append("id must be snake_case 3-32 chars")
     fn = os.path.basename(path); parent = os.path.basename(os.path.dirname(os.path.abspath(path)))
     if fn != s["id"] + ".json" and not (fn == "spec.json" and parent == s["id"]):  # specs/<id>.json or out/dryrun/<id>/spec.json
@@ -30,6 +30,7 @@ def main(path):
         if b is None: fails.append(f"biome {s['biome']} not in biomes.json")
         elif kind == "creature" and s["locomotion"] not in b["locomotion"]: fails.append(f"locomotion {s['locomotion']} not allowed in biome {b['name']} ({b['locomotion']})")
     L = s["size"].get("length_m", s["size"].get("height_m", 0))
+    if kind == "scenery": L = max(s["size"].get("height_m", 0), s["size"].get("footprint_m", 0))   # flat props: their width
     if not 0.03 <= L <= 3: fails.append(f"length_m {L} outside 0.03-3")
     pal = s["palette"]; mains = pal.get("main", [])
     if not 1 <= len(mains) <= 4: fails.append("palette.main needs 1-4 colors")
@@ -38,6 +39,7 @@ def main(path):
         if V < 0.35 or V > 0.98: fails.append(f"{c} value {V:.2f} outside 0.35-0.98")
         if S > 0.15 and not 0.45 <= S <= 0.95: fails.append(f"{c} saturation {S:.2f} outside 0.45-0.95 (neutrals <0.15 allowed)")
     if kind == "plant": return _plant(s, fails)
+    if kind == "scenery": return _scenery(s, fails)
     idle = s["motion"].get("idle", {}); feed = s["motion"].get("feed", {})
     if not 48 <= idle.get("frames", 0) <= 144: fails.append("idle.frames 48-144")
     if not 36 <= feed.get("frames", 0) <= 96: fails.append("feed.frames 36-96")
@@ -64,7 +66,7 @@ def main(path):
                 o = json.load(open(p))["motion"]["idle"]
                 if (o.get("frames"), o.get("cycles")) == (idle.get("frames"), idle.get("cycles")):
                     fails.append(f"idle loop identical to {c['id']}; vary frames or cycles")
-    return {"gate": "G1", "pass": not fails, "fails": fails}
+    return {"gate": "spec-check", "pass": not fails, "fails": fails}
 
 def _plant(s, fails):
     """Plant draft contract (models/plant/CONTRACT.md): per-stage sway loops + a tend reaction."""
@@ -73,7 +75,21 @@ def _plant(s, fails):
     if sw.get("cycles", 0) < 1 or int(sw.get("cycles", 0)) != sw.get("cycles"): fails.append("motion.sway.cycles whole number >=1")
     if not 24 <= td.get("frames", 0) <= 72: fails.append("motion.tend.frames 24-72")
     if s["budget"].get("tris", 1e9) > TRIS.get(s["rarity"], 0): fails.append("tris over rarity budget")
-    return {"gate": "G1", "pass": not fails, "fails": fails}
+    return {"gate": "spec-check", "pass": not fails, "fails": fails}
+
+def _scenery(s, fails):
+    """Scenery contract (models/scenery/CONTRACT.md): one prop, small budget, optional seamless sway."""
+    if "height_m" not in s["size"]: fails.append("size.height_m required (ground to top)")
+    if s["budget"].get("tris", 1e9) > 3000: fails.append("budget.tris <= 3000 (scenery)")
+    if s["budget"].get("texture", 512) > 512: fails.append("budget.texture <= 512 (scenery)")
+    sw = (s.get("motion") or {}).get("sway")
+    if sw:
+        if not 48 <= sw.get("frames", 0) <= 144: fails.append("motion.sway.frames 48-144")
+        if sw.get("cycles", 0) < 1 or int(sw.get("cycles", 0)) != sw.get("cycles"): fails.append("motion.sway.cycles whole number >=1")
+    if not isinstance(s.get("pass_through", False), bool): fails.append("pass_through must be true|false")
+    mat = s.get("material", {})
+    if not 0.25 <= mat.get("roughness", 0.5) <= 0.55: fails.append("material.roughness 0.25-0.55 (STYLE)")
+    return {"gate": "spec-check", "pass": not fails, "fails": fails}
 
 if __name__ == "__main__":
     r = main(sys.argv[1]); print(json.dumps(r, indent=1)); sys.exit(0 if r["pass"] else 1)

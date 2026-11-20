@@ -1,6 +1,7 @@
 import bpy, math, os
+OUT_DIR = os.environ.get("PROTO_OUT", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "out", "prototype"))  # models/out is gitignored
 D = bpy.data; sc = bpy.context.scene
-out = "~/noggin/scratch/blender/sprites"; os.makedirs(out, exist_ok=True)
+out = OUT_DIR + "/sprites"; os.makedirs(out, exist_ok=True)
 body = D.objects["Clownfish"]
 body.location = (0, 0, 0); body.rotation_euler = (0, 0, 0)
 cam = D.objects["Camera"]; cam.data.type = "ORTHO"; cam.data.ortho_scale = 2.6

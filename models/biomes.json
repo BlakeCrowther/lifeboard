@@ -1,5 +1,5 @@
 {
-  "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded. `pass_through`: scenery kinds creatures may swim/fly through in this biome (default none: everything registered is solid). Kinds: rock, coral, anemone, shrub, plus any new scenery's kind. `scene`: which scenery set habitat.js builds (reef, kelp, tidepool, mangrove, deep, meadow, canopy; default by medium). A new scene needs its builder in habitat.js `tiers` and colors in `LOOKS`. `look`: the biome's identity (see `identity_rules`); briefs, habitat.js and the shelf diorama all read it.",
+  "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded. `pass_through`: scenery kinds creatures may swim/fly through in this biome (default none: everything registered is solid). Kinds: rock, coral, anemone, shrub, plus any new scenery's kind (a scenery prop's kind is its roster id). `scenery` (new biomes): [{id (roster model of kind scenery), count, spread cluster|scatter|edge|back, scale [min,max], phase 0-4 or phases [first,last] (copies spread across them), landmark (the last copy lands as its phase completes), pass_through}]. habitat.js places these props instead of the scene builder's own corals/tiers, keeping the phase progression: phase 0 = sparse ground cover, later phases bigger/rarer pieces. `frame`: {ground hex, water [shallow hex, deep hex], dens (fog multiplier), light (sun/caustics multiplier)} overrides the base frame. `scene`: base frame (ground, rocks, ground cover, light shafts, motes) and, for biomes without `scenery`, the scenery set habitat.js builds (reef, kelp, tidepool, mangrove, deep, meadow, canopy, jungle; default by medium). Optional when `scenery` + `frame` are given. `look`: the biome's identity (see `identity_rules`); briefs, habitat.js and the shelf diorama all read it.",
   "biomes": [
     {
       "id": 0,
@@ -19,7 +19,81 @@
         "green sea turtle",
         "dugong"
       ],
-      "scene": "kelp",
+      "scenery": [
+        {
+          "id": "sand_dollar",
+          "count": 6,
+          "spread": "scatter",
+          "scale": [
+            1.5,
+            2.0
+          ],
+          "phase": 0
+        },
+        {
+          "id": "eelgrass_tuft",
+          "count": 5,
+          "spread": "cluster",
+          "scale": [
+            0.8,
+            1.05
+          ],
+          "phase": 0,
+          "pass_through": true
+        },
+        {
+          "id": "turtle_grass_blades",
+          "count": 12,
+          "spread": "scatter",
+          "scale": [
+            0.9,
+            1.25
+          ],
+          "phases": [
+            1,
+            3
+          ],
+          "pass_through": true
+        },
+        {
+          "id": "eelgrass_tuft",
+          "count": 14,
+          "spread": "edge",
+          "scale": [
+            1.0,
+            1.35
+          ],
+          "phases": [
+            2,
+            4
+          ],
+          "pass_through": true
+        },
+        {
+          "id": "eelgrass_tuft",
+          "count": 8,
+          "spread": "back",
+          "scale": [
+            1.5,
+            1.9
+          ],
+          "phases": [
+            3,
+            4
+          ],
+          "landmark": true,
+          "pass_through": true
+        }
+      ],
+      "frame": {
+        "ground": "#d8c48a",
+        "water": [
+          "#6fd6c0",
+          "#1d6b78"
+        ],
+        "dens": 0.8,
+        "light": 1.1
+      },
       "look": {
         "shape": "swaying grass blades: dense low tufts of long, thin, leaning blades",
         "palette": [

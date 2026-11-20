@@ -5,7 +5,7 @@ description: Shared, any kind. One-time setup and health check for a fresh clone
 
 # Lifeboard setup (fresh clone)
 
-Order: 1 toolchain + doctor → 2 local preview → 3 Ecosystem/Garden toggles → 4 publishing → 5 runtime test hook → 6 weekly scheduled task. Run the doctor first; it says exactly what is missing:
+Order: 1 toolchain + doctor → 2 local preview → 3 Ecosystem/Garden toggles + commitment lock → 4 publishing → 5 runtime test hook → 6 weekly scheduled task. Run the doctor first; it says exactly what is missing:
 
 ```bash
 models/shared/tools/doctor.sh          # check only
@@ -27,7 +27,8 @@ models/shared/tools/doctor.sh --fix    # install what brew can install
 2. In Blender: Edit → Preferences → Get Extensions → add repository `https://lab.blender.org/` → install + enable "MCP". Its settings live under Preferences → Add-ons → MCP (no N-panel tab); "Auto Start" is on by default (port 9876).
 3. Restart Claude (⌘Q). Test: ask Claude for the Blender scene summary.
 
-## Known gotchas (seen on this Mac, Nov 2026)
+## Known gotchas
+- `npx` gltf-transform/sharp needs node >= 20; under node 18 export-check fails with `SyntaxError: Unexpected token 'with'`. Put a newer node first on PATH (nvm) before verify.sh. (seen on this Mac, Nov 2026)
 - **Blender MCP extension fails with `pydantic-core`/`rpds-py` build errors.** `uv` picked a too-new Python (3.15) with no wheels, then tried to compile with Rust. Fix: pin 3.12 in the extension folder (doctor prints the exact command) and/or `uv python pin --global 3.12`. Reinstalling the extension wipes the folder pin.
 - **Rust "can't find crate for core" on Apple Silicon.** rustup default toolchain is x86_64. `rustup default stable-aarch64-apple-darwin`.
 - **Artifacts won't serve `.glb`.** Ship models as base64 JS (`assets/<id>-glb.js`) and parse with `GLTFLoader.parseAsync`. `model-ship` does this.
@@ -36,6 +37,7 @@ models/shared/tools/doctor.sh --fix    # install what brew can install
 
 ## Local preview
 - `.claude/launch.json` (in the repo) serves the **repo root** with `python3 -m http.server 8765` (config name `lifeboard`). In Claude: `preview_start` with name `lifeboard`, then open `http://127.0.0.1:8765/`. By hand: `python3 -m http.server 8765` from the repo root.
+- In a git worktree, `preview_start` `lifeboard` may serve the **main checkout**, not your worktree. Serve the worktree on another port (`python3 -m http.server 8766 --directory <worktree>`, then `preview_start` with that url) and confirm with `fetch('/habitat.js')` that the page has your change before judging a screenshot.
 - The real page talks to the artifact db through `window.claude.use('db')`, which only exists inside claude.ai. Locally, `mock.js` stubs it with an in-memory db (`onSnapshot`, `doc().set/update/delete`) seeded from `window.MOCK`.
 - `mockdata.js` = `window.MOCK = { <collection>: { <docId>: {...doc} } }`. The owner's file is a personal data snapshot and is **gitignored**; you won't have it. Make your own: start with `window.MOCK={}` (empty dashboard) or add a few docs per collection using the shapes in `schema.js` (`tasks`, `habits`, `habit_sessions`, `checks`, `list_items`, …). Keep it out of git.
 - Load order for a local test page (also gitignored: `test.html`): copy `index.html` and insert `<script src="mockdata.js"></script><script src="mock.js"></script>` before `logic.js`.
@@ -45,6 +47,9 @@ models/shared/tools/doctor.sh --fix    # install what brew can install
 The game (reef points, garden, visitors) starts at 0 on the day the game is first turned on: that date is written once to db `game_state/game.started` and earlier history is ignored. The reef/habitat counts from that day and never resets weekly; the garden runs Mon–Sun weeks from the first Monday on/after it (plots stay seeds until then). Delete that doc to restart from 0.
 The display-settings popover (sliders icon) has **Ecosystem** and **Garden** toggles (both on by default; they and the theme are saved board-wide in db `checks/ui_prefs` as `{eco, garden, theme}` so every device matches, newest change wins) that shows the experimental habitat (creatures) and garden (plants) cards. Turn it on to see models in the page; the rest of lifeboard works without it. With either on, Grow gets a third view, **Collection**: one diorama per finished biome (plus the one growing now; tap to inspect dates, stats, signature and visitors) and the pressed habit plants.
 
+
+**Commit lock** (ask once, with AskUserQuestion when available; SPEC.md "Ring %"). A task is committed to a day when that day arrives with it due (or it's put on today); the lock is how long after that you can still move it off today without it counting as missed. Options: "Right away (Recommended)" = `0`, "5 minutes" = `5`, "3 hours" = `180` (a morning planning window), "End of day" = `"end"` (free re-planning, but a late-night move keeps the ring full); accept any other duration as minutes. Write it into the board prefs without dropping the other keys: `ArtifactData` update `checks/ui_prefs` → `value.commitLock` and `updated_at` = now (read the doc first; skip if it already holds that value). Default when unset: `0`.
+
 **Biome identity.** `models/biomes.json` gives every biome a `look` (shape language, palette, owned motifs, creature/plant style, motion) under shared `identity_rules`. creature-brief and plant-brief design to it, habitat.js builds its scene frame and pieces from the same identity, and the Collection diorama draws from its palette. A new biome needs a `look`, a `scene` builder in habitat.js `tiers` + `FRAME` + `LOOKS`, and a diorama `MOTIF` in garden.js.
 
 ## Publishing
@@ -53,7 +58,13 @@ The display-settings popover (sliders icon) has **Ecosystem** and **Garden** tog
 - Someone cloning the repo publishes to an artifact of their own (first publish creates it; reuse that URL afterwards).
 
 ## Runtime test hook
-`habitat.js` supports `?visitor=<id>`, `#visitor=<id>` and `#visitor-<id>` (use the last one in the published artifact, which only passes plain `#name` hashes); any of them turns the Ecosystem on for that visit only. `#eco` turns it on without a visitor. It it injects a candidate creature (from `window.LB_CREATURES[<id>]`, e.g. a wrapped `models/out/<id>/<id>-glb.js`) into the habitat so G6 (model-verify) can check it in the real page before it ships.
+`habitat.js` supports `?visitor=<id>`, `#visitor=<id>` and `#visitor-<id>` (use the last one in the published artifact, which only passes plain `#name` hashes); any of them turns the Ecosystem on for that visit only. `#eco` turns it on without a visitor. It it injects a candidate creature (from `window.LB_CREATURES[<id>]`, e.g. a wrapped `models/out/<id>/<id>-glb.js`) into the habitat so page-test (model-verify) can check it in the real page before it ships.
+
+## Subagent model
+Ask once (AskUserQuestion): which model skill subagents default to. Options: "Sonnet (Recommended, cheaper)", "Same as session (judges too)", "Haiku (cheapest, weaker briefs)". Write the answer into this clone's `AGENTS.md` "Subagent models" line. judge-panel judges follow the same default; changing it means re-judging each golden (see AGENTS.md).
+
+## Your labels (checks/profile)
+Owner-specific labels live in the board, never the repo. Ask (optional): the place name for the conditions card and pet names with kind (dog/cat). Write `ArtifactData` set `checks/profile` = `{value: {place: "<name>", pets: [{name, kind}]}, updated_at: <ms>}`. Without it the card says "Local conditions" and the pet filter is hidden.
 
 ## Weekly scheduled task (the weekly check)
 `.claude/scheduled/weekly-visitor.md` holds the prompt and the cron shape (`0 <hour> * * <day>`). The weekly check makes the visitor and the garden plants that bloomed or died that week need (SPEC.md Weekly job).

@@ -1,6 +1,6 @@
 """Run ledger: the single source of truth for a pipeline run's budget and judge freshness.
 Agents must not count builds or minutes in their heads; every build goes through it (build.py --run <id>) and every
-G5 judge is recorded here.
+The judge-panel result is recorded here.
 
 Usage: python3 models/shared/tools/ledger.py start  <run_id> [--builds 8] [--minutes 120]
        python3 models/shared/tools/ledger.py build  <run_id> <creature_id>      # exit 4 + "BUDGET EXHAUSTED" when spent

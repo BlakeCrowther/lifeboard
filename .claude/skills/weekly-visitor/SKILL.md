@@ -26,6 +26,9 @@ The most rare earned this week wins. If the game says no visitor (for example th
 ## 1b. New biome?
 If `models/biomes.json` has no entry for `biome`, or `phase == phases - 1` (final phase) and there is no entry for `biome + 1`: run **biome-brief** for that id first (it validates with `check_biome.py`). It doesn't count toward the build budget. If it fails twice, report it and brief this week's creature for the current biome as usual. A biome brief needs no visitor: run it even when the habitat is bleached.
 
+## 1b2. Biome scenery
+Right after 1b (and every week): if the current biome (or the one biome-brief just made) lists `scenery` ids with no roster entry of kind `scenery`, run **scenery-make** for them. Own ledger per piece; it doesn't spend the visitor's budget. A biome with no `scenery` uses its `scene` builder and needs nothing.
+
 ## 1c. Garden plants
 Every week, after this week's visitor (or the no-visitor branch): if `checks/game_status` `value.garden.needs` is non-empty, run **season-seeds**. It has its own ledger per plant (`plant-<plot>-g<gen>`), so it doesn't spend the visitor's budget. Commit its plants on the same branch; one republish covers both.
 
@@ -39,7 +42,7 @@ Retry loop, driven by `report.json.fix_notes` (fix the cause: a trait the judges
 - re-run from that step;
 - max 2 retries (3 for a novel archetype).
 - **Every** build goes through the ledger: `blender -b --factory-startup --python models/shared/blender/build.py -- <spec> [outdir] --run <run_id>`. Never call build.py without `--run` in a pipeline run.
-- A G1 (spec) failure caught before the build (`build.py` runs check_spec first and exits 3) is a brief fix, not a build attempt: it is not recorded and does not count toward the budget.
+- A spec-check failure caught before the build (`build.py` runs check_spec first and exits 3) is a brief fix, not a build attempt: it is not recorded and does not count toward the budget.
 - `build.py` exits 4 and prints `BUDGET EXHAUSTED` when the ledger says the run is spent: stop immediately, no more builds or retries, go to the "no visitor" branch (quarantine + report). Do not work around it (no build without `--run`, no new run id, no hand-run Blender).
 - Verify signature: `models/shared/tools/verify.sh <id> [glb] [spec]` (defaults `out/<id>/<id>.glb`; QA goes to `<glb dir>/qa`).
 
@@ -47,8 +50,8 @@ Retry loop, driven by `report.json.fix_notes` (fix the cause: a trait the judges
 1. Still failing → if the first attempt was **novel**, keep the species idea and simplify the new archetype once (fewer parts, proven rig pieces from lib.py) before giving up on it. Only then brief a **safe-path** variant: proven archetype, new species/palette/params, and a species the archetype can genuinely express (not a recolor of a past miss). Run build → animate → verify again (2 retries).
 2. Still failing → no visitor this week. Move `out/<id>` to `out/quarantine/<id>/` (dry run: `out/dryrun/quarantine/<id>/`).
 
-## 3b. Polish rounds (after a PASS)
-A first pass ships nothing yet. While the ledger has ≥ 1 build left (and at most 2 rounds): take the fix notes ≥ 2 judges agreed on, fix their **cause** in the species generator or spec (a missing trait is code, not a parameter nudge), rebuild, re-run G1–G5 with 3 fresh judges, and keep whichever version has the higher G5 mean (ties: the newer one). Stop early when a round doesn't raise the mean. Report each round's mean.
+## 3b. Polish rounds
+model-verify "Polish rounds" (shared by every kind).
 
 ## 4. Ship
 On PASS (after polish) → model-ship the best version.
@@ -66,8 +69,8 @@ Tests the whole pipeline on a simulated week without touching anything live.
 - Get events with `node sim/run.js 1 28 --visitors=steady:1000`. Pass one event, e.g. `{"week":11,"biome":2,"rarity":"rare"}`, in place of step 1.
 - Run steps 2–3 fully: real Blender, real gates, retries and fallbacks.
 - **Skip ship.** No roster edit, no commit, no publish. All dry-run work goes in `models/out/dryrun/<id>/` (spec as `spec.json`, build outdir = that folder: `build.py out/dryrun/<id>/spec.json out/dryrun/<id>`), not `creature/specs/` or `out/<id>/`, unless a human promotes it. Verify with `verify.sh <id> out/dryrun/<id>/<id>.glb`. Dry-run quarantine: `out/dryrun/quarantine/<id>/`.
-- G6 runs if the habitat page has the `?visitor=` hook; otherwise mark it `"skipped: no runtime hook"` (the dry run still counts as PASS on G1–G5).
+- page-test runs if the habitat page has the `?visitor=` hook; otherwise mark it `"skipped: no runtime hook"` (the dry run still counts as PASS on the first five gates).
 - Report like a normal run, plus timings per step and every fix note, so the pipeline itself can be improved.
 
 ## Budget
-120 minutes of wall time or 8 Blender build attempts (novel archetypes need the room) in total (pre-build G1 failures don't count), whichever comes first, **enforced by `models/shared/tools/ledger.py`** (`out/runs/<run_id>.json`). `BUDGET EXHAUSTED` from build.py or `ledger.py build` is final for the run. Every G5 judge is recorded with `ledger.py judge` (see model-verify), which refuses a reused judge agent. Judges are cheap (~15 s each) and do not count toward the build budget: each G5 attempt uses 3 fresh judges (median-of-3); the ledger records all of them.
+120 minutes of wall time or 8 Blender build attempts (novel archetypes need the room) in total (pre-build spec-check failures don't count), whichever comes first, **enforced by `models/shared/tools/ledger.py`** (`out/runs/<run_id>.json`). `BUDGET EXHAUSTED` from build.py or `ledger.py build` is final for the run. Every judge is recorded with `ledger.py judge` (see model-verify), which refuses a reused judge agent. Judges are cheap (~15 s each) and do not count toward the build budget: each judge-panel attempt uses 3 fresh judges (median-of-3); the ledger records all of them.

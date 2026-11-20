@@ -14,7 +14,7 @@ Goal: any week's surprise visitor looks like it belongs in the same world as the
 - **Motion feel:**
   - Eased everything: no linear interpolation; Bezier with auto-clamped handles.
   - Follow-through: chains (tail, fins, wings, tentacles, antennae, petals) lag the parent by 2–6 frames, amplitude grows toward the tip.
-  - Gentle but readable: nothing snaps (peak bone rotation ≤ 30° idle, ≤ 60° feed; speed ≤ 8% / 25% body length per frame), yet the motion must read at card size: some vertex moves ≥ 4% body length from the frame-0 pose during idle and ≥ 12% during feed (G3).
+  - Gentle but readable: nothing snaps (peak bone rotation ≤ 30° idle, ≤ 60° feed; speed ≤ 8% / 25% body length per frame), yet the motion must read at card size: some vertex moves ≥ 4% body length from the frame-0 pose during idle and ≥ 12% during feed (motion-check).
   - Feed reads in silhouette: anticipation is visible (small pull-back), strike is the fastest beat, settle is the slowest.
 - **QA lighting:** fixed rig (`shared/blender/qa_render.py`), so renders compare across weeks.
 

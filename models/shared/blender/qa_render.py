@@ -1,4 +1,4 @@
-"""G5 inputs: fixed-rig QA renders of a creature .glb for the visual judge.
+"""judge-panel inputs: fixed-rig QA renders of a creature .glb for the visual judge.
 Usage: blender -b --factory-startup --python qa_render.py -- <file.glb> <outdir> [golden1.glb golden2.glb ...]
 Writes: turn_0..7.png (turntable), idle_0..5.png, feed_0..5.png,
   onion_{idle,feed}_0..5.png (elevated 3/4 view; 0 opaque, 1..5 transparent, overlaid by verify.sh),
@@ -11,8 +11,10 @@ from mathutils import Vector
 
 argv = sys.argv[sys.argv.index("--") + 1:]
 LEGACY = "--legacy-framing" in argv; argv = [a for a in argv if a != "--legacy-framing"]   # A/B only: old fixed L*1.5 / L*2.0 framing
-CLIPS = ["idle", "feed", "sulk"]                   # creature default; plants pass --clips sway_4,tend
+CLIPS = ["idle", "feed", "sulk"]                   # creature default; plants pass --clips sway_4,tend; static scenery --clips ""
 if "--clips" in argv: i = argv.index("--clips"); CLIPS = [c for c in argv[i + 1].split(",") if c]; del argv[i:i + 2]
+PITCH = 8                                          # turntable elevation; flat scenery passes --pitch 35 (top face reads)
+if "--pitch" in argv: i = argv.index("--pitch"); PITCH = float(argv[i + 1]); del argv[i:i + 2]
 GLB, OUT, GOLDEN = argv[0], argv[1], argv[2:]
 os.makedirs(OUT, exist_ok=True)
 sc = bpy.context.scene
@@ -108,9 +110,9 @@ objs, _ = load(GLB); mn, mx = bbox(objs); L = hlen(mn, mx); C = (mn + mx) / 2
 cam = rig(L, C)
 # every view is framed to the creature's actual silhouette in that view (fit()), not a fixed L*1.5: low, flat or tiny
 # bodies fill the frame like the golden does
-r = play(objs, CLIPS[0]); s0 = r[0] if r else 1; sc.frame_set(s0)
+r = play(objs, CLIPS[0]) if CLIPS else None; s0 = r[0] if r else 1   # static scenery: no clips; sc.frame_set(s0)
 for i in range(8):
-    aim(cam, C, L, 360 * i / 8); fit(cam, silhouette_pts(objs)); shot(f"{OUT}/turn_{i}.png")
+    aim(cam, C, L, 360 * i / 8, PITCH); fit(cam, silhouette_pts(objs)); shot(f"{OUT}/turn_{i}.png")
 # plants: a growth strip (each stage_<n> alone, side view, one shared framing so growth reads at true scale), then
 # the clip strips and onions show the bloom stage only (the union of five overlapping stages is unjudgeable)
 STG = {o.name.split(".")[0]: o for o in objs if o.type == "MESH" and o.name.startswith("stage_")}
@@ -147,7 +149,7 @@ if GOLDEN:
     def panel(path, scale, out):
         clear(); setup_render(384); o, _ = load(path); a, b = bbox(o); c = (a + b) / 2
         cam = rig(S, c); aim(cam, c, S, 0, 4)
-        play(o, CLIPS[0]); sc.frame_set(1); cam.data.ortho_scale = scale * 1.5
+        CLIPS and play(o, CLIPS[0]); sc.frame_set(1); cam.data.ortho_scale = scale * 1.5
         cam.data.clip_start = 1e-4; cam.data.clip_end = S * 20
         shot(out)
     for path in [GLB] + GOLDEN:

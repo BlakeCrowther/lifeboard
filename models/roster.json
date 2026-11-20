@@ -11,6 +11,45 @@
       "rarity": "common",
       "golden": false,
       "added": "2026-11-18"
+    },
+    {
+      "id": "eelgrass_tuft",
+      "kind": "scenery",
+      "name": "Eelgrass tuft",
+      "spec": "scenery/specs/eelgrass_tuft.json",
+      "glb": "assets/eelgrass_tuft.glb",
+      "js": "assets/eelgrass_tuft-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "pass_through": true,
+      "golden": true,
+      "added": "2026-11-19"
+    },
+    {
+      "id": "turtle_grass_blades",
+      "kind": "scenery",
+      "name": "Turtle grass",
+      "spec": "scenery/specs/turtle_grass_blades.json",
+      "glb": "assets/turtle_grass_blades.glb",
+      "js": "assets/turtle_grass_blades-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "pass_through": true,
+      "golden": false,
+      "added": "2026-11-19"
+    },
+    {
+      "id": "sand_dollar",
+      "kind": "scenery",
+      "name": "Sand dollar",
+      "spec": "scenery/specs/sand_dollar.json",
+      "glb": "assets/sand_dollar.glb",
+      "js": "assets/sand_dollar-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "pass_through": false,
+      "golden": false,
+      "added": "2026-11-19"
     }
   ]
 }

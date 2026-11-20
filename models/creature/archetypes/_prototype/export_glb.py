@@ -1,4 +1,6 @@
 import bpy, math
+import os
+OUT_DIR = os.environ.get("PROTO_OUT", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "out", "prototype"))  # models/out is gitignored
 D = bpy.data
 sc = bpy.context.scene
 for n in ("Camera", "Light", "Cube"):
@@ -30,7 +32,7 @@ for m in fish.data.materials:
 sc.render.engine = "CYCLES"; sc.cycles.samples = 8; sc.cycles.device = "GPU"
 bk = sc.render.bake; bk.use_pass_direct = False; bk.use_pass_indirect = False; bk.margin = 8
 bpy.ops.object.bake(type="DIFFUSE")
-img.filepath_raw = "~/noggin/scratch/blender/clownfish_color.png"; img.file_format = "PNG"; img.save()
+img.filepath_raw = OUT_DIR + "/clownfish_color.png"; img.file_format = "PNG"; img.save()
 # replace materials with single textured PBR (glTF-friendly)
 mat = D.materials.new("Clownfish"); mat.use_nodes = True
 nt = mat.node_tree; b = nt.nodes["Principled BSDF"]
@@ -39,6 +41,6 @@ nt.links.new(t.outputs[0], b.inputs["Base Color"])
 b.inputs["Roughness"].default_value = 0.32
 b.inputs["Coat Weight"].default_value = 0.4
 fish.data.materials.clear(); fish.data.materials.append(mat)
-bpy.ops.export_scene.gltf(filepath="~/noggin/scratch/blender/clownfish.glb",
+bpy.ops.export_scene.gltf(filepath=OUT_DIR + "/clownfish.glb",
     export_format="GLB", use_selection=False, export_animations=False, export_image_format="WEBP")
 print("EXPORTED", len(fish.data.vertices), "verts")
