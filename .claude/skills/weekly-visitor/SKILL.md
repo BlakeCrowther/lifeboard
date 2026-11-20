@@ -27,7 +27,7 @@ The most rare earned this week wins. If the game says no visitor (for example th
 If `models/biomes.json` has no entry for `biome`, or `phase == phases - 1` (final phase) and there is no entry for `biome + 1`: run **biome-brief** for that id first (it validates with `check_biome.py`). It doesn't count toward the build budget. If it fails twice, report it and brief this week's creature for the current biome as usual. A biome brief needs no visitor: run it even when the habitat is bleached.
 
 ## 1b2. Biome scenery
-Right after 1b (and every week): if the current biome (or the one biome-brief just made) lists `scenery` ids with no roster entry of kind `scenery`, run **scenery-make** for them. Own ledger per piece; it doesn't spend the visitor's budget. A biome with no `scenery` uses its `scene` builder and needs nothing.
+Right after 1b (and every week): if the current biome (or the one biome-brief just made) lists `scenery` ids or a `neglect.blight` id with no roster entry of kind `scenery`, run **scenery-make** for them. Own ledger per piece; it doesn't spend the visitor's budget. A biome with no `scenery` uses its `scene` builder and needs nothing.
 
 ## 1c. Garden plants
 Every week, after this week's visitor (or the no-visitor branch): if `checks/game_status` `value.garden.needs` is non-empty, run **season-seeds**. It has its own ledger per plant (`plant-<plot>-g<gen>`), so it doesn't spend the visitor's budget. Commit its plants on the same branch; one republish covers both.

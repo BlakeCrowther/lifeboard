@@ -12,7 +12,7 @@
    Choices where game.js leaves the mapping open (see SPEC.md):
    - Tide day = the Today ring: dayTide(committed, done) from LBG.ringTally. A day with nothing committed
      is neutral (null). Days run from the first task/session date (max 365 back) to today.
-   - Overdue = open tasks whose effective date < today; cloudiness counts them. Algae uses the age of every open task
+   - Overdue = open tasks whose effective date < today; cloudiness counts them. Blight uses the age of every open task
      since it was first committed (rescheduling doesn't reset it); tasks without committed days use their current date.
    - Visitor this week = the better of weekVisitor(Mon..today tides) and an aged-task drop this week, else 'common';
      none while bleached.
@@ -158,7 +158,7 @@
       todayTide, weekTides, events,
       lessons: lessonState(input.lessonDates, today, dn, LBG),
       breaks: { skipsToday: skipOn[today] || 0, skipCost, lost: Math.round(lost), sad: (skipOn[today] || 0) > 0 },
-      overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), algae: LBG.algae(neglectAges), agedDrop: weekDrop,
+      overdue: overdueAges.length, cloudiness: LBG.cloudiness(overdueAges.length), blight: LBG.blight(neglectAges), agedDrop: weekDrop,
       visitor: reef.bleached ? null : wv || 'common', visitorWeek: ds(wk),
       season: { ...sea, biome: reef.biome, opens: waiting ? ds(gStart) : null },
       start: start != null ? ds(start) : null,

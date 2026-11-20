@@ -118,7 +118,7 @@
     const t = gm.todayTide, bits = [gm.pf != null ? `preview: day ${Math.round(gm.pf * 31.5)} of ~32` : `${Math.round(r.pts)} / ${r.next ?? '–'} life points`];
     bits.push(t ? `today ${Math.round(t.pct * 100)}%${t.full ? ', full day' : ''}` : 'today neutral');
     if (engine && engine.newToday.length) bits.push(`new today: ${engine.newToday.join(', ')}`);
-    if (gm.overdue) bits.push(`${gm.overdue} overdue clouding the water`);
+    if (gm.overdue) bits.push(`${gm.overdue} overdue: ${(b.neglect && b.neglect.murk_name) || 'murk'} clouding the ${b.medium === 'water' || !b.medium ? 'water' : 'air'}`);
     if (gm.breaks && gm.breaks.sad) bits.push(`skipped ${gm.breaks.skipsToday > 1 ? gm.breaks.skipsToday + ' breaks' : 'a break'} · the fish noticed${gm.breaks.lost ? ` (−${gm.breaks.lost} growth)` : ''}`);
     if (gm.lessons && gm.lessons.hide) bits.push(`no lessons in ${gm.lessons.daysSince} days · the fish are hiding`);
     $('line').textContent = bits.join(' · ');
@@ -278,7 +278,7 @@ attribute float aTip; varying float vTip;
       obj.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(obj), p = bb.getCenter(new V()), r = bb.getSize(new V()).multiplyScalar(0.5 * pad);
       colliders.push({ kind, p, r, obj }); obj.userData.kind = obj.userData.kind || kind; return obj;
     };
-    let world = null, medium = null, growth = [], ambient = [], coralMats = [], algaeInst = null, rays = [], rockMat = null, snowMat = null;
+    let world = null, medium = null, growth = [], ambient = [], coralMats = [], blightInst = null, blightCopies = [], nk = null, rays = [], rockMat = null, snowMat = null;
     /* scene key: biomes.json `scene`, else by medium. Each key has its own scenery + water/air look (LOOKS). */
     const sceneOf = (b) => forcedScene || b.scene || ({ water: 'reef', land: 'meadow', air: 'canopy' })[b.medium || 'water'] || 'reef';
     /* per-scene frame: the base layer every scene shares (ground, rocks, ground cover, light shafts, motes). Distinct per biome
@@ -299,7 +299,7 @@ attribute float aTip; varying float vTip;
     const useProps = (b) => !forcedScene && Array.isArray(b.scenery) && b.scenery.length > 0;
     async function loadProps(b) {
       const out = {};
-      for (const id of [...new Set(b.scenery.map((s) => s.id))]) {
+      for (const id of [...new Set([...b.scenery.map((s) => s.id), ...(b.neglect && b.neglect.blight ? [b.neglect.blight] : [])])]) {
         const entry = (roster.scenery || []).find((m) => m.id === id);
         if (!entry) { console.warn('[habitat] scenery not in roster:', id); continue; }
         try {
@@ -312,7 +312,7 @@ attribute float aTip; varying float vTip;
     }
     function buildWorld(med, key, bio, props) {
       if (world) { scene.remove(world); world.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
-      world = new THREE.Group(); scene.add(world); medium = med; sk = key || (med === 'water' ? 'reef' : med === 'air' ? 'canopy' : 'meadow'); growth = []; ambient = []; coralMats = []; rays = []; seed = 7; propMixers = []; passKinds = [];
+      world = new THREE.Group(); scene.add(world); medium = med; sk = key || (med === 'water' ? 'reef' : med === 'air' ? 'canopy' : 'meadow'); growth = []; ambient = []; coralMats = []; rays = []; blightCopies = []; blightInst = null; seed = 7; propMixers = []; passKinds = [];
       const water = med === 'water'; fr = FRAME[sk] || (water ? FRAME.reef : FRAME.meadow);
       fx = (props && bio.frame) || {}; if (fx.ground) fr = { ...fr, g: fx.ground };
       const sandGeo = new THREE.PlaneGeometry(80, 80, 120, 120); sandGeo.rotateX(-Math.PI / 2);
@@ -577,11 +577,29 @@ attribute float aTip; varying float vTip;
         const N = cv.n, inst = new THREE.InstancedMesh(g, mat, N), o = new THREE.Object3D(), L = cv.l || [0.3, 0.45]; let k = 0;
         while (k < N) { const cx = R(-7, 7), cz = R(-2, 4); if (Math.hypot(cx, cz + 1) < 2.6) continue; for (let j = 0; j < 10 && k < N; j++, k++) { const x = cx + R(-0.4, 0.4), z = cz + R(-0.4, 0.4); o.position.set(x, H(x, z) - 0.02, z); o.rotation.set(R(-0.3, 0.3), R(0, 3), R(-0.3, 0.3)); o.scale.set(1, R(0.6, 1.5), 1); o.updateMatrix(); inst.setMatrixAt(k, o.matrix); inst.setColorAt(k, new THREE.Color().setHSL(R(cv.c[0], cv.c[1]), R(0.35, 0.6), R(L[0], L[1]))); } }
         inst.receiveShadow = true; world.add(inst); }
-      /* algae from neglected tasks: hair algae on rocks (water) / weeds (land) */
-      { const g = new THREE.ConeGeometry(0.025, 0.3, 4); g.translate(0, 0.15, 0); const mat = new THREE.MeshStandardMaterial({ color: 0x5d7228, roughness: 1 }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: 0.6 } });
+      /* blight from neglected tasks: the biome's own prop (biomes.json neglect.blight, e.g. drift algae, weeds, mold);
+         copies are placed now and shown as blight rises (apply). No prop yet → generic green tufts on rocks. */
+      const ng = bio && bio.neglect, bp = ng && props && props[ng.blight];
+      nk = ng && ng.murk ? { s: new THREE.Color(ng.murk), d: new THREE.Color(ng.murk).multiplyScalar(0.32), tint: new THREE.Color(ng.murk).lerp(new THREE.Color(0xffffff), 0.55) } : null;
+      const onRock = (r, a, d, ray) => { r.updateMatrixWorld(); ray.set(new V(r.position.x + Math.cos(a) * d * r.scale.x, r.position.y + 5, r.position.z + Math.sin(a) * d * r.scale.z), new V(0, -1, 0)); const hit = ray.intersectObject(r)[0]; return hit ? hit.point : r.position.clone(); };
+      if (bp) {
+        const N = ng.count || 30, [s0, s1] = ng.scale || [0.8, 1.3], ray = new THREE.Raycaster(), clip = bp.gltf.animations.find((a) => a.name === 'sway');
+        for (let k = 0; k < N; k++) {
+          let pos;
+          if (ng.grows_on === 'rocks' && rocks.length) pos = onRock(rocks[k % rocks.length], rnd() * 6.283, rnd() * 0.7, ray);
+          else { let x, z, t = 0; do { x = R(-6, 6); z = R(-4.5, 3); } while (Math.hypot(x, z + 1) < 1.8 && ++t < 12); pos = new V(x, H(x, z) - 0.01, z); }
+          const root = K.SU.clone(bp.gltf.scene), holder = new THREE.Group(); holder.add(root);
+          root.scale.setScalar(DISPLAY_SCALE * R(s0, s1)); root.rotation.y = R(0, 6.283);
+          root.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.frustumCulled = false; o.material = patch(o.material.clone()); } });
+          if (clip) { const mx = new THREE.AnimationMixer(root), act = mx.clipAction(clip); act.play(); act.time = R(0, clip.duration); propMixers.push(mx); }
+          holder.position.copy(pos); holder.userData.base = holder.scale.clone(); holder.visible = false; world.add(holder); blightCopies.push(holder);
+        }
+      } else {
+        const g = new THREE.ConeGeometry(0.025, 0.3, 4); g.translate(0, 0.15, 0); const mat = new THREE.MeshStandardMaterial({ color: 0x5d7228, roughness: 1 }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: 0.6 } });
         const N = 270, inst = new THREE.InstancedMesh(g, mat, N), o = new THREE.Object3D(), ray = new THREE.Raycaster();
-        for (let i = 0; i < N; i++) { const r = rocks[i % Math.max(1, rocks.length)] || sand, a = rnd() * 6.283, d = rnd() * 0.7; r.updateMatrixWorld(); ray.set(new V(r.position.x + Math.cos(a) * d * r.scale.x, r.position.y + 5, r.position.z + Math.sin(a) * d * r.scale.z), new V(0, -1, 0)); const hit = ray.intersectObject(r)[0]; o.position.copy(hit ? hit.point : r.position); o.rotation.set(R(-0.3, 0.3), R(0, 3), R(-0.3, 0.3)); o.scale.setScalar(R(0.6, 1.3)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
-        inst.count = 0; world.add(inst); algaeInst = inst; }
+        for (let i = 0; i < N; i++) { const r = rocks[i % Math.max(1, rocks.length)] || sand; o.position.copy(onRock(r, rnd() * 6.283, rnd() * 0.7, ray)); o.rotation.set(R(-0.3, 0.3), R(0, 3), R(-0.3, 0.3)); o.scale.setScalar(R(0.6, 1.3)); o.updateMatrix(); inst.setMatrixAt(i, o.matrix); }
+        inst.count = 0; world.add(inst); blightInst = inst;
+      }
       /* light shafts (water only) */
       rayU.uRayCol.value.set(fr.rays || 0xdffbff);
       if (water || fr.rays) for (let i = 0; i < 8; i++) {
@@ -774,7 +792,7 @@ attribute float aTip; varying float vTip;
     /* per-scene colors: s = shallow/sky, d = deep/horizon; dens = fog, light = sun/caustics, glow = constant bioluminescence */
     const LOOKS = { reef: { s: 0x3fd0e4, d: 0x0a5a86 }, kelp: { s: 0x5fb89a, d: 0x0d4a3a, dens: 1.15 }, tidepool: { s: 0x8ff0f5, d: 0x3a9fc0, dens: 0.55, light: 1.15 },
       mangrove: { s: 0x9ab87a, d: 0x2c4a30, dens: 1.5, light: 0.8 }, deep: { s: 0x1a3f6a, d: 0x020a1a, dens: 1.25, light: 0.3, glow: 0.85 }, meadow: { s: 0x9fd4f2, d: 0xf2e2bc }, canopy: { s: 0xbfe2f7, d: 0xeef3f6, dens: 0.6 }, jungle: { s: 0x8fc07a, d: 0x163a20, dens: 1.8, light: 0.85 } };
-    const MURK_S = C(0x6f8f4a), MURK_D = C(0x23361c), NIGHT_S = C(0x0a2a48), NIGHT_D = C(0x01070f), DUSK = C(0xd9906a), ALGAE = C(0x8fb04a);
+    const MURK_S = C(0x6f8f4a), MURK_D = C(0x23361c), NIGHT_S = C(0x0a2a48), NIGHT_D = C(0x01070f), DUSK = C(0xd9906a), BLIGHT = C(0x8fb04a);
     let envDirty = true;
     /* biome progress 0..1 from reef points (thresholds are evenly spaced); preview overrides pin it */
     let newToday = [], nextUp = null;
@@ -797,8 +815,8 @@ attribute float aTip; varying float vTip;
     const NAMES = { tree: 'buttress tree', leaf: 'giant leaves', vine: 'vines', limb: 'mossy branch', coral: 'coral', shrub: 'flowering bush', anemone: 'anemone', kelp: 'kelp', root: 'mangrove tree', cloud: 'cloud', sponge: 'tube sponges', rock: 'rock' };
     const nameOf = (g) => g.userData.nm || (g.userData.kind === 'coral' && medium !== 'water' ? 'bush' : NAMES[g.userData.kind]) || 'something new';
     function apply() {
-      const st = view() || { reef: { phase: 2, phases: 5, bleached: false }, cloudiness: 0, algae: 0 }, water = medium === 'water';
-      const o = st.cloudiness, al = st.algae, bleached = st.reef.bleached;
+      const st = view() || { reef: { phase: 2, phases: 5, bleached: false }, cloudiness: 0, blight: 0 }, water = medium === 'water';
+      const o = st.cloudiness, al = st.blight, bleached = st.reef.bleached;
       const now = new Date(), h = now.getHours() + now.getMinutes() / 60;
       const W = wxLook(), sea = seasonK(); /* real weather + season: look only, no game effect */
       const len = 12 + sea * 1.8, rise = 12 - len / 2; /* longer summer days, shorter winter ones */
@@ -807,8 +825,8 @@ attribute float aTip; varying float vTip;
       const lk = { ...(LOOKS[sk] || LOOKS.reef) }; /* biomes.json frame overrides: water [shallow, deep], dens, light */
       if (fx.water) { lk.s = fx.water[0]; lk.d = fx.water[1]; } if (fx.dens) lk.dens = fx.dens; if (fx.light) lk.light = fx.light;
       U.uShallow.value.set(lk.s); U.uDeep.value.set(lk.d);
-      U.uShallow.value.lerp(C(0x56626c), W.cloud * 0.45).lerp(C(0xc8d0d4), W.fog * 0.5).lerp(MURK_S, o * 0.65).lerp(ALGAE, al * 0.35).lerp(DUSK, dusk * 0.3).lerp(NIGHT_S, night * nightK);
-      U.uDeep.value.lerp(C(0x1e252b), W.cloud * 0.45).lerp(MURK_D, o * 0.6).lerp(NIGHT_D, night * nightK);
+      U.uShallow.value.lerp(C(0x56626c), W.cloud * 0.45).lerp(C(0xc8d0d4), W.fog * 0.5).lerp(nk ? nk.s : MURK_S, o * 0.65).lerp(nk ? nk.tint : BLIGHT, al * 0.35).lerp(DUSK, dusk * 0.3).lerp(NIGHT_S, night * nightK);
+      U.uDeep.value.lerp(C(0x1e252b), W.cloud * 0.45).lerp(nk ? nk.d : MURK_D, o * 0.6).lerp(NIGHT_D, night * nightK);
       U.uDens.value = (water ? 0.042 : medium === 'air' ? 0.05 : 0.018) * (lk.dens || 1) * (1 + o * 1.4) * (1 + night * 0.25) * (1 + W.cloud * 0.3 + W.fog * 2 + W.rain * 0.4);
       U.uAbsorb.value.set(...(water ? [0.035, 0.012, 0.01] : [0, 0, 0])).multiplyScalar(1 + o * 0.5);
       const lightK = (1 - o * 0.45) * (lk.light || 1) * (1 - W.cloud * 0.35 - W.storm * 0.15) * (1 + sea * 0.06);
@@ -823,8 +841,9 @@ attribute float aTip; varying float vTip;
       scene.environmentIntensity = 0.4 + day * 0.2 + night * 0.15; hemi.intensity = (0.15 + day * 0.65 + night * 0.2) * lightK;
       rayU.uRay.value = (water ? 0.16 : 0.24) * day * (1 - o * 0.7) * (1 - W.cloud * 0.7);
       if (snowMat) { snowMat.uniforms.uOp.value = water ? 0.45 + o * 0.5 + W.rain * 0.25 : 0.25 + W.rain * 0.35 + W.snow * 0.6; snowMat.uniforms.uCol.value.set(water && night > 0.5 ? 0x7af0ff : !water && W.snow ? 0xffffff : fr.mote); }
-      if (rockMat) rockMat.color.set(0xffffff).lerp(C(0x9aa060), Math.max(o, al) * 0.6);
-      if (algaeInst) algaeInst.count = Math.round(al * 270);
+      if (rockMat) rockMat.color.set(0xffffff).lerp(nk ? nk.tint : C(0x9aa060), Math.max(o, al) * 0.6);
+      if (blightInst) blightInst.count = Math.round(al * 270);
+      { const shown = Math.round(al * blightCopies.length), grow = 0.6 + 0.4 * al; blightCopies.forEach((h, k) => { h.visible = k < shown; h.scale.copy(h.userData.base).multiplyScalar(grow); }); }
       /* phase -> which tiers of coral/plant life are in (userData.ph) */
       const f = progressOf(st), f0 = dayStart(st, f), pnow = performance.now();
       const fresh = [];
@@ -838,7 +857,7 @@ attribute float aTip; varying float vTip;
       nextUp = nxt ? nameOf(nxt) + (nxt.userData.landmark ? ' (landmark)' : '') : null;
       coralMats.forEach((m) => { m.emissive = m.emissive || new THREE.Color(); m.emissive.set(bleached ? 0x5a5a58 : 0x000000); });
       grade.uniforms.sat.value = (bleached ? 0.35 : st.breaks && st.breaks.sad ? 0.75 : 1.15) * (1 - W.cloud * 0.3 - W.fog * 0.15);
-      grade.uniforms.tint.value.set(1, 1, 1).lerp(C(0xd8f0b0), al * 0.5);
+      grade.uniforms.tint.value.set(1, 1, 1).lerp(nk ? nk.tint : C(0xd8f0b0), al * 0.5);
       renderer.toneMappingExposure = ((water ? 1.05 : 1.0) + night * 0.2) * (1 - W.cloud * 0.22 - W.storm * 0.1);
       if (stats.bloom) { bloom.strength = 0.28 + night * 0.55; bloom.threshold = 0.9 - night * 0.5; }
       envDirty = true; kick();

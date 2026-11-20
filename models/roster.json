@@ -50,6 +50,19 @@
       "pass_through": false,
       "golden": false,
       "added": "2026-11-19"
+    },
+    {
+      "id": "drift_algae_mat",
+      "kind": "scenery",
+      "name": "Drift algae mat",
+      "spec": "scenery/specs/drift_algae_mat.json",
+      "glb": "assets/drift_algae_mat.glb",
+      "js": "assets/drift_algae_mat-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "pass_through": true,
+      "golden": false,
+      "added": "2026-11-20"
     }
   ]
 }

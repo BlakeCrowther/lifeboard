@@ -4,7 +4,7 @@ Usage: python3 models/shared/tools/check_biome.py [biome_id]
 Checks: ids 0..n-1 in order, required fields, medium, palette hex, scene is one habitat.js can build (LOOKS keys; optional
 when `scenery` + `frame` are given), each `scenery` item is a roster model of kind scenery (or not built yet: warns) with a valid spread/scale/phase
 and every phase 0..4 gets at least one piece, `frame` colours are hex,
-`owns` motifs unique across biomes, unique names; warns when the main hue sits too close to a neighbour's.
+`owns` motifs unique across biomes, unique names, `neglect` (required with `scenery`: blight prop, form, grows_on, murk); warns when the main hue sits too close to a neighbour's.
 Archive (biomes.archive.json, past games): reusing an archived name fails; an archived owned motif warns (biome-brief's
 archive review decides, and must say why in its report)."""
 import colorsys, json, re, sys
@@ -19,6 +19,7 @@ SPREADS = {"cluster", "scatter", "edge", "back"}
 HEX = re.compile(r"#[0-9a-fA-F]{6}")
 MEDIA = {"water", "land", "air"}
 LOCO = {"swim", "drift", "crawl", "rooted", "walk", "fly", "climb", "burrow", "hop", "glide"}
+GROWS_ON = {"rocks", "ground"}
 LOOK_KEYS = ["shape", "palette", "ground", "owns", "creatures", "plants", "motion"]
 
 
@@ -90,6 +91,30 @@ def main():
             miss = sorted(set(range(5)) - phases)
             if miss:
                 err.append(f"{p}: scenery leaves phase(s) {miss} empty; every phase must add something")
+        ng = b.get("neglect")
+        if sc is not None and not ng:
+            err.append(f"{p}: missing neglect (how this biome shows neglected tasks: blight prop + murk)")
+        if ng:
+            ros = {m["id"]: m for m in json.loads(ROSTER.read_text()).get("models", [])} if ROSTER.exists() else {}
+            bl = ng.get("blight")
+            for k in ("blight", "form", "grows_on", "murk", "murk_name"):
+                if not ng.get(k):
+                    err.append(f"{p}: neglect.{k} missing")
+            if bl and bl in {it.get("id") for it in (sc or [])}:
+                err.append(f"{p}: neglect.blight '{bl}' is one of the biome's scenery pieces; blight needs its own prop")
+            if bl and bl not in ros:
+                warn.append(f"{p}: neglect.blight '{bl}' not built yet; habitat falls back to generic tufts (scenery-make builds it)")
+            elif bl and ros[bl].get("kind") != "scenery":
+                err.append(f"{p}: neglect.blight '{bl}' is a roster model of kind {ros[bl].get('kind')!r}, not scenery")
+            if ng.get("grows_on") and ng["grows_on"] not in GROWS_ON:
+                err.append(f"{p}: neglect.grows_on must be one of {sorted(GROWS_ON)}")
+            if not 1 <= ng.get("count", 30) <= 60:
+                err.append(f"{p}: neglect.count 1-60")
+            lo, hi = ng.get("scale", [1, 1])
+            if not 0 < lo <= hi <= 4:
+                err.append(f"{p}: neglect.scale [min,max] with 0 < min <= max <= 4")
+            if ng.get("murk") and not HEX.fullmatch(ng["murk"]):
+                err.append(f"{p}: neglect.murk {ng['murk']} must be #rrggbb")
         fr = b.get("frame") or {}
         for c in [fr.get("ground")] + list(fr.get("water") or []):
             if c is not None and not HEX.fullmatch(c):

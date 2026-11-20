@@ -1,0 +1,54 @@
+{
+  "kind": "scenery",
+  "id": "drift_algae_mat",
+  "name": "Drift algae mat",
+  "lore": "Loose seaweed that piles up when the lagoon is left alone.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "tangle",
+  "reference": "Drift macroalgae mat on lagoon sand (Laurencia / Gracilaria tangles, as in Florida Bay and the Indian River Lagoon): a low, loose heap of round, wiry, much-branched stems, matted and dark olive-brown in the middle, rusty red-brown at the stem ends, smothering the sand",
+  "size": {
+    "height_m": 0.04,
+    "footprint_m": 0.32
+  },
+  "shape": {
+    "heap": {
+      "radius_ratio": 0.3,
+      "knobs": 0.3,
+      "cover": 40
+    },
+    "stems": {
+      "count": 15,
+      "radius_ratio": 0.1,
+      "reach": 0.95,
+      "wander": 0.7,
+      "forks": 2,
+      "fork_deg": 32,
+      "segs": 5
+    }
+  },
+  "palette": {
+    "main": [
+      "#5a4f2a",
+      "#8c3f22"
+    ],
+    "accent": "#4e5a2a"
+  },
+  "material": {
+    "roughness": 0.5,
+    "coat": 0.05
+  },
+  "motion": {
+    "sway": {
+      "frames": 96,
+      "cycles": 1,
+      "amp_deg": 3,
+      "lag_frames": 8
+    }
+  },
+  "pass_through": true,
+  "budget": {
+    "tris": 2200,
+    "texture": 512
+  }
+}

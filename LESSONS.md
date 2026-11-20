@@ -2,6 +2,8 @@
 
 One line per lesson: date, what went wrong, what changed (file). Newest first. Read before a skill run or a big change (AGENTS.md "Improve as you go").
 
+- 2026-11-20: drift_algae_mat (first `tangle` archetype) used all 5 builds getting past gates, then judges failed it (reads_as 2: crab legs/starfish; peach in judge renders vs olive in model.png). → scenery-make: a novel archetype starts its ledger with 8 builds and judges the contact sheet (not model.png) before the last build; quarantined, weekly run retries.
+- 2026-11-20: neglect looked the same in every biome (hard-coded green algae cones + green murk, land included), and only creature-brief said to design first and write an archetype when none fits. → `biomes.json` `neglect` (blight prop + murk) required by check_biome; habitat.js places the biome's blight prop; algae renamed blight; design-first rule for every kind (models/README.md), biome-brief + scenery-make follow it.
 - 2026-11-19 verify.sh used `ls glob` under nullglob to detect renders; with no match `ls` lists cwd and "succeeds", so non-plant sheets tried to montage missing stage rows. → array length checks (verify.sh).
 - 2026-11-19 Build quick render of a 1.4 cm sand dollar was empty (framed by height, camera clipped). → scenery frames by max(height, footprint) (build.py); G1 size check uses the same.
 - 2026-11-19 Judges flagged the conch's flat lip slab as clipping/floating twice (artifacts median 2); quarantined. → solid lip needs fusing to the body before another shell ships (open, scenery CONTRACT).
@@ -23,3 +25,5 @@ One line per lesson: date, what went wrong, what changed (file). Newest first. R
 - 2026-11-19: phones showed the lifeboard title ~a third down the screen: the artifact host's wrapper pads :root by env(safe-area-inset-top) and .app added the inset again. → index.html resets :root padding (page owns its insets); check pages pulled from live for host wrapper CSS that stacks on ours.
 - 2026-11-19: fullscreen ecosystem froze because the IntersectionObserver saw the card's in-page slot off-screen; render loop now also runs while expanded (habitat.js running()).
 - 2026-11-19: Fullscreen API on the ecosystem took the whole artifact page first in the claude.ai frame; switched to a fixed overlay only. Portrait screens zoomed in because three.js fov is vertical; fov now widens to keep the 4:3 horizontal view.
+- 2026-11-20: drift_algae_mat run 2: build 7 passed judge-panel (mean 3.0); the build 8 polish (curvier stems, flatter knobs, more rock) dropped reads_as to 2, so build 7 shipped (keep-the-better rule worked; restored from a snapshot, so snapshot every passing build before polishing).
+- 2026-11-20: verify.sh given a wrong relative glb path ran on and wrote QA to /qa with confusing errors. → verify.sh now exits 2 when the glb is missing.

@@ -75,7 +75,7 @@ Each habit tile shows its week at a glance (`habitPips` in app.js). Daily and we
 
 ## Ecosystem (rings and tasks)
 
-**Status:** Partly built. Built: Growth from the ring, ring = done ÷ committed with recorded commitments (`tasks.committed_days`) and the commitment lock, adaptive phases, 8 biomes, dioramas, weekly visitor, aged-task visitor drops, murk, algae from task age, bleaching. Not built: Claude-written diorama titles. Claude-invented biomes: built as the `biome-brief` skill, run by `weekly-visitor`.
+**Status:** Partly built. Built: Growth from the ring, ring = done ÷ committed with recorded commitments (`tasks.committed_days`) and the commitment lock, adaptive phases, 8 biomes, dioramas, weekly visitor, aged-task visitor drops, murk, blight from task age (per-biome look via `neglect`), bleaching. Not built: Claude-written diorama titles. Claude-invented biomes: built as the `biome-brief` skill, run by `weekly-visitor`.
 
 Every day earns **Growth** from the day's ring %, and Growth moves the current biome through its phases. Biomes take as long as they take, independent of the garden calendar.
 
@@ -86,7 +86,7 @@ Every day earns **Growth** from the day's ring %, and Growth moves the current b
 - Committed for a day = tasks committed to that day that weren't finished earlier + every task finished that day. Tasks with no recorded commitments (older ones) use their current date.
 - Overdue tasks don't count against today. To commit one to today, reschedule it to today.
 - **Day statuses** (shown per day in the ring card): **Done** (finished that day) and **Missed** (committed, not finished that day). A missed task is now one of: **Done late**, **Moved** (has a new date), **Slipped** (due date passed, deadline still ahead) or **Overdue** (deadline passed, or due date passed with no deadline).
-- **Age** = days since a task was first committed (its earliest `committed_days`); pushing it to another day never resets it. Open tasks show it as "Missed Nd" (plus "pushed N×" when moved), whether they sat overdue or kept getting pushed. Only the days a task was committed to count against the ring: a task left overdue doesn't count against later days (murk and algae cover the backlog), so a long backlog can't sink every ring.
+- **Age** = days since a task was first committed (its earliest `committed_days`); pushing it to another day never resets it. Open tasks show it as "Missed Nd" (plus "pushed N×" when moved), whether they sat overdue or kept getting pushed. Only the days a task was committed to count against the ring: a task left overdue doesn't count against later days (murk and blight cover the backlog), so a long backlog can't sink every ring.
 - Adding a task for today raises committed, so today's % drops until it's done. A task added and finished the same day adds 1 to both sides (3/4 = 75% becomes 4/5 = 80%).
 - A day with nothing due where you finish anything is a full ring.
 - A day with nothing committed is neutral: no Growth, no penalty, ignored by bleaching.
@@ -124,10 +124,11 @@ Finishing the last phase saves the biome as a **diorama** (biome, days taken, fu
 
 Aged-task drops are capped: `visitor.overdueDropsPerWeek = 1` a week and `visitor.exoticPerBiome = 1` exotic per biome.
 
-**Water and algae** (both gradual, both reverse as you clear tasks):
+**Murk and blight** (both gradual, both reverse as you clear tasks):
 
-- **Murk** = how many tasks are overdue: each tints the water, fully murky at `tide.cloudyAt = 10` (1 task 10%, 5 tasks 50%).
-- **Algae** = how long tasks have been neglected: open tasks first committed `tide.algaeAfter = 7`+ days ago grow algae, whether they sit overdue or keep getting pushed; `tide.algaeAt = 10` such tasks cover it.
+- **Murk** = how many tasks are overdue: each fouls the water or air, fully murky at `tide.cloudyAt = 10` (1 task 10%, 5 tasks 50%).
+- **Blight** = how long tasks have been neglected: open tasks first committed `tide.blightAfter = 7`+ days ago grow blight, whether they sit overdue or keep getting pushed; `tide.blightAt = 10` such tasks cover it.
+- **Each biome shows them its own way** (`biomes.json` `neglect`): murk is the biome's own fouling (silt, dust haze, spore fog, tannin) in its own colour, and blight is a scenery prop made for that biome (hair algae on a reef, weeds in a meadow, mold in a cave, sand drifts in a desert, ash fall on a volcano). More copies appear and grow as blight rises; clearing old tasks makes them recede. Biomes without a `neglect` entry fall back to generic green tufts and a green tint.
 - **Bleaching** (separate) = your rings, not your backlog. An average ring below `bleach.below = 0.25` over `bleach.days = 14` days bleaches the scene grey; it recovers when the average over `bleach.recoverDays = 7` days reaches `bleach.recoverAt = 0.5`. No visitors while bleached. It never dies.
 
 ## Lessons
@@ -300,11 +301,11 @@ Before building UI, the rules became one pure module (`game.js`, no DOM, like `l
 
 **Update (Nov 18, feedings):** two feedings of 5 a day → at 1 book a month the backlog stays ~0 and a book takes ~71 days (was ~14 and ~82 with one deck); 2 books a month backlog ~6.
 
-**Decision (Nov 18):** strict death kept, 4-week seasons kept, no wilt. Everything else adopted as defaults in `game.js`: dead plots stay dead until next season, overdue rewards capped at 1 a week and exotic at 1 per biome, deck of 5 on a 3-7-21 schedule, starting pace 9 a day, water murk and algae scaled gradually. Re-run: steady still blooms 1.7 of 4 (by design), dead plot-weeks ~30%, about 3 rare and 0.5 exotic visitors a month, first biome 3.9 weeks, lesson backlog flat at 1 book a month.
+**Decision (Nov 18):** strict death kept, 4-week seasons kept, no wilt. Everything else adopted as defaults in `game.js`: dead plots stay dead until next season, overdue rewards capped at 1 a week and exotic at 1 per biome, deck of 5 on a 3-7-21 schedule, starting pace 9 a day, water murk and blight scaled gradually. Re-run: steady still blooms 1.7 of 4 (by design), dead plot-weeks ~30%, about 3 rare and 0.5 exotic visitors a month, first biome 3.9 weeks, lesson backlog flat at 1 book a month.
 
 **Run 2 (task cleanup added):** personas now reschedule or delete overdue tasks at their own rate. Murk = 1 task 10%, 5 tasks 50%.
 
-| Persona | Avg overdue pile | Days 50%+ murky | Days 50%+ algae | Exotic/mo |
+| Persona | Avg overdue pile | Days 50%+ murky | Days 50%+ blight | Exotic/mo |
 | --- | --- | --- | --- | --- |
 | Steady | 2.8 | 22% | 5% | 0.02 |
 | Slump | 5.9 | 40% | 19% | 0.11 |
@@ -312,7 +313,7 @@ Before building UI, the rules became one pure module (`game.js`, no DOM, like `l
 | Light | 20 | 94% | 88% | 0.39 |
 | Overachiever | 0 | 0% | 0% | 0 |
 
-Real snapshot at the time: 4 overdue, none 7+ days old → 40% murk, no algae. Steady pace matches; murk reads clearly as "a few things slipping" without being constant.
+Real snapshot at the time: 4 overdue, none 7+ days old → 40% murk, no blight. Steady pace matches; murk reads clearly as "a few things slipping" without being constant.
 
 **Real habits:** 6 of 8 hit the floor every week; Journaling (4/9 weeks) and Guitar practice (3/7) would die nearly every season even at a floor of 1. They need a biweekly cadence option, since the floor can't go lower. Reading beats its target most weeks (4–6 vs 3), so it would earn exotic seeds every season; the tweak suggestion should raise its target.
 

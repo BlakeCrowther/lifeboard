@@ -61,7 +61,7 @@ const RANK = { none: 0, common: 1, rare: 2, exotic: 3 };
 function runOne(P, seed, opts = {}) {
   const rng = mulberry32(seed), st = { off: 0 };
   const M = { deaths: 0, blooms: 0, finished: 0, deadPlotWeeks: 0, plotWeeks: 0, rarity: { common: 0, rare: 0, exotic: 0 },
-    visitors: [], biomeDays: [], rare: 0, rareOd: 0, pileEnd: 0, algaeDays: 0, pileSum: 0, exotic: 0, bleach: 0, bleachDays: 0, cloudyDays: 0, ringSum: 0, ringDays: 0, fullDays: 0, neutral: 0,
+    visitors: [], biomeDays: [], rare: 0, rareOd: 0, pileEnd: 0, blightDays: 0, pileSum: 0, exotic: 0, bleach: 0, bleachDays: 0, cloudyDays: 0, ringSum: 0, ringDays: 0, fullDays: 0, neutral: 0,
     lessonsShown: 0, backlogEnd: 0, backlogMax: 0, bookDays: [], booksStarted: 0, booksDone: 0 };
 
   /* garden */
@@ -110,7 +110,7 @@ function runOne(P, seed, opts = {}) {
       if (ev.includes('bleach')) M.bleach++;
       if (reef.bleached) M.bleachDays++;
       if (G.cloudiness(pile.length) >= 0.5) M.cloudyDays++;
-      if (G.algae(pile.map((t) => day - t.since)) >= 0.5) M.algaeDays++;
+      if (G.blight(pile.map((t) => day - t.since)) >= 0.5) M.blightDays++;
       M.pileSum += pile.length;
       /* lessons */
       for (let fd = 0; fd < G.RULES.lessons.feedings; fd++) if (rng() < P.deck * (dayMode === 'gap' ? 0.4 : 1)) {
@@ -175,7 +175,7 @@ function summarize(name, P, opts) {
     'visitors c/r/e per mo': ['common', 'rare', 'exotic'].map((k) => (avg((r) => r.visitors.filter((v) => v.rarity === k).length) / months).toFixed(1)).join('/'),
     'bleach': avg((r) => r.bleach).toFixed(2),
     'murk50 %': (100 * avg((r) => r.cloudyDays) / (WEEKS * 7)).toFixed(0),
-    'algae50 %': (100 * avg((r) => r.algaeDays) / (WEEKS * 7)).toFixed(0),
+    'blight50 %': (100 * avg((r) => r.blightDays) / (WEEKS * 7)).toFixed(0),
     'pile avg': avg((r) => r.pileSum / (WEEKS * 7)).toFixed(1),
     'backlog end': avg((r) => r.backlogEnd).toFixed(0),
     'book days': mean(book).toFixed(0),

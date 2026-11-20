@@ -7,6 +7,7 @@
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"   # models/
 ID=$1; GLB=${2:-$ROOT/out/$ID/$ID.glb}; SPEC=${3:-}
+[[ -f $GLB ]] || { echo "no glb at $GLB (paths are relative to the current dir)"; exit 2; }
 if [[ -z $SPEC ]]; then
   for c in "$ROOT"/{creature,plant,scenery}/specs/$ID.json "$ROOT"/{creature,plant,scenery}/specs/examples/$ID.json "$(dirname "$GLB")/spec.json" "$ROOT/out/dryrun/$ID/spec.json"; do
     [[ -f $c ]] && { SPEC=$c; break; }; done

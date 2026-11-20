@@ -1,5 +1,5 @@
 {
-  "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded. `pass_through`: scenery kinds creatures may swim/fly through in this biome (default none: everything registered is solid). Kinds: rock, coral, anemone, shrub, plus any new scenery's kind (a scenery prop's kind is its roster id). `scenery` (new biomes): [{id (roster model of kind scenery), count, spread cluster|scatter|edge|back, scale [min,max], phase 0-4 or phases [first,last] (copies spread across them), landmark (the last copy lands as its phase completes), pass_through}]. habitat.js places these props instead of the scene builder's own corals/tiers, keeping the phase progression: phase 0 = sparse ground cover, later phases bigger/rarer pieces. `frame`: {ground hex, water [shallow hex, deep hex], dens (fog multiplier), light (sun/caustics multiplier)} overrides the base frame. `scene`: base frame (ground, rocks, ground cover, light shafts, motes) and, for biomes without `scenery`, the scenery set habitat.js builds (reef, kelp, tidepool, mangrove, deep, meadow, canopy, jungle; default by medium). Optional when `scenery` + `frame` are given. `look`: the biome's identity (see `identity_rules`); briefs, habitat.js and the shelf diorama all read it.",
+  "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded. `pass_through`: scenery kinds creatures may swim/fly through in this biome (default none: everything registered is solid). Kinds: rock, coral, anemone, shrub, plus any new scenery's kind (a scenery prop's kind is its roster id). `scenery` (new biomes): [{id (roster model of kind scenery), count, spread cluster|scatter|edge|back, scale [min,max], phase 0-4 or phases [first,last] (copies spread across them), landmark (the last copy lands as its phase completes), pass_through}]. habitat.js places these props instead of the scene builder's own corals/tiers, keeping the phase progression: phase 0 = sparse ground cover, later phases bigger/rarer pieces. `frame`: {ground hex, water [shallow hex, deep hex], dens (fog multiplier), light (sun/caustics multiplier)} overrides the base frame. `scene`: base frame (ground, rocks, ground cover, light shafts, motes) and, for biomes without `scenery`, the scenery set habitat.js builds (reef, kelp, tidepool, mangrove, deep, meadow, canopy, jungle; default by medium). Optional when `scenery` + `frame` are given. `look`: the biome's identity (see `identity_rules`); briefs, habitat.js and the shelf diorama all read it. `neglect` (every biome with `scenery`): how this biome shows neglected tasks. {blight: roster id of kind scenery (the prop that spreads as tasks age; its own model, not one of the biome's `scenery` pieces), form (a word or two: overgrowth, mold, sand drift, ash fall, cobwebs, silt mat, rust, anything that fits the place), grows_on rocks|ground (where copies land: on the frame's rocks, or scattered over the ground), count 1-60 (copies at full blight, default 30), scale [min,max], murk (hex: what overdue tasks foul the water/air with), murk_name (a word for it: silt, dust haze, spore fog)}. habitat.js shows round(blight × count) copies, growing as blight rises, and tints toward `murk` as overdue tasks pile up.",
   "biomes": [
     {
       "id": 0,
@@ -112,6 +112,18 @@
         "creatures": "slender, grass-green and sand-tan grazers with soft mottling that hides in the blades; small warm-orange accents",
         "plants": "ribbon-thin seagrass blades in greens and olive, epiphyte-speckled tips",
         "motion": "slow grazing drift that leans with the blades, short pauses"
+      },
+      "neglect": {
+        "blight": "drift_algae_mat",
+        "form": "drift algae mats",
+        "grows_on": "ground",
+        "count": 30,
+        "scale": [
+          0.8,
+          1.4
+        ],
+        "murk": "#c4b08a",
+        "murk_name": "silt"
       }
     }
   ],
