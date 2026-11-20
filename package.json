@@ -1,0 +1,15 @@
+{
+  "name": "lifeboard",
+  "private": true,
+  "description": "No dependencies, no build. Scripts wrap the checks in tools/.",
+  "scripts": {
+    "bootstrap": "corepack enable && pnpm install && pnpm exec playwright install chromium",
+    "test": "node tools/spec-check.js && node sim/run.js 20 8 > /dev/null",
+    "verify": "tools/verify.sh",
+    "test:ui": "node tools/ui-smoke/run.js"
+  },
+  "packageManager": "pnpm@12.21.0",
+  "devDependencies": {
+    "playwright": "^1.65.1"
+  }
+}

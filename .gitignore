@@ -4,3 +4,4 @@ test.html
 .DS_Store
 models/out/
 models/**/__pycache__/
+node_modules/

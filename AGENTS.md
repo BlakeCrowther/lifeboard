@@ -7,9 +7,10 @@ Personal life dashboard, published as a claude.ai Artifact with the `db` capabil
 - `schema.js`: db collection shapes; `validate(col, doc)`.
 - `store.js`: artifact-db data layer (live listeners, optimistic writes).
 - `app.js`: views and actions.
+- `package.json`: pnpm only (never npm/yarn). `pnpm verify` runs `tools/verify.sh`.
 - `mock.js` + `mockdata.js`: local `window.claude.use('db')` stub for testing. `mockdata.js` holds a real-data snapshot and is gitignored.
 
-Live vs repo: the owner's published lifeboard artifact is the live copy; this repo is the template others clone. They drift when the live artifact is edited directly. Rule: before changing either, `read` the live artifact's files and diff them against `main`; port any live-only changes into the repo first (they win unless a game change replaces them), then make the change here, test with `test.html`, and publish from the repo. Never edit the live artifact without landing the same change in the repo. Others who clone own their copy from that point; only the owner keeps the two in sync.
+Live vs repo: the owner's published lifeboard artifact is the live copy; this repo is the template others clone. They drift when the live artifact is edited directly. Rule: before changing either, `read` the live artifact's files and diff them against `main`; port any live-only changes into the repo first (they win unless a game change replaces them), then make the change here, run `pnpm verify`, and publish from the repo. Never edit the live artifact without landing the same change in the repo. Others who clone own their copy from that point; only the owner keeps the two in sync.
 
 Publish: Artifact tool with `index.html` and its scripts as `files`, to the existing lifeboard artifact URL. Data lives in the artifact db, not this repo. **Publishing is pre-approved** (owner, 2026-11-19): finished work and the weekly run publish without asking, once checks pass and the live diff (above) shows no live-only changes. If live has changes the repo lacks, port them first; if they conflict, stop and report instead of overwriting. Strip the artifact service's wrapper lines from any page pulled from live.
 
@@ -26,7 +27,7 @@ Every subagent a skill spawns uses `model: "sonnet"`, judge-panel judges include
 
 ## Improve as you go (verify → fix the cause → log)
 Every task and every skill run in this repo ends with this loop. It's how the prompts, skills and gates get better instead of the same mistake repeating.
-1. **Verify before saying done**, with the cheapest check that proves it: `node tools/spec-check.js` (game rules), `node sim/run.js` (balance), `node --check` on touched scripts, `tools/check-doc-frontmatter` (ADRs and design docs; needs `uv`), the `test.html` preview (UI), `verify.sh` + judges (models). Say what you couldn't check.
+1. **Verify before saying done**: `pnpm verify` runs the checks below (syntax, spec-check, sim, doc frontmatter, UI smoke via headless Chromium: `tools/ui-smoke/`, synthetic `fixture.js`) and fails if any fail. Run single ones when iterating: `node tools/spec-check.js` (game rules), `node sim/run.js` (balance), `node --check` on touched scripts, `tools/check-doc-frontmatter` (ADRs and design docs; needs `uv`), `pnpm test:ui` + the preview (UI), `verify.sh` + judges (models). Not in `verify`: visual review in the preview, model gates (`verify.sh` + judges). Say what you couldn't check.
 2. **Retro**: list each thing that went wrong or wasted time (a failed gate, a wrong assumption, a retry, a user correction).
 3. **Fix the cause where it lives**, in the same commit: the skill step, prompt wording, gate threshold or tool that let it happen, not just this instance. Prefer a check that fails loudly (a gate, an assert, spec-check) over a sentence of advice.
 4. **Log it**: one line in `LESSONS.md` (date, what happened, what changed). Read `LESSONS.md` before starting a skill run or a big change.
