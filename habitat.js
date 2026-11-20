@@ -44,7 +44,7 @@
   card.className = 'sec eco-card';
   card.setAttribute('aria-label', 'Ecosystem');
   card.innerHTML = `<div class="sec-h"><h3 class="sec-t">Ecosystem</h3><span class="hab-ph" data-h="phase"></span></div>
-    <div class="hab"><canvas aria-hidden="true"></canvas><div class="hab-chips"><span class="hab-chip" data-h="biome"></span><span class="hab-chip" data-h="visitor" hidden></span></div>
+    <div class="hab"><canvas aria-hidden="true"></canvas><button type="button" class="hab-fs" data-h="fs" aria-label="Expand ecosystem to full screen" aria-pressed="false"></button><div class="hab-chips"><span class="hab-chip" data-h="biome"></span><span class="hab-chip" data-h="visitor" hidden></span></div>
     <div class="hab-info"><div class="hab-bar"><div data-h="bar"></div></div><p data-h="line"></p></div><p class="hab-msg" data-h="msg">Ecosystem loads when you scroll here.</p></div>`;
   /* the state the scene draws: the real game, with preview overrides on top */
   const forcedScene = hookOf('scene', G.LB_GAME_HREF), forcedPhase = +hookOf('phase', G.LB_GAME_HREF) || null;
@@ -74,6 +74,23 @@
   let game = null, biomes = null, roster = null, base = null, forced = visitorOverride(G.LB_GAME_HREF);
   const stats = { fps: null, bloom: true, pixelRatio: null, creatures: 0, loadMs: null, base: null };
   let engine = null, starting = false, inView = false;
+
+  /* ---------- full screen: tap the scene to expand; button / Esc / back to minimize.
+     Real Fullscreen API where allowed, else a fixed overlay (iPhone, sandboxed iframes). resize() follows the canvas size. ---------- */
+  const hab = card.querySelector('.hab'), fsBtn = $('fs');
+  const isOpen = () => hab.classList.contains('open');
+  function setFs(on) {
+    if (on === isOpen()) return;
+    hab.classList.toggle('open', on); document.documentElement.classList.toggle('hab-lock', on);
+    fsBtn.setAttribute('aria-pressed', String(on)); fsBtn.setAttribute('aria-label', on ? 'Minimize ecosystem' : 'Expand ecosystem to full screen');
+    if (on && hab.requestFullscreen && !document.fullscreenElement) hab.requestFullscreen().catch(() => {});
+    if (!on && document.fullscreenElement === hab) document.exitFullscreen().catch(() => {});
+    if (engine) engine.kick();
+  }
+  fsBtn.addEventListener('click', (e) => { e.stopPropagation(); setFs(!isOpen()); });
+  hab.addEventListener('click', () => { if (!isOpen()) setFs(true); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) setFs(false); });
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && isOpen()) setFs(false); });
 
   function biomeOf(id) { const L = (biomes && biomes.biomes && biomes.biomes.length) ? biomes.biomes : [{ id: 0, name: biomes ? 'Uncharted' : 'Coral shallows', medium: 'water' }]; return L.find((b) => b.id === id) || L[((id % L.length) + L.length) % L.length]; }
   function sceneBiomeId() {
@@ -848,7 +865,7 @@ attribute float aTip; varying float vTip;
       if (!fpsChecked && !reduce && ++warm > 45) { fpsN++; fpsT += dt; if (fpsT > 2 && fpsN > 20) { stats.fps = Math.round(fpsN / fpsT); fpsChecked = true; if (stats.fps < 40) { bloom.enabled = false; stats.bloom = false; } } }
       if (running() && (!reduce || food.length)) raf = requestAnimationFrame(frame);
     }
-    const running = () => inView && document.visibilityState === 'visible';
+    const running = () => (inView || isOpen()) && document.visibilityState === 'visible';
     function kick() { if (!raf && running()) { last = 0; raf = requestAnimationFrame(frame); } }
     document.addEventListener('visibilitychange', kick);
     reduceMQ.addEventListener('change', kick);
