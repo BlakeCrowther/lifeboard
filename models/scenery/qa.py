@@ -17,8 +17,23 @@ def shape_check():
 def motion_check():
     acts = {a.name: a for a in bpy.data.actions}
     want = (spec.get("motion") or {}).get("sway")
-    if not want:
-        check("motion-check", "static prop: no animations", not acts, f"{sorted(acts)}"); return
+    if not want or want.get("mode") == "shader":
+        check("motion-check", "no baked clips (static, or swayed by the habitat shader)", not acts, f"{sorted(acts)}")
+        if want:   # the motion itself is measured on the habitat capture (capture_habitat.mjs sway-check)
+            o = next(m for m in bpy.data.objects if m.type == "MESH")
+            at = o.data.attributes; w = at.get("_SWAY_W") or at.get("_sway_w")
+            has = bool(w) and bool(at.get("_SWAY_P") or at.get("_sway_p")); detail = f"{sorted(a.name for a in at)}"
+            if not has:   # Blender's importer drops normalized-int custom attributes, so a quantized (shipped) glb is read raw
+                import struct; b = open(GLB, "rb").read(); g = json.loads(b[20:20 + struct.unpack("<I", b[12:16])[0]])
+                names = {k for m in g.get("meshes", []) for p in m["primitives"] for k in p["attributes"]}
+                has = {"_SWAY_W", "_SWAY_P"} <= names; detail = f"in the glb accessors (quantized; weights checked before optimize): {sorted(names)}"
+            check("motion-check", "shader sway: per-vertex _SWAY_W/_SWAY_P present", has, detail)
+            if w:
+                vals = [d.value for d in w.data]; R = max(math.hypot(v.co.x, v.co.y) for v in o.data.vertices)
+                anchor = [d.value for d, v in zip(w.data, o.data.vertices) if v.co.z < 0.1 * L and math.hypot(v.co.x, v.co.y) < 0.25 * R]
+                check("motion-check", "shader sway: some parts free (max weight >= 0.5)", max(vals) >= 0.5, f"max {max(vals):.2f}")
+                check("motion-check", "shader sway: anchored (base points in the inner quarter: mean weight <= 0.3)", not anchor or sum(anchor) / len(anchor) <= 0.3, f"{(sum(anchor) / len(anchor)) if anchor else 0:.2f} over {len(anchor)} points")
+        return
     sw = next((v for k, v in acts.items() if k == "sway" or k.startswith("sway_") or k.startswith("sway.")), None)
     check("motion-check", "has 'sway' loop", sw is not None, f"actions: {sorted(acts)}")
     if not sw: return

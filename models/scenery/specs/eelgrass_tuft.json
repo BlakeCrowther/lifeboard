@@ -7,14 +7,55 @@
   "rarity": "common",
   "archetype": "clump",
   "reference": "Zostera marina tuft: 8-10 long, very narrow ribbon blades (~1 cm wide) rising from a small sand mound, leaning out and arching over at the tips; grass green at the base to yellow-green tips with pale epiphyte speckle",
-  "size": { "height_m": 0.4 },
-  "shape": {
-    "blades": { "count": 9, "width_ratio": 0.026, "thick_ratio": 0.005, "spread": 0.06, "lean_deg": 12, "curl": 0.5, "tip": "point", "vary": 0.35, "segs": 8, "speckle": 0.5 },
-    "base": { "radius_ratio": 0.08, "height_ratio": 0.03 }
+  "size": {
+    "height_m": 0.4
   },
-  "palette": { "main": ["#3f8a3a", "#9cc84e"], "accent": "#d8cf8a", "base": "#c9b07a" },
-  "material": { "roughness": 0.45, "coat": 0.15 },
-  "motion": { "sway": { "frames": 96, "cycles": 2, "amp_deg": 5, "lag_frames": 6 } },
+  "shape": {
+    "blades": {
+      "count": 9,
+      "width_ratio": 0.026,
+      "thick_ratio": 0.007,
+      "spread": 0.06,
+      "lean_deg": 12,
+      "curl": 0.5,
+      "tip": "point",
+      "vary": 0.35,
+      "segs": 8,
+      "speckle": 0.8
+    },
+    "base": {
+      "radius_ratio": 0.05,
+      "height_ratio": 0.02
+    }
+  },
+  "palette": {
+    "main": [
+      "#3f8a3a",
+      "#b2d44f"
+    ],
+    "accent": "#d8cf8a",
+    "base": "#b59f6e"
+  },
+  "material": {
+    "roughness": 0.45,
+    "coat": 0.15
+  },
+  "motion": {
+    "sway": {
+      "mode": "shader",
+      "amp": 0.12,
+      "period_s": 7,
+      "lift": 0,
+      "personality": "long ribbons lean with the current and arch over, tips trailing the base, a slow even breathing sway"
+    }
+  },
   "pass_through": true,
-  "budget": { "tris": 2000, "texture": 512 }
+  "budget": {
+    "tris": 2000,
+    "texture": 512
+  },
+  "sit": {
+    "mode": "upright",
+    "why": "seagrass grows straight up toward the light from its rooted base, whatever the slope"
+  }
 }

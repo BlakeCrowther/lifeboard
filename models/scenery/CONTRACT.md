@@ -7,20 +7,47 @@ A scenery piece is one prop of a biome's backdrop: a clump, a shell, a rock arch
 
 ## Space
 - ✓ Origin at the ground contact point: bbox min z ≈ 0 (≤ 3%), centred over the origin in X/Y. +Z up in Blender (+Y in glTF), meters.
-- ✓ Height = `size.height_m` ±20%; optional `size.footprint_m` (widest horizontal extent) ±30%.
+- ✓ Height = `size.height_m` ±20%; optional `size.footprint_m` (widest horizontal extent) ±30%. Measured on the whole rest-pose mesh: everything that pokes up counts, and anything sunk below the origin fails the ground-origin check.
+
+## How it rests (`sit`, required)
+How a copy sits on the ground, decided per spec by reasoning from the real thing: what holds it (roots, its own weight, nothing),
+whether it is rigid, whether it hugs bumps or bridges them. Write the reason in `sit.why`; there is no size rule to fall back on.
+- `upright`: stays vertical whatever the slope (rooted plants grow toward the light: eelgrass, kelp).
+- `follow`: the whole prop tilts with the surface under it (rigid things lying flat: a sand dollar, a shell, a fallen leaf).
+- `drape`: tilts and bends so every part rests on the sand under it (soft, heavy-for-its-stiffness things: an algae mat, a mold film, wet cloth).
+On rocks a copy tilts to the rock face (`follow` and `drape`). The build writes the mode into the glb (`lb_sit`), habitat.js seats every copy by it, and the habitat capture shows the result; a wrong choice is a `placement` note.
 
 ## Budget
 - ✓ ≤ 3000 tris (aim 1500–3000; less is fine), one baked material, texture ≤ 512² (`budget.texture`), ≤ 200 KB optimized (export-check).
+- ✓ ≤ 32 bones (shape-check; bone sway only).
+- Where the 200 KB goes: mesh ~35–40 B/tri after quantize (2800 tris ≈ 110 KB), texture ≈ 20–40 KB (webp 512²). Bone sway adds ≈ 4.5 KB per bone per 96 frames; shader sway adds ~2 numbers per point (≈ 10 KB). Prefer shader sway.
+- Check all of these before spending a counted build: `shared/tools/preflight.sh <spec> --run <run>` (uncounted trial build + verify.sh).
 
 ## Animation
+- **Shader sway (preferred)**: `motion.sway {mode: "shader", amp, period_s, lift, personality}`. No armature, no clip: the build writes two per-point values (`_SWAY_W` how free the point is 0..1, `_SWAY_P` how far its wave lags 0..1; archetype `sway_weights(spec, co)`, default by height) and the settings into the glb; habitat.js moves the points on the GPU, each copy a little out of step. `amp` is a fraction of the prop's size (0.01–0.15), `period_s` 3–12 s, `lift` 0–1 (stem ends rise as the wave passes). ✓ anchored (base core weight ≤ 0.3), ✓ free parts (max weight ≥ 0.5), ✓ sway visible in the habitat capture (`qa/habitat/sway-check.json`, peak frame change ≥ 0.008; golden eelgrass ≈ 0.014).
 - Static props (shells, stones): no armature, ✓ no actions.
-- Swaying props (grasses, kelp): one armature, ✓ one `sway` loop, 48–144 frames, whole cycles, ✓ seamless (bone delta < 1e-3), ✓ gentle (≤ 4% size/frame), ✓ visible (≥ 3%), ✓ no pops. Water = slower, lag growing up the blade.
+- Bone sway (shipped grasses; new props use shader sway): one armature, ✓ one `sway` loop, 48–144 frames, whole cycles, ✓ seamless (bone delta < 1e-3), ✓ gentle (≤ 4% size/frame), ✓ visible (≥ 3%), ✓ no pops. Water = slower, lag growing up the blade.
 
 ## Spec
-`kind: "scenery"`, `id`, `name`, `biome`, `rarity: "common"`, `archetype`, `reference`, `size.height_m` (+ `footprint_m`), `palette`, `material`, `budget`, optional `motion.sway {frames, cycles, amp_deg, lag_frames}`, optional `pass_through` (creatures swim through it; also settable per biome item). `check_spec.py` (spec-check) enforces these.
+`kind: "scenery"`, `id`, `name`, `biome`, `rarity: "common"`, `archetype`, `reference`, `size.height_m` (+ `footprint_m`), `palette`, `material`, `budget`, `sit {mode, why}`, optional `motion.sway` (shader: `{mode: "shader", amp, period_s, lift, personality}`; bone: `{frames, cycles, amp_deg, lag_frames, personality}`; `personality`: one sentence on how it should move, the judges grade `sway_readable` against it), optional `pass_through` (creatures swim through it; also settable per biome item). `check_spec.py` (spec-check) enforces these.
 
 ## judge-panel
-Same judge harness as the other kinds, rubric `reads_as, style_match, artifacts, sway_readable` (static: null). No mouth/feed criteria. Until a golden calibration exists, judged absolute: every median ≥ 3 (`qa_calibration.json`).
+Same judge harness as the other kinds, rubric `reads_as, style_match, artifacts, sway_readable` (static: null). No mouth/feed criteria. Judged absolute: every median ≥ 3 (`qa_calibration.json`). Images come from `node shared/tools/capture_habitat.mjs <id>` (the real habitat) then `verify.sh`'s contact sheet. Judge prompt (fill the `{}`; nothing else about the build):
+
+```
+You are a visual judge for a 3D scenery prop in a stylized underwater game habitat. Judge only what you see.
+Prop: {name}. Reference: "{reference}". Placed many times on the {biome name}{, shown in neglect murk among its own copies: blight props}.
+Sway intent: "{motion.sway.personality}" (static props: no sway; score sway_readable null).
+Read the style guide models/STYLE.md. Images (Read tool), in order, from out/{id}/qa/:
+1. habitat/wide.png: the game camera in the real habitat; the prop is the copy nearest the camera. What the player sees.
+2. habitat/turn.png: 4 angles round it. 3. habitat/sway.png: labelled frames across one sway loop, in order.
+4. contact.png: studio renders for structure and true scale. Judge colour and readability from 1-3, not the studio lighting.
+Anchor: the golden {golden id} scored {qa_calibration.json judge}; see out/{golden}/qa/habitat/wide.png. Equal quality = equal score.
+Score 1-5 (3 = acceptable for this world): reads_as, style_match, artifacts, sway_readable.
+Tag every fix with the criterion it would raise; use "placement" for anything about how the habitat places copies
+(spacing, sameness of copies, sinking into the sand): those go to habitat.js, not the model.
+Reply with ONLY: {"reads_as":n,"style_match":n,"artifacts":n,"sway_readable":n,"notes":["..."],"fix":[{"criterion":"artifacts","fix":"..."}]}
+```
 
 ## Shipping
 `assets/<id>.glb` + `assets/<id>-glb.js` setting `window.LB_SCENERY['<id>']` (base64). Roster: `{id, kind: "scenery", name, spec, glb, js, biome, rarity, pass_through, golden, added}`.

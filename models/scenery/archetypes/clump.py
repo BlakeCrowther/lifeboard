@@ -136,3 +136,10 @@ def animate(spec, arm):
         lib.key_pose(arm, 1 + f, rots)
     lib.ease_all(act)
     return [act]
+
+def sway_weights(spec, co):
+    """Shader sway (motion.sway.mode "shader"): blades are rooted at the base and free at the tip; each blade's wave
+    starts a little apart (by its direction round the clump) so the tuft doesn't move as one sheet. (w, phase) at co (m)."""
+    h = max(0.0, min(1.0, co.z / _H(spec)))
+    turn = (math.atan2(co.y, co.x) / (2 * math.pi)) + 0.5
+    return h ** 1.6, min(1.0, 0.8 * h + 0.2 * turn)

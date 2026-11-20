@@ -7,14 +7,55 @@
   "rarity": "common",
   "archetype": "clump",
   "reference": "Thalassia testudinum shoot: 5-6 flat, wide strap-like blades (~1.2 cm) with rounded tips, short and fairly upright from a buried rhizome node; deep green with pale sandy epiphyte crust near the tips",
-  "size": { "height_m": 0.26 },
-  "shape": {
-    "blades": { "count": 6, "width_ratio": 0.055, "thick_ratio": 0.008, "spread": 0.05, "lean_deg": 9, "curl": 0.22, "tip": "round", "vary": 0.3, "segs": 7, "speckle": 0.8 },
-    "base": { "radius_ratio": 0.09, "height_ratio": 0.04 }
+  "size": {
+    "height_m": 0.26
   },
-  "palette": { "main": ["#2f6e3a", "#5fa04a"], "accent": "#e0cc8a", "base": "#b89a62" },
-  "material": { "roughness": 0.5, "coat": 0.1 },
-  "motion": { "sway": { "frames": 120, "cycles": 2, "amp_deg": 5, "lag_frames": 8 } },
+  "shape": {
+    "blades": {
+      "count": 6,
+      "width_ratio": 0.055,
+      "thick_ratio": 0.008,
+      "spread": 0.05,
+      "lean_deg": 9,
+      "curl": 0.22,
+      "tip": "round",
+      "vary": 0.3,
+      "segs": 7,
+      "speckle": 0.8
+    },
+    "base": {
+      "radius_ratio": 0.09,
+      "height_ratio": 0.04
+    }
+  },
+  "palette": {
+    "main": [
+      "#2f6e3a",
+      "#5fa04a"
+    ],
+    "accent": "#e0cc8a",
+    "base": "#b89a62"
+  },
+  "material": {
+    "roughness": 0.5,
+    "coat": 0.1
+  },
+  "motion": {
+    "sway": {
+      "mode": "shader",
+      "amp": 0.05,
+      "period_s": 8,
+      "lift": 0,
+      "personality": "stiff flat blades bend from the base in a slow swell, barely flexing, tips lagging the base"
+    }
+  },
   "pass_through": true,
-  "budget": { "tris": 2000, "texture": 512 }
+  "budget": {
+    "tris": 2000,
+    "texture": 512
+  },
+  "sit": {
+    "mode": "upright",
+    "why": "rooted blades grow toward the light, not along the slope"
+  }
 }

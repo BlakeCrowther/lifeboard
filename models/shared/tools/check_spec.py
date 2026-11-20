@@ -83,9 +83,18 @@ def _scenery(s, fails):
     if s["budget"].get("tris", 1e9) > 3000: fails.append("budget.tris <= 3000 (scenery)")
     if s["budget"].get("texture", 512) > 512: fails.append("budget.texture <= 512 (scenery)")
     sw = (s.get("motion") or {}).get("sway")
-    if sw:
+    if sw and sw.get("mode") == "shader":   # habitat vertex shader: amp is a fraction of the prop's size, period in seconds
+        if not 0.01 <= sw.get("amp", 0) <= 0.15: fails.append("motion.sway.amp 0.01-0.15 (fraction of size)")
+        if not 3 <= sw.get("period_s", 0) <= 12: fails.append("motion.sway.period_s 3-12")
+        if not 0 <= sw.get("lift", 0) <= 1: fails.append("motion.sway.lift 0-1")
+    elif sw:
         if not 48 <= sw.get("frames", 0) <= 144: fails.append("motion.sway.frames 48-144")
         if sw.get("cycles", 0) < 1 or int(sw.get("cycles", 0)) != sw.get("cycles"): fails.append("motion.sway.cycles whole number >=1")
+    sit = s.get("sit") or {}
+    if sit.get("mode") not in ("upright", "follow", "drape"): fails.append("sit.mode upright|follow|drape (how it rests on the ground; see scenery/CONTRACT.md)")
+    if len(str(sit.get("why", "")).split()) < 6: fails.append("sit.why: reason from the real thing (what holds it, is it rigid, does it hug bumps)")
+    if sw:
+        if len(str(sw.get("personality", "")).split()) < 4: fails.append("motion.sway.personality: a sentence on how it should move (the judges grade sway_readable against it)")
     if not isinstance(s.get("pass_through", False), bool): fails.append("pass_through must be true|false")
     mat = s.get("material", {})
     if not 0.25 <= mat.get("roughness", 0.5) <= 0.55: fails.append("material.roughness 0.25-0.55 (STYLE)")

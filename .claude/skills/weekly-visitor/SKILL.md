@@ -13,7 +13,7 @@ Runs unattended. Do not ask the user anything; decide, log, and report.
 `models/shared/tools/doctor.sh`. If anything required fails, there's no visitor this week. Report the failing line and point to the lifeboard-setup skill.
 
 ## 0b. Start the run ledger
-`python3 models/shared/tools/ledger.py start <run_id> --builds 8 --minutes 120` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).
+`python3 models/shared/tools/ledger.py start <run_id> --rounds 4 --minutes 30` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).
 
 ## 1. Should a visitor come?
 Read the game state from the lifeboard artifact db (see AGENTS.md / `game.js`). The board writes the habitat's status to `checks/game_status` whenever it changes: `value = { biome, phase, phases, bleached, dioramas, visitor, visitorWeek }` (ArtifactData `get`). If it's missing, try the old name `checks/labs_reef` (boards before Nov 19 2026); if both are missing (the game was never opened), use biome 0 and common.
@@ -73,4 +73,4 @@ Tests the whole pipeline on a simulated week without touching anything live.
 - Report like a normal run, plus timings per step and every fix note, so the pipeline itself can be improved.
 
 ## Budget
-120 minutes of wall time or 8 Blender build attempts (novel archetypes need the room) in total (pre-build spec-check failures don't count), whichever comes first, **enforced by `models/shared/tools/ledger.py`** (`out/runs/<run_id>.json`). `BUDGET EXHAUSTED` from build.py or `ledger.py build` is final for the run. Every judge is recorded with `ledger.py judge` (see model-verify), which refuses a reused judge agent. Judges are cheap (~15 s each) and do not count toward the build budget: each judge-panel attempt uses 3 fresh judges (median-of-3); the ledger records all of them.
+4 judge rounds (a counted build the judges saw), 30 minutes of wall time, or rounds + 2 counted builds, whichever comes first (uncounted `preflight.sh` trial builds and pre-build spec-check failures don't count), **enforced by `models/shared/tools/ledger.py`** (`out/runs/<run_id>.json`). `BUDGET EXHAUSTED` from build.py or `ledger.py build` is final for the run. Every judge is recorded with `ledger.py judge` (see model-verify), which refuses a reused judge agent. Judges are cheap (~15 s each) but each judge round counts toward the round budget: each judge-panel attempt uses 3 fresh judges (median-of-3); the ledger records all of them.

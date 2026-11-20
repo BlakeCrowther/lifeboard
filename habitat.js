@@ -49,6 +49,11 @@
   /* the state the scene draws: the real game, with preview overrides on top */
   const forcedScene = hookOf('scene', G.LB_GAME_HREF), forcedPhase = +hookOf('phase', G.LB_GAME_HREF) || null;
   const forcedWx = hookOf('weather', G.LB_GAME_HREF), forcedMonth = +hookOf('month', G.LB_GAME_HREF) || null;
+  /* QA capture hooks (models/shared/tools/capture_habitat.mjs): ?inspect=<scenery id>&inspect_src=<path to its -glb.js>
+     places one copy of that prop in front of the camera, ?biome=<id> pins the biome, ?hour=<0-23> pins the sun,
+     and Habitat.inspect.pose({yaw, frac}) orbits the camera round it and sets its sway to frac (0..1) of the loop. */
+  const inspectId = hookOf('inspect', G.LB_GAME_HREF), inspectSrc = new URL(G.LB_GAME_HREF || location.href).searchParams.get('inspect_src');
+  const forcedBiome = hookOf('biome', G.LB_GAME_HREF), forcedHour = hookOf('hour', G.LB_GAME_HREF);
   let wx = null; /* real weather: {condition, at} from the board's conditions snapshot */
   /* condition text -> 0..1 amounts. Older than 12 h counts as unknown (clear), so a stale report never darkens the scene. */
   function wxLook() {
@@ -103,6 +108,7 @@
 
   function biomeOf(id) { const L = (biomes && biomes.biomes && biomes.biomes.length) ? biomes.biomes : [{ id: 0, name: biomes ? 'Uncharted' : 'Coral shallows', medium: 'water' }]; return L.find((b) => b.id === id) || L[((id % L.length) + L.length) % L.length]; }
   function sceneBiomeId() {
+    if (forcedBiome != null) return +forcedBiome;
     const fc = forced && roster && roster.creatures.find((c) => c.id === forced);
     if (fc && fc.biome != null) return fc.biome;
     const n = (biomes && biomes.biomes && biomes.biomes.length) || 1;
@@ -204,6 +210,9 @@ uniform float uSwayAmp;
 #ifdef GLOW
 attribute float aTip; varying float vTip;
 #endif
+#ifdef PROP_SWAY
+attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform float uSwayT;
+#endif
 `;
     const VERT_DEFORM = `
 #ifdef SWAY
@@ -217,6 +226,14 @@ attribute float aTip; varying float vTip;
 #endif
 #ifdef GLOW
   vTip = aTip;
+#endif
+#ifdef PROP_SWAY
+  /* scenery shader sway (models/shared/blender/lib.py shader_sway): uPSway = (amp m, period s, lift 0..1, per-copy phase);
+     _sway_w = how free this point is, _sway_p = how far its wave lags the base. Prop-local space, meters. */
+  float pt = 6.2832 * uSwayT / uPSway.y + uPSway.w - _sway_p * 2.2;
+  transformed.x += sin(pt) * uPSway.x * _sway_w;
+  transformed.z += sin(pt + 1.7) * uPSway.x * .45 * _sway_w;
+  transformed.y += max(0., sin(pt - .5)) * uPSway.z * uPSway.x * _sway_w;
 #endif
 `;
     const VERT_WORLD = `
@@ -278,7 +295,7 @@ attribute float aTip; varying float vTip;
       obj.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(obj), p = bb.getCenter(new V()), r = bb.getSize(new V()).multiplyScalar(0.5 * pad);
       colliders.push({ kind, p, r, obj }); obj.userData.kind = obj.userData.kind || kind; return obj;
     };
-    let world = null, medium = null, growth = [], ambient = [], coralMats = [], blightInst = null, blightCopies = [], nk = null, rays = [], rockMat = null, snowMat = null;
+    let world = null, medium = null, growth = [], ambient = [], coralMats = [], blightInst = null, blightCopies = [], nk = null, inspected = null, rays = [], rockMat = null, snowMat = null;
     /* scene key: biomes.json `scene`, else by medium. Each key has its own scenery + water/air look (LOOKS). */
     const sceneOf = (b) => forcedScene || b.scene || ({ water: 'reef', land: 'meadow', air: 'canopy' })[b.medium || 'water'] || 'reef';
     /* per-scene frame: the base layer every scene shares (ground, rocks, ground cover, light shafts, motes). Distinct per biome
@@ -299,11 +316,11 @@ attribute float aTip; varying float vTip;
     const useProps = (b) => !forcedScene && Array.isArray(b.scenery) && b.scenery.length > 0;
     async function loadProps(b) {
       const out = {};
-      for (const id of [...new Set([...b.scenery.map((s) => s.id), ...(b.neglect && b.neglect.blight ? [b.neglect.blight] : [])])]) {
-        const entry = (roster.scenery || []).find((m) => m.id === id);
+      for (const id of [...new Set([...b.scenery.map((s) => s.id), ...(b.neglect && b.neglect.blight ? [b.neglect.blight] : []), ...(inspectId ? [inspectId] : [])])]) {
+        const entry = (id === inspectId && inspectSrc) ? { id, js: inspectSrc, name: id.replace(/_/g, ' '), abs: true } : (roster.scenery || []).find((m) => m.id === id);
         if (!entry) { console.warn('[habitat] scenery not in roster:', id); continue; }
         try {
-          if (!(G.LB_SCENERY && G.LB_SCENERY[id])) await loadScript(base + entry.js);
+          if (!(G.LB_SCENERY && G.LB_SCENERY[id])) await loadScript(entry.abs ? entry.js : base + entry.js);
           const bin = Uint8Array.from(atob(G.LB_SCENERY[id]), (c) => c.charCodeAt(0)).buffer;
           out[id] = { entry, gltf: await new K.GLTFLoader().parseAsync(bin, '') };
         } catch (e) { console.warn('[habitat] scenery failed', id, e); }
@@ -535,6 +552,50 @@ attribute float aTip; varying float vTip;
           tier(bigLeaves(4.4, 1.6, 1.3, 0x2f7a2a, 8), 4); tier(bigLeaves(-3.6, 2.0, 1.1, 0x4a9a2a), 4); tier(swarm(26, 0, 2.0, -0.6, 3.2, 0xfff06a, 'firefly', true), 4);
         },
       };
+      /* Dress a prop clone for the scene and read how it rests. A glb's node extras (models/shared/blender/lib.py) carry
+         lb_sit (upright | follow | drape, decided per spec) and the shader-sway settings; meshes with _sway_w sway on the GPU.
+         tUni: the time uniform it sways by (the shared clock, or the QA capture's own). */
+      const dress = (root, tUni) => {
+        let sit = 'upright';
+        root.traverse((o) => {
+          if (o.userData && o.userData.lb_sit) sit = o.userData.lb_sit;
+          if (!o.isMesh) return;
+          o.castShadow = o.receiveShadow = true; o.frustumCulled = false;
+          const m = o.material.clone(), ud = o.userData;
+          if (o.geometry.attributes._sway_w && ud.lb_sway_amp) {
+            m.defines = { ...(m.defines || {}), PROP_SWAY: '' };
+            /* amp is metres but the shader moves local (pre-node-scale) units; a quantized glb scales its mesh node down */
+            o.material = patch(m, { uPSway: { value: new THREE.Vector4(ud.lb_sway_amp / (o.scale.x || 1), ud.lb_sway_period || 6, ud.lb_sway_lift || 0, R(0, 6.283)) }, uSwayT: tUni || U.uTime });
+          } else o.material = patch(m);
+        });
+        return sit;
+      };
+      const groundNormal = (x, z) => { const e = 0.05; return new V(H(x - e, z) - H(x + e, z), 2 * e, H(x, z - e) - H(x, z + e)).normalize(); };
+      /* drape: after tilting to the slope, move every point by how far the real sand sits above/below that slope there */
+      const conform = (holder, root, at, n) => {
+        holder.updateMatrixWorld(true);
+        root.traverse((o) => {
+          if (!o.isMesh || o.isSkinnedMesh) return;
+          const g = o.geometry.clone(), P0 = g.attributes.position, inv = o.matrixWorld.clone().invert(), v = new V();
+          /* float copy: a quantized glb stores normalized ints, which would clamp vertices pushed past the original box */
+          const P = new THREE.Float32BufferAttribute(P0.count * 3, 3); for (let i = 0; i < P0.count; i++) P.setXYZ(i, P0.getX(i), P0.getY(i), P0.getZ(i));
+          g.setAttribute('position', P);
+          for (let i = 0; i < P.count; i++) {
+            v.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld);
+            const plane = at.y - (n.x * (v.x - at.x) + n.z * (v.z - at.z)) / n.y;
+            v.y += H(v.x, v.z) - 0.01 - plane; v.applyMatrix4(inv); P.setXYZ(i, v.x, v.y, v.z);
+          }
+          P.needsUpdate = true; o.geometry = g;
+        });
+      };
+      /* seat a dressed copy at `at` by its sit mode; `n` = surface normal when not on sand (a rock face) */
+      const seat = (holder, root, sit, at, n) => {
+        holder.position.copy(at);
+        if (sit === 'upright') return;
+        const nn = n || groundNormal(at.x, at.z);
+        holder.quaternion.setFromUnitVectors(new V(0, 1, 0), nn);
+        if (sit === 'drape' && !n) conform(holder, root, at, nn);
+      };
       /* biome scenery: each roster prop placed `count` times by `spread` (seeded), on the phase(s) the biome gives it */
       const placeProps = () => bio.scenery.forEach((it) => {
         const pr = props[it.id]; if (!pr) return;
@@ -551,9 +612,9 @@ attribute float aTip; varying float vTip;
           } while (it.spread !== 'back' && Math.hypot(x, z + 1) < 1.8 && ++tries < 12);
           const root = K.SU.clone(pr.gltf.scene), holder = new THREE.Group(); holder.add(root);
           root.scale.setScalar(DISPLAY_SCALE * R(s0, s1)); root.rotation.y = R(0, 6.283);
-          root.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.frustumCulled = false; o.material = patch(o.material.clone()); } });
+          const sit = dress(root);
           if (clip) { const mx = new THREE.AnimationMixer(root), act = mx.clipAction(clip); act.play(); act.time = R(0, clip.duration); act.timeScale = R(0.85, 1.1); propMixers.push(mx); }
-          holder.position.set(x, H(x, z) - 0.01, z); holder.userData.prop = true; holder.userData.nm = pr.entry.name || it.id.replace(/_/g, ' ');
+          seat(holder, root, sit, new V(x, H(x, z) - 0.01, z)); holder.userData.prop = true; holder.userData.nm = pr.entry.name || it.id.replace(/_/g, ' ');
           if (it.landmark && k === n - 1) holder.userData.landmark = true;
           world.add(holder); solid(it.id, holder, 0.8); tier(holder, ph[0] + Math.floor((k * (ph[1] - ph[0] + 1)) / n));
         }
@@ -580,19 +641,37 @@ attribute float aTip; varying float vTip;
       /* blight from neglected tasks: the biome's own prop (biomes.json neglect.blight, e.g. drift algae, weeds, mold);
          copies are placed now and shown as blight rises (apply). No prop yet → generic green tufts on rocks. */
       const ng = bio && bio.neglect, bp = ng && props && props[ng.blight];
+      const INSPECT_AT = [0, 2.2]; /* where ?inspect= puts the candidate; blight copies keep clear of it */
+      const clearOf = (x, z) => Math.hypot(x, z + 1) >= 1.8 && (!inspectId || Math.hypot(x - INSPECT_AT[0], z - INSPECT_AT[1]) >= 1.6);
       nk = ng && ng.murk ? { s: new THREE.Color(ng.murk), d: new THREE.Color(ng.murk).multiplyScalar(0.32), tint: new THREE.Color(ng.murk).lerp(new THREE.Color(0xffffff), 0.55) } : null;
-      const onRock = (r, a, d, ray) => { r.updateMatrixWorld(); ray.set(new V(r.position.x + Math.cos(a) * d * r.scale.x, r.position.y + 5, r.position.z + Math.sin(a) * d * r.scale.z), new V(0, -1, 0)); const hit = ray.intersectObject(r)[0]; return hit ? hit.point : r.position.clone(); };
+      const rockHit = (r, a, d, ray) => { r.updateMatrixWorld(); ray.set(new V(r.position.x + Math.cos(a) * d * r.scale.x, r.position.y + 5, r.position.z + Math.sin(a) * d * r.scale.z), new V(0, -1, 0)); const hit = ray.intersectObject(r)[0];
+        return hit ? { p: hit.point, n: hit.face ? hit.face.normal.clone().transformDirection(r.matrixWorld) : new V(0, 1, 0) } : { p: r.position.clone(), n: new V(0, 1, 0) }; };
+      const onRock = (r, a, d, ray) => rockHit(r, a, d, ray).p;
+      /* QA capture: one unscaled copy of the inspected prop on the open sand in front of the camera */
+      inspected = null;
+      if (inspectId && props && props[inspectId]) {
+        const pr = props[inspectId], root = K.SU.clone(pr.gltf.scene), holder = new THREE.Group(); holder.add(root);
+        root.scale.setScalar(DISPLAY_SCALE);
+        const tUni = { value: 0 }, sit = dress(root, tUni);
+        const [x, z] = INSPECT_AT; seat(holder, root, sit, new V(x, H(x, z) - 0.01, z)); world.add(holder);
+        const clip = pr.gltf.animations.find((a) => a.name === 'sway'), mx = clip ? new THREE.AnimationMixer(root) : null;
+        if (mx) mx.clipAction(clip).play();
+        let period = 0; root.traverse((o) => { if (o.userData && o.userData.lb_sway_period) period = o.userData.lb_sway_period; });
+        const box = new THREE.Box3().setFromObject(holder), size = box.getSize(new V());
+        inspected = { holder, mx, tUni, dur: clip ? clip.duration : period, r: Math.max(size.x, size.y, size.z) / 2, pose: null };
+      }
       if (bp) {
         const N = ng.count || 30, [s0, s1] = ng.scale || [0.8, 1.3], ray = new THREE.Raycaster(), clip = bp.gltf.animations.find((a) => a.name === 'sway');
         for (let k = 0; k < N; k++) {
-          let pos;
-          if (ng.grows_on === 'rocks' && rocks.length) pos = onRock(rocks[k % rocks.length], rnd() * 6.283, rnd() * 0.7, ray);
-          else { let x, z, t = 0; do { x = R(-6, 6); z = R(-4.5, 3); } while (Math.hypot(x, z + 1) < 1.8 && ++t < 12); pos = new V(x, H(x, z) - 0.01, z); }
+          let pos, n = null;
+          if (ng.grows_on === 'rocks' && rocks.length) { const h = rockHit(rocks[k % rocks.length], rnd() * 6.283, rnd() * 0.7, ray); pos = h.p; n = h.n; }
+          else { let x, z, t = 0; do { x = R(-6, 6); z = R(-4.5, 3); } while (!clearOf(x, z) && ++t < 24); pos = new V(x, H(x, z) - 0.01, z); }
           const root = K.SU.clone(bp.gltf.scene), holder = new THREE.Group(); holder.add(root);
           root.scale.setScalar(DISPLAY_SCALE * R(s0, s1)); root.rotation.y = R(0, 6.283);
-          root.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.frustumCulled = false; o.material = patch(o.material.clone()); } });
+          const sit = dress(root);
           if (clip) { const mx = new THREE.AnimationMixer(root), act = mx.clipAction(clip); act.play(); act.time = R(0, clip.duration); propMixers.push(mx); }
-          holder.position.copy(pos); holder.userData.base = holder.scale.clone(); holder.visible = false; world.add(holder); blightCopies.push(holder);
+          seat(holder, root, sit, pos, n);
+          holder.userData.base = holder.scale.clone(); holder.visible = false; world.add(holder); blightCopies.push(holder);
         }
       } else {
         const g = new THREE.ConeGeometry(0.025, 0.3, 4); g.translate(0, 0.15, 0); const mat = new THREE.MeshStandardMaterial({ color: 0x5d7228, roughness: 1 }); mat.defines = { SWAY: '' }; patch(mat, { uSwayAmp: { value: 0.6 } });
@@ -817,7 +896,7 @@ attribute float aTip; varying float vTip;
     function apply() {
       const st = view() || { reef: { phase: 2, phases: 5, bleached: false }, cloudiness: 0, blight: 0 }, water = medium === 'water';
       const o = st.cloudiness, al = st.blight, bleached = st.reef.bleached;
-      const now = new Date(), h = now.getHours() + now.getMinutes() / 60;
+      const now = new Date(), h = forcedHour != null ? +forcedHour : now.getHours() + now.getMinutes() / 60;
       const W = wxLook(), sea = seasonK(); /* real weather + season: look only, no game effect */
       const len = 12 + sea * 1.8, rise = 12 - len / 2; /* longer summer days, shorter winter ones */
       const elev = Math.sin(((h - rise) / len) * Math.PI) * (0.85 + sea * 0.15), day = Math.max(0, elev), night = 1 - smooth(-0.1, 0.25, elev), dusk = Math.max(0, 1 - Math.abs(elev) / 0.3) * (1 - night * 0.6);
@@ -877,29 +956,35 @@ attribute float aTip; varying float vTip;
       raf = 0;
       const reduce = reduceMQ.matches, m = reduce ? 0 : 1, dt = Math.min(0.05, last ? (t - last) / 1000 : 0.016); last = t;
       if (!resize()) return;
-      const s = t / 1000;
-      U.uTime.value = reduce ? 3 : s;
+      const s = t / 1000, ip = inspected && inspected.pose;
+      U.uTime.value = ip ? 3 : reduce ? 3 : s; /* QA pose: freeze everything else so only the candidate's pose changes */
+      if (inspected) inspected.tUni.value = ip ? ip.frac * inspected.dur : U.uTime.value;
       if (envDirty && t - envTick > 120) { bakeEnv(); envDirty = false; envTick = t; }
       const a0 = m * Math.sin(s * 0.1) * 0.22;
       const a1 = a0 + look.yaw; camera.position.set(Math.sin(a1) * 7.4, 2.1 + look.pitch * 6 + m * Math.sin(s * 0.3) * 0.08, Math.cos(a1) * 7.4); camera.lookAt(0, 1.0, -0.6);
+      if (ip) { const c = inspected.holder.position, d = Math.max(0.9, inspected.r * 3.4), e = ip.pitch ?? 0.45;
+        camera.position.set(c.x + Math.sin(ip.yaw) * Math.cos(e) * d, c.y + Math.sin(e) * d, c.z + Math.cos(ip.yaw) * Math.cos(e) * d); camera.lookAt(c.x, c.y + inspected.r * 0.4, c.z); }
       dome.position.copy(camera.position);
-      propMixers.forEach((mx) => mx.update(reduce ? 0 : dt));
+      propMixers.forEach((mx) => mx.update(reduce || ip ? 0 : dt));
+      if (inspected && inspected.mx) { if (inspected.pose) inspected.mx.setTime(inspected.pose.frac * inspected.dur); else inspected.mx.update(dt); }
       ambient.forEach((a) => { if (a.visible) a.userData.tick(m ? s : 3); });
       growth.forEach((g) => { const t0 = g.userData.t0; if (!t0) return; const k = Math.min(1, (t - t0) / 1600), e = k < 1 ? 1 - Math.pow(1 - k, 3) * (1 - Math.sin(k * 9) * 0.15) : 1;
         g.scale.copy(g.userData.base).multiplyScalar(Math.max(0.01, e)); if (k >= 1) g.userData.t0 = 0; });
       rays.forEach((r, i) => { r.lookAt(camera.position.x, r.position.y, camera.position.z); r.rotateZ(r.userData.slant + m * Math.sin(s * 0.2 + i) * 0.04); });
       const sulk = (view() && view().breaks && view().breaks.sad) ? 0.45 : 1; /* skipped a break today: the fish mope */
-      stepCreatures((reduce ? 0.016 : dt) * sulk, s, reduce ? (food.length ? 1 : 0) : 1);
+      stepCreatures((ip ? 0 : reduce ? 0.016 : dt) * sulk, s, reduce ? (food.length ? 1 : 0) : 1);
       composer.render(dt);
       /* fps over ~2 s after a warm-up; below 40 drops bloom for good */
-      if (!fpsChecked && !reduce && ++warm > 45) { fpsN++; fpsT += dt; if (fpsT > 2 && fpsN > 20) { stats.fps = Math.round(fpsN / fpsT); fpsChecked = true; if (stats.fps < 40) { bloom.enabled = false; stats.bloom = false; } } }
+      if (!fpsChecked && !reduce && !inspectId && ++warm > 45) { fpsN++; fpsT += dt; if (fpsT > 2 && fpsN > 20) { stats.fps = Math.round(fpsN / fpsT); fpsChecked = true; if (stats.fps < 40) { bloom.enabled = false; stats.bloom = false; } } }
       if (running() && (!reduce || food.length)) raf = requestAnimationFrame(frame);
     }
     const running = () => (inView || isOpen()) && document.visibilityState === 'visible';
     function kick() { if (!raf && running()) { last = 0; raf = requestAnimationFrame(frame); } }
     document.addEventListener('visibilitychange', kick);
     reduceMQ.addEventListener('change', kick);
-    return { apply, kick, loadCreatures, dropFood, get visitorName() { return visitorName; }, get newToday() { return newToday; }, progress: (st) => progressOf(st), get nextUp() { return nextUp; }, get visitorInfo() { return visitorInfo; }, debug: () => ({ food: food.length, creatures: creatures.map((c) => ({ id: c.id, state: c.state, eaten: c.eaten, loco: c.loco, pos: c.pos.toArray().map((x) => +x.toFixed(2)), feeding: !!(c.feed && c.feed.isRunning()), rest: c.rest ? c.rest.getClip().name : null })) }) };
+    const inspect = { get ready() { return !!inspected; }, get dur() { return inspected ? inspected.dur : 0; },
+      pose(p) { if (!inspected) return false; inspected.pose = p ? { yaw: p.yaw || 0, frac: p.frac || 0, pitch: p.pitch } : null; kick(); return true; } };
+    return { apply, kick, loadCreatures, inspect, dropFood, get visitorName() { return visitorName; }, get newToday() { return newToday; }, progress: (st) => progressOf(st), get nextUp() { return nextUp; }, get visitorInfo() { return visitorInfo; }, debug: () => ({ food: food.length, creatures: creatures.map((c) => ({ id: c.id, state: c.state, eaten: c.eaten, loco: c.loco, pos: c.pos.toArray().map((x) => +x.toFixed(2)), feeding: !!(c.feed && c.feed.isRunning()), rest: c.rest ? c.rest.getClip().name : null })) }) };
   }
 
   /* ---------- visibility: lazy start + pause off-screen ---------- */
@@ -924,6 +1009,7 @@ attribute float aTip; varying float vTip;
       if (k === (wx ? `${wx.condition}|${wx.at}` : '')) return;
       wx = w && w.condition ? { condition: w.condition, at: w.at } : null; if (engine) engine.apply();
     },
+    get inspect() { return engine ? engine.inspect : null; },
     feed(n = 6) { if (engine) engine.dropFood(n); else pendingFood += n; },
     visitorOverride,
     debug: () => (engine ? engine.debug() : null),

@@ -2,8 +2,11 @@
 Usage: blender -b --factory-startup --python models/shared/blender/build.py -- <spec.json> [outdir] [--stage blockout|model|all] [--run <run_id>]
 Runs spec-check (check_spec) first and exits 3 on failure (fail fast, before any Blender work; not a build attempt).
 --run <run_id>: records the attempt in the run ledger (shared/tools/ledger.py) after spec-check passes; exits 4 with
-"BUDGET EXHAUSTED" (no Blender work) when the run's build or time budget is spent. Pipeline runs must always pass it.
-Writes outdir/blockout_{side,top}.png (only if the archetype defines blockout()), <id>_model.blend, model.png,
+"BUDGET EXHAUSTED" (no Blender work) when the run's build or time budget is spent, exits 6 "PLAN NEEDED" when the last build
+was judged and no `ledger.py plan` follows it. Pipeline runs must always pass it.
+--preview: an uncounted trial build into out/<id>/preview/ (with --run it still checks the run's minutes, never its builds).
+shared/tools/preflight.sh wraps it with verify.sh so size, bones and height fail before a counted build is spent.
+Writes outdir/blockout_{side,top}.png (only if the archetype defines blockout()), <id>_model.blend,
 <id>_color.png, build_meta.json (eye size vs body height, for shape-check), <id>.blend, <id>.glb (default outdir models/out/<id>).
 The archetype is looked up in models/<spec.kind>/archetypes/ (kind default creature). rig() may return (None, None)
 for a static model (scenery without sway): no armature, no actions."""
@@ -16,6 +19,8 @@ import lib
 argv = sys.argv[sys.argv.index("--") + 1:]
 stage = "all"
 if "--stage" in argv: i = argv.index("--stage"); stage = argv[i + 1]; del argv[i:i + 2]
+preview = "--preview" in argv
+if preview: argv.remove("--preview")
 run_id = None
 if "--run" in argv: i = argv.index("--run"); run_id = argv[i + 1]; del argv[i:i + 2]
 sys.path.insert(0, os.path.join(ROOT, "shared", "tools"))
@@ -26,10 +31,10 @@ if not spec_report["pass"]:
 spec = json.load(open(argv[0])); sid = spec["id"]
 if run_id:
     import ledger
-    ok, msg = ledger.record_build(run_id, sid)
+    ok, msg = (ledger.record_preview if preview else ledger.record_build)(run_id, sid)
     print("LEDGER", msg)
-    if not ok: sys.exit(4)
-out = argv[1] if len(argv) > 1 else os.path.join(ROOT, "out", sid); os.makedirs(out, exist_ok=True)
+    if not ok: sys.exit(6 if msg.startswith("PLAN") else 4)
+out = argv[1] if len(argv) > 1 else os.path.join(ROOT, "out", sid, *(["preview"] if preview else [])); os.makedirs(out, exist_ok=True)
 
 kind = spec.get("kind", "creature")
 p = os.path.join(ROOT, kind, "archetypes", spec["archetype"] + ".py")
@@ -58,11 +63,14 @@ lib.bake_to_single_material(mesh, sid, spec.get("budget", {}).get("texture", 102
 json.dump({"id": sid, "archetype": spec["archetype"], "tris": lib.tris(mesh), "roughness": rough, "coat": coat,
            "eyes": lib.EYES, "eye_range": lib.EYE_RANGE, "mouth_parts": mouth_meta}, open(os.path.join(out, "build_meta.json"), "w"), indent=1)
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, f"{sid}_model.blend"))
-lib.quick_render(os.path.join(out, "model.png"), L, C)
 print("BUILD model", sid, "tris", lib.tris(mesh))
 if stage == "model": sys.exit(0)
 
-arm, mouth = arch.rig(spec, mesh)
+lib.placement_extras(mesh, spec)
+if ((spec.get("motion") or {}).get("sway") or {}).get("mode") == "shader":   # habitat shader sways it: no bones, no clip
+    lib.shader_sway(mesh, spec, getattr(arch, "sway_weights", None)); arm = None
+else:
+    arm, mouth = arch.rig(spec, mesh)
 acts = arch.animate(spec, arm) if arm else []      # static scenery: no rig, no actions
 if arm: lib.stash_nla(arm, acts)
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, f"{sid}.blend"))

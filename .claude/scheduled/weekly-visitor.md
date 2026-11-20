@@ -11,7 +11,7 @@ This file is a template. Nothing runs until someone registers it; `lifeboard-set
 ```
 Run the weekly-visitor skill for lifeboard (repo root = working directory), including step 1c garden plants (season-seeds) for checks/game_status garden.needs.
 Unattended: do not ask questions; decide, log, report.
-Start a run ledger first: python3 models/shared/tools/ledger.py start <YYYY>-w<WW> --builds 8 --minutes 120
+Start a run ledger first: python3 models/shared/tools/ledger.py start <YYYY>-w<WW> --rounds 4 --minutes 30
 (the ledger enforces the budget; every build uses build.py --run <run_id>; every judge is recorded).
 Ship only on a full PASS. Follow AGENTS.md and the model-ship skill for commit/publish:
 commit on branch visitor/<id>; do not merge or push to main; republish the existing lifeboard artifact URL only.

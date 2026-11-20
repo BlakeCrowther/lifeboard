@@ -373,7 +373,34 @@ def stash_nla(arm, actions):
 def export_glb(path):
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", export_yup=True, export_skins=True,
                               export_animations=True, export_animation_mode="NLA_TRACKS",
-                              export_image_format="WEBP", export_apply=False)
+                              export_image_format="WEBP", export_apply=False, export_extras=True, export_attributes=True)
+
+SIT_MODES = ("upright", "follow", "drape")
+
+def placement_extras(o, spec):
+    """How the runtime should seat and move this prop, carried in the glb itself (node extras -> three.js userData),
+    so the habitat and the QA capture read the same thing. lb_sit: upright | follow | drape (scenery `sit.mode`)."""
+    sit = (spec.get("sit") or {}).get("mode")
+    if sit: o["lb_sit"] = sit
+
+def shader_sway(o, spec, weight_fn=None):
+    """Sway done by the habitat's vertex shader instead of bones: no armature, no animation data in the file.
+    Writes two per-vertex float attributes, exported as glTF _SWAY_W / _SWAY_P (three.js: _sway_w / _sway_p):
+      _SWAY_W 0..1  how far this point may move (0 = rooted, 1 = free tip)
+      _SWAY_P 0..1  how far behind the base its wave runs (lag)
+    weight_fn(spec, co) -> (w, p) per vertex in meters (archetype `sway_weights`); default: by height above the ground.
+    Node extras carry the motion: lb_sway_amp (m), lb_sway_period (s), lb_sway_lift (0..1 of amp, upward)."""
+    sw = spec["motion"]["sway"]; H = spec["size"]["height_m"]; F = spec["size"].get("footprint_m", H)
+    if weight_fn is None:
+        weight_fn = lambda sp, co: (min(1.0, max(0.0, co.z / H)) ** 2, min(1.0, max(0.0, co.z / H)))
+    me = o.data
+    for nm in ("_SWAY_W", "_SWAY_P"):
+        if nm in me.attributes: me.attributes.remove(me.attributes[nm])
+    aw = me.attributes.new("_SWAY_W", "FLOAT", "POINT"); ap = me.attributes.new("_SWAY_P", "FLOAT", "POINT")
+    for v in me.vertices:
+        w, ph = weight_fn(spec, v.co)
+        aw.data[v.index].value = min(1.0, max(0.0, w)); ap.data[v.index].value = min(1.0, max(0.0, ph))
+    o["lb_sway_amp"] = round(sw["amp"] * max(H, F), 5); o["lb_sway_period"] = float(sw["period_s"]); o["lb_sway_lift"] = float(sw.get("lift", 0))
 
 def silhouette_renders(prefix, L, res=384):
     """Blockout check: flat black silhouettes on white, orthographic side (-Y) and top (+Z) views."""
@@ -391,13 +418,3 @@ def silhouette_renders(prefix, L, res=384):
         bpy.ops.render.render(write_still=True); outs.append(p)
     return outs
 
-def quick_render(path, L, center=(0, 0, 0), yaw=25, res=512):
-    """Cheap check render (side 3/4) during build; the comparable QA renders live in qa_render.py."""
-    sc = bpy.context.scene; sc.render.engine = "BLENDER_EEVEE"; sc.render.resolution_x = sc.render.resolution_y = res
-    w = bpy.data.worlds.new("w"); sc.world = w; w.use_nodes = True; w.node_tree.nodes["Background"].inputs[0].default_value = (0.03, 0.2, 0.32, 1)
-    ld = bpy.data.lights.new("k", "SUN"); ld.energy = 3; lo = link(bpy.data.objects.new("k", ld)); lo.rotation_euler = (0.7, 0.2, 0.4)
-    cd = bpy.data.cameras.new("c"); cd.type = "ORTHO"; cd.ortho_scale = L * 1.4; cam = link(bpy.data.objects.new("c", cd)); sc.camera = cam
-    y = math.radians(yaw); c = Vector(center); d = Vector((math.sin(y), -math.cos(y), 0.15)).normalized()
-    cam.location = c + d * L * 4; cam.rotation_euler = (c - cam.location).to_track_quat("-Z", "Y").to_euler()
-    sc.render.filepath = path; bpy.ops.render.render(write_still=True)
-    for o in (lo, cam): bpy.data.objects.remove(o, do_unlink=True)

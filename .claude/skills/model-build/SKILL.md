@@ -7,7 +7,7 @@ description: Shared step, any kind (creature, plant). Build a model in headless 
 
 Shared step. Kind steps around it: creature (creature-brief → **model-build** → creature-animate), plant (plant-brief → **model-build** → plant-grow). Rules below are written for creatures; plants follow `models/plant/CONTRACT.md` (rooted origin at the soil point, five stage parts) with the same stages 3–7.
 
-Input `models/<kind>/specs/<id>.json`. Output `models/out/<id>/<id>_model.blend` with one mesh named `<id>`, baked single PBR material, plus `model.png` (and `blockout_{side,top}.png` when the archetype has a blockout), `build_meta.json` (eye size, gloss, tris). build.py runs `check_spec` first and exits 3 on a spec-check failure, before any Blender work. Always `blender -b --factory-startup --python <script> -- <args>`; never the Blender MCP.
+Input `models/<kind>/specs/<id>.json`. Output `models/out/<id>/<id>_model.blend` with one mesh named `<id>`, baked single PBR material, plus (`blockout_{side,top}.png` when the archetype has a blockout), `build_meta.json` (eye size, gloss, tris). build.py runs `check_spec` first and exits 3 on a spec-check failure, before any Blender work. Always `blender -b --factory-startup --python <script> -- <args>`; never the Blender MCP.
 
 ## Generator
 - **One generator per species (default).** Copy the closest generator in `models/<kind>/archetypes/` to `models/<kind>/archetypes/<id>.py`, set the spec's `archetype` to `<id>`, add a first docstring line `Based on: <source>`, and then edit freely to express the species: beak, spines, sloped head, extra fins, new pattern. Species traits the judges look for (from the spec's `reference`) belong in code here, not squeezed into a parent archetype's parameters. Anything reusable (a fin builder, a beak, a gait cycle) goes into `models/shared/blender/lib.py` instead, so every species gets later fixes. The file joins the library when the creature ships; failed ones stay in quarantine.
@@ -22,9 +22,9 @@ Input `models/<kind>/specs/<id>.json`. Output `models/out/<id>/<id>_model.blend`
 4. **UVs**: Smart UV Project (angle ~66°, margin 0.02); tubes/tentacles get a seam on the underside first.
 5. **Material**: Principled BSDF from spec palette; pattern via object-space coordinates + noise wobble (see `models/creature/archetypes/streamlined_swimmer.py` bands); roughness/coat from `spec.material` (clamped to STYLE; passed to the bake); creatures: eyes via `lib.eye(name, body_height, at)` (never hand-made spheres); a visible mouth: real geometry via `lib.mouth(spec, at, direction, head_size)` as part `mouth` (facing `spec.mouth`: front +X / underside −Z, clear of tentacles/appendages; optional `lib.accent_line` lip). Required for every archetype (shape-check).
 6. **Bake**: Cycles, bake DIFFUSE color only (no direct/indirect) to one 1024² (2048² exotic) image, margin 8 px; optionally roughness to a 512². Replace node trees with one Image Texture → Principled material named `<id>`.
-7. Save `<id>_model.blend`; render `model.png` (3/4 view, QA rig from `models/shared/blender/qa_render.py`).
+7. Save `<id>_model.blend`. No look-dev render here: the look is judged from `verify.sh`'s contact sheet and, for scenery, `capture_habitat.mjs` (the habitat's real lighting).
 
 ## Self-check before handing to animate
-Mesh tri count within budget, no NaN, dimensions ±15% of spec, looks like the reference in `model.png`. If the silhouette is wrong, go back to stage 1 instead of patching.
+Mesh tri count within budget, no NaN, dimensions ±15% of spec, looks like the reference on the contact sheet (scenery: `qa/habitat/wide.png`). If the silhouette is wrong, go back to stage 1 instead of patching.
 
 Reference implementation: `models/creature/archetypes/streamlined_swimmer.py` (example spec `models/creature/specs/examples/clownfish.json`).

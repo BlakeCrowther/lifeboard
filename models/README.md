@@ -19,7 +19,7 @@ models/
   README.md  STYLE.md (shared style lock)  biomes.json  roster.json (every shipped model, with kind)
   assets/    shipped <id>.glb + <id>-glb.js            out/  local work dir (gitignored): builds, QA, runs/, quarantine
   shared/blender/  lib.py  build.py  qa_structural.py (shared gates)  qa_render.py
-  shared/tools/    doctor.sh  verify.sh  check_spec.py  optimize.sh  ledger.py
+  shared/tools/    doctor.sh  verify.sh  check_spec.py  optimize.sh  ledger.py  capture_habitat.mjs  preflight.sh
   creature/  CONTRACT.md  archetypes/  specs/  qa.py (creature gates)  qa_calibration.json (golden judge scores)
   plant/     CONTRACT.md  archetypes/stem_bloom.py  specs/mermaids_cup.json  qa.py (plant gates)
   scenery/   CONTRACT.md  archetypes/{clump,solid}.py  specs/  qa.py (scenery gates)
@@ -43,7 +43,7 @@ Six gates a model must pass to ship (names appear in `report.json`, `qa/*.json`,
 - **shape-check** (formerly G2): mesh, rig, size, rest pose.
 - **motion-check** (formerly G3): animation measured by code (loops, speed, amplitude, pops).
 - **export-check** (formerly G4): glb valid and small, measured on the optimized file.
-- **judge-panel** (formerly G5): 3 fresh AI judges view renders, median vs the golden.
+- **judge-panel** (formerly G5): 3 fresh AI judges view renders, median vs the golden. Scenery judges look first at the prop in the real habitat (`shared/tools/capture_habitat.mjs` drives the standalone `capture.html` at the repo root, which runs habitat.js alone: wide, 4 angles, sway frames), so they judge the lighting the player sees; Blender's QA lighting is only for structure and scale.
 - **page-test** (formerly G6): runs in the real habitat page.
 
 Shape-check and motion-check share one output file, `qa/shape-motion-check.json`.
@@ -99,7 +99,7 @@ Archetypes are named by **body plan**, not species or biome, so one generator se
 Doing a lesson drops food into the habitat. Every creature within range plays `feed` aimed at the food (runtime steers the root toward the food, `feed` supplies the body action). That's why every creature must have a `feed` action and a `mouth` node, whatever its body plan (swimmer lunge-bite, octopus arm curl-to-mouth, jelly tentacle wrap, crab claw-to-mouth, anemone tentacle close, bird peck, bee land-and-sip).
 
 ## Run ledger (budget)
-`shared/tools/ledger.py` is the only budget counter: `start <run> --builds 8 --minutes 120`, every build is `build.py ... --run <run>` (exits 4 `BUDGET EXHAUSTED`; pre-build spec-check failures don't count), every judge is `ledger.py judge <run> <id> <agent_id>` (a reused agent id is refused), `status <run>`. State: `out/runs/<run>.json`.
+`shared/tools/ledger.py` is the only budget counter: `start <run> --rounds 4 --minutes 30` (judge rounds are the token cost, so they are the limit; `preflight.sh` trial builds are free, 5 between counted builds), every build is `build.py ... --run <run>` (exits 4 `BUDGET EXHAUSTED`; pre-build spec-check failures don't count), every judge is `ledger.py judge <run> <id> <agent_id> --reply '<json>'` (a reused agent id is refused), `status <run>`. Run log: judges tag each fix with the criterion it raises; `notes` lists each judged build's medians and the fixes by criterion; `plan` (required before rebuilding a judged build, build.py exits 6 otherwise) must take on a lowest-median criterion, caps polish at 2 rounds (failed-build retries don't count) and snapshots a passing build; `best` names the version to ship. `preflight.sh` is an uncounted trial build + code gates (counts minutes, not builds; swaying scenery also gets the habitat sway check), so size/bones/height/motion never cost a counted build. Scenery sways in habitat.js's vertex shader (per-point weights baked by the build, no bones) and is seated by its spec's reasoned `sit` mode; see `scenery/CONTRACT.md`. State: `out/runs/<run>.json`.
 
 ## Failure policy
 - Each gate failure returns machine-readable reasons; the failing step retries with them (max 2 retries, 3 for novel archetypes).
