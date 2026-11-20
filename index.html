@@ -88,6 +88,8 @@
 .k-habits{--t:var(--t-habits);--a:var(--a-habits)}
 .k-goals{--t:var(--t-goals);--a:var(--a-goals)}
 *,*::before,*::after{box-sizing:border-box}
+/* NOTE: the artifact host's wrapper pads :root by the safe-area insets; .app, .bar and the tab bar already clear them, so drop the wrapper's copy or phones get the inset twice */
+:root{padding:0}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:calc(var(--stick) + 44px)}
 body{margin:0;background:var(--bg);color:var(--text);font:400 15.5px/1.4 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
