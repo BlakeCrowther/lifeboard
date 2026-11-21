@@ -98,7 +98,7 @@
     /* ---- garden ---- */
     /* garden weeks run Mon..Sun: with a start date the garden opens the first Monday on/after it; until then every plot is a seed.
        Each plot (habit) runs its own plant lifecycle (game.js plotWeek): bloom or die, show it a week, pressed, next seed. A habit
-       added later starts its plot the Monday on/after it was created. */
+       added later gets its plot in the week it was created. */
     const gStart = start == null ? null : monday(start) === start ? start : monday(start) + 7, waiting = gStart != null && today < gStart;
     const gSessions = gStart == null ? sessions : sessions.filter((s) => dn(s.date) >= gStart);
     const firstWeek = gStart != null ? gStart : gSessions.length ? monday(Math.min(...gSessions.map((s) => dn(s.date)))) : wk;
@@ -118,10 +118,14 @@
       const counts = {}, perDay = {};
       gSessions.forEach((s) => { if (s.h === h.key) { const d = dn(s.date), m = monday(d); counts[m] = (counts[m] || 0) + 1; perDay[d] = (perDay[d] || 0) + 1; } });
       /* daily habits: a day below the floor kills the plant that week; otherwise the week is scored on its total vs 7x floor/target */
-      const missedIn = (w, upto) => { for (let d = w; d < Math.min(w + 7, upto); d++) if ((perDay[d] || 0) < h.floor) return true; return false; };
-      const result = (w) => (h.daily ? (missedIn(w, w + 7) ? 'died' : LBG.weekResult(counts[w] || 0, 7 * h.floor, 7 * h.target)) : LBG.weekResult(counts[w] || 0, h.floor, h.target));
+      /* days before the habit existed never count as misses (it can be planted mid-week) */
+      const born = h.since ? dn(h.since) : -Infinity;
+      const missedIn = (w, upto) => { for (let d = Math.max(w, born); d < Math.min(w + 7, upto); d++) if ((perDay[d] || 0) < h.floor) return true; return false; };
+      const daysIn = (w) => w + 7 - Math.max(w, born);
+      const result = (w) => (h.daily ? (missedIn(w, w + 7) ? 'died' : LBG.weekResult(counts[w] || 0, daysIn(w) * h.floor, daysIn(w) * h.target)) : LBG.weekResult(counts[w] || 0, h.floor, h.target));
       const rng = mulberry(hash(h.key));
-      const since = h.since ? Math.max(firstWeek, monday(dn(h.since)) === dn(h.since) ? dn(h.since) : monday(dn(h.since)) + 7) : firstWeek;
+      /* planted in the week it was created: that partial week is scored against the full floor; a miss leaves the seed waiting */
+      const since = h.since ? Math.max(firstWeek, monday(dn(h.since))) : firstWeek;
       const pl = LBG.newPlot();
       let sown = since, n = 0;
       for (let w = since; w < wk && !waiting; w += 7) {

@@ -32,9 +32,9 @@ Each input drives exactly one thing, so no system can game another.
 
 ## Garden (habits)
 
-**Status:** Built (per-plot plant lifecycle and calendar seasons, Nov 19; 3D plants made per plant by the weekly job). Not built: rarity looks and accessories on 3D plants, herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), grace token.
+**Status:** Built (per-plot plant lifecycle and calendar seasons, Nov 19; new habits planted the day they're created, Nov 21; 3D plants made per plant by the weekly job). Not built: rarity looks and accessories on 3D plants, herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), grace token.
 
-One plot per habit, one plant at a time. Each plant is its own species, made for that plot (below); until its model exists the plot shows an SVG species (`daisy`, `tulip`, `sunflower`, `mushroom`, `cactus`, `fern`, `bonsai`, `lavender`, no repeats until all are used). A plant grows one stage per week you hit the floor, and dies the first week you don't. Everything is per plot: a new habit gets a plot (and a plant) from the first week start on or after it was created; nothing waits for other plots.
+One plot per habit, one plant at a time. Each plant is its own species, made for that plot (below); until its model exists the plot shows an SVG species (`daisy`, `tulip`, `sunflower`, `mushroom`, `cactus`, `fern`, `bonsai`, `lavender`, no repeats until all are used). A plant grows one stage per week you hit the floor, and dies the first week you don't. Everything is per plot: a new habit gets a plot (and a seed) the day it's created, even mid-week. That first partial week is scored against the full floor (daily habits: only the days from creation on, each at the floor, total scored against that many days × floor / target): hit it and the seed sprouts; miss it and the seed just waits, as any unsprouted seed does. Nothing waits for other plots.
 
 **Inputs** come from habit fields: `streak_floor_per_week` (floor), `target_per_week` (target) and `cadence` (`week`, default, or `day`).
 
