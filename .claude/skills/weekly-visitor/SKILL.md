@@ -10,7 +10,7 @@ description: Kind: creature (orchestrator). Runs the weekly autonomous habitat v
 Runs unattended. Do not ask the user anything; decide, log, and report.
 
 ## 0. Preflight
-`models/shared/tools/doctor.sh`. If anything required fails, there's no visitor this week. Report the failing line and point to the lifeboard-setup skill.
+`./setup.sh --check`. If anything required fails, there's no visitor this week. Report the failing line and point to the lifeboard-setup skill.
 
 ## 0b. Start the run ledger
 `python3 models/shared/tools/ledger.py start <run_id> --rounds 4 --minutes 30` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).

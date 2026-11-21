@@ -9,7 +9,7 @@ Mirror of `weekly-visitor` for plants. Paths relative to `models/`. Rules: SPEC.
 
 When: every week, after the visitor (`weekly-visitor` step 1c), or by hand.
 
-0. Preflight `models/shared/tools/doctor.sh`.
+0. Preflight `./setup.sh --check`.
 1. Inputs: `checks/game_status` `value.garden` (`season` = calendar season name, `biome`, `needs`; else ask). `needs` = `[{plot, habit, gen, rarity, mutated, biome, sown}]`: one entry per plant with no model yet. Skip an entry whose roster plant (`plot` + `gen`) already exists. Empty → report "no plants needed" and stop. Also read that biome's `biomes.json` entry and the roster's plants.
 2. Per entry, in list order (rare seeds first if time is short). **Start this plant's ledger only when you start this plant**, never all up front (they expire together): `python3 models/shared/tools/ledger.py start plant-<plot>-g<gen> --rounds 4 --minutes 30` (the ledger enforces it, never count in your head).
    `plant-brief` (biome, rarity, habit name, season, plot, gen) → `model-build` (`blender -b --factory-startup --python shared/blender/build.py -- plant/specs/<id>.json --run <run_id>`; also rigs, animates, exports) → `plant-grow` (check + fix loop) → `model-verify` (shared gates + `plant/qa.py`, a fresh judge panel recorded in the ledger, verdict from `judge_verdict.py`) → `model-ship` (roster entry per `plant/CONTRACT.md` Shipping, with `plot`, `gen`, `habit`).

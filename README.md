@@ -25,7 +25,7 @@ You need a Claude account with Artifacts and Claude Code (desktop app or CLI). L
 2. Say: *"Run lifeboard-setup"*. It asks a few questions (your name, timezone, week start, how strict the day's ring is) and publishes the board as your own private artifact.
 3. Open the link it gives you. Pin it in claude.ai so it's one click away.
 
-**With the 3D models** (creatures and plants made each week): setup also checks Blender, ImageMagick and Node, offers to install what's missing (macOS with Homebrew), and registers the weekly job. See [models/README.md](models/README.md).
+**With the 3D models** (creatures and plants made each week): setup also checks Blender, ImageMagick and Node, offers to install what's missing with `./setup.sh` (macOS, Linux and Windows; also what a cloud environment's setup script can call), and registers the weekly job. See [models/README.md](models/README.md).
 
 **Optional extras:**
 - **Lifeboard Break** (macOS): a menu-bar app that covers your screens with the board during timed breaks. Say *"run break-setup"*.

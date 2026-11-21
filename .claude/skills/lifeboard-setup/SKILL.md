@@ -5,20 +5,20 @@ description: Set up lifeboard for a new owner or a fresh clone, and health-check
 
 # Lifeboard setup (fresh clone)
 
-Order: 1 toolchain + doctor → 2 local preview → 3 Ecosystem/Garden toggles + commitment lock → 4 publishing → 5 runtime test hook → 6 weekly scheduled task. Run the doctor first; it says exactly what is missing:
+Order: 1 toolchain (`./setup.sh`) → 2 local preview → 3 Ecosystem/Garden toggles + commitment lock → 4 publishing → 5 runtime test hook → 6 weekly scheduled task. Run `./setup.sh` first; it says exactly what is missing:
 
 ```bash
-models/shared/tools/doctor.sh          # check only
-models/shared/tools/doctor.sh --fix    # install what brew can install
+./setup.sh                             # install what's missing (macOS brew, Linux apt/dnf, Windows winget), then check
+./setup.sh --check                     # checks only, installs nothing
 ```
 
 ## 1. Toolchain (model pipelines)
 ### Required
 | Tool | Why | Install |
 |---|---|---|
-| Blender ≥ 5.3 | Headless modeling, rigging, animation, baking, QA renders, glTF export (`blender -b`) | `brew install --cask blender` (free, GPL) |
-| ImageMagick | Contact sheets for the visual judge | `brew install imagemagick` |
-| Node ≥ 20 + `npx @gltf-transform/cli@4` | Validate + optimize `.glb` | `brew install node` (gltf-transform fetched by npx) |
+| Blender ≥ 5.3 | Headless modeling, rigging, animation, baking, QA renders, glTF export (`blender -b`) | `./setup.sh` (free, GPL) |
+| ImageMagick | Contact sheets for the visual judge | `./setup.sh` |
+| Node ≥ 20 + `npx @gltf-transform/cli@4` | Validate + optimize `.glb` | `./setup.sh` (gltf-transform fetched by npx) |
 | Claude desktop app scheduled tasks | Runs `weekly-visitor` locally (Blender is a local app); Mac must be awake | Desktop app → Scheduled |
 
 ### Optional (interactive development only)
@@ -28,8 +28,8 @@ models/shared/tools/doctor.sh --fix    # install what brew can install
 3. Restart Claude (⌘Q). Test: ask Claude for the Blender scene summary.
 
 ## Known gotchas
-- `npx` gltf-transform/sharp needs node >= 20; under node 18 export-check fails with `SyntaxError: Unexpected token 'with'`. Put a newer node first on PATH (nvm) before verify.sh; `doctor.sh` fails on an older node. (seen on this Mac, Nov 2026)
-- **Blender MCP extension fails with `pydantic-core`/`rpds-py` build errors.** `uv` picked a too-new Python (3.15) with no wheels, then tried to compile with Rust. Fix: pin 3.12 in the extension folder (doctor prints the exact command) and/or `uv python pin --global 3.12`. Reinstalling the extension wipes the folder pin.
+- `npx` gltf-transform/sharp needs node >= 20; under node 18 export-check fails with `SyntaxError: Unexpected token 'with'`. Put a newer node first on PATH (nvm) before verify.sh; `./setup.sh --check` fails on an older node. (seen on this Mac, Nov 2026)
+- **Blender MCP extension fails with `pydantic-core`/`rpds-py` build errors.** `uv` picked a too-new Python (3.15) with no wheels, then tried to compile with Rust. Fix: pin 3.12 in the extension folder (`./setup.sh --check` prints the exact command) and/or `uv python pin --global 3.12`. Reinstalling the extension wipes the folder pin.
 - **Rust "can't find crate for core" on Apple Silicon.** rustup default toolchain is x86_64. `rustup default stable-aarch64-apple-darwin`.
 - **Artifacts won't serve `.glb`.** Ship models as base64 JS (`assets/<id>-glb.js`) and parse with `GLTFLoader.parseAsync`. `model-ship` does this.
 - **Blender MCP vs. ahujasid `blender-mcp`.** Different projects. This repo assumes the official Blender Lab one (or none).
@@ -41,7 +41,7 @@ models/shared/tools/doctor.sh --fix    # install what brew can install
 - The real page talks to the artifact db through `window.claude.use('db')`, which only exists inside claude.ai. Locally, `mock.js` stubs it with an in-memory db (`onSnapshot`, `doc().set/update/delete`) seeded from `window.MOCK`.
 - `mockdata.js` = `window.MOCK = { <collection>: { <docId>: {...doc} } }`. The owner's file is a personal data snapshot and is **gitignored**; you won't have it. Make your own: start with `window.MOCK={}` (empty dashboard) or add a few docs per collection using the shapes in `schema.js` (`tasks`, `habits`, `habit_sessions`, `checks`, `list_items`, …). Keep it out of git.
 - Load order for a local test page (also gitignored: `test.html`): copy `index.html` and insert `<script src="mockdata.js"></script><script src="mock.js"></script>` before `logic.js`.
-- `doctor.sh` checks that `.claude/launch.json` exists and reports `mockdata.js` as optional.
+- `./setup.sh --check` checks that `.claude/launch.json` exists and reports `mockdata.js` as optional.
 
 ## Ecosystem and Garden toggles
 The game (reef points, garden, visitors) starts at 0 on the day the game is first turned on: that date is written once to db `game_state/game.started` and earlier history is ignored. The reef/habitat counts from that day and never resets weekly; the garden runs Mon–Sun weeks from the first Monday on/after it (plots stay seeds until then). Delete that doc to restart from 0.
@@ -78,4 +78,4 @@ A brand-new board seeds a few starter tasks on first open that teach how points 
 - `models/out/` (builds, QA renders, run ledgers, quarantine) is gitignored local work; `models/assets/` + `models/roster.json` are what ships.
 
 ## Sharing checklist
-Someone cloning this repo needs: the tools above, `doctor.sh` passing, their own `mockdata.js` for local preview, a lifeboard artifact of their own (see AGENTS.md + Publishing), and (optionally) the weekly check registered on the day they chose.
+Someone cloning this repo needs: the tools above, `./setup.sh` passing, their own `mockdata.js` for local preview, a lifeboard artifact of their own (see AGENTS.md + Publishing), and (optionally) the weekly check registered on the day they chose.

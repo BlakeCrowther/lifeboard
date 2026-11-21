@@ -19,7 +19,7 @@ models/
   README.md  STYLE.md (shared style lock)  biomes.json  roster.json (every shipped model, with kind)
   assets/    shipped <id>.glb + <id>-glb.js            out/  local work dir (gitignored): builds, QA, runs/, quarantine
   shared/blender/  lib.py  build.py  qa_structural.py (shared gates)  qa_render.py
-  shared/tools/    doctor.sh  verify.sh  check_spec.py  optimize.sh  ledger.py  judge_verdict.py  check_judge_rule.py  capture_habitat.mjs  watch_creatures.mjs (creature behaviour over time, headless)  preflight.sh
+  shared/tools/    verify.sh  check_spec.py  optimize.sh  ledger.py  judge_verdict.py  check_judge_rule.py  capture_habitat.mjs  watch_creatures.mjs (creature behaviour over time, headless)  preflight.sh
   creature/  CONTRACT.md  archetypes/  specs/  qa.py (creature gates)  qa_calibration.json (golden + judge-panel pass_rule)  calibration/ (golden sheet)
   plant/     CONTRACT.md  archetypes/stem_bloom.py  specs/mermaids_cup.json  qa.py (plant gates)  qa_calibration.json  calibration/
   scenery/   CONTRACT.md  archetypes/{clump,solid,tangle}.py  specs/  qa.py (scenery gates)  qa_calibration.json  calibration/

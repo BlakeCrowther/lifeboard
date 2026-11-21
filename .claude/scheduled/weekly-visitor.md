@@ -20,7 +20,7 @@ Final message: the weekly-visitor report (visitor or no-visitor reason, plants m
 ```
 
 ## Register (later, by a human)
-1. Run `models/shared/tools/doctor.sh` until it passes (see the lifeboard-setup skill).
+1. Run `./setup.sh` until it passes (see the lifeboard-setup skill).
 2. Run `lifeboard-setup` (it asks the day), or Claude desktop app → Scheduled with the cron for your day and the prompt above, working directory = this repo.
 3. First time: trigger it once by hand, or do a dry run first (`weekly-visitor --dry-run <event-json>`, see that skill).
 4. To stop it: delete or pause the task in the Scheduled list.
