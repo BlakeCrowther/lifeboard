@@ -1,6 +1,6 @@
 ---
 name: lifeboard-setup
-description: Shared, any kind. One-time setup and health check for a fresh clone of lifeboard: model toolchain (Blender, ImageMagick, gltf-transform, optional Blender MCP) + doctor, local preview server, mockdata, Ecosystem/Garden toggles, publishing, the ?visitor= test hook, and the weekly scheduled-task template. Use on a new machine, when sharing the repo, or when any model skill fails with a tooling error.
+description: Set up lifeboard for a new owner or a fresh clone, and health-check it later. Asks for name, timezone, week start and how strict the daily ring is, publishes the board as the user's own artifact, and optionally installs the 3D model toolchain (Blender, ImageMagick, Node) and the weekly job. Use when someone first opens this repo, says "set up lifeboard", moves to a new machine, or a model skill fails with a tooling error.
 ---
 
 # Lifeboard setup (fresh clone)
@@ -64,7 +64,9 @@ The display-settings popover (sliders icon) has **Ecosystem** and **Garden** tog
 Ask once (AskUserQuestion): which model skill subagents default to. Options: "Sonnet (Recommended, cheaper)", "Same as session (judges too)", "Haiku (cheapest, weaker briefs)". Write the answer into this clone's `AGENTS.md` "Subagent models" line. judge-panel judges follow the same default; changing it means re-judging each golden (see AGENTS.md).
 
 ## Your labels (checks/profile)
-Owner-specific labels live in the board, never the repo. Ask (optional): the place name for the conditions card and pet names with kind (dog/cat). Write `ArtifactData` set `checks/profile` = `{value: {place: "<name>", pets: [{name, kind}]}, updated_at: <ms>}`. Without it the card says "Local conditions" and the pet filter is hidden.
+Owner-specific labels and ids live in the board, never the repo. Ask (all optional): their first name (the Today greeting and prompts; without it the greeting is plain "Good morning."), the timezone (default: the one this machine reports, e.g. `America/Los_Angeles`; the board's day boundary, otherwise the viewer's browser zone), the place name for the conditions card, and pet names with kind (dog/cat). Write `ArtifactData` update `checks/profile` = `{value: {name, tz, place, pets: [{name, kind}]}, updated_at: <ms>}` (keep fields already there, e.g. `duet_trigger`, the owner's own scheduled agent's trigger id, which shows "Send to Duet" on tasks). Without a place the card says "Local conditions"; without pets the pet filter is hidden.
+
+A brand-new board seeds a few starter tasks on first open that teach how points work (`seedStarter` in `app.js`); nothing to do here.
 
 ## Weekly scheduled task (the weekly check)
 `.claude/scheduled/weekly-visitor.md` holds the prompt and the cron shape (`0 <hour> * * <day>`). The weekly check makes the visitor and the garden plants that bloomed or died that week need (SPEC.md Weekly job).

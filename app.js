@@ -154,7 +154,7 @@ const TASK_ICONS = ['spark','heart','med','pill','coin','receipt','house','wrenc
 /* icon keys written by the original app, drawn with the nearest icon in this set */
 const ICON_MAP = { plant: 'leaf', tooth: 'med', medical: 'med', mail: 'chat', broom: 'house', droplet: 'drop', dumbbell: 'flame', plane: 'pin', cake: 'gift', music: 'drum', bag: 'cart', books: 'book', 'book-open': 'book', surf: 'wave', key: 'house', chart: 'target', scissors: 'person', journal: 'book', hola: 'chat', cup: 'drop', diamond: 'star', flag: 'target', dot: 'spark', clipboard: 'list', pumpkin: 'spark', 'bubble-heart': 'heart', sunset: 'sun', stopwatch: 'clock', news: 'list', bulb: 'spark' };
 const iconOf = (k) => (k && P[k] ? k : (k && ICON_MAP[k]) || 'spark');
-const HABIT_IC = { drumming: 'drum', 'guitar-practice': 'heart', 'spanish-speaking': 'chat', surfing: 'wave', running: 'shoe', meditation: 'lotus', journaling: 'book', reading: 'book' };
+const HABIT_IC = { drumming: 'drum', 'spanish-speaking': 'chat', surfing: 'wave', running: 'shoe', meditation: 'lotus', journaling: 'book', reading: 'book' };
 const TAGS = LB.TAGS;
 const GROC_SECS = ['Produce', 'Dairy', 'Meat & seafood', 'Bakery', 'Pantry', 'Frozen', 'Drinks', 'Household', 'Other'];
 const GROC_GUESS = [[/apple|banana|lemon|lime|avocado|onion|garlic|spinach|kale|tomato|pepper|berr|herb|cilantro|potato|carrot|lettuce|ginger|scallion/i, 'Produce'], [/milk|yogurt|cheese|butter|egg|cream/i, 'Dairy'], [/chicken|beef|salmon|fish|shrimp|pork|turkey|tofu/i, 'Meat & seafood'], [/bread|tortilla|bagel|bun/i, 'Bakery'], [/rice|pasta|bean|oil|flour|sugar|sauce|spice|oat|cereal|coffee|tea|stock|broth|lentil|curry|coconut/i, 'Pantry'], [/frozen|ice cream/i, 'Frozen'], [/water|juice|soda|beer|wine|kombucha/i, 'Drinks'], [/soap|towel|detergent|sponge|trash bag|litter|dog food|cat food/i, 'Household']];
@@ -235,7 +235,7 @@ const recShort = (r) => (r ? LB.shortRule(r) : '');
 const byOrd = (a, b) => (a.sort_order ?? 1e9) - (b.sort_order ?? 1e9) || (a.created_at || 0) - (b.created_at || 0);
 const byCreated = (a, b) => (a.created_at || 0) - (b.created_at || 0);
 const str = (v) => (v == null ? '' : String(v));
-const emptyS = () => ({ tasks: [], habits: [], sessions: [], events: [], calOK: false, calAt: null, cond: null, groceries: [], wish: [], recipes: [], gifts: [], lists: {}, goals: [], weddings: [], glance: [], checks: {}, logs: [] });
+const emptyS = () => ({ tasks: [], habits: [], sessions: [], events: [], calOK: false, calAt: null, cond: null, groceries: [], wish: [], recipes: [], gifts: [], lists: {}, goals: [], bigDays: [], glance: [], checks: {}, logs: [] });
 let S = emptyS();
 const safeColor = (c) => (typeof c === 'string' && /^(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\))$/i.test(c.trim()) ? c.trim() : '');
 const CAL_FALLBACK = ['var(--cal-a)', 'var(--cal-b)', 'var(--cal-c)'];
@@ -252,15 +252,15 @@ function vmEvents(snap) {
     }
     const sMs = Date.parse(e.start), eMs = Date.parse(e.end || '');
     if (isNaN(sMs)) return null;
-    const date = LB.laDateOf(sMs), s = LB.minsOfDay(e.start);
-    const en = isNaN(eMs) ? s + 60 : LB.laDateOf(eMs) === date ? LB.minsOfDay(e.end) : 1440;
+    const date = LB.localDateOf(sMs), s = LB.minsOfDay(e.start);
+    const en = isNaN(eMs) ? s + 60 : LB.localDateOf(eMs) === date ? LB.minsOfDay(e.end) : 1440;
     return { ...base, date, s, e: Math.max(en, s) };
   }).filter(Boolean);
 }
 /* ---------- live Google Calendar (mcp connector). Falls back to the saved snapshot when unavailable ---------- */
 const LIVE = { evs: null, at: null, err: null, day: null, unsub: null, mcp: null };
 const GCAL = 'Google Calendar';
-const calInput = (d) => ({ startTime: d + 'T00:00:00', endTime: addDays(d, 2) + 'T00:00:00', orderBy: 'startTime', pageSize: 100, timeZone: 'America/Los_Angeles' });
+const calInput = (d) => ({ startTime: d + 'T00:00:00', endTime: addDays(d, 2) + 'T00:00:00', orderBy: 'startTime', pageSize: 100, timeZone: LB.tz() });
 function gcalToSnap(p) {
   const items = p && Array.isArray(p.events) ? p.events : p && Array.isArray(p.items) ? p.items : [];
   return { events: items.filter((e) => e && e.status !== 'cancelled'
@@ -305,15 +305,17 @@ function vmTask(d) {
     done: d.status === 'done', doneAt: d.completed_at || null, created: d.created_at || 0, days: Array.isArray(d.committed_days) ? d.committed_days.filter(isDate) : [],
     duet: d.duet_request && typeof d.duet_request === 'object' ? d.duet_request.status || 'queued' : null, _d: d };
 }
-let PROFILE = { place: 'Local conditions', pets: [] };
+let PROFILE = { name: '', place: 'Local conditions', placeName: '', pets: [], duetTrigger: '' };
 const validException = (e) => !!e && typeof e === 'object' && typeof e.reason === 'string' && e.reason.trim().length >= 20 && typeof e.evidence === 'string' && e.evidence.trim().length >= 3;
 function derive() {
   const A = (c) => LBDB.all(c);
   applyPrefs();
   { const w = LBDB.get('checks', 'week_start'), v = w ? +w.value : NaN; WS = Number.isInteger(v) && v >= 0 && v <= 6 ? v : 1; }
-  /* checks/profile: the owner's own labels (conditions place, pet names) live in their board, never in the repo */
+  /* checks/profile: the owner's own labels and ids (name, conditions place, pets, timezone, Duet trigger) live in their board, never in the repo */
   { const pr = LBDB.get('checks', 'profile'), v = pr && pr.value && typeof pr.value === 'object' ? pr.value : {};
-    PROFILE = { place: typeof v.place === 'string' && v.place.trim() ? v.place.trim() : 'Local conditions',
+    const txt = (x) => (typeof x === 'string' ? x.trim() : '');
+    if (txt(v.tz) && txt(v.tz) !== LB.tz() && LB.setTZ(txt(v.tz))) TODAY = LB.todayStr();
+    PROFILE = { name: txt(v.name), place: txt(v.place) || 'Local conditions', placeName: txt(v.place), duetTrigger: txt(v.duet_trigger),
       pets: (Array.isArray(v.pets) ? v.pets : []).filter((x) => x && typeof x.name === 'string' && x.name.trim()).map((x) => ({ key: x.name.trim().toLowerCase(), name: x.name.trim(), icon: ['dog', 'cat'].includes(x.kind) ? x.kind : 'paw' })) }; }
   const s = emptyS();
   const allT = A('tasks').map(vmTask), isSug = (t) => t._d.suggested === true && !t.done;
@@ -323,7 +325,7 @@ function derive() {
   s.habits = A('habits').filter((d) => !d.hidden).sort(byOrd).map((d) => ({ id: d.id, key: d.key || d.id, name: d.name, icon: iconOf(d.icon_key || HABIT_IC[d.key]), target: Math.max(1, +d.target_per_week || 1), floor: Math.max(1, +d.streak_floor_per_week || 1), daily: d.cadence === 'day', notes: d.notes || '', _d: d }));
   /* a session counts when it was logged during its own week. Later logs count only with an exception (reason + evidence). Older docs without created_at count. */
   const allS = A('habit_sessions').map((d) => ({ id: d.id, h: d.habit_id, date: d.date, created: d.created_at || 0, ex: validException(d.exception) ? d.exception : null }));
-  const onTime = (x) => !x.created || weekOf(LB.laDateOf(x.created)) <= weekOf(x.date);
+  const onTime = (x) => !x.created || weekOf(LB.localDateOf(x.created)) <= weekOf(x.date);
   s.sessions = allS.filter((x) => onTime(x) || x.ex);
   s.voidSessions = allS.filter((x) => !onTime(x) && !x.ex);
   const snaps = Object.fromEntries(A('snapshots').map((d) => [d.id, d]));
@@ -338,12 +340,13 @@ function derive() {
     s.cond = { w: c.weather && typeof c.weather === 'object' ? c.weather : null, s: c.surf && typeof c.surf === 'object' ? c.surf : null, tides, at: c.fetched_at || null, quote: c.quote && c.quote.text ? c.quote : null };
   } else if (c && c.quote && c.quote.text) s.cond = { w: null, s: null, tides: [], at: c.fetched_at || null, quote: c.quote };
   s.groceries = A('groceries').sort(byOrd).map((d) => ({ id: d.id, name: d.name, sec: GROC_SECS.includes(d.group_name) ? d.group_name : 'Other', done: !!d.checked, created: d.created_at || 0 }));
-  s.wish = A('buy_list_items').sort(byOrd).map((d) => ({ id: d.id, name: d.name, tag: TAGS[d.tag] ? d.tag : 'one_day', added: d.added_date || (d.created_at ? LB.laDateOf(d.created_at) : TODAY), price: str(d.price), url: d.url, notes: d.notes || '', status: d.status || 'waiting' }));
+  s.wish = A('buy_list_items').sort(byOrd).map((d) => ({ id: d.id, name: d.name, tag: TAGS[d.tag] ? d.tag : 'one_day', added: d.added_date || (d.created_at ? LB.localDateOf(d.created_at) : TODAY), price: str(d.price), url: d.url, notes: d.notes || '', status: d.status || 'waiting' }));
   s.recipes = A('recipes').sort(byOrd).map((d) => ({ id: d.id, name: d.name, time: d.time || '', mood: d.mood || '', url: d.url, notes: d.notes || '', ingredients: (d.ingredients || []).filter((x) => typeof x === 'string' && x.trim()), cooked: d.status === 'archived', cookedAt: d.cooked_at || null }));
   s.gifts = A('gift_ideas').sort(byOrd).map((d) => ({ id: d.id, person: d.person.trim() || 'Someone', idea: d.idea || '', url: d.url, done: d.status === 'given' }));
   A('list_items').sort(byOrd).forEach((d) => { (s.lists[d.list_key] = s.lists[d.list_key] || []).push({ id: d.id, name: d.title, by: d.author || '', url: d.url, notes: d.notes || '', done: d.status === 'done' }); });
   s.goals = A('goals').sort(byOrd).map((d) => ({ id: d.id, title: d.title, cat: d.category || '', icon: iconOf(d.icon_key || GOAL_CAT_IC[d.category] || 'star'), year: +d.year, done: d.status === 'completed', notes: d.notes || '', q: [1, 2, 3, 4].map((q) => d['progress_q' + q] || '') }));
-  s.weddings = A('countdowns').filter((d) => d.kind === 'wedding').sort((a, b) => (a.date < b.date ? -1 : 1)).map((d) => ({ id: d.id, title: d.title, date: d.date, where: d.detail || d.when || '', gift: d.gift || '', match: Array.isArray(d.match) ? d.match.filter((x) => typeof x === 'string') : [] }));
+  /* big days: every countdown except the small 'glance' ones (weddings, trips, birthdays…); kind is free text */
+  s.bigDays = A('countdowns').filter((d) => d.kind !== 'glance').sort((a, b) => (a.date < b.date ? -1 : 1)).map((d) => ({ id: d.id, kind: d.kind.replace(/[-_]/g, ' '), title: d.title, date: d.date, where: d.detail || d.when || '', gift: d.gift || '', match: Array.isArray(d.match) ? d.match.filter((x) => typeof x === 'string') : [] }));
   s.glance = A('countdowns').filter((d) => d.kind === 'glance').sort((a, b) => (a.date < b.date ? -1 : 1)).map((d) => ({ id: d.id, title: d.title, date: d.date, detail: d.detail || '' }));
   A('checks').forEach((d) => { s.checks[d.id] = d; });
   s.logs = A('logs').sort(byCreated).map((d) => ({ kind: d.kind, label: d.label || '', date: d.date, at: d.created_at || null }));
@@ -491,7 +494,8 @@ function commitPass() {
   const first = commitDay !== TODAY; commitDay = TODAY;
   S.tasks.forEach((t) => {
     if (t.done || t._d.suggested === true) return;
-    const e = eff(t), has = new Set(t.days);
+    /* a task can't be committed to a day before it existed: back-dating its due date would fake age (SPEC.md Age) */
+    const born = t.created ? LB.localDateOf(t.created) : null, e0 = eff(t), e = e0 && born && e0 < born ? born : e0, has = new Set(t.days);
     if (e && e <= TODAY && !has.has(e)) {
       const p = { committed_days: [...t.days, e].sort() };
       if (e === TODAY) p.committed_at = first ? laMidnight(TODAY) : Date.now();
@@ -501,10 +505,30 @@ function commitPass() {
     }
   });
 }
+/* Starter tasks: a brand-new board (no tasks, habits, sessions, goals or checks at all) gets a few tasks that teach how
+   lifeboard works and what earns what (SPEC.md). Written once, with fixed ids so two open tabs can't double them;
+   checks/starter marks it done, so deleting them never brings them back. An owner's existing board never qualifies. */
+const STARTER = [
+  ['Add the task you\'ve been putting off', 0, 'Everyone has one. Old tasks matter here: once an open task is 7+ days past the day it was first due (pushing it doesn\'t reset that), it grows blight in your Ecosystem, and overdue tasks cloud the water. Finishing one that old brings a rare visitor (30+ days: an exotic one, once per biome; old-task visitors are capped at one a week). So clearing old stuff is worth more than it looks.'],
+  ['Finish this task to fill today\'s ring', 0, 'Tap the circle to finish a task. Today\'s ring is done ÷ committed: every task due today counts, and finishing it fills the ring. Each day\'s ring earns Life points (up to 10, plus 5 for a full ring), which grow your Ecosystem through its phases and biomes. A day with nothing due is neutral.'],
+  ['Add your first habit', 0, 'Grow → Habits → New habit. Each habit gets a plot in your garden. Pick a floor (the least that keeps it alive) and a target. Every week you reach the floor, its plant grows a stage; four floor weeks and it blooms. A week below the floor and it withers, and a new seed goes in. Beating the target earns rarer seeds.'],
+  ['Log a habit session', 1, 'Tap a habit\'s plant to log a session, on the day you do it. Sessions count for the week they happen in; logging one late needs a reason and evidence. Habits only grow the garden: they never change your ring or Life points.'],
+  ['Add a task for tomorrow', 1, 'Tap + to add a task with a date. A task counts toward a day\'s ring once that day arrives with it due, and moving it later doesn\'t erase that day. Adding a task for today makes today\'s ring harder until it\'s done, so plan the night before.'],
+  ['Do your first lesson', 2, 'Ask Claude to "make lessons from" a book, video or article you liked (the lesson-make skill). Due lessons show above your Ecosystem. Answering them brings the scenes to life (creatures feeding); they never change growth or points.'],
+  ['Delete these starter tasks', 3, 'They\'re ordinary tasks: finish them or delete them. They won\'t come back.'],
+];
+let starterChecked = false;
+function seedStarter() {
+  if (starterChecked) return; starterChecked = true;
+  if (['tasks', 'habits', 'habit_sessions', 'goals', 'checks'].some((c) => LBDB.all(c).length)) return;
+  W.create('checks', { value: { seeded_at: Date.now() }, updated_at: Date.now() }, null, 'starter').then(() => Promise.all(STARTER.map(([title, inDays, notes], i) =>
+    W.create('tasks', { ...newTaskBody({ title, notes, category: 'Personal', due_date: LB.addDays(TODAY, inDays) }), sort_order: i + 1, created_at: Date.now() }, null, 'starter-' + (i + 1)))))
+    .catch((e) => console.warn('[lifeboard] starter tasks', e));
+}
 function ensureRecurring() {
   if (ensured) return; ensured = true;
   LBDB.all('tasks').filter((d) => d.status === 'done' && d.recurrence_rule && !d.recurrence_spawned)
-    .forEach((d) => spawnSuccessor(d, d.completed_at ? LB.laDateOf(d.completed_at) : TODAY).catch(saveErr));
+    .forEach((d) => spawnSuccessor(d, d.completed_at ? LB.localDateOf(d.completed_at) : TODAY).catch(saveErr));
 }
 /* reorder a bucket. Urgent keeps its own order (urgent_sort_order). In This week and Later, dates lead, so a row dropped
    among other dates takes its neighbour's do date. */
@@ -599,19 +623,20 @@ function copyText(txt) {
   return Promise.resolve(fallback());
 }
 /* Send to Duet: mark the task, then start Duet's hourly check right now with this task as its focus.
+   Duet is the owner's own scheduled agent; its trigger id lives in checks/profile.duet_trigger, and the button hides without it.
    If the page can't start it (connector not allowed), copy the task to paste into Duet instead. */
-const DUET_TRIGGER = 'trig_<id>';
 const CCR = 'Claude Code Remote';
 function duetRunText(t) {
   const when = [t.due && `due ${t.due}`, t.deadline && `deadline ${t.deadline}`].filter(Boolean).join(', ');
-  return `The owner tapped "Send to Duet" on a lifeboard task, so this run was started early. Do the usual check, then make this task the focus of your message.\n\n`
+  const who = PROFILE.name || 'The owner';
+  return `${who} tapped "Send to Duet" on a lifeboard task, so this run was started early. Do the usual check, then make this task the focus of your message.\n\n`
     + `Task: "${t.title}" (tasks doc ${t.id}${t.group ? ', ' + t.group : ''}${t.project ? ', project ' + t.project : ''}${when ? ', ' + when : ''}).${t.notes ? '\nNotes: ' + t.notes : ''}\n\n`
     + `Start working on it with them in this chat: say what you can already do, do the parts that need no decision from them, and ask them for anything only they have. `
-    + `Don't send any email, pay, or book anything; drafts only. Don't mark or edit the task; the owner taps done themself.`;
+    + `Don't send any email, pay, or book anything; drafts only. Don't mark or edit the task; ${who} taps done themself.`;
 }
 async function sendToDuet(t) {
   if (!LBDB.ready) { toast("Your data isn't connected in this view."); return; }
-  if (U.duetBusy) return;
+  if (U.duetBusy || !PROFILE.duetTrigger) return;
   U.duetBusy = true;
   const mark = { duet_request: { requested_at: Date.now(), status: 'queued' } };
   const fallback = async (why) => {
@@ -623,7 +648,7 @@ async function sendToDuet(t) {
     await W.patch('tasks', t.id, mark);
     if (!LIVE.mcp) { await fallback("Couldn't start Duet from here."); return; }
     toast('Starting Duet…');
-    await LIVE.mcp.callTool(CCR, 'fire_trigger', { trigger_id: DUET_TRIGGER, text: duetRunText(t) }, { cache: false });
+    await LIVE.mcp.callTool(CCR, 'fire_trigger', { trigger_id: PROFILE.duetTrigger, text: duetRunText(t) }, { cache: false });
     toast('Sent. Duet is starting now; its reply will be in your Duet chat.');
   } catch (e) {
     console.warn('[lifeboard] send to Duet failed', e);
@@ -641,7 +666,7 @@ function taskRow(t, opts = {}) {
     ${open ? `<div class="tray">
       ${t.done ? '' : `${eff(t) && eff(t) < TODAY ? `<button class="btn sm" data-act="resched" data-val="today" data-id="${t.id}">Today</button>` : ''}<button class="btn sm" data-act="resched" data-val="tomorrow" data-id="${t.id}">Tomorrow</button><button class="btn sm" data-act="resched" data-val="weekend" data-id="${t.id}">This weekend</button><button class="btn sm" data-act="snooze-week" data-id="${t.id}">${ic('snooze', 18)}Next week</button>`}
       ${grip ? `<button class="btn sm" data-act="move" data-dir="-1" data-id="${t.id}" aria-label="Move up">${ic('up', 18)}</button><button class="btn sm" data-act="move" data-dir="1" data-id="${t.id}" aria-label="Move down">${ic('down', 18)}</button>` : ''}
-      ${t.done ? '' : `${IN_DESKTOP ? `<button class="btn sm" data-act="claudecopy" data-id="${t.id}" title="Copies this task as a prompt for a new chat">${ic('spark', 18)}Copy for Claude</button>` : `<a class="btn sm" href="${esc(claudeUrl(t))}" target="_blank" rel="noopener noreferrer" title="Opens a new Claude chat with this task filled in">${ic('spark', 18)}New Claude chat</a>`}<button class="btn sm" data-act="duet" data-id="${t.id}" title="Starts Duet now with this task as its focus">${ic('chat', 18)}${t.duet ? 'Send to Duet again' : 'Send to Duet'}</button>`}
+      ${t.done ? '' : `${IN_DESKTOP ? `<button class="btn sm" data-act="claudecopy" data-id="${t.id}" title="Copies this task as a prompt for a new chat">${ic('spark', 18)}Copy for Claude</button>` : `<a class="btn sm" href="${esc(claudeUrl(t))}" target="_blank" rel="noopener noreferrer" title="Opens a new Claude chat with this task filled in">${ic('spark', 18)}New Claude chat</a>`}${PROFILE.duetTrigger ? `<button class="btn sm" data-act="duet" data-id="${t.id}" title="Starts Duet now with this task as its focus">${ic('chat', 18)}${t.duet ? 'Send to Duet again' : 'Send to Duet'}</button>` : ''}`}
       <button class="btn sm" data-act="edit" data-id="${t.id}">${ic('edit', 18)}Edit</button>
       <button class="btn sm ghost" data-act="del" data-id="${t.id}">${ic('trash', 18)}Delete</button>
     </div>` : ''}
@@ -655,7 +680,7 @@ function groupTasks(filter, empty) {
 }
 
 /* ---------- Today ---------- */
-function nextWedding() { return S.weddings.filter((w) => w.date >= TODAY)[0]; }
+function nextBigDay() { return S.bigDays.filter((w) => w.date >= TODAY)[0]; }
 const vv = (x, u = '') => (x == null || x === '' ? '–' : esc(x) + u);
 const nextTideOf = (c) => (c && c.tides.length ? c.tides.find((t) => t.upcoming) || c.tides[0] : null);
 function dayLabel(s) { const d = toD(s); return `${WD3[d.getDay()]}, ${MON3[d.getMonth()]} ${d.getDate()}`; }
@@ -668,9 +693,9 @@ function daySummary() {
 }
 const sumHTML = (x) => `<span class="hotc${x.late ? ' late' : ''}">${x.due} due</span>${S.calOK ? ` <span class="sep">·</span> <span>${plural(x.ev, 'event')}</span> <span class="sep">·</span> <span>${x.next ? 'next ' + x.next : 'nothing later'}</span>` : ''}`;
 function viewToday() {
-  const wed = nextWedding(), C = S.cond, w = C && C.w, sf = C && C.s, nextTide = nextTideOf(C);
+  const big = nextBigDay(), C = S.cond, w = C && C.w, sf = C && C.s, nextTide = nextTideOf(C);
   const B = buckets(S.tasks), sm = daySummary();
-  const doneToday = S.tasks.filter((t) => t.done && t.doneAt && LB.laDateOf(t.doneAt) === TODAY).sort((a, b) => a.doneAt - b.doneAt);
+  const doneToday = S.tasks.filter((t) => t.done && t.doneAt && LB.localDateOf(t.doneAt) === TODAY).sort((a, b) => a.doneAt - b.doneAt);
   const rows = (l, o = { grip: true }) => l.map((t) => taskRow(t, o)).join('');
   const none = !S.tasks.length;
   /* tier 1: needs me now. Past their day: Overdue (deadline, or due date with no deadline, passed) and Slipped (due date
@@ -721,25 +746,26 @@ function viewToday() {
     if (h.daily) return { h, st, met: !st.missed && st.today >= h.target, low: !st.missed && st.today < h.floor };
     const need = h.floor - st.week; return { h, st, met: st.week >= h.target, low: need > 0 && daysLeft <= need + 2 }; });
   const hDone = hs.reduce((n, x) => n + Math.min(x.st.week, x.h.target), 0), hTot = S.habits.reduce((n, h) => n + h.target, 0);
-  const wd = wed ? diffDays(TODAY, wed.date) : 0;
+  const bd = big ? diffDays(TODAY, big.date) : 0;
   const cells = [];
   if (w) cells.push(`<span><span class="k">Air</span><span class="v num">${vv(w.temp_f, '°')}</span><span class="s">${esc(String(w.condition || '').split(',')[0])}</span></span>`);
   if (sf) cells.push(`<span><span class="k">Surf</span><span class="v num">${vv(sf.wave_ft)}<small style="font-size:12px"> ft</small></span><span class="s">${sf.period_s ? esc(sf.period_s) + 's ' : ''}${esc(sf.direction || '')}</span></span>`);
-  if (sf && sf.water_temp_f != null) cells.push(`<span><span class="k">Water</span><span class="v num">${vv(sf.water_temp_f, '°')}</span><span class="s">Local</span></span>`);
+  if (sf && sf.water_temp_f != null) cells.push(`<span><span class="k">Water</span><span class="v num">${vv(sf.water_temp_f, '°')}</span><span class="s">${esc(PROFILE.placeName || 'Local')}</span></span>`);
   if (nextTide) cells.push(`<span><span class="k">Tide</span><span class="v num">${esc(nextTide.type)}</span><span class="s">${esc(nextTide.time)}</span></span>`);
   const condGrid = cells.length ? `<button class="card cond" style="grid-template-columns:repeat(${cells.length},1fr)" data-act="go" data-to="life/hobbies" aria-label="${esc(PROFILE.place)} conditions. Open Hobbies for details.">${cells.join('')}</button>` : '';
-  const wedRow = wed ? `<button class="wedrow" data-act="go" data-to="life/home" data-anchor="weddings"><b class="num">${wd}</b><span>days to ${esc(wed.title)}</span>${ic('chevR', 16)}</button>` : '';
+  const bigRow = big ? `<button class="countrow" data-act="go" data-to="life/home" data-anchor="bigdays"><b class="num">${bd}</b><span>days to ${esc(big.title)}</span>${ic('chevR', 16)}</button>` : '';
   const glanceUp = S.glance.filter((g) => g.date >= TODAY);
-  const glanceRows = glanceUp.map((g) => { const n = diffDays(TODAY, g.date); return `<div class="wedrow" title="${esc(g.detail)}"><b class="num">${n}</b><span>days to ${esc(g.title)}</span></div>`; }).join('');
+  const glanceRows = glanceUp.map((g) => { const n = diffDays(TODAY, g.date); return `<div class="countrow" title="${esc(g.detail)}"><b class="num">${n}</b><span>days to ${esc(g.title)}</span></div>`; }).join('');
   const sumBits = [];
   if (w && w.temp_f != null) sumBits.push(`${vv(w.temp_f, '°')}`);
   if (sf && sf.wave_ft != null) sumBits.push(`surf <b>${vv(sf.wave_ft)} ft</b>`);
   if (nextTide) sumBits.push(`${esc(nextTide.type.toLowerCase())} tide ${esc(nextTide.time)}`);
-  if (wed) sumBits.push(`wedding ${wd}d`);
+  if (big) sumBits.push(`${esc(big.kind)} ${bd}d`);
   glanceUp.forEach((g) => sumBits.push(`${esc(g.title.toLowerCase())} ${diffDays(TODAY, g.date)}d`));
   const gw = gardenHabits(hs, hDone, hTot, daysLeft);
-  const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + wedRow + glanceRows }) : '';
-  return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}, there. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}, there.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
+  const hiName = PROFILE.name ? ', ' + esc(PROFILE.name) : '';
+  const amb = sumBits.length || condGrid ? fold('glance', 'At a glance', { tier: 3, def: false, z: 'z-amb', sum: sumBits.join(' · '), body: condGrid + bigRow + glanceRows }) : '';
+  return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}${hiName}. ${longDate(TODAY)}</h2><span class="greet" aria-hidden="true">${greeting()}${hiName}.</span><span class="d">${dayLabel(TODAY)}</span><span class="sep">·</span>${sumHTML(sm)}</div>
     <div class="today"><div class="col a">${upnext}${weekRings({ html: due + sug + tomorrow + week + more, tiles: [{ k: 'overdue', n: late.length, l: 'overdue', c: 'bad', id: 'sec-overdue' }, { k: 'slipped', n: slipped.length, l: 'slipped', c: 'hot', id: 'sec-slipped' }, { k: 'today', n: dueToday.length, l: 'today', id: 'tasks', always: 1 }, { k: 'tomorrow', n: tmr.length, l: 'tomorrow', id: 'tomorrow', always: 1 }, { k: 'sug', n: sg.length, l: 'suggested', id: 'suggested' }] })}</div><div class="col b">${ecoOn() ? `<div class="les-wrap">${lessonCard()}<div class="eco-slot"></div></div>` : ''}${gw || habitRings(hs, hDone, hTot, daysLeft)}${amb}</div></div>`;
 }
 /* Habit rings: one per habit, filling toward the weekly target. The dot on each ring is the floor that keeps the streak alive. */
@@ -840,12 +866,12 @@ function flameBadge(st, low) {
 let ringLast = null; /* today's done count at the last render: the ring sweeps only when it grows */
 /* completion step for ring color: p1 under a third, p2 under two thirds, p3 almost there, p4 done */
 const ringStep = (f) => (f >= 1 ? 'p4' : f >= 2 / 3 ? 'p3' : f >= 1 / 3 ? 'p2' : 'p1');
-const ringTally = () => LBG.ringTally(S.tasks.map((t) => ({ eff: eff(t) || null, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null, days: t.days })));
+const ringTally = () => LBG.ringTally(S.tasks.map((t) => ({ eff: eff(t) || null, doneDate: t.done && t.doneAt ? LB.localDateOf(t.doneAt) : null, days: t.days })));
 /* tasks a past day committed to (committed_days, else its current date for tasks never tracked) */
 const committedOn = (t, d) => (t.days.length ? t.days.includes(d) : eff(t) === d);
 /* a missed task's status now: done late, moved to another date, or still sitting on a past date (overdue/slipped) */
 function missStatus(t, d) {
-  if (t.done) return `<span class="m">${ic('check', 15)}Done late · ${relDate(LB.laDateOf(t.doneAt))}</span>`;
+  if (t.done) return `<span class="m">${ic('check', 15)}Done late · ${relDate(LB.localDateOf(t.doneAt))}</span>`;
   const e = eff(t), st = tstate(t);
   if (!e) return '<span class="m hot">Moved · no date</span>';
   if (e !== d && e >= TODAY) return `<span class="m hot">Moved ${ic('arrow', 13)} ${relDate(e)}</span>`;
@@ -853,9 +879,9 @@ function missStatus(t, d) {
 }
 /* a past day's tasks: what got done that day, then what it committed to and missed */
 function pastDayTasks(d) {
-  const doneOn = (t) => t.done && t.doneAt && LB.laDateOf(t.doneAt) === d;
+  const doneOn = (t) => t.done && t.doneAt && LB.localDateOf(t.doneAt) === d;
   const done = S.tasks.filter(doneOn).sort((a, b) => a.doneAt - b.doneAt);
-  const missed = S.tasks.filter((t) => !doneOn(t) && committedOn(t, d) && !(t.done && t.doneAt && LB.laDateOf(t.doneAt) < d));
+  const missed = S.tasks.filter((t) => !doneOn(t) && committedOn(t, d) && !(t.done && t.doneAt && LB.localDateOf(t.doneAt) < d));
   const list = (title, a, o, empty) => `<section class="sec t1">${secH(title, '', 1, a.length)}<div class="card">${a.length ? `<ul class="list">${a.map((t) => taskRow(t, o(t))).join('')}</ul>` : `<p class="empty">${empty}</p>`}</div></section>`;
   return list('Done', done, () => ({}), 'Nothing finished that day.') + list('Missed', missed, (t) => ({ status: missStatus(t, d) }), 'Nothing missed.');
 }
@@ -1055,7 +1081,7 @@ function viewLife() {
     const BLEND = [['Blended', 'Name the part that has the wheel, and notice your feet on the floor.'], ['Noticing it', 'Noticing is the gap. That already counts.'], ['A bit of space', 'Hold onto that space, and take a short break while you have it.']];
     const t = U.timer, left = t.end ? Math.max(0, Math.ceil((t.end - Date.now()) / 1000)) : t.len * 60;
     body = `<section class="sec">${secH('Health tasks')}${groupTasks((x) => x.group === 'Health', 'No health tasks open.')}</section>
-      <section class="sec">${checklist('Appointments, in small steps', "Not one big scary task. Step 1 alone counts as progress, and there's no calling yet.", ['appt-1', 'appt-2', 'appt-3', 'appt-4'], ['List what you need: the type of appointment and what it’s for.', 'Find the number or portal for each one.', 'Book just the first one.', 'Add it to your calendar and file the confirmation.'])}
+      <section class="sec">${checklist('Checkups, in small steps', "Annual physical, dentist cleaning, eye exam: not one big scary task. Step 1 alone counts as progress, and there's no calling yet.", ['appt-1', 'appt-2', 'appt-3', 'appt-4'], ['List what you need: the type of appointment and what it’s for.', 'Find the number or portal for each one.', 'Book just the first one.', 'Add it to your calendar and file the confirmation.'])}
         <button class="link" data-act="script" aria-expanded="${U.script}" style="margin-top:4px">${ic(U.script ? 'chevD' : 'chevR', 16)} ${U.script ? 'Hide' : 'Show'} the call script</button>
         ${U.script ? `<div class="callout"><p style="margin:0">"Hi, I'd like to book an appointment with <b>[doctor type or name]</b>. It's for <b>[one-line reason]</b>. I'm usually free <b>[your availability]</b>. What's the earliest opening? Is there anything I should bring?"</p><p class="muted small" style="margin:8px 0 0">If something isn't handy: "Could you give me a direct number or the patient portal link so I can book that way?"</p></div>` : ''}</section>
       <section class="sec">${secH('Break timer', `<span class="small muted num">${plural(breaks, 'break')} today</span>`)}<div class="card pad">
@@ -1068,7 +1094,7 @@ function viewLife() {
       <section class="sec">${secH('Check in')}<div class="card pad">
         <h4 style="margin:0 0 8px;font-size:16px">Which part is loudest right now?</h4>
         <div class="row-btns">${PARTS.map((p) => `<button class="seg" data-act="part" data-val="${p}" aria-pressed="${!!lp && lp.label === p}">${p}</button>`).join('')}</div>
-        ${lp ? `<p class="small muted" style="margin:8px 0 0">Last check-in: <b>${esc(lp.label)}</b> ${lp.at ? 'at ' + new Intl.DateTimeFormat('en-US', { timeZone: LB.TZ, hour: 'numeric', minute: '2-digit' }).format(new Date(lp.at)) : 'today'}. No fixing required.</p>` : ''}
+        ${lp ? `<p class="small muted" style="margin:8px 0 0">Last check-in: <b>${esc(lp.label)}</b> ${lp.at ? 'at ' + new Intl.DateTimeFormat('en-US', { timeZone: LB.tz(), hour: 'numeric', minute: '2-digit' }).format(new Date(lp.at)) : 'today'}. No fixing required.</p>` : ''}
         <h4 style="margin:18px 0 8px;font-size:16px">How blended with work?</h4>
         <div class="row-btns">${BLEND.map(([b]) => `<button class="seg" data-act="blend" data-val="${b}" aria-pressed="${!!lb && lb.label === b}">${b}</button>`).join('')}</div>
         ${lb ? `<p class="small" style="margin:8px 0 0">${(BLEND.find((x) => x[0] === lb.label) || [])[1]}</p>` : ''}
@@ -1081,13 +1107,13 @@ function viewLife() {
       <section class="sec">${secH('Coming up', `<span class="small muted">${plural(bills.length, 'reminder')}</span>`)}<div class="card">${bills.length ? bills.map((b) => `<div class="kv"><span>${ic('repeat', 16)} ${esc(b.title)}</span><span class="num ${tstate(b).overdue ? 'tmeta' : 'muted'}" style="margin:0"><span class="${tstate(b).overdue || eff(b) === TODAY ? 'hot' : ''}">${relDate(eff(b))}</span></span></div>`).join('') : '<p class="empty">No recurring money reminders.</p>'}</div></section>
       <section class="sec">${secH('Money tasks')}${groupTasks((x) => x.group === 'Money', 'No money tasks open.')}</section>`;
   } else if (U.life === 'home') {
-    const terms = S.weddings.flatMap((w) => w.match.length ? w.match : [w.title.split("'")[0]]).map((x) => x.toLowerCase().trim()).filter(Boolean).concat(['wedding']);
-    const isWed = (t) => t.group === 'Social' && terms.some((s) => t.title.toLowerCase().includes(s));
+    const terms = S.bigDays.flatMap((w) => (w.match.length ? w.match : [w.title.split("'")[0]]).concat(w.kind)).map((x) => x.toLowerCase().trim()).filter(Boolean);
+    const isBig = (t) => t.group === 'Social' && terms.some((s) => t.title.toLowerCase().includes(s));
     const pf = PROFILE.pets.some((p) => p.key === U.petFilter) ? U.petFilter : 'all';
     const petMatch = (t) => pf === 'all' || t.title.toLowerCase().includes(pf) || (/\band\b/.test(t.title) && t.title.toLowerCase().includes(pf));
-    body = (S.weddings.length ? `<section class="sec" id="weddings">${secH('Weddings')}<div class="cards2">${S.weddings.map((w) => { const n = diffDays(TODAY, w.date); return `<div class="card pad hcard"><div class="wcard"><span class="stat num">${n >= 0 ? n : '✓'}</span><span class="small muted">${n === 0 ? 'Today!' : n > 0 ? 'days to go' : 'Celebrated'}</span><h4 style="margin:0;font-size:17px">${esc(w.title)}</h4></div>
+    body = (S.bigDays.length ? `<section class="sec" id="bigdays">${secH('Big days')}<div class="cards2">${S.bigDays.map((w) => { const n = diffDays(TODAY, w.date); return `<div class="card pad hcard"><div class="wcard"><span class="stat num">${n >= 0 ? n : '✓'}</span><span class="small muted">${n === 0 ? 'Today!' : n > 0 ? 'days to go' : 'Celebrated'}</span><h4 style="margin:0;font-size:17px">${esc(w.title)}</h4></div>
         <p class="small" style="margin:10px 0 0">${longDate(w.date)}${w.where ? ' · ' + esc(w.where) : ''}</p>${w.gift ? `<p class="small muted" style="margin:4px 0 0">Gift: ${esc(w.gift)}</p>` : ''}</div>`; }).join('')}</div>
-        <div class="group-l">Wedding tasks</div>${groupTasks(isWed, 'No wedding tasks open.')}</section>` : '')
+        <div class="group-l">Big day tasks</div>${groupTasks(isBig, 'No big day tasks open.')}</section>` : '')
       + `      <section class="sec">${secH('Home')}${groupTasks((t) => t.group === 'Home', 'No home tasks open.')}</section>
       <section class="sec">${secH('Pets')}${PROFILE.pets.length > 1 ? `<div class="scroller" role="group" aria-label="Filter pets" style="margin-bottom:10px">${[{ key: 'all', name: 'All pets', icon: 'paw' }, ...PROFILE.pets].map((p) => `<button class="seg" data-act="pet" data-val="${esc(p.key)}" aria-pressed="${pf === p.key}">${ic(p.icon, 17)}${esc(p.name)}</button>`).join('')}</div>` : ''}
         ${groupTasks((t) => t.group === 'Pets' && petMatch(t), pf === 'all' ? 'No pet tasks open.' : 'Nothing open for ' + esc((PROFILE.pets.find((p) => p.key === pf) || { name: pf }).name) + '.')}</section>
@@ -1098,7 +1124,7 @@ function viewLife() {
     const outside = S.habits.filter((h) => ['surfing', 'running'].includes(h.key) || /surf|run/i.test(h.name));
     const climbs = S.goals.filter((g) => g.cat === 'Climbing' && !g.done);
     const q = Math.ceil(+TODAY.slice(5, 7) / 3);
-    const upd = C && C.at ? `<span class="tiny muted">Updated ${new Intl.DateTimeFormat('en-US', { timeZone: LB.TZ, hour: 'numeric', minute: '2-digit' }).format(new Date(C.at))}${LB.laDateOf(C.at) !== TODAY ? ' on ' + shortDate(LB.laDateOf(C.at)) : ''}</span>` : '';
+    const upd = C && C.at ? `<span class="tiny muted">Updated ${new Intl.DateTimeFormat('en-US', { timeZone: LB.tz(), hour: 'numeric', minute: '2-digit' }).format(new Date(C.at))}${LB.localDateOf(C.at) !== TODAY ? ' on ' + shortDate(LB.localDateOf(C.at)) : ''}</span>` : '';
     const wxCard = w ? `<div class="card pad"><span class="group-l" style="margin:0 0 4px">Weather</span><div class="stat num">${vv(w.temp_f, '°')}</div><p class="small" style="margin:4px 0 8px">${esc(w.condition || '')}<br><span class="muted">Feels ${vv(w.feels_like_f, '°')} · H ${vv(w.high_f, '°')} L ${vv(w.low_f, '°')}</span></p>
           <div class="kv small"><span class="muted">Wind</span><span class="num">${vv(w.wind_mph, ' mph')} ${esc(w.wind_dir || '')}${w.gust_mph != null ? `, gusts ${esc(w.gust_mph)}` : ''}</span></div><div class="kv small"><span class="muted">Sun</span><span class="num">${vv(w.sunrise)} – ${vv(w.sunset)}</span></div><div class="kv small"><span class="muted">UV · Rain</span><span class="num">${vv(w.uv_max)} · ${vv(w.rain_chance, '%')}</span></div></div>` : '';
     const surfCard = sf ? `<div class="card pad"><span class="group-l" style="margin:0 0 4px">Surf</span><div class="stat num">${vv(sf.wave_ft)}<small style="font-size:18px"> ft</small></div><p class="small" style="margin:4px 0 8px">${sf.period_s ? esc(sf.period_s) + 's ' : ''}${esc(sf.direction || '')}<br><span class="muted">Water ${vv(sf.water_temp_f, '°')}</span></p>
@@ -1377,7 +1403,7 @@ async function sendChat(text) {
   try { sample = window.claude && window.claude.use ? await window.claude.use('sample') : null; } catch (e) { sample = null; }
   if (!sample) { c.err = 'Claude isn’t available in this view. Use Copy for a full chat.'; renderSheet(); return; }
   const first = !c.msgs.length;
-  const ctx = `You are helping the owner with one task from their personal dashboard. Today is ${WD[dow(TODAY)]} ${TODAY}. Be concise and practical: concrete next steps, drafts they can paste, short questions only when needed. Plain text, no markdown headers.\n\n` + taskPrompt(t, false);
+  const ctx = `You are helping ${PROFILE.name || 'someone'} with one task from their personal dashboard. Today is ${WD[dow(TODAY)]} ${TODAY}. Be concise and practical: concrete next steps, drafts they can paste, short questions only when needed. Plain text, no markdown headers.\n\n` + taskPrompt(t, false);
   c.msgs.push({ role: 'user', content: first ? ctx + (text ? '\n\n' + text : '') : text, shown: text || 'Help me get started.' });
   if (!first && !text) { c.msgs.pop(); return; }
   c.msgs.push({ role: 'assistant', content: '' });
@@ -1752,7 +1778,7 @@ document.addEventListener('click', (e) => {
     case 'cal-allow': allowCal(); break;
     case 'sug-keep': { const t = (S.suggested || []).find((x) => x.id === id); if (t) act((rec) => W.patch('tasks', id, { suggested: false }, rec), `Kept “${t.title}”`); break; }
     case 'sug-done': { const t = (S.suggested || []).find((x) => x.id === id); if (t) act((rec) => W.patch('tasks', id, { status: 'done', completed_at: Date.now() }, rec)
-        .then(() => W.create('logs', { kind: 'suggestion_done', label: t.title, value: { task_id: id, note: 'The owner marked this suggestion done (already done)' }, date: TODAY }, rec)), `Marked “${t.title}” done`); break; }
+        .then(() => W.create('logs', { kind: 'suggestion_done', label: t.title, value: { task_id: id, note: `${PROFILE.name || 'The owner'} marked this suggestion done (already done)` }, date: TODAY }, rec)), `Marked “${t.title}” done`); break; }
     case 'sug-drop': { const t = (S.suggested || []).find((x) => x.id === id); if (t) delDoc('tasks', id, `Dismissed “${t.title}”`); break; }
     case 'del': { const t = S.tasks.find((x) => x.id === id); if (t) delDoc('tasks', id, `Deleted “${t.title}”`); break; }
     case 'tomorrow': U.showTomorrow = !U.showTomorrow; render(); break;
@@ -1905,8 +1931,8 @@ function currentGame() {
   if (GAME.start === undefined) { gameStart(); return null; }
   const key = S, pool = LBGarden.plantPool(), pv = LBGarden.poolVersion();
   if (GAME.gameKey === key && GAME.poolV === pv && GAME.game && GAME.game.today === TODAY) return GAME.game;
-  const tasks = S.tasks.map((t) => ({ eff: eff(t), done: t.done, doneDate: t.done && t.doneAt ? LB.laDateOf(t.doneAt) : null, days: t.days }));
-  const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target, daily: h.daily, since: h._d && h._d.created_at ? LB.laDateOf(h._d.created_at) : null }));
+  const tasks = S.tasks.map((t) => ({ eff: eff(t), done: t.done, doneDate: t.done && t.doneAt ? LB.localDateOf(t.doneAt) : null, days: t.days }));
+  const habits = S.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target, daily: h.daily, since: h._d && h._d.created_at ? LB.localDateOf(h._d.created_at) : null }));
   const sessions = S.sessions.map((x) => { const h = S.habits.find((k) => k.key === x.h || k.id === x.h); return { h: h ? h.key : x.h, date: x.date }; });
   const breakSkips = LBDB.all('logs').filter((l) => l.kind === 'break' && l.label === 'skip').map((l) => l.date);
   const lessonDates = LBDB.all('logs').filter((l) => l.kind === 'lesson').map((l) => l.date);
@@ -2013,8 +2039,7 @@ function lesRules() {
   ['feedings', 'perFeeding', 'dayStart', 'dayEnd'].forEach((k) => { if (v[k] != null && isFinite(+v[k])) R[k] = +v[k]; });
   return R;
 }
-const lesHourF = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' });
-const lesHour = (ms) => { const p = lesHourF.formatToParts(new Date(ms)), g = (t) => +p.find((x) => x.type === t).value; return g('hour') + g('minute') / 60; };
+const lesHour = (ms) => { const p = new Intl.DateTimeFormat('en-US', { timeZone: LB.tz(), hour: 'numeric', minute: 'numeric', hourCycle: 'h23' }).formatToParts(new Date(ms)), g = (t) => +p.find((x) => x.type === t).value; return g('hour') + g('minute') / 60; };
 const lesRung = (l) => l.rungs[LBG.rungOf(l.level, l.rungs.length)];
 /* today's deck: due reviews then new lessons (game.js buildDeck), from active sources, shuffled the same way all day */
 function lessonDeck() {
@@ -2022,7 +2047,7 @@ function lessonDeck() {
   const R = lesRules(), f = LBG.feedingOf(lesHour(Date.now()), R);
   /* the cap is per day: cards already answered today (lesson touched today) use up today's deck */
   /* the cap is per feeding: cards answered earlier in this feeding (lesson touched today, same window) use it up */
-  const used = live.filter((l) => l.updated_at && LB.laDateOf(l.updated_at) === TODAY && LBG.feedingOf(lesHour(l.updated_at), R) === f).length;
+  const used = live.filter((l) => l.updated_at && LB.localDateOf(l.updated_at) === TODAY && LBG.feedingOf(lesHour(l.updated_at), R) === f).length;
   const ids = LBG.buildDeck(live.map((l) => ({ id: l.id, level: l.level, due: lesDay(l.due), state: l.state })), lesDay(TODAY), Math.max(0, R.perFeeding - used)).map((x) => x.id);
   let h = 0; for (const c of TODAY) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const key = (id) => { let x = h; for (const c of id) x = ((x ^ c.charCodeAt(0)) * 16777619) >>> 0; return x; };
@@ -2110,7 +2135,7 @@ GAME.forced = gameFromUrl(location.href);
 window.LB_GAME_HREF = location.href;
 readHash();
 if (gameOn()) loadGame();
-LBDB.start(() => { derive(); if (LBDB.state.status === 'ready') { ensureRecurring(); commitPass(); } schedule(); });
+LBDB.start(() => { derive(); if (LBDB.state.status === 'ready') { seedStarter(); ensureRecurring(); commitPass(); } schedule(); });
 render();
 startCal();
 /* break overlay (break/ app): it injects window.lifeboardBreak and fires lifeboardbreakend with how the break ended.

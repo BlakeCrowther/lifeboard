@@ -1,9 +1,19 @@
 /* lifeboard: pure date, task, habit and recurrence logic. No DOM. */
 (function (G) {
-  const TZ = 'America/Los_Angeles';
-  const fmtYMD = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+  /* The board's day boundary. Defaults to the browser's zone; the owner's checks/profile.tz overrides it (app.js calls setTZ). */
+  let TZ, fmtYMD, timeFmt, hmFmt;
+  function setTZ(tz) {
+    try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); } catch (e) { return false; }
+    TZ = tz;
+    fmtYMD = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+    timeFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
+    hmFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    return true;
+  }
+  if (!setTZ(Intl.DateTimeFormat().resolvedOptions().timeZone)) setTZ('America/Los_Angeles');
+  const tz = () => TZ;
   const todayStr = () => fmtYMD.format(new Date());
-  const laDateOf = (ms) => fmtYMD.format(new Date(ms));
+  const localDateOf = (ms) => fmtYMD.format(new Date(ms));
   const toD = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
   const fromD = (d) => d.toISOString().slice(0, 10);
   const addDays = (s, n) => { const d = toD(s); d.setUTCDate(d.getUTCDate() + n); return fromD(d); };
@@ -170,17 +180,15 @@
   function buyCalc(item, today) {
     const tag = TAGS[item.tag] ? item.tag : 'one_day';
     const days = TAGS[tag].days;
-    const added = item.added_date || (item.created_at ? laDateOf(item.created_at) : today);
+    const added = item.added_date || (item.created_at ? localDateOf(item.created_at) : today);
     const ready = days == null ? null : addDays(added, days);
     const remaining = ready ? Math.max(0, diffDays(today, ready)) : null;
     return { tag, timer_days: days, ready_date: ready, days_remaining: remaining, is_ready: days === 0 || (!!ready && ready <= today) };
   }
 
   /* ---------- Calendar ---------- */
-  const laTimeFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
-  const laHM = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-  const tLabel = (iso) => laTimeFmt.format(new Date(iso)).replace(':00', '');
-  const minsOfDay = (iso) => { const p = laHM.formatToParts(new Date(iso)); return (+p.find((x) => x.type === 'hour').value % 24) * 60 + +p.find((x) => x.type === 'minute').value; };
+  const tLabel = (iso) => timeFmt.format(new Date(iso)).replace(':00', '');
+  const minsOfDay = (iso) => { const p = hmFmt.formatToParts(new Date(iso)); return (+p.find((x) => x.type === 'hour').value % 24) * 60 + +p.find((x) => x.type === 'minute').value; };
   const durLabel = (m) => m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
   const evMins = (e) => Math.max(0, Math.round((Date.parse(e.end) - Date.parse(e.start)) / 60000));
   const minLabel = (m) => { const h = Math.floor(m / 60), mm = m % 60; return `${(h % 12) || 12}${mm ? ':' + pad(mm) : ''} ${h < 12 || h === 24 ? 'AM' : 'PM'}`; };
@@ -190,12 +198,12 @@
       const s = e.start.slice(0, 10), en = e.end ? e.end.slice(0, 10) : null;
       return en && en > s ? s <= d && d < en : d === s;
     });
-    const tm = evs.filter((e) => !e.all_day && laDateOf(Date.parse(e.start)) === d).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+    const tm = evs.filter((e) => !e.all_day && localDateOf(Date.parse(e.start)) === d).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
     return { ad, tm };
   }
   function freeGaps(tm, d) {
     const iv = tm.map((e) => {
-      const s = minsOfDay(e.start); const sameDay = laDateOf(Date.parse(e.end)) === d;
+      const s = minsOfDay(e.start); const sameDay = localDateOf(Date.parse(e.end)) === d;
       return [Math.max(480, s), Math.min(1080, sameDay ? minsOfDay(e.end) : 1440)];
     }).filter(([a, b]) => b > a).sort((a, b) => a[0] - b[0]);
     const gaps = []; let cur = 480;
@@ -228,7 +236,7 @@
   }
 
   G.LB = {
-    TZ, todayStr, laDateOf, toD, addDays, diffDays, dow, ymd, pad, lastDayOfMonth, addMonths, mondayOf, MONTHS, MON3, WD, WD3, longDate, shortDate, relDate, nth,
+    tz, setTZ, todayStr, localDateOf, toD, addDays, diffDays, dow, ymd, pad, lastDayOfMonth, addMonths, mondayOf, MONTHS, MON3, WD, WD3, longDate, shortDate, relDate, nth,
     GROUPS, eff, taskState, byOrder, byDateThenOrder, sortUrgent, groupKey, buckets, sortGroupList,
     ORD, nthWeekday, nextDue, describeRule, shortRule, habitStats, TAGS, buyCalc,
     tLabel, minsOfDay, durLabel, evMins, minLabel, eventsOn, freeGaps, autoIcon,

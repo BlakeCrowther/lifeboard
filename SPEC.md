@@ -86,7 +86,7 @@ Every day earns **Growth** from the day's ring %, and Growth moves the current b
 - Committed for a day = tasks committed to that day that weren't finished earlier + every task finished that day. Tasks with no recorded commitments (older ones) use their current date.
 - Overdue tasks don't count against today. To commit one to today, reschedule it to today.
 - **Day statuses** (shown per day in the ring card): **Done** (finished that day) and **Missed** (committed, not finished that day). A missed task is now one of: **Done late**, **Moved** (has a new date), **Slipped** (due date passed, deadline still ahead) or **Overdue** (deadline passed, or due date passed with no deadline).
-- **Age** = days since a task was first committed (its earliest `committed_days`); pushing it to another day never resets it. Open tasks show it as "Missed Nd" (plus "pushed N×" when moved), whether they sat overdue or kept getting pushed. Only the days a task was committed to count against the ring: a task left overdue doesn't count against later days (murk and blight cover the backlog), so a long backlog can't sink every ring.
+- **Age** = days since a task was first committed (its earliest `committed_days`); pushing it to another day never resets it. A task is never committed to a day before it was created, so giving a new task a past date makes it overdue from its creation day, not older. Open tasks show it as "Missed Nd" (plus "pushed N×" when moved), whether they sat overdue or kept getting pushed. Only the days a task was committed to count against the ring: a task left overdue doesn't count against later days (murk and blight cover the backlog), so a long backlog can't sink every ring.
 - Adding a task for today raises committed, so today's % drops until it's done. A task added and finished the same day adds 1 to both sides (3/4 = 75% becomes 4/5 = 80%).
 - A day with nothing due where you finish anything is a full ring.
 - A day with nothing committed is neutral: no Growth, no penalty, ignored by bleaching.
@@ -149,7 +149,7 @@ Later candidate: **Scenario** (a short situation; pick which idea applies). Drop
 
 **Ladder per source:** each source picks which formats its lessons climb through, in order, and a lesson's format follows its level instead of staying fixed. A book might go Tap → Recall → Apply; Spanish skips Tap and goes Recall → Apply. A new lesson starts on the first rung; advancing moves it up a rung and lengthens the interval; a miss drops it a rung and brings it back sooner. The lesson-making skill sets the ladder and writes a prompt for every rung of every lesson.
 
-**Feedings:** `lessons.feedings = 2` decks a day of `lessons.perFeeding = 5` lessons each, shuffled. The waking day `lessons.dayStart = 6` to `lessons.dayEnd = 22` (hours, Pacific) splits evenly between feedings (default: before 2 pm, after 2 pm); before the start counts as the first, after the end as the last. Reviews that are due come first, then new lessons. Never more than `perFeeding` per feeding: cards answered earlier in the same feeding count toward it, and a missed feeding doesn't carry over. Per-board override: `checks/lesson_rules` `{ value: { feedings, perFeeding, dayStart, dayEnd } }` (an old `{ deck }` sets `perFeeding`).
+**Feedings:** `lessons.feedings = 2` decks a day of `lessons.perFeeding = 5` lessons each, shuffled. The waking day `lessons.dayStart = 6` to `lessons.dayEnd = 22` (hours, board timezone) splits evenly between feedings (default: before 2 pm, after 2 pm); before the start counts as the first, after the end as the last. Reviews that are due come first, then new lessons. Never more than `perFeeding` per feeding: cards answered earlier in the same feeding count toward it, and a missed feeding doesn't carry over. Per-board override: `checks/lesson_rules` `{ value: { feedings, perFeeding, dayStart, dayEnd } }` (an old `{ deck }` sets `perFeeding`).
 
 **Spaced repetition:** each lesson tracks its level. Advancing brings it back after `lessons.intervals = [3,7,21]` days for levels 1, 2 and 3; advancing past the last level **graduates** it. A source can set its own `intervals` (any length, e.g. quotes `[7,30,90]`, a language `[1,3,7,14]`); the lesson-make skill picks them by type. A missed Recall drops a level (never below the first rung) and comes back after that level's interval, or tomorrow on the first rung.
 
@@ -257,7 +257,7 @@ Everything sits in the lifeboard artifact db; no hippocampus dependency. Claude 
 
 Seeds, plantings, the herbarium, the ecosystem and dioramas were planned as stored collections; they're derived from history instead (see Core rules) and only need storing if derivation stops being enough.
 
-**Code:** private repo `BlakeCrowther/lifeboard`. Rules: `game.js`. Derivation and Collection UI: `garden.js`. Scene: `habitat.js`. Balance simulation: `sim/run.js`.
+**Code:** this repo. Rules: `game.js`. Derivation and Collection UI: `garden.js`. Scene: `habitat.js`. Balance simulation: `sim/run.js`.
 
 ## Simulation
 
@@ -313,9 +313,9 @@ Before building UI, the rules became one pure module (`game.js`, no DOM, like `l
 | Light | 20 | 94% | 88% | 0.39 |
 | Overachiever | 0 | 0% | 0% | 0 |
 
-Real snapshot at the time: 4 overdue, none 7+ days old → 40% murk, no blight. Steady pace matches; murk reads clearly as "a few things slipping" without being constant.
+A typical board (a few tasks overdue, none 7+ days old) sits around 40% murk with no blight. Steady pace matches; murk reads clearly as "a few things slipping" without being constant.
 
-**Real habits:** 6 of 8 hit the floor every week; Journaling (4/9 weeks) and Guitar practice (3/7) would die nearly every season even at a floor of 1. They need a biweekly cadence option, since the floor can't go lower. Reading beats its target most weeks (4–6 vs 3), so it would earn exotic seeds every season; the tweak suggestion should raise its target.
+**Hard habits:** habits done less than weekly (e.g. a 3-of-7-weeks pace) would die nearly every season even at a floor of 1. They need a biweekly cadence option, since the floor can't go lower. A habit that beats its target most weeks (4–6 vs 3) earns exotic seeds every season; the tweak suggestion should raise its target.
 
 **Run 3 (Nov 19, per-plot plants, 200 seeds × 28 weeks):** no seasons ending plants; each plot finishes on its own and is replanted after a week on show. Dead plot-weeks fall from ~30% to 12% (steady), 16% bursty, 20% light. Blooms per plot a month: steady 0.46, overachiever 0.70, light 0.29. Seed mix after the points change (Nov 19; common/rare/exotic % of blooms): steady 30/67/3, bursty 24/68/8, overachiever 2/53/45, light 36/63/0. Rare at 7 instead would give steady 54/43/3. A composted plant (3 growing weeks, max 9) can't earn exotic. The weekly job makes ~0.9 new plants a week for 4 habits (0.5 for the light user), so one or two builds a week.
 
@@ -324,7 +324,7 @@ Real snapshot at the time: 4 overdue, none 7+ days old → 40% murk, no blight. 
 - [ ] Grace token: decide after a few months of real data.
 - [ ] Rare-visitor threshold: 6 full rings; check after 4 weeks of real data.
 - [ ] Seed placement: random now; add a pick menu later?
-- [ ] Biweekly cadence for hard habits (Journaling, Guitar practice fail even a floor of 1).
+- [ ] Biweekly cadence for hard habits (ones done less than weekly fail even a floor of 1).
 - [ ] Freeze closed weeks (`week_results`) before anyone edits a floor or target, or accept that edits re-score the past.
 - [x] Where lesson-making lives: a skill in this repo (decided Nov 18).
 - [x] Visual direction for garden and ecosystem: 3D ecosystem scene with 8 biomes and SVG plants (built Nov 18).

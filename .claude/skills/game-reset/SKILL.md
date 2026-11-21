@@ -22,7 +22,7 @@ The user's live lifeboard artifact (never a mock/test build; see break-setup for
 ArtifactData `list` (page through with `cursor`) with `out_dir` = `~/lifeboard-backups/<YYYY-MM-DD>/` for: `game_state`, `visitors_met`, `keepsakes`, and `checks` doc `game_status` (`get`). Outside the repo: it's personal data. Copy `models/biomes.json` there too. Report the folder.
 
 ## 4. Reset
-- `game_state/game`: `update` `{ "started": "<today, Pacific YYYY-MM-DD>", "created_at": <ms> }` pinned with `if_version`.
+- `game_state/game`: `update` `{ "started": "<today in the board timezone (checks/profile.tz, else the owner's local zone), YYYY-MM-DD>", "created_at": <ms> }` pinned with `if_version`.
 - `checks/game_status`: `delete` (the board rewrites it on next load).
 - If chosen: `delete` every doc in `visitors_met` and `keepsakes` with `batch` (≤ 50 writes per batch, each pinned with its `if_version`).
 - Fresh biomes: move every entry of `models/biomes.json` `biomes` into `models/biomes.archive.json` and every `models/roster.json` `models` entry (creatures and `kind: "plant"` alike) into `models/roster.archive.json` (append under the same key with an `archived: "<date>"` field; keep `note`/`identity_rules`/`version` in the live files, leaving `"biomes": []` and `"models": []`; the `assets/` files stay, and so do `*/qa_calibration.json` goldens: judge-panel still compares new creatures and plants against them). Run `python3 models/shared/tools/check_biome.py`, commit, push, and republish the artifact with `models/biomes.json` and `models/roster.json` in `files` (lifeboard-setup "Publishing"; check the live copy against the repo first per AGENTS.md).

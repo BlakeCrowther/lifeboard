@@ -1,6 +1,7 @@
 {
   "name": "lifeboard",
   "private": true,
+  "license": "MIT",
   "description": "No dependencies, no build. Scripts wrap the checks in tools/.",
   "scripts": {
     "bootstrap": "corepack enable && pnpm install && pnpm exec playwright install chromium",
