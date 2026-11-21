@@ -9,6 +9,8 @@
       "js": "assets/gulf_pipefish-glb.js",
       "biome": 0,
       "rarity": "common",
+      "locomotion": "swim",
+      "rest": {"on": "sand", "pose": "lie", "share": 0.3, "bout_s": [12, 28]},
       "golden": false,
       "added": "2026-11-18"
     },

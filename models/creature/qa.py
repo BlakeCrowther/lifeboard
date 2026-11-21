@@ -1,7 +1,7 @@
 """Creature-kind gates (models/creature/CONTRACT.md), exec'd by shared/blender/qa_structural.py.
 shape-check (REST pose): length/axes/symmetry/origin by body plan, `mouth` empty + `part:mouth` geometry.
 motion-check (actions): idle loop + feed (start/end on idle, speed caps, visible amplitude, no pops, mouth reach) + sulk (mood loop:
- slower than idle, a visibly different posture, frown on front mouths)."""
+ slower than idle, a visibly different posture, frown on front mouths) + perch when present (resting loop: seamless, no pops, calmer than idle)."""
 
 def shape_check():
     global L, RADIAL, MOUTH_SIDE, ctr, mouth
@@ -97,3 +97,13 @@ def motion_check():
                 check("motion-check", "sulk frowns (mouth corners drop >= 15% mouth width)", drop >= 0.15, f"{drop:.2f} of width")
             else:
                 check("motion-check", "sulk frowns (mouth corner bones cornerL/R, lib.mouth_corner_bones)", False, "no cornerL/jaw bones")
+    # perch (CONTRACT "Resting"): the resting loop; required when the spec has motion.perch (check_spec decides when), checked when present
+    perch = find("perch")
+    if spec.get("motion", {}).get("perch"): check("motion-check", "has 'perch' animation (spec motion.perch)", perch is not None)
+    if perch:
+        use(perch); s, e = map(int, perch.frame_range); n = e - s
+        check("motion-check", "perch length 48-144 frames", 48 <= n <= 144, f"{n}")
+        d = delta(pose(s), pose(e)); check("motion-check", "perch loops seamlessly", d < 1e-3, f"max bone delta {d:.2e}")
+        sp, pk, am = motion(perch)
+        check("motion-check", "perch has no pops (no acceleration spikes)", pk == 0, f"spike {pk:.3f}")
+        if idle: check("motion-check", "perch calmer than idle (max speed below idle's)", sp < idle_sp, f"{sp:.3f} vs idle {idle_sp:.3f}")

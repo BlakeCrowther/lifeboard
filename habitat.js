@@ -54,6 +54,9 @@
      and Habitat.inspect.pose({yaw, frac}) orbits the camera round it and sets its sway to frac (0..1) of the loop. */
   const inspectId = hookOf('inspect', G.LB_GAME_HREF), inspectSrc = new URL(G.LB_GAME_HREF || location.href).searchParams.get('inspect_src');
   const forcedBiome = hookOf('biome', G.LB_GAME_HREF), forcedHour = hookOf('hour', G.LB_GAME_HREF);
+  /* creature rest QA (docs/design/creature-rest.md): ?rest=<on>_<pose> (e.g. rock_cling) overrides the visitor's rest,
+     ?perch=1 starts every resting creature on its perch */
+  const forcedRest = hookOf('rest', G.LB_GAME_HREF), forcedPerch = !!hookOf('perch', G.LB_GAME_HREF);
   let wx = null; /* real weather: {condition, at} from the board's conditions snapshot */
   /* condition text -> 0..1 amounts. Older than 12 h counts as unknown (clear), so a stale report never darkens the scene. */
   function wxLook() {
@@ -186,6 +189,7 @@
     const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
     const n2 = (x, z) => Math.sin(x * 0.9) * Math.cos(z * 0.7) * 0.3 + Math.sin(x * 2.3 + z * 1.7) * 0.1 + Math.sin(z * 3.1 - x) * 0.04;
     const H = (x, z) => n2(x, z) + 0.6 * Math.exp(-(x * x + (z + 1) * (z + 1)) / 10);
+    const groundNormal = (x, z) => { const e = 0.05; return new V(H(x - e, z) - H(x + e, z), 2 * e, H(x, z - e) - H(x, z + e)).normalize(); };
 
     /* ===== shared shading (ported from the v5 reef): caustics, absorption and view-direction fog.
        Land/air reuse it with caustics + absorption off, so the "water" fog becomes sky haze. ===== */
@@ -295,6 +299,8 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
       obj.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(obj), p = bb.getCenter(new V()), r = bb.getSize(new V()).multiplyScalar(0.5 * pad);
       colliders.push({ kind, p, r, obj }); obj.userData.kind = obj.userData.kind || kind; return obj;
     };
+    let rockList = [], grips = []; /* creature perch data, rebuilt with the world: rocks to cling to, overhead grip points
+      {obj, local | node}: a point in obj's own space (growth rescales obj after placing) or a scenery `perch*` node */
     let world = null, medium = null, growth = [], ambient = [], coralMats = [], blightInst = null, blightCopies = [], nk = null, inspected = null, rays = [], rockMat = null, snowMat = null;
     /* scene key: biomes.json `scene`, else by medium. Each key has its own scenery + water/air look (LOOKS). */
     const sceneOf = (b) => forcedScene || b.scene || ({ water: 'reef', land: 'meadow', air: 'canopy' })[b.medium || 'water'] || 'reef';
@@ -349,7 +355,7 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
         g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
         const m = new THREE.Mesh(g, rockMat); m.scale.set(s, s * sy, s); m.position.set(x, H(x, z) + s * sy * 0.25, z); m.rotation.y = R(0, 6); m.castShadow = m.receiveShadow = true; world.add(m); rocks.push(m); solid('rock', m);
       };
-      fr.rocks.forEach(([x, z, s2, sy]) => rock(x, z, s2, sy));
+      fr.rocks.forEach(([x, z, s2, sy]) => rock(x, z, s2, sy)); rockList = rocks; grips = [];
       const tipAttr = (g, maxY) => { const p = g.attributes.position, a = new Float32Array(p.count); for (let i = 0; i < p.count; i++) a[i] = p.getY(i) / maxY; g.setAttribute('aTip', new THREE.BufferAttribute(a, 1)); return a; };
       const colorByTip = (g, tip, c1, c2) => { const col = new Float32Array(tip.length * 3), a = new THREE.Color(c1), b = new THREE.Color(c2), c = new THREE.Color(); for (let i = 0; i < tip.length; i++) { c.copy(a).lerp(b, smooth(0.35, 1, tip[i])); col.set([c.r, c.g, c.b], i * 3); } g.setAttribute('color', new THREE.BufferAttribute(col, 3)); };
       const coralMat = (sheen) => { const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.62, sheen: 0.35, sheenRoughness: 0.5, sheenColor: new THREE.Color(sheen) }); m.defines = { GLOW: '' }; coralMats.push(m); return patch(m); };
@@ -475,7 +481,9 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
       /* mossy limb (canopy, solid): a thick horizontal branch with hanging moss */
       const limb = (pts, r, moss) => { const c = new THREE.CatmullRomCurve3(pts.map((p) => new V(...p))), geos = [new THREE.TubeGeometry(c, 40, r, 10).toNonIndexed()];
         for (let i = 0; i < 26; i++) { const q = c.getPoint(rnd()), h = R(0.25, 0.8), cg = new THREE.ConeGeometry(R(0.02, 0.05), h, 4); cg.rotateX(Math.PI); cg.translate(q.x + R(-r, r), q.y - r * 0.6 - h / 2, q.z + R(-r, r)); geos.push(cg.toNonIndexed()); }
-        const m = new THREE.Mesh(BU.mergeGeometries(geos), std(moss, { roughness: 0.95 })); m.castShadow = m.receiveShadow = true; world.add(m); m.userData.nm = 'mossy branch'; return solid('limb', m, 0.8); };
+        const m = new THREE.Mesh(BU.mergeGeometries(geos), std(moss, { roughness: 0.95 })); m.castShadow = m.receiveShadow = true; world.add(m); m.userData.nm = 'mossy branch';
+        for (let i = 1; i < 10; i++) { const q = c.getPoint(i / 10); grips.push({ local: new V(q.x, q.y - r, q.z), obj: m }); } /* hang/cling points under the limb */
+        return solid('limb', m, 0.8); };
       const perched = (p, n, col) => { const grp = new THREE.Group(), mat = std(col, { roughness: 0.4 }); for (let i = 0; i < n; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), mat); b.position.set(p[0] + R(-0.4, 0.4), p[1] + R(0, 0.12), p[2] + R(-0.15, 0.15)); grp.add(b); } world.add(grp); grp.userData.nm = 'orchids'; return grp; };
       /* giant clam (reef): fluted shell with a blue mantle */
       const clam = (x, z, s2) => { const grp = new THREE.Group(), sh = new THREE.SphereGeometry(0.3, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2); sh.scale(1.4, 0.55, 1); const ma = new THREE.TorusGeometry(0.3, 0.07, 8, 24); ma.rotateX(Math.PI / 2); ma.scale(1.25, 1, 0.85); ma.translate(0, 0.15, 0);
@@ -570,7 +578,6 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
         });
         return sit;
       };
-      const groundNormal = (x, z) => { const e = 0.05; return new V(H(x - e, z) - H(x + e, z), 2 * e, H(x, z - e) - H(x, z + e)).normalize(); };
       /* drape: after tilting to the slope, move every point by how far the real sand sits above/below that slope there */
       const conform = (holder, root, at, n) => {
         holder.updateMatrixWorld(true);
@@ -617,6 +624,7 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
           seat(holder, root, sit, new V(x, H(x, z) - 0.01, z)); holder.userData.prop = true; holder.userData.nm = pr.entry.name || it.id.replace(/_/g, ' ');
           if (it.landmark && k === n - 1) holder.userData.landmark = true;
           world.add(holder); solid(it.id, holder, 0.8); tier(holder, ph[0] + Math.floor((k * (ph[1] - ph[0] + 1)) / n));
+          root.traverse((o) => { if (/^perch/i.test(o.name)) grips.push({ node: o, obj: holder }); }); /* scenery grip nodes */
         }
       });
       if (props) placeProps(); else (tiers[sk] || (water ? tiers.reef : tiers.meadow))();
@@ -741,12 +749,116 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
       const loco = (entry.locomotion || spec.locomotion || 'swim').toLowerCase(), i = pathSeed++;
       const P = { c: [[1.4, 1.2], [-0.6, 0.4], [0.8, -0.6], [-1.8, 1.0]][i % 4], r: [R(1.1, 1.7), R(0.6, 1.0)], y: R(0.7, 1.4), sp: R(0.28, 0.4) * (loco === 'drift' ? 0.4 : loco === 'walk' || loco === 'crawl' ? 0.35 : 1), ph: R(0, 6.28), dir: i % 2 ? -1 : 1 };
       const hab = spec.habitat || {}, shelter = hab.shelter || hab.anchor || 'rock';
-      const c = { id: entry.id, holder, root, mouth, mixer, idle, feed, sulk, rest: idle, shelter, loco, P, a: P.ph, len, footY: -bb.min.y, pos: new V(), prev: new V(), yaw: 0, pitch: 0, state: 'roam', target: null, eatEnd: 0, eaten: 0 };
+      /* resting (CONTRACT "Resting"): the `perch` loop, else idle at half speed; `grip` = where a hanging body holds on, else its rear tip */
+      const rest = restOf(entry, spec, loco), pc = clip('perch');
+      const perch = rest && (pc || clip('idle')) ? mixer.clipAction(pc || clip('idle').clone()) : null;
+      if (perch) perch.timeScale = pc ? ts : ts * 0.5;
+      const gripNode = root.getObjectByName('grip'), grip = gripNode ? gripNode.getWorldPosition(new V()) : new V(bb.min.x, (bb.min.y + bb.max.y) / 2, 0);
+      const c = { id: entry.id, holder, root, mouth, mixer, idle, feed, sulk, perch, loop: idle, shelter, loco, P, a: P.ph, len, footY: -bb.min.y, pos: new V(), prev: new V(), yaw: 0, pitch: 0, state: 'roam', target: null, eatEnd: 0, eaten: 0,
+        rest, grip, belly: bb.min.y, site: null, pp: null, nextRest: null, snap: !!rest && (forcedPerch || rest.sessile) };
       c.pos.copy(pathPos(c, c.a));
       if (enter && loco !== 'rooted') { c.state = 'enter'; c.pos.x = (k % 2 ? -1 : 1) * 9; c.pos.y += 0.6; } /* swims/flies in from the edge */
       if (entry.rarity === 'exotic') { const gl = new THREE.PointLight(0xffd36a, 1.2, 1.6 + len * 2); holder.add(gl); } /* exotic: a soft golden glow */
       c.prev.copy(c.pos); holder.position.copy(c.pos);
       scene.add(holder); creatures.push(c);
+    }
+    /* ===== resting (docs/design/creature-rest.md): roam -> approach -> settle -> perched -> leave -> enter ===== */
+    const REST_ON = { lie: ['sand'], cling: ['rock', 'branch', 'prop'], hang: ['branch', 'prop'] };
+    const RESTING = new Set(['approach', 'settle', 'perched', 'leave']), ON_SITE = new Set(['settle', 'perched']);
+    function restOf(entry, spec, loco) { /* roster first: specs aren't published with the board */
+      let r = entry.rest || spec.rest || null;
+      if (forcedRest) { const [on, pose] = forcedRest.split('_'); r = { ...(r || {}), on, pose }; }
+      if (!r || !REST_ON[r.pose] || !REST_ON[r.pose].includes(r.on)) return null;
+      const share = Math.min(1, Math.max(0.05, r.share ?? 0.35)), bout = r.bout_s || [10, 25];
+      return { on: r.on, pose: r.pose, share, bout, sessile: share >= 1 || loco === 'rooted' };
+    }
+    const restGap = (r) => (R(r.bout[0], r.bout[1]) * (1 - r.share) / r.share) * R(0.7, 1.3);
+    const shown = (o) => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
+    /* a point in obj's space, in the world once obj has grown in (growth animates scale up to userData.base) */
+    const settledM = new THREE.Matrix4();
+    const settled = (obj, local) => { obj.updateMatrixWorld(true); settledM.compose(obj.position, obj.quaternion, obj.userData.base || obj.scale); if (obj.parent) settledM.premultiply(obj.parent.matrixWorld); return local.clone().applyMatrix4(settledM); };
+    const UP = new V(0, 1, 0), restRay = new THREE.Raycaster(), nm3 = new THREE.Matrix3(), mB = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpE = new THREE.Euler();
+    /* the outer surface of `obj` seen from direction `dir` (unit, from its centre): hit point + world normal */
+    function surfaceHit(obj, dir) {
+      const ctr = new THREE.Box3().setFromObject(obj).getCenter(new V());
+      restRay.set(ctr.clone().addScaledVector(dir, 8), dir.clone().negate()); restRay.far = 16;
+      const h = restRay.intersectObject(obj, true)[0]; if (!h || !h.face) return null;
+      return { p: h.point.clone(), n: h.face.normal.clone().applyMatrix3(nm3.getNormalMatrix(h.object.matrixWorld)).normalize(), obj };
+    }
+    /* a free perch site of the creature's kind near its loop, on the camera's side; null = none in this world (it keeps roaming) */
+    function findSite(c) {
+      const r = c.rest, home = new V(c.P.c[0], 0, c.P.c[1]), cam = camera.position;
+      const taken = creatures.filter((o) => o !== c && o.site).map((o) => o.site.p), free = (p) => taken.every((q) => q.distanceTo(p) > c.len * 1.6);
+      const best = (L) => L.sort((a, b) => a.score - b.score)[0] || null;
+      if (r.on === 'sand') {
+        const out = [];
+        for (let i = 0; i < 32; i++) {
+          const x = home.x + R(-2.2, 2.2), z = home.z + R(-1.6, 1.6), p = new V(x, H(x, z), z);
+          if (Math.abs(x) > 5.5 || z < -4.5 || z > 3.2 || !free(p)) continue;
+          if (colliders.some((o) => shown(o.obj) && Math.hypot((x - o.p.x) / (o.r.x + c.len * 0.6), (z - o.p.z) / (o.r.z + c.len * 0.6)) < 1)) continue;
+          out.push({ p, n: groundNormal(x, z), obj: null, score: Math.hypot(x - home.x, z - home.z) });
+        }
+        return best(out);
+      }
+      if (r.pose === 'hang' || r.on === 'branch') /* overhead grips: limbs, scenery perch* nodes */
+        return best(grips.filter((g) => shown(g.obj) && (r.on === 'branch' || g.obj.userData.prop)).map((g) => {
+          const p = settled(g.obj, g.node ? g.obj.worldToLocal(g.node.getWorldPosition(new V())) : g.local);
+          return { p, n: new V(0, -1, 0), obj: g.obj, score: p.distanceTo(home) + R(0, 1) };
+        }).filter((s) => free(s.p) && (r.pose !== 'hang' || s.p.y - H(s.p.x, s.p.z) > c.len * 1.2))); /* a hanging body must clear the ground */
+      /* cling to a rock or prop: side faces (not the top, not underneath) the camera can see, clear of the sand */
+      const objs = r.on === 'rock' ? rockList : colliders.filter((o) => o.obj.userData.prop && shown(o.obj) && !o.obj.userData.t0).map((o) => o.obj), out = []; /* t0: still growing in */
+      for (const o of objs) for (let i = 0; i < 6; i++) {
+        const d = new V(cam.x - o.position.x, 0, cam.z - o.position.z).normalize().applyAxisAngle(UP, R(-1.1, 1.1)); d.y = R(-0.05, 0.6); d.normalize();
+        const h = surfaceHit(o, d);
+        if (!h || h.n.y < -0.3 || h.n.y > 0.75 || h.p.y < H(h.p.x, h.p.z) + c.len * 0.3 || !free(h.p)) continue;
+        out.push({ ...h, score: h.p.distanceTo(home) * 0.3 + R(0, 0.5) });
+      }
+      return best(out);
+    }
+    /* where the body goes on a site: cling/lie = belly on the surface (up = normal, head up-slope on steep faces, else its heading);
+       hang = head down from its grip, back to the camera. `from` = the hover point it lands from and leaves to. */
+    function perchPose(c, site) {
+      let fwd, up, anchor, away;
+      if (c.rest.pose === 'hang') { fwd = new V(0, -1, 0); up = new V(camera.position.x - site.p.x, 0, camera.position.z - site.p.z).normalize(); anchor = c.grip; }
+      else {
+        up = site.n.clone(); const head = Math.abs(up.y) < 0.7 ? UP.clone() : new V(Math.cos(c.yaw), 0, -Math.sin(c.yaw));
+        fwd = head.addScaledVector(up, -head.dot(up)); if (fwd.lengthSq() < 1e-6) fwd.set(1, 0, 0).addScaledVector(up, -up.x);
+        fwd.normalize(); anchor = new V(0, c.belly * 0.92, 0); /* sink 8% so it reads as touching */
+      }
+      const side = fwd.clone().cross(up).normalize(); up = side.clone().cross(fwd).normalize(); away = c.rest.pose === 'hang' ? up : site.n;
+      const q = new THREE.Quaternion().setFromRotationMatrix(mB.makeBasis(fwd, up, side)), pos = site.p.clone().sub(anchor.clone().applyQuaternion(q));
+      return { q, pos, from: pos.clone().addScaledVector(away, c.len * 0.9 + 0.2) };
+    }
+    /* timers and transitions; returns the desired position for the resting states, else null */
+    function stepRest(c, t, dt, m, hiding) {
+      const r = c.rest; if (!r) return null;
+      if (c.nextRest == null) c.nextRest = t + restGap(r); /* a visitor never rests the moment it arrives */
+      if ((c.state === 'roam' || (c.snap && c.state === 'enter')) && (c.snap || (m && t >= c.nextRest && !food.length && !hiding))) {
+        const site = findSite(c);
+        if (!site) { c.snap = false; c.nextRest = t + 8; return null; }
+        c.site = site; c.pp = perchPose(c, site);
+        if (c.snap) { c.snap = false; c.state = 'perched'; c.pos.copy(c.pp.pos); c.holder.quaternion.copy(c.pp.q); c.restEnd = r.sessile ? Infinity : t + R(r.bout[0], r.bout[1]); }
+        else c.state = 'approach';
+      }
+      if (c.state === 'approach') {
+        const v = c.pp.from.clone().sub(c.pos), d = v.length(), sp = 1.1 * dt * m;
+        if (d < 0.05) { c.state = 'settle'; c.t0 = t; }
+        return d <= sp ? c.pp.from.clone() : c.pos.clone().addScaledVector(v, sp / d);
+      }
+      if (c.state === 'settle' || c.state === 'leave') {
+        const k = smooth(0, c.state === 'settle' ? 1.4 : 0.9, t - c.t0), [a, b] = c.state === 'settle' ? [c.pp.from, c.pp.pos] : [c.pp.pos, c.pp.from], p = a.clone().lerp(b, k);
+        if (k >= 1) {
+          if (c.state === 'settle') { c.state = 'perched'; c.restEnd = r.sessile ? Infinity : t + R(r.bout[0], r.bout[1]); }
+          else { c.state = 'enter'; c.site = null; c.pp = null; c.nextRest = t + restGap(r); }
+        }
+        return p;
+      }
+      if (c.state === 'perched') {
+        /* food in reach or hiding time calls it off its perch; a sessile one stays put */
+        if (!r.sessile && (t >= c.restEnd || hiding || food.some((f) => f.position.distanceTo(c.pos) < 7))) { c.state = 'leave'; c.t0 = t; }
+        return c.pp.pos.clone();
+      }
+      return null;
     }
     function pathPos(c, a) {
       const P = c.P, x = P.c[0] + Math.cos(a * P.dir) * P.r[0], z = P.c[1] + Math.sin(a * P.dir) * P.r[1], g = H(x, z);
@@ -780,11 +892,11 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
     }
     function removeFood(f) { scene.remove(f); const i = food.indexOf(f); if (i >= 0) food.splice(i, 1); }
     /* no passing through rocks, the ground or each other: project the body back outside after each move */
-    function keepClear(c) {
+    function keepClear(c, except) { /* except: the perch object it is landing on */
       const pad = c.len * 0.55, q = new V();
       const pass = (biomeOf(sceneBiomeId()).pass_through || []).concat(passKinds);
       for (const o of colliders) {
-        if (pass.includes(o.kind) || !o.obj.visible) continue; /* hidden growth (not yet grown) isn't there */
+        if (pass.includes(o.kind) || !o.obj.visible || o.obj === except) continue; /* hidden growth (not yet grown) isn't there */
         q.set((c.pos.x - o.p.x) / (o.r.x + pad), (c.pos.y - o.p.y) / (o.r.y + pad), (c.pos.z - o.p.z) / (o.r.z + pad));
         const L = q.length(); if (L >= 1) continue; if (L < 1e-4) q.set(0, 1, 0); else q.divideScalar(L);
         c.pos.set(o.p.x + q.x * (o.r.x + pad), o.p.y + q.y * (o.r.y + pad), o.p.z + q.z * (o.r.z + pad));
@@ -812,19 +924,22 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
       const v = view(), sad = !!(v && v.breaks && v.breaks.sad), hiding = !!(v && v.lessons && v.lessons.hide);
       creatures.forEach((c, i) => { c.i = i; });
       for (const c of creatures) {
-        /* mood: the resting loop is 'sulk' (the creature's own mope, from the model pipeline) while sad or hiding, else 'idle' */
-        const want = (sad || hiding) && c.sulk ? c.sulk : c.idle;
+        const restP = stepRest(c, t, dt, m, hiding);
+        /* the looping clip: on a perch, 'perch' (a sessile one mopes there with 'sulk'); otherwise 'sulk' (the creature's own mope,
+           from the model pipeline) while sad or hiding, else 'idle' */
+        const mope = (sad || hiding) && c.sulk, want = ON_SITE.has(c.state) && c.perch ? (c.rest.sessile && mope ? c.sulk : c.perch) : mope ? c.sulk : c.idle;
         /* no lessons for days: tuck in by the creature's shelter (spec.habitat.shelter/anchor, else a rock); food (a lesson) brings it out */
         if (hiding && c.state === 'roam' && c.loco !== 'rooted' && !food.length) { c.state = 'hide'; c.spot = shelterSpot(c); }
         if (c.state === 'hide' && (!hiding || food.length)) { c.state = 'roam'; c.spot = null; }
-        if (want && c.rest && want !== c.rest && c.state !== 'eat') { want.reset().play(); c.rest.crossFadeTo(want, 1.2, false); c.rest = want; }
+        if (want && c.loop && want !== c.loop && c.state !== 'eat') { want.reset().play(); c.loop.crossFadeTo(want, 1.2, false); c.loop = want; }
         c.mixer.update(dt * m);
         if (c.state === 'roam' && food.length && c.eaten < 4 && c.loco !== 'rooted') {
           const f = food.filter((x) => !x.userData.claimed).sort((a, b) => a.position.distanceTo(c.pos) - b.position.distanceTo(c.pos))[0];
           if (f && f.position.distanceTo(c.pos) < 7) { f.userData.claimed = c; c.target = f; c.state = 'seek'; }
         }
         let desired;
-        if (c.state === 'seek') {
+        if (restP) desired = restP;
+        else if (c.state === 'seek') {
           if (!c.target.parent) { c.state = 'roam'; c.target = null; continue; }
           c.holder.updateMatrixWorld(true); c.mouth.getWorldPosition(tmpV); tmpV2.copy(c.holder.position).sub(tmpV); /* root - mouth */
           desired = c.target.position.clone().add(tmpV2);
@@ -832,12 +947,12 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
           if (tmpV.distanceTo(c.target.position) < Math.max(0.12, c.len * 0.12)) {
             c.state = 'eat'; c.eaten++; removeFood(c.target); c.target = null;
             const dur = c.feed ? c.feed.getClip().duration / c.feed.timeScale : 1.2;
-            if (c.feed && c.rest) { c.feed.reset().play(); c.rest.crossFadeTo(c.feed, 0.25, false); }
+            if (c.feed && c.loop) { c.feed.reset().play(); c.loop.crossFadeTo(c.feed, 0.25, false); }
             c.eatEnd = t + dur * 0.92;
           }
         } else if (c.state === 'eat') {
           desired = c.pos.clone();
-          if (t >= c.eatEnd) { if (c.feed && c.rest) { c.rest.reset().play(); c.feed.crossFadeTo(c.rest, 0.3, false); } c.state = 'roam'; }
+          if (t >= c.eatEnd) { if (c.feed && c.loop) { c.loop.reset().play(); c.feed.crossFadeTo(c.loop, 0.3, false); } c.state = 'roam'; }
         } else if (c.state === 'hide') {
           desired = c.spot.clone().add(new V(Math.sin(t * 0.35 + c.P.ph) * c.len * 0.4, Math.sin(t * 0.25 + c.P.ph) * c.len * 0.15, 0));
         } else if (c.state === 'enter') {
@@ -847,17 +962,19 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
           c.a += dt * m * c.P.sp; desired = pathPos(c, c.a);
           if (!food.length) c.eaten = 0;
         }
-        const k = c.state === 'enter' ? 1 : c.state === 'seek' ? 1 - Math.exp(-dt * 2.2) : c.state === 'hide' ? 1 - Math.exp(-dt * 0.7) : 1 - Math.exp(-dt * 3);
+        const k = c.state === 'enter' || RESTING.has(c.state) ? 1 : c.state === 'seek' ? 1 - Math.exp(-dt * 2.2) : c.state === 'hide' ? 1 - Math.exp(-dt * 0.7) : 1 - Math.exp(-dt * 3);
         c.prev.copy(c.pos); c.pos.lerp(desired, k * m || (m ? 0 : 1));
         if (c.state === 'seek') { const v = desired.clone().sub(c.pos), d = v.length(), sp = 1.4 * dt; if (d > sp) c.pos.addScaledVector(v, sp / d); }
-        if (c.loco !== 'rooted') keepClear(c);
+        if (c.loco !== 'rooted' && (!RESTING.has(c.state) || c.state === 'approach')) keepClear(c, c.state === 'approach' && c.site ? c.site.obj : null);
         const vel = tmpV.copy(c.pos).sub(c.prev);
         const face = c.state !== 'roam' && c.target ? tmpV2.copy(c.target.position).sub(c.pos) : vel;
-        if (face.lengthSq() > 1e-8 && c.loco !== 'rooted') {
+        if (face.lengthSq() > 1e-8 && c.loco !== 'rooted' && !ON_SITE.has(c.state)) {
           const yaw = Math.atan2(-face.z, face.x), pitch = c.loco === 'walk' || c.loco === 'crawl' ? 0 : Math.atan2(face.y, Math.hypot(face.x, face.z)) * 0.8;
           let dy = yaw - c.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); c.yaw += dy * Math.min(1, dt * 4); c.pitch += (pitch - c.pitch) * Math.min(1, dt * 4);
         }
-        c.holder.position.copy(c.pos); c.holder.rotation.set(0, c.yaw, c.pitch, 'YZX');
+        /* turn toward the target orientation (perch pose on a site, else heading); easing it means landing and take-off never pop */
+        const tq = ON_SITE.has(c.state) ? c.pp.q : tmpQ.setFromEuler(tmpE.set(0, c.yaw, c.pitch, 'YZX'));
+        c.holder.position.copy(c.pos); c.holder.quaternion.slerp(tq, 1 - Math.exp(-dt * (c.state === 'settle' || c.state === 'leave' ? 3 : 10)));
       }
       for (let i = food.length - 1; i >= 0; i--) {
         const f = food[i], u = f.userData, floor = H(f.position.x, f.position.z) + 0.05;
@@ -984,7 +1101,7 @@ attribute float _sway_w; attribute float _sway_p; uniform vec4 uPSway; uniform f
     reduceMQ.addEventListener('change', kick);
     const inspect = { get ready() { return !!inspected; }, get dur() { return inspected ? inspected.dur : 0; },
       pose(p) { if (!inspected) return false; inspected.pose = p ? { yaw: p.yaw || 0, frac: p.frac || 0, pitch: p.pitch } : null; kick(); return true; } };
-    return { apply, kick, loadCreatures, inspect, dropFood, get visitorName() { return visitorName; }, get newToday() { return newToday; }, progress: (st) => progressOf(st), get nextUp() { return nextUp; }, get visitorInfo() { return visitorInfo; }, debug: () => ({ food: food.length, creatures: creatures.map((c) => ({ id: c.id, state: c.state, eaten: c.eaten, loco: c.loco, pos: c.pos.toArray().map((x) => +x.toFixed(2)), feeding: !!(c.feed && c.feed.isRunning()), rest: c.rest ? c.rest.getClip().name : null })) }) };
+    return { apply, kick, loadCreatures, inspect, dropFood, get visitorName() { return visitorName; }, get newToday() { return newToday; }, progress: (st) => progressOf(st), get nextUp() { return nextUp; }, get visitorInfo() { return visitorInfo; }, debug: () => ({ food: food.length, creatures: creatures.map((c) => ({ id: c.id, state: c.state, eaten: c.eaten, loco: c.loco, pos: c.pos.toArray().map((x) => +x.toFixed(2)), feeding: !!(c.feed && c.feed.isRunning()), loop: c.loop ? c.loop.getClip().name : null, rest: c.rest ? c.rest.pose + ' on ' + c.rest.on : null, site: c.site ? { p: c.site.p.toArray().map((x) => +x.toFixed(2)), n: c.site.n.toArray().map((x) => +x.toFixed(2)) } : null, quat: c.holder.quaternion.toArray().map((x) => +x.toFixed(3)), box: ((b) => [b.min, b.max].map((v) => v.toArray().map((x) => +x.toFixed(2))))(new THREE.Box3().setFromObject(c.root)), ground: +H(c.pos.x, c.pos.z).toFixed(2) })) }) };
   }
 
   /* ---------- visibility: lazy start + pause off-screen ---------- */

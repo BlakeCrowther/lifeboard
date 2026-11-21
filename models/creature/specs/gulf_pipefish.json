@@ -20,5 +20,6 @@
     "sulk": {"frames": 120, "cycles": 1, "energy": 0.3, "droop_deg": 16, "frown": 0.9, "technique": "a wilted blade: snout droops, body sags into a limp bow, dorsal fin barely ticks, pectorals clamped, sinks low, mouth corners down"}
   },
   "habitat": {"depth": "low", "anchor": "kelp", "shelter": "kelp", "schooling": false},
+  "rest": {"on": "sand", "pose": "lie", "share": 0.3, "bout_s": [12, 28], "why": "Gulf pipefish rest motionless on the bottom among seagrass bases, lying along the blades between slow hunting drifts."},
   "budget": {"tris": 8000, "texture": 1024}
 }

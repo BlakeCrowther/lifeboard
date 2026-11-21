@@ -36,9 +36,11 @@ Write keys with Python on pose bones; Bezier interpolation, auto-clamped handles
 - A held posture (droop/slump/retract, never through the body) plus a slow, small loop; max speed must stay below idle's (motion-check).
 - Posture differs from idle frame 0 by ≥ 4% body length. Front mouths frown: add `lib.mouth_corner_bones()` to the rig, skin the mouth with `lib.mouth_weights(co)`, key `lib.frown_locs(spec.motion.sulk.frown)` as locs every frame (motion-check: corners drop ≥ 15% mouth width).
 
+**perch** (when `spec.motion.perch`; CONTRACT "Resting"): `spec.motion.perch.frames`, a seamless loop following `perch.technique` and `spec.rest`. Animate in the normal axes (head +X, up +Z) as if the resting surface were below; the runtime turns the whole body into the pose (head down for `hang`, belly to a rock face for `cling`). Only the body's own resting shape moves: wings folded and breathing, tentacles fanning, legs gripping, nothing travelling. Max speed below idle's (motion-check). For `hang`, add an empty `grip` at the feet (parented to the bone that holds on) so the runtime hangs it from there.
+
 Optional `swim_fast` (same rules as idle, higher k) and `react` (startle) when the spec asks.
 
 ## 3. Export
-- Push each action to its own NLA track named exactly `idle`, `feed`, `sulk`, …
+- Push each action to its own NLA track named exactly `idle`, `feed`, `sulk`, `perch`, …
 - Export: `export_format='GLB'`, `export_animations=True`, `export_animation_mode='NLA_TRACKS'`, `export_image_format='WEBP'`, `export_skins=True`, `export_yup=True`.
 - Run `models/shared/tools/verify.sh <id>` locally; if shape-check/motion-check fail, fix and re-export before handing off (verify will run again independently).

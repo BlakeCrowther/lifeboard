@@ -56,6 +56,7 @@ def main(path):
     if not 0.25 <= mat.get("roughness", 0.35) <= 0.55: fails.append("material.roughness 0.25-0.55 (STYLE)")
     if not 0 <= mat.get("coat", 0.35) <= 0.6: fails.append("material.coat 0-0.6 (STYLE)")
     if s["budget"].get("tris", 1e9) > TRIS.get(s["rarity"], 0): fails.append("tris over rarity budget")
+    fails += _rest(s)
     # uniqueness vs. roster: idle length/cycles combo should differ from shipped creatures
     roster = os.path.join(root, "roster.json")
     if os.path.exists(roster):
@@ -67,6 +68,31 @@ def main(path):
                 if (o.get("frames"), o.get("cycles")) == (idle.get("frames"), idle.get("cycles")):
                     fails.append(f"idle loop identical to {c['id']}; vary frames or cycles")
     return {"gate": "spec-check", "pass": not fails, "fails": fails}
+
+REST_ON = {"lie": {"sand"}, "cling": {"rock", "branch", "prop"}, "hang": {"branch", "prop"}}
+
+def _rest(s):
+    """Optional creature `rest` (models/creature/CONTRACT.md "Resting"; docs/design/creature-rest.md)."""
+    r = s.get("rest")
+    if r is None: return []   # never rests; a rooted creature without rest stands on the sand
+    f = []
+    if not isinstance(r, dict): return ["rest must be an object {on, pose, why, share?, bout_s?}"]
+    pose, on = r.get("pose"), r.get("on")
+    if pose not in REST_ON: f.append("rest.pose must be cling|lie|hang")
+    elif on not in REST_ON[pose]: f.append(f"rest.on {on} doesn't fit pose {pose} (allowed: {sorted(REST_ON[pose])})")
+    if not str(r.get("why", "")).strip(): f.append("rest.why: one sentence on how the real animal rests")
+    share = r.get("share", 0.35)
+    if not isinstance(share, (int, float)) or not 0 < share <= 1: f.append("rest.share must be > 0 and <= 1")
+    elif (share == 1) != (s["locomotion"] == "rooted"): f.append("rest.share 1 (sessile) and locomotion rooted go together")
+    b = r.get("bout_s", [10, 25])
+    if not (isinstance(b, list) and len(b) == 2 and all(isinstance(x, (int, float)) for x in b) and 3 <= b[0] <= b[1] <= 300): f.append("rest.bout_s must be [min, max] seconds, 3-300")
+    if (pose == "hang" or s["locomotion"] == "fly") and not s["motion"].get("perch"): f.append("motion.perch required (hanging or flying creatures can't rest on their idle)")
+    p = s["motion"].get("perch")
+    if p:
+        if not 48 <= p.get("frames", 0) <= 144: f.append("perch.frames 48-144")
+        if p.get("cycles", 0) < 1 or int(p.get("cycles", 0)) != p.get("cycles"): f.append("perch.cycles whole number >=1")
+        if not p.get("technique"): f.append("perch.technique must describe the resting body (wings folded, tentacles fanned...)")
+    return f
 
 def _plant(s, fails):
     """Plant draft contract (models/plant/CONTRACT.md): per-stage sway loops + a tend reaction."""

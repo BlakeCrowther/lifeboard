@@ -36,6 +36,7 @@ Median of 3 fresh judge subagents (each recorded in the run ledger): every media
 | `idle` | ✓ | 48–144 frames (2–6 s) | ✓ Seamless loop: pose at last frame == first frame (max bone delta < 1e-3). Every periodic channel completes a whole number of cycles. Length is **per species** (from spec), not a shared constant. |
 | `feed` | ✓ | 36–96 frames (1.5–4 s) | ✓ Starts and ends on `idle` frame-0 pose (delta < 1e-2) so it crossfades both ways. Phases: anticipate → reach/strike toward `mouth` direction (+X) → grab/bite → chew/swallow → settle. Plays once per food item; may be looped by runtime for multiple items. |
 | `sulk` | ✓ | 48–144 frames (2–6 s) | ✓ Mood loop, played instead of `idle` while the user skipped a break today (runtime crossfades ~1.2 s, so no start-pose rule). Per body plan, from `spec.motion.sulk.technique` (swimmer: nose down, fins clamped, slow tail, sinks; jelly: weak pulses, limp tentacles; octopus: arms curled under, flattened). ✓ Seamless loop, ✓ no pops, ✓ max speed below idle's, ✓ posture differs from idle frame 0 by ≥ 4% length, ✓ front mouths frown: `cornerL/R` bones (`lib.mouth_corner_bones`, skinned with `lib.mouth_weights`) drop ≥ 15% mouth width relative to the jaw (`lib.frown_locs`). |
+| `perch` | when `spec.motion.perch` (required by spec-check for `rest.pose: hang` or `locomotion: fly`) | 48–144 frames | Resting loop (see Resting). ✓ Seamless loop, ✓ no pops, ✓ max speed below idle's. Crossfaded, so no start-pose rule. Authored in the normal axes; the runtime turns the body into the pose. |
 | `swim_fast` | optional | 24–72 | Same loop rules as idle; used when the runtime speed is high. |
 | `react` | optional | 24–72 | Startle/flinch, starts/ends on idle pose. |
 
@@ -43,6 +44,15 @@ Median of 3 fresh judge subagents (each recorded in the run ledger): every media
 - ✓ Speed caps: max per-vertex movement per frame ≤ 8% body length (idle, keeps it gentle) / 25% (feed strike).
 - ✓ Visible motion: max per-vertex displacement from the clip's frame-0 pose ≥ 4% body length (idle) / ≥ 12% (feed). Calibrated on the clownfish (idle 0.18, feed 0.35).
 - Uniqueness: idle length, cycle count, amplitude and phase offsets come from the spec; runtime additionally randomizes per instance: start phase (0–1) and timeScale (0.92–1.08).
+
+## Resting (`spec.rest`, optional)
+How the real animal rests, reasoned per species like scenery's `sit` (design: `docs/design/creature-rest.md`). ✓ = spec-check.
+- ✓ `rest {on, pose, why, share?, bout_s?}`. `pose` + `on` pairs: `lie` → `sand` (flounder, ray); `cling` → `rock` | `branch` | `prop` (belly to the surface at any angle: anemone on a rock side, gecko, sloth under a limb); `hang` → `branch` | `prop` (head down from its grip: bat). `prop` = a biome scenery piece; `branch` = an overhead grip (canopy limbs, scenery `perch*` nodes).
+- ✓ `why`: one sentence on where and how the real animal rests. ✓ `share` (0–1], default 0.35: fraction of time resting; `1` = sessile, only with `locomotion: rooted`. ✓ `bout_s` `[min, max]` seconds per rest, default `[10, 25]`.
+- ✓ `motion.perch {frames, cycles, technique}` required when `pose` is `hang` or `locomotion` is `fly` (their idle can't rest); otherwise the runtime rests on `idle` at half speed.
+- Optional empty `grip` where the body holds on (a bat's feet); fallback: the body's rear tip for `hang`, its belly for `cling`/`lie`.
+- No `rest` = never rests. Specs aren't published with the board, so `model-ship` copies `rest` and `locomotion` into the roster entry; habitat.js reads `entry.rest`, then `spec.rest`.
+- Runtime: roams, then flies to a perch site (rock face by ray hit + normal, open sand, builder or scenery grip points), settles, rests a bout, pushes off. No site of the right kind in the biome → keeps roaming. Food and hiding call it off its perch; a sessile one never leaves (plays `sulk` there when sad). QA: `capture.html?visitor=<id>&perch=1` (starts perched), `&rest=<on>_<pose>` (override, e.g. `rock_cling`); `node models/shared/tools/watch_creatures.mjs <id> --expect approach,settle,perched,leave` (timed cycle in headless Chrome).
 
 ## Budgets
 | | common | rare | exotic |
