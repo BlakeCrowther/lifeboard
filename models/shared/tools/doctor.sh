@@ -25,8 +25,12 @@ fi
 if command -v magick >/dev/null; then pass "imagemagick"; else
   [[ "$FIX" == --fix ]] && brew install imagemagick && pass "imagemagick installed" || fail "imagemagick" "brew install imagemagick"; fi
 
-# Node + gltf-transform (validate/optimize glb)
-if command -v node >/dev/null; then pass "node $(node -v)"; else fail "node" "brew install node"; fi
+# Node + gltf-transform (validate/optimize glb). export-check's optimizer (sharp) needs Node >= 20.
+if command -v node >/dev/null; then
+  nv=$(node -v); nmajor=${nv#v}; nmajor=${nmajor%%.*}
+  if [[ "$nmajor" =~ ^[0-9]+$ ]] && (( nmajor >= 20 )); then pass "node $nv"
+  else fail "node >= 20 (found $nv; export-check fails on older)" "brew upgrade node, or put node >= 20 first on PATH (nvm use 20)"; fi
+else fail "node" "brew install node"; fi
 if npx -y @gltf-transform/cli@4 --version >/dev/null 2>&1; then pass "gltf-transform"; else fail "gltf-transform (npx @gltf-transform/cli@4)" "check network / npm"; fi
 
 # Optional: Blender MCP for interactive dev (NOT used by the weekly run)
@@ -50,6 +54,14 @@ else fail "preview config .claude/launch.json missing" "restore it from git (ser
 if [[ -f "$REPO/mockdata.js" ]]; then pass "mockdata.js (optional, personal, gitignored)"
 else echo "  skip  mockdata.js not present (optional: create your own window.MOCK={...}, see lifeboard-setup)"; fi
 grep -q '^models/out/' "$REPO/.gitignore" 2>/dev/null && pass "models/out/ gitignored" || fail "models/out/ not gitignored" "add 'models/out/' to .gitignore"
+
+# judge-panel rule: well formed, numbers only in <kind>/qa_calibration.json, verdict script behaves
+if out=$(python3 "$REPO/models/shared/tools/check_judge_rule.py" 2>&1); then pass "judge rule: one source (check_judge_rule.py)"
+else fail "judge rule check:
+$(sed 's/^/        /' <<<"$out")" "state rule numbers only in models/<kind>/qa_calibration.json pass_rule; point at it from docs"; fi
+if out=$(python3 "$REPO/models/shared/tools/test_judge_verdict.py" 2>&1); then pass "judge verdict self-check"
+else fail "judge verdict self-check:
+$(sed 's/^/        /' <<<"$out")" "fix models/shared/tools/judge_verdict.py"; fi
 
 # Smoke test: build a cube, export glb headless
 tmp=$(mktemp -d)

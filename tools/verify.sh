@@ -12,6 +12,7 @@ skip() { rows+=("SKIP  $1 ($2)"); }
 run "syntax (node --check)" bash -c 'for f in *.js tools/*.js sim/*.js; do node --check "$f" || exit 1; done'
 run "game rules vs SPEC.md" node tools/spec-check.js
 run "sim runs (balance report)" node sim/run.js 20 8
+run "model pipeline map current" python3 models/shared/tools/render_pipeline_map.py --check
 if [ -d node_modules/playwright ]; then run "UI smoke (headless Chromium)" node tools/ui-smoke/run.js; else skip "UI smoke" "run pnpm bootstrap"; fi
 if command -v uv >/dev/null; then run "doc frontmatter" tools/check-doc-frontmatter; else skip "doc frontmatter" "uv not installed"; fi
 

@@ -50,10 +50,20 @@ def _body(spec, nu, seg, sub):
     if sub: lib.subsurf(b, sub)
     return b
 
+FAN_RAYS = 5          # ray tips along the fan's trailing edge
+FAN_SPREAD = 40       # degrees each side of the body axis the outer rays reach
+
 def _fan(spec, th):
+    """Caudal fan: pinched where it leaves the tail tip, rays flaring to a scalloped trailing edge (tips at the fan
+    length, notches between them), so it reads as a fin and not a disc."""
     L, hh, hw = _dims(spec); s = spec.get("parts", {}).get("tail_fan", 0.05) * L
-    pts = [(0.012 * L, 0.25 * s), (0, 0.45 * s), (-0.5 * s, 0.75 * s), (-0.9 * s, 0.5 * s), (-1.0 * s, 0), (-0.9 * s, -0.5 * s), (-0.5 * s, -0.75 * s), (0, -0.45 * s), (0.012 * L, -0.25 * s)]
-    return lib.flat_part("tail", pts, th, at=(BASE * L + 0.01 * L, 0, 0), rim=0.004 * L)
+    ray = lambda deg, r: (-r * s * math.cos(math.radians(deg)), r * s * math.sin(math.radians(deg)))
+    trail = []
+    for i in range(FAN_RAYS):
+        a = FAN_SPREAD - 2 * FAN_SPREAD * i / (FAN_RAYS - 1); trail.append(ray(a, 1.0))
+        if i < FAN_RAYS - 1: trail.append(ray(a - FAN_SPREAD / (FAN_RAYS - 1), 0.88))
+    pts = [(0.012 * L, -0.15 * s), (0.012 * L, 0.15 * s), (0, 0.18 * s), (-0.4 * s, 0.4 * s)] + trail + [(-0.4 * s, -0.4 * s), (0, -0.18 * s)]
+    return lib.flat_part("tail", pts, th, at=(BASE * L + 0.01 * L, 0, 0), rim=0.004 * L, root=1)
 
 def blockout(spec):
     return {"body": _body(spec, 16, 8, 0), "tail": _fan(spec, 0.006 * spec["size"]["length_m"])}
@@ -62,21 +72,19 @@ def model(spec):
     L, hh, hw = _dims(spec); parts = {}; pd = spec.get("parts", {})
     parts["body"] = _body(spec, 44, 14, 1)
     th = 0.006 * L
-    parts["tail"] = _fan(spec, th); lib.subsurf(parts["tail"], 1)
+    parts["tail"] = _fan(spec, th)
     d = pd.get("dorsal", {}); u0, u1 = d.get("u0", 0.4), d.get("u1", 0.56); H = d.get("height", 1.1) * hh
-    n = 7; pts = []
-    for i in range(n):                                    # rounded sail: sin-shaped top edge
-        u = u0 + (u1 - u0) * i / (n - 1); pts.append((_x(u) * L, _zc(spec, u) + _r(spec, u) * hh * 0.7 + H * math.sin(math.pi * i / (n - 1)) ** 0.7))
-    for i in reversed(range(n)):
-        u = u0 + (u1 - u0) * i / (n - 1); pts.append((_x(u) * L, _zc(spec, u) + _r(spec, u) * hh * 0.45))
-    parts["dorsal"] = lib.flat_part("dorsal", pts, th, rim=0.004 * L); lib.subsurf(parts["dorsal"], 1)
+    n = 7; us = [u0 + (u1 - u0) * i / (n - 1) for i in range(n)]
+    base = [(_x(u) * L, _zc(spec, u) + _r(spec, u) * hh * 0.45) for u in us]     # sunk in the body: the fin's root
+    edge = [(_x(u) * L, _zc(spec, u) + _r(spec, u) * hh * 0.7 + H * math.sin(math.pi * i / (n - 1)) ** 0.7) for i, u in enumerate(us)]   # rounded sail
+    parts["dorsal"] = lib.flat_part("dorsal", base + edge[::-1], th, rim=0.004 * L, root=n - 1)
     ps = pd.get("pectoral", 0.035) * L
     if ps > 0:
         u = 0.26; x = _x(u) * L; y = _r(spec, u) * hw * 0.9
-        shape = [(0, 0.15 * ps), (-0.6 * ps, 0.55 * ps), (-1.0 * ps, 0.2 * ps), (-1.0 * ps, -0.25 * ps), (-0.5 * ps, -0.45 * ps), (0, -0.15 * ps)]
+        shape = [(0, -0.15 * ps), (0, 0.15 * ps), (-0.6 * ps, 0.55 * ps), (-1.0 * ps, 0.2 * ps), (-1.0 * ps, -0.25 * ps), (-0.5 * ps, -0.45 * ps)]
         for side, sgn in (("pecL", 1), ("pecR", -1)):
-            o = lib.flat_part(side, shape, th * 0.8, at=(x, sgn * y, -0.1 * hh), rot=(0, 0, sgn * math.radians(-35)), rim=0.003 * L)
-            lib.subsurf(o, 1); parts[side] = o
+            o = lib.flat_part(side, shape, th * 0.8, at=(x, sgn * y, -0.1 * hh), rot=(0, 0, sgn * math.radians(-35)), rim=0.003 * L, root=1)
+            parts[side] = o
     eu = 0.165; er = _r(spec, eu)
     for side, sgn in (("eyeL", 1), ("eyeR", -1)):
         parts[side] = lib.eye(side, 2 * hh, (_x(eu) * L, sgn * er * hw * 0.86, _zc(spec, eu) + 0.22 * hh), spec.get("eye", {}).get("ratio", 0.12))
@@ -218,19 +226,24 @@ def animate(spec, arm):
     acts.append(_sulk(spec, arm))
     return acts
 
+SULK_DROOP_MIN = 20   # degrees; below this the wilt reads as idle sway at card size
+
 def _sulk(spec, arm):
-    """Wilted blade: snout droops, the body sags into a limp bow, the dorsal fin barely ticks, sinks, mouth frowns."""
+    """Wilted blade: snout droops by motion.sulk.droop_deg (at least SULK_DROOP_MIN), the body sags into a limp bow
+    with the tail end hanging, the dorsal fin folds down against the back and barely ticks, pectorals clamp, sinks,
+    mouth frowns."""
     L, hh, hw = _dims(spec); mi = spec["motion"]["idle"]; ms = spec["motion"]["sulk"]
     N, k = ms["frames"], ms["cycles"]; amp = math.radians(mi.get("amp_deg", 9)) * ms.get("energy", 0.3)
-    droop = math.radians(ms.get("droop_deg", 14))
+    droop = math.radians(max(ms.get("droop_deg", SULK_DROOP_MIN), SULK_DROOP_MIN))
     act = lib.new_action(arm, "sulk")
     for f in range(0, N + 1):
-        rots = {bn: [(Z, amp * (0.6 + 0.2 * i) * _w(k, f - 5 * i, N)), (Y, -droop * 0.22)] for i, bn in enumerate(CHAIN)}
-        rots["root"] = [(Y, droop * 0.6 + math.radians(2) * _w(1, f, N))]
-        rots["head"] = [(Y, droop * 0.5)]
-        rots["dorsal"] = [(Xax, math.radians(5) * _w(k, f, N))]
+        rots = {bn: [(Z, amp * (0.6 + 0.2 * i) * _w(k, f - 5 * i, N)), (Y, -droop * 0.3)] for i, bn in enumerate(CHAIN)}
+        rots["root"] = [(Y, droop * 0.8 + math.radians(1.5) * _w(1, f, N))]
+        rots["head"] = [(Y, droop * 0.6)]
+        rots["dorsal"] = [(Xax, math.radians(4) * _w(k, f, N))]
         for side, sgn in (("pecL", 1), ("pecR", -1)): rots[side] = [(Z, -sgn * math.radians(15))]
-        locs = {"root": Vector((0, 0, -L * (0.04 + 0.008 * _w(1, f, N))))}
+        locs = {"root": Vector((0, 0, -L * (0.04 + 0.008 * _w(1, f, N)))),
+                "dorsal": Vector((0, 0, -0.8 * hh))}   # the fin's weight rises with height, so this squashes it flat
         locs.update(lib.frown_locs(ms.get("frown", 0.8)))
         lib.key_pose(arm, 1 + f, rots, locs)
     lib.ease_all(act); return act

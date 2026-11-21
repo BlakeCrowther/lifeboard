@@ -40,20 +40,135 @@ def loft(name, rings, cap_front=None, cap_back=None):
     bm.normal_update()
     return mesh_from_bmesh(name, bm)
 
-def flat_part(name, pts_xz, thickness, at=(0, 0, 0), rot=(0, 0, 0), rim=0.0):
-    """Thin extruded plate from an XZ outline (fins, wings, petals, flippers). Symmetric about its own XZ plane.
-    rim > 0: inset both faces by `rim` meters; the outer ring + edge faces get material index 1 (give the object a
-    second material, e.g. palette.accent, for a fin rim)."""
-    bm = bmesh.new(); vs = [bm.verts.new((x, -thickness / 2, z)) for x, z in pts_xz]
-    f = bm.faces.new(vs); r = bmesh.ops.extrude_face_region(bm, geom=[f])
-    for v in (g for g in r["geom"] if isinstance(g, bmesh.types.BMVert)): v.co.y += thickness
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    if rim > 0:
-        caps = [g for g in r["geom"] if isinstance(g, bmesh.types.BMFace)] + [f]
-        bmesh.ops.inset_individual(bm, faces=caps, thickness=rim, use_even_offset=True)
-        for fc in bm.faces: fc.material_index = 0 if fc in caps else 1
+FLAT_PARTS = []    # one record per flat_part(); measure_flat_parts() adds thicknesses; build.py writes it to build_meta.json
+ROOT_AT, EDGE_AT = 0.1, 0.9   # thickness is measured this far along each root -> free edge column (edge: of its visible extent)
+
+def flat_part(name, pts_xz, thickness, at=(0, 0, 0), rot=(0, 0, 0), rim=0.0, root=0, edge=0.1, rings=3, smooth=3):
+    """Thin part from a closed XZ outline (fins, wings, petals, flippers), symmetric about its own XZ plane.
+    root = n > 0: pts_xz[0..n] is the root chain, where the part joins the body; the rest of the outline is the free
+    edge. The part is a membrane lofted from root to free edge in `rings` steps, `thickness` at the root thinning to
+    `edge` x thickness at the free edge, so it reads as a fin, not a cut-out slab. root = 0: a uniform plate.
+    smooth = n: n extra free-edge points per outline segment, on a curve through the outline points, so the edge is
+    round without a subdivision modifier (which would shrink the fin and multiply its triangles).
+    rim > 0: a band `rim` metres wide inside the free edge (the whole outline for a plate), plus the edge faces, gets
+    material index 1 (give the object a second material, e.g. palette.accent, for a fin rim)."""
+    if root == 0:
+        bm = bmesh.new(); vs = [bm.verts.new((x, -thickness / 2, z)) for x, z in pts_xz]
+        f = bm.faces.new(vs); r = bmesh.ops.extrude_face_region(bm, geom=[f])
+        for v in (g for g in r["geom"] if isinstance(g, bmesh.types.BMVert)): v.co.y += thickness
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        if rim > 0:
+            caps = [g for g in r["geom"] if isinstance(g, bmesh.types.BMFace)] + [f]
+            bmesh.ops.inset_individual(bm, faces=caps, thickness=rim, use_even_offset=True)
+            for fc in bm.faces: fc.material_index = 0 if fc in caps else 1
+        columns = []
+    else:
+        bm, columns = _tapered_membrane(pts_xz, root, thickness, edge, rings, rim, smooth)
     o = mesh_from_bmesh(name, bm); o.location = at; o.rotation_euler = rot
+    FLAT_PARTS.append({"name": o.name, "tapered": root > 0, "columns": columns})
     return o
+
+def _resample(chain, ts):
+    """Points at arc-length fractions ts along a polyline."""
+    seg = [(a - b).length for a, b in zip(chain[1:], chain)]; total = sum(seg) or 1.0; out = []
+    for t in ts:
+        d = t * total; i = 0
+        while i < len(seg) - 1 and d > seg[i]: d -= seg[i]; i += 1
+        out.append(chain[i].lerp(chain[i + 1], min(1.0, d / seg[i]) if seg[i] else 0.0))
+    return out
+
+def _through(chain, n):
+    """Centripetal Catmull-Rom through every point of an open polyline, n extra points per segment (no overshoot loops
+    at sharp tips such as tail forks or fan rays)."""
+    if n <= 0: return chain
+    ext = [2 * chain[0] - chain[1]] + chain + [2 * chain[-1] - chain[-2]]; out = []
+    for i in range(1, len(ext) - 2):
+        p0, p1, p2, p3 = ext[i - 1:i + 3]; t0 = 0.0
+        t1 = t0 + max((p1 - p0).length, 1e-9) ** 0.5; t2 = t1 + max((p2 - p1).length, 1e-9) ** 0.5; t3 = t2 + max((p3 - p2).length, 1e-9) ** 0.5
+        out.append(p1)
+        for k in range(1, n + 1):
+            t = t1 + (t2 - t1) * k / (n + 1)
+            a1 = p0.lerp(p1, (t - t0) / (t1 - t0)); a2 = p1.lerp(p2, (t - t1) / (t2 - t1)); a3 = p2.lerp(p3, (t - t2) / (t3 - t2))
+            b1 = a1.lerp(a2, (t - t0) / (t2 - t0)); b2 = a2.lerp(a3, (t - t1) / (t3 - t1))
+            out.append(b1.lerp(b2, (t - t1) / (t2 - t1)))
+    return out + [chain[-1]]
+
+def _tapered_membrane(pts_xz, root, thickness, edge, rings, rim, smooth):
+    """Columns run from the root chain to the free edge (one per free-edge point, so its shape is kept exactly); the
+    two end columns are the corners where the free edge meets the root, a single vertex each. Returns (bmesh, the
+    inner columns' (root, free edge) XZ end points for measure_flat_parts)."""
+    P = [Vector((x, 0, z)) for x, z in pts_xz]
+    free = _through([P[0]] + P[:root - 1:-1], smooth)        # outline[0] backwards round to outline[root]
+    fl = [0.0]
+    for a, b in zip(free, free[1:]): fl.append(fl[-1] + (b - a).length)
+    base = _resample(P[:root + 1], [d / fl[-1] for d in fl])
+    M = len(free)
+    def ring_s(j):                                           # ring positions 0 (root) .. 1 (free edge) on column j
+        s = [k / rings for k in range(rings + 1)]
+        if rim <= 0: return s
+        inner = 1 - min(0.5, rim / max((free[j] - base[j]).length, 1e-9))
+        return [x * inner for x in s] + [1.0]
+    K = len(ring_s(0)) - 1
+    bm = bmesh.new(); top, bot = [], []
+    for j in range(M):
+        if j in (0, M - 1):
+            c = bm.verts.new(free[j]); top.append([c] * (K + 1)); bot.append([c] * (K + 1)); continue
+        tj, bj = [], []
+        for s in ring_s(j):
+            p = base[j].lerp(free[j], s); t = thickness * (edge + (1 - edge) * (1 - s * s))   # holds near the root, thins over the outer part
+            tj.append(bm.verts.new((p.x, t / 2, p.z))); bj.append(bm.verts.new((p.x, -t / 2, p.z)))
+        top.append(tj); bot.append(bj)
+    def face(vs, mat):
+        vs = [v for i, v in enumerate(vs) if v not in vs[:i]]
+        if len(vs) >= 3: bm.faces.new(vs).material_index = mat
+    on_rim = lambda k: 1 if rim > 0 and k >= K - 1 else 0
+    for j in range(M - 1):
+        for k in range(K):
+            face([top[j][k], top[j + 1][k], top[j + 1][k + 1], top[j][k + 1]], on_rim(k))
+            face([bot[j][k + 1], bot[j + 1][k + 1], bot[j + 1][k], bot[j][k]], on_rim(k))
+        face([top[j][K], top[j + 1][K], bot[j + 1][K], bot[j][K]], 1 if rim > 0 else 0)
+        face([bot[j][0], bot[j + 1][0], top[j + 1][0], top[j][0]], 0)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces); bm.normal_update()
+    # the sheets meet the root and edge bands nearly square on: smooth shading would average across that corner and
+    # darken the fin's root and rim, so those edges stay sharp (the sheets themselves still shade smooth)
+    for e in bm.edges:
+        if len(e.link_faces) == 2 and e.link_faces[0].normal.angle(e.link_faces[1].normal, 0.0) > math.radians(45): e.smooth = False
+    return bm,[(tuple(base[j].xz), tuple(free[j].xz)) for j in range(1, M - 1)]
+
+def measure_flat_parts(steps=40):
+    """Root and edge thickness of every tapered flat_part, measured on the evaluated object (modifiers included) by
+    casting rays through it along its own Y: the real geometry, not the parameters it was built from. Subdivision pulls
+    a part's edge in from its outline, so the edge sample sits at EDGE_AT of each column's visible extent. Run after
+    the archetype has added its modifiers and before finalize() joins the parts. Median over columns, in metres."""
+    from mathutils.bvhtree import BVHTree
+    bpy.context.view_layer.update(); dg = bpy.context.evaluated_depsgraph_get()
+    for rec in FLAT_PARTS:
+        o = bpy.data.objects.get(rec["name"])
+        if not rec["columns"] or o is None: continue
+        tree = BVHTree.FromObject(o, dg); roots, edges = [], []
+        for (bx, bz), (fx, fz) in rec["columns"]:
+            th = {}
+            for i in range(steps + 1):
+                s = i / steps; x, z = bx + (fx - bx) * s, bz + (fz - bz) * s
+                up = tree.ray_cast(Vector((x, 1.0, z)), Vector((0, -1, 0)))[0]; dn = tree.ray_cast(Vector((x, -1.0, z)), Vector((0, 1, 0)))[0]
+                if up is not None and dn is not None: th[s] = up.y - dn.y
+            if not th: continue
+            near = lambda target: th[min(th, key=lambda s: abs(s - target))]
+            roots.append(near(ROOT_AT)); edges.append(near(EDGE_AT * max(th)))
+        med = lambda v: sorted(v)[len(v) // 2] if v else None
+        rec["root_thickness_m"], rec["edge_thickness_m"] = med(roots), med(edges)
+
+def surface_hit(o, origin, direction):
+    """First hit of a world-space ray on the evaluated object (subdivision included, so a part mounted there sits on
+    the surface the user sees, not on the control cage). Returns (point, normal) in world space, or (None, None). The
+    normal faces back along the ray, so it points outward for a ray cast from outside, whatever the face winding."""
+    from mathutils.bvhtree import BVHTree
+    bpy.context.view_layer.update(); dg = bpy.context.evaluated_depsgraph_get()
+    mw = o.matrix_world; inv = mw.inverted(); tree = BVHTree.FromObject(o, dg)
+    loc, nrm, _, _ = tree.ray_cast(inv @ Vector(origin), (inv.to_3x3() @ Vector(direction)).normalized())
+    if loc is None: return None, None
+    n = (inv.to_3x3().transposed() @ nrm).normalized()
+    return mw @ loc, (-n if n.dot(Vector(direction)) > 0 else n)
 
 def tube(name, path, radii, segs=6):
     """Tapered closed tube along a polyline (tentacles, legs, cerata, antennae, stalks). path: [(x,y,z)] base→tip,
@@ -176,9 +291,13 @@ def subsurf(o, levels):
 
 def finalize(parts, name, tri_budget):
     """parts: {part_name: obj}. Tags verts with 'part:<name>' groups, applies modifiers/transforms, joins,
-    cleans, decimates to budget. Returns the single mesh object (origin at world 0)."""
+    cleans, decimates to budget. Returns the single mesh object (origin at world 0).
+    Tapered flat parts are kept out of the decimation: collapsing an edge across a membrane a fraction of a millimetre
+    thick costs the decimator almost nothing, so it would eat fin edges first and leave dark, folded patches."""
+    thin = {r["name"] for r in FLAT_PARTS if r["tapered"]}
     for pn, o in parts.items():
         vg = o.vertex_groups.new(name=f"part:{pn}"); vg.add(range(len(o.data.vertices)), 1.0, "REPLACE")
+        if o.name in thin: o.vertex_groups.new(name="decimate_keep").add(range(len(o.data.vertices)), 1.0, "REPLACE")
     bpy.ops.object.select_all(action="DESELECT")
     for o in parts.values(): o.select_set(True)
     bpy.context.view_layer.objects.active = next(iter(parts.values()))
@@ -193,7 +312,9 @@ def finalize(parts, name, tri_budget):
         n = sum(len(p.vertices) - 2 for p in o.data.polygons)
         if n <= tri_budget: break
         d = o.modifiers.new("Dec", "DECIMATE"); d.ratio = tri_budget / n
+        if "decimate_keep" in o.vertex_groups: d.vertex_group = "decimate_keep"; d.invert_vertex_group = True; d.vertex_group_factor = 10.0
         bpy.ops.object.modifier_apply(modifier="Dec")
+    if "decimate_keep" in o.vertex_groups: o.vertex_groups.remove(o.vertex_groups["decimate_keep"])
     for p in o.data.polygons: p.use_smooth = True
     return o
 

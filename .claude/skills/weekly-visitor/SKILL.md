@@ -44,11 +44,11 @@ Retry loop, driven by `report.json.fix_notes` (fix the cause: a trait the judges
 - **Every** build goes through the ledger: `blender -b --factory-startup --python models/shared/blender/build.py -- <spec> [outdir] --run <run_id>`. Never call build.py without `--run` in a pipeline run.
 - A spec-check failure caught before the build (`build.py` runs check_spec first and exits 3) is a brief fix, not a build attempt: it is not recorded and does not count toward the budget.
 - `build.py` exits 4 and prints `BUDGET EXHAUSTED` when the ledger says the run is spent: stop immediately, no more builds or retries, go to the "no visitor" branch (quarantine + report). Do not work around it (no build without `--run`, no new run id, no hand-run Blender).
-- Verify signature: `models/shared/tools/verify.sh <id> [glb] [spec]` (defaults `out/<id>/<id>.glb`; QA goes to `<glb dir>/qa`).
+- Verify signature: `models/shared/tools/verify.sh <id> [glb] [spec]` (defaults `out/<id>/<id>.glb`; the glb must be in `out/<id>/` or `out/dryrun/<id>/`, and QA goes to that folder's `qa/`).
 
 ## 3. Fallbacks (in order)
 1. Still failing → if the first attempt was **novel**, keep the species idea and simplify the new archetype once (fewer parts, proven rig pieces from lib.py) before giving up on it. Only then brief a **safe-path** variant: proven archetype, new species/palette/params, and a species the archetype can genuinely express (not a recolor of a past miss). Run build → animate → verify again (2 retries).
-2. Still failing → no visitor this week. Move `out/<id>` to `out/quarantine/<id>/` (dry run: `out/dryrun/quarantine/<id>/`).
+2. Still failing → no visitor this week. Move `out/<id>` to `out/quarantine/<id>/` and the spec to `creature/specs/quarantined/<id>.json` (`git mv` when tracked), so no later brief or check treats it as live (dry run: move `out/dryrun/<id>/`, spec included, to `out/dryrun/quarantine/<id>/`).
 
 ## 3b. Polish rounds
 model-verify "Polish rounds" (shared by every kind).
@@ -73,4 +73,4 @@ Tests the whole pipeline on a simulated week without touching anything live.
 - Report like a normal run, plus timings per step and every fix note, so the pipeline itself can be improved.
 
 ## Budget
-4 judge rounds (a counted build the judges saw), 30 minutes of wall time, or rounds + 2 counted builds, whichever comes first (uncounted `preflight.sh` trial builds and pre-build spec-check failures don't count), **enforced by `models/shared/tools/ledger.py`** (`out/runs/<run_id>.json`). `BUDGET EXHAUSTED` from build.py or `ledger.py build` is final for the run. Every judge is recorded with `ledger.py judge` (see model-verify), which refuses a reused judge agent. Judges are cheap (~15 s each) but each judge round counts toward the round budget: each judge-panel attempt uses 3 fresh judges (median-of-3); the ledger records all of them.
+4 judge rounds (a counted build the judges saw), 30 minutes of wall time, or rounds + 2 counted builds, whichever comes first (uncounted `preflight.sh` trial builds and pre-build spec-check failures don't count), **enforced by `models/shared/tools/ledger.py`** (`out/runs/<run_id>.json`). `BUDGET EXHAUSTED` from build.py or `ledger.py build` is final for the run. Every judge is recorded with `ledger.py judge --reply` (see model-verify), which refuses a reused judge agent; `judge_verdict.py` gives the verdict. Judges are cheap (~15 s each) but each judge round counts toward the round budget: each judge-panel attempt uses a fresh panel (size: the kind's `pass_rule.judges`); the ledger records all of them.

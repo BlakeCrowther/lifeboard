@@ -12,7 +12,7 @@ Usage: python3 models/shared/tools/ledger.py start  <run_id> [--rounds 4] [--min
 Run log: a judge recorded with --reply is filed under the latest build; judges tag each fix with the criterion it raises
 (or "placement" for runtime placement, which plans ignore). After a build is judged, the next build is refused (exit 6,
 PLAN NEEDED) until `plan` names the criteria it fixes; `plan` refuses unless one of the build's lowest-median criteria is
-fixed or skipped with a reason. A plan after a passing build (every median >= --floor, default 3) is a polish round (max 2;
+fixed or skipped with a reason. A plan after a passing build (judge_verdict.py's verdict under the kind's pass_rule) is a polish round (max 2;
 retries after a failed build don't count) and first snapshots out/<id>/ to out/runs/<run_id>/build<N>/.
 Budget: judge rounds (a round = a counted build that judges saw), wall-clock minutes, at most rounds+2 counted builds, and
 at most 5 uncounted preflight trial builds between counted ones. Tokens go to judge rounds, so rounds are the limit.
@@ -20,6 +20,9 @@ State: models/out/runs/<run_id>.json. Exit codes: 0 ok, 2 usage / unknown or dup
 import json, os, sys, time, re, shutil, statistics
 
 RUNS = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "out", "runs")  # models/out/runs
+MODELS = os.path.dirname(os.path.dirname(RUNS))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import judge_verdict  # the pass rule lives there (numbers in models/<kind>/qa_calibration.json); the ledger never restates it
 
 def _path(run_id):
     if not re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", run_id): raise SystemExit(f"bad run_id {run_id!r}")
@@ -117,6 +120,29 @@ def _medians(js):
     med = {k: statistics.median(j["reply"].get(k, 0) for j in js) for k in keys}
     return med, round(sum(med.values()) / max(1, len(med)), 2)
 
+def _kind(cid):
+    """The model's kind, from its spec: <kind>/specs/[quarantined/|examples/]<id>.json, else out/[dryrun/]<id>/spec.json."""
+    for k in ("creature", "plant", "scenery"):
+        for sub in ("", "quarantined", "examples"):
+            p = os.path.join(MODELS, k, "specs", sub, cid + ".json")
+            if os.path.exists(p): return json.load(open(p)).get("kind", k)
+    for p in (os.path.join(MODELS, "out", cid, "spec.json"), os.path.join(MODELS, "out", "dryrun", cid, "spec.json")):
+        if os.path.exists(p): return json.load(open(p)).get("kind", "creature")
+    return None
+
+def _judge(js):
+    """One build's replies under the kind's pass rule: (medians, mean of medians, passed). passed is None when there is
+    no verdict (no spec found, or fewer usable replies than pass_rule.judges); the medians then cover every numeric key."""
+    try:
+        kind = _kind(js[0]["creature"])
+        if kind is None: raise judge_verdict.NoVerdict("no spec")
+        rule = judge_verdict.load_rule(kind)
+        usable = [(j["agent_id"], j["reply"]) for j in js if not judge_verdict.problems(j["reply"], rule)]
+        v = judge_verdict.verdict(rule, usable[-rule["judges"]:])
+        return v["medians"], v["mean_of_medians"], v["pass"]
+    except judge_verdict.NoVerdict:
+        med, mean = _medians(js); return med, mean, None
+
 def _fixes(j):
     """A judge's fixes as (criterion, text). Judges tag each fix with the criterion it raises; untagged ones are 'general'."""
     for f in j["reply"].get("fix") or []:
@@ -125,7 +151,7 @@ def _fixes(j):
 def _lowest(med):
     lo = min(med.values()); return sorted(k for k, v in med.items() if v == lo)
 
-def notes(run_id, cid=None, floor=3):
+def notes(run_id, cid=None):
     """Judged builds in order, then every fix grouped by the criterion it raises, oldest first (lowest median first)."""
     st = _load(run_id)
     if st is None: return False, f"unknown run {run_id}"
@@ -133,9 +159,10 @@ def notes(run_id, cid=None, floor=3):
     if not g: return True, "nothing judged with --reply yet"
     lines, last = [], max(g)
     for b, js in sorted(g.items()):
-        med, mean = _medians(js)
-        lines.append(f"build {b}: {len(js)} judges, mean {mean}, {'PASS' if min(med.values()) >= floor else 'FAIL'}  " + " ".join(f"{k}={v:g}" for k, v in med.items()))
-    med, _ = _medians(g[last]); order = sorted(med, key=lambda k: (med[k], k)) + ["general", ROUTED]
+        med, mean, passed = _judge(js)
+        verdict = {True: "PASS", False: "FAIL", None: "NO VERDICT (too few usable replies or no spec)"}[passed]
+        lines.append(f"build {b}: {len(js)} judges, mean {mean}, {verdict}  " + " ".join(f"{k}={v:g}" for k, v in med.items()))
+    med, _, _ = _judge(g[last]); order = sorted(med, key=lambda k: (med[k], k)) + ["general", ROUTED]
     lines.append(f"fixes by criterion (lowest first; `plan` must take one of {_lowest(med)}):")
     for c in order:
         rows = [(b, t) for b, js in sorted(g.items()) for j in js for cc, t in _fixes(j) if cc == c]
@@ -145,12 +172,12 @@ def notes(run_id, cid=None, floor=3):
         lines += [f"    b{b}: {t}" for b, t in rows]
     return True, "\n".join(lines)
 
-def plan(run_id, cid, fixes, skips, summary, floor=3, polish_max=2):
+def plan(run_id, cid, fixes, skips, summary, polish_max=2):
     st = _load(run_id)
     if st is None: return False, f"unknown run {run_id}"
     g = _graded(st, cid)
     if not g: return False, "nothing judged with --reply yet; no plan needed"
-    last = max(g); med, mean = _medians(g[last]); passed = min(med.values()) >= floor
+    last = max(g); med, mean, passed = _judge(g[last]); passed = bool(passed)
     bad = [x for x in fixes + list(skips) if x not in med]
     if bad: return False, f"PLAN REFUSED: {bad} are not criteria; use {sorted(med)}"
     lows = _lowest(med)
@@ -170,13 +197,13 @@ def plan(run_id, cid, fixes, skips, summary, floor=3, polish_max=2):
     kind = f"polish round {polish + 1}/{polish_max}" if passed else "retry (failed build; not a polish round)"
     return True, f"plan after build {last} recorded, {kind} (fixes {fixes or '-'}; skips {list(skips) or '-'})" + (f"; passing build {last} snapshotted to {snap}" if snap else "")
 
-def best(run_id, cid, floor=3):
+def best(run_id, cid):
     st = _load(run_id)
     if st is None: return False, f"unknown run {run_id}"
     rows = []
     for b, js in _graded(st, cid).items():
-        med, mean = _medians(js)
-        if min(med.values()) >= floor: rows.append((mean, b))
+        med, mean, passed = _judge(js)
+        if passed: rows.append((mean, b))
     if not rows: return False, "no passing build"
     mean, b = max(rows)
     snap = os.path.join(RUNS, run_id, f"build{b}"); latest = st["builds"][-1]["n"] if st["builds"] else 0
@@ -187,7 +214,7 @@ def main(argv):
     if not argv: print(__doc__); return 2
     cmd, rest = argv[0], argv[1:]
     def opt(name, default):
-        if name in rest: i = rest.index(name); v = rest[i + 1]; del rest[i:i + 2]; return v
+        if name in rest[:-1]: i = rest.index(name); v = rest[i + 1]; del rest[i:i + 2]; return v
         return default
     if cmd == "start":
         b, m = opt("--rounds", 4), opt("--minutes", 30)
@@ -195,9 +222,8 @@ def main(argv):
         ok, msg = start(rest[0], b, m); print(msg); return 0 if ok else 2
     if cmd == "build" and len(rest) == 2:
         ok, msg = record_build(*rest); print(msg); return 0 if ok else (6 if msg.startswith("PLAN") else 4)
-    floor = float(opt("--floor", 3))
     if cmd == "notes" and len(rest) in (1, 2):
-        ok, msg = notes(rest[0], rest[1] if len(rest) == 2 else None, floor); print(msg); return 0 if ok else 2
+        ok, msg = notes(rest[0], rest[1] if len(rest) == 2 else None); print(msg); return 0 if ok else 2
     if cmd == "plan":
         fx = [x for x in (opt("--fixes", "") or "").split(",") if x]; sk = {}
         while "--skip" in rest:
@@ -205,9 +231,9 @@ def main(argv):
             if not why.strip(): print("--skip needs 'T<n>: reason'"); return 2
             sk[k.strip()] = why.strip()
         if len(rest) != 3: print(__doc__); return 2
-        ok, msg = plan(rest[0], rest[1], fx, sk, rest[2], floor); print(msg); return 0 if ok else 6
+        ok, msg = plan(rest[0], rest[1], fx, sk, rest[2]); print(msg); return 0 if ok else 6
     if cmd == "best" and len(rest) == 2:
-        ok, msg = best(*rest, floor=floor); print(msg); return 0 if ok else 2
+        ok, msg = best(*rest); print(msg); return 0 if ok else 2
     if cmd == "judge":
         rep = opt("--reply", None)
         if rep == "-": rep = "@/dev/stdin"

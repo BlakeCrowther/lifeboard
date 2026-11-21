@@ -32,7 +32,7 @@ On rocks a copy tilts to the rock face (`follow` and `drape`). The build writes 
 `kind: "scenery"`, `id`, `name`, `biome`, `rarity: "common"`, `archetype`, `reference`, `size.height_m` (+ `footprint_m`), `palette`, `material`, `budget`, `sit {mode, why}`, optional `motion.sway` (shader: `{mode: "shader", amp, period_s, lift, personality}`; bone: `{frames, cycles, amp_deg, lag_frames, personality}`; `personality`: one sentence on how it should move, the judges grade `sway_readable` against it), optional `pass_through` (creatures swim through it; also settable per biome item). `check_spec.py` (spec-check) enforces these.
 
 ## judge-panel
-Same judge harness as the other kinds, rubric `reads_as, style_match, artifacts, sway_readable` (static: null). No mouth/feed criteria. Judged absolute: every median ≥ 3 (`qa_calibration.json`). Images come from `node shared/tools/capture_habitat.mjs <id>` (the real habitat) then `verify.sh`'s contact sheet. Judge prompt (fill the `{}`; nothing else about the build):
+Same judge harness as the other kinds (model-verify skill), rubric `reads_as, style_match, artifacts, sway_readable` (static: null). No mouth/feed criteria. Criteria, floor, bar and panel size live only in `models/scenery/qa_calibration.json` `pass_rule`; `models/shared/tools/judge_verdict.py` decides (a static prop's `null` motion score is left out). Images come from `node shared/tools/capture_habitat.mjs <id>` (the real habitat) then `verify.sh`'s contact sheet. Judge prompt (fill the `{}`; nothing else about the build):
 
 ```
 You are a visual judge for a 3D scenery prop in a stylized underwater game habitat. Judge only what you see.
@@ -41,8 +41,8 @@ Sway intent: "{motion.sway.personality}" (static props: no sway; score sway_read
 Read the style guide models/STYLE.md. Images (Read tool), in order, from out/{id}/qa/:
 1. habitat/wide.png: the game camera in the real habitat; the prop is the copy nearest the camera. What the player sees.
 2. habitat/turn.png: 4 angles round it. 3. habitat/sway.png: labelled frames across one sway loop, in order.
-4. contact.png: studio renders for structure and true scale. Judge colour and readability from 1-3, not the studio lighting.
-Anchor: the golden {golden id} scored {qa_calibration.json judge}; see out/{golden}/qa/habitat/wide.png. Equal quality = equal score.
+4. contact.png: studio renders for structure and true scale (its first row is the card-size view). Judge colour and readability from 1-3, not the studio lighting.
+Anchor: the golden {golden id} scored {qa_calibration.json golden_medians}; see models/{qa_calibration.json habitat_wide}. Equal quality = equal score.
 Score 1-5 (3 = acceptable for this world): reads_as, style_match, artifacts, sway_readable.
 Tag every fix with the criterion it would raise; use "placement" for anything about how the habitat places copies
 (spacing, sameness of copies, sinking into the sand): those go to habitat.js, not the model.

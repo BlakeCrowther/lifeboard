@@ -13,7 +13,7 @@ Contract: head +X, up +Z, meters, origin at body center (see models/creature/CON
 import math, sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared", "blender"))
 import lib
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 NOSE, BASE = 0.5, -0.34          # body spans x = +0.5L (nose) … -0.34L (tail base); tail fin reaches ~-0.52L
 DEFAULT_PROFILE = [(0, 0.0), (0.03, 0.36), (0.1, 0.68), (0.22, 0.92), (0.37, 1.0), (0.52, 0.94), (0.67, 0.76), (0.8, 0.5), (0.92, 0.33), (1.0, 0.26)]
@@ -49,6 +49,34 @@ def blockout(spec):
     tail = lib.flat_part("tail", [(x * L, z * L * spec["size"].get("height_ratio", .45) / .45) for x, z in t], 0.012 * L, at=(BASE * L + 0.03 * L, 0, 0))
     return {"body": body, "tail": tail}
 
+PEC_U, PEC_Z = 0.3, -0.15   # pectoral root: along the body (u) and down the flank (x half-depth)
+PEC_FLARE = 25               # degrees the fin opens from the flank at rest; idle, feed and sulk turn it about its root
+PEC_SLANT = 30               # degrees the root line leans back from vertical, within the flank: the fin angles down-back
+                             # and its outer face tips up to the light, while the whole root stays on the surface
+PEC_MOUNT = {}               # side -> (root point, root-line axis, trailing direction), from model(); rig() and the
+                             # actions need them after the body has been joined
+
+def _pec_mount(spec, body, sgn, root_thickness):
+    """Root point and orientation for a pectoral: the root line lies in the flank (on the subdivided surface, sunk just
+    enough that the root band never shows), slanted PEC_SLANT, and the fin trails back from it, opened PEC_FLARE from
+    the flank. Rooted along the surface, the whole fin stays outside the body: a fin tilted through the flank shows as
+    a slot, and one tilted about its own trailing edge lifts an end of its root off the body."""
+    L, hh, hw = _dims(spec)
+    hit, n = lib.surface_hit(body, (_x(PEC_U) * L, sgn * 2 * hw, PEC_Z * hh), (0, -sgn, 0))
+    up, back = Vector((0, 0, 1)), Vector((-1, 0, 0))
+    ev = (up - up.dot(n) * n).normalized()                                   # vertical, in the flank
+    eb = (back - back.dot(n) * n - back.dot(ev) * ev).normalized()           # straight back, in the flank
+    sl, f = math.radians(PEC_SLANT), math.radians(PEC_FLARE)
+    ez = ev * math.cos(sl) + eb * math.sin(sl)                               # root line
+    trail = (eb * math.cos(sl) - ev * math.sin(sl)) * math.cos(f) + n * math.sin(f)
+    ex = -trail; frame = Matrix((ex, ez.cross(ex), ez)).transposed()         # outline -X trails, outline Z is the root line
+    return hit - n * 0.6 * root_thickness, frame
+
+def _pec_open(sgn, deg):
+    """Pose rotation that opens a pectoral `deg` further from the flank (negative: folds it in) about its root line."""
+    m = PEC_MOUNT.get("pecL" if sgn > 0 else "pecR")
+    return [(tuple(m[1]), -sgn * math.radians(deg))] if m else []
+
 def model(spec):
     L, hh, hw = _dims(spec); parts = {}; seg, nu = 18, 14
     rings = []
@@ -59,32 +87,28 @@ def model(spec):
     lib.subsurf(body, 2); parts["body"] = body
     th = 0.012 * L
     pd = spec.get("parts", {})
-    t = [(0.03, 0.05), (0.03, -0.05)] + TAIL.get(pd.get("tail", "rounded"), TAIL["rounded"])[1:]  # thick root wedge
-    tail = lib.flat_part("tail", [(x * L, z * L * spec["size"].get("height_ratio", .45) / .45) for x, z in t], th, at=(BASE * L + 0.07 * L, 0, 0), rim=RIM * L)   # root overlaps the tapered body so subdivision never opens a gap
-    lib.subsurf(tail, 2); parts["tail"] = tail
+    t = [(0.03, -0.05), (0.03, 0.05)] + TAIL.get(pd.get("tail", "rounded"), TAIL["rounded"])[1:]   # root edge first
+    tail = lib.flat_part("tail", [(x * L, z * L * spec["size"].get("height_ratio", .45) / .45) for x, z in t], th, at=(BASE * L + 0.07 * L, 0, 0), rim=RIM * L, root=1)   # root overlaps the tapered body so subdivision never opens a gap
+    parts["tail"] = tail
 
     def ridge(name, u0, u1, heights, top=True, scale=0.62):
-        pts = []
-        n = len(heights)
-        for i, h in enumerate(heights):
-            u = u0 + (u1 - u0) * i / (n - 1); x = _x(u) * L; base = _r(spec, u) * hh * 0.8
-            pts.append((x, (base + h * hh * scale) if top else -(base + h * hh * scale)))
-        for i in reversed(range(n)):
-            u = u0 + (u1 - u0) * i / (n - 1); pts.append((_x(u) * L, (_r(spec, u) * hh * 0.55) * (1 if top else -1)))
-        if not top: pts = list(reversed(pts))
-        o = lib.flat_part(name, pts, th, rim=RIM * L); lib.subsurf(o, 2); parts[name] = o
+        n = len(heights); us = [u0 + (u1 - u0) * i / (n - 1) for i in range(n)]; sg = 1 if top else -1
+        base = [(_x(u) * L, sg * _r(spec, u) * hh * 0.55) for u in us]          # sunk in the body: the fin's root
+        edge = [(_x(u) * L, sg * (_r(spec, u) * hh * 0.8 + h * hh * scale)) for u, h in zip(us, heights)]
+        o = lib.flat_part(name, base + edge[::-1], th, rim=RIM * L, root=n - 1); parts[name] = o
 
     d = pd.get("dorsal", "rounded")
     if d != "none": ridge("dorsal", 0.3, 0.85, SAIL.get(d, SAIL["rounded"]), True)
     a = pd.get("anal", "rounded")
     if a != "none": ridge("anal", 0.6, 0.9, SAIL["pointed" if a == "pointed" else "rounded"][:5], False, 0.45)
+    PEC_MOUNT.clear()
     if pd.get("pectoral", "paddle") != "none":
-        u = 0.3; x = _x(u) * L; y = _r(spec, u) * hw * 0.85
         ps = pd.get("pectoral_scale", 1.5)    # paddle size multiplier (default 1.5: reads at card size)
-        shape = [(0, 0), (-.05 * L * ps, .045 * L * ps), (-.11 * L * ps, .03 * L * ps), (-.12 * L * ps, -.015 * L * ps), (-.06 * L * ps, -.035 * L * ps)]
+        shape = [(x * L * ps, z * L * ps) for x, z in ((0, -.02), (0, .02), (-.05, .045), (-.11, .03), (-.12, -.015), (-.06, -.035))]
         for side, sgn in (("pecL", 1), ("pecR", -1)):
-            o = lib.flat_part(side, shape, th * 0.8, at=(x, sgn * y * 0.93, -0.15 * hh), rot=(sgn * math.radians(40), 0, sgn * math.radians(-30)), rim=RIM * L * 0.7)
-            lib.subsurf(o, 2); parts[side] = o
+            at, frame = _pec_mount(spec, body, sgn, th * 0.8)
+            parts[side] = lib.flat_part(side, shape, th * 0.8, at=tuple(at), rot=tuple(frame.to_euler()), rim=RIM * L * 0.7, root=1)
+            PEC_MOUNT[side] = (at, frame.col[2].copy(), -frame.col[0])
     # eyes (shared STYLE eye: glossy dark sphere, ~10% body depth)
     eu = 0.12
     for side, sgn in (("eyeL", 1), ("eyeR", -1)):
@@ -143,9 +167,8 @@ def rig(spec, mesh):
              ("spine2", (X(0.6), 0, 0), (X(0.78), 0, 0), "spine1"),
              ("spine3", (X(0.78), 0, 0), (BASE * L, 0, 0), "spine2"),
              ("tail", (BASE * L, 0, 0), ((BASE - 0.17) * L, 0, 0), "spine3")]
-    for side, sgn in (("pecL", 1), ("pecR", -1)):
-        y = _r(spec, 0.3) * hw * 0.85
-        bones.append((side, (X(0.3), sgn * y, -0.15 * hh), (X(0.3) - 0.1 * L, sgn * (y + 0.03 * L), -0.15 * hh), "root"))
+    for side, (at, axis, trail) in PEC_MOUNT.items():    # pivot on the fin's root, so turning it never swings it into the flank
+        bones.append((side, tuple(at), tuple(at + trail * 0.1 * L), "root"))
     bones.append(lib.jaw_bone("head")); bones += lib.mouth_corner_bones()
     arm = lib.armature(spec["id"] + "_rig", bones)
     stations = [(X(0.12), "head"), (X(0.36), "root"), (X(0.52), "spine1"), (X(0.69), "spine2"), (X(0.86), "spine3"), ((BASE - 0.06) * L, "tail")]
@@ -173,7 +196,7 @@ def _idle_pose(spec, f):
     # hover: slow pitch (k=1) + roll wave (k), whole cycles so the loop stays seamless; bob lives in _idle_locs
     rots["root"] = [(Y, math.radians(4) * math.sin(2 * math.pi * f / N)), (Xax, math.radians(5) * math.sin(2 * math.pi * k * f / N + 1.1))]
     for side, sgn in (("pecL", 1), ("pecR", -1)):
-        rots[side] = [(Xax, sgn * math.radians(30) * math.sin(2 * math.pi * 2 * k * f / N + (0 if sgn > 0 else 0.6)))]
+        rots[side] = _pec_open(sgn, 12 * math.sin(2 * math.pi * 2 * k * f / N + (0 if sgn > 0 else 0.6)))
     return rots
 
 def _idle_locs(spec, f):
@@ -203,25 +226,29 @@ def animate(spec, arm):
         rots["head"] = rots.get("head", []) + [(Y, math.radians(pitch))]
         rots["root"] = rots.get("root", []) + [(Y, math.radians(9) * sc)]   # whole-body nose-up tuck on anticipation (reads side-on)
         for i, bn in enumerate(CHAIN): rots[bn] = rots[bn] + [(Z, sweep * amp * (0.4 + 0.25 * i) + sc * math.radians(26) * (1 if i % 2 == 0 else -1))]
-        for side, sgn in (("pecL", 1), ("pecR", -1)): rots[side] = rots[side] + [(Xax, sgn * math.radians(35) * max(sc, 0))]
+        for side, sgn in (("pecL", 1), ("pecR", -1)): rots[side] = rots[side] + _pec_open(sgn, 25 * max(sc, 0))
         lib.key_pose(arm, 1 + round(t * M), rots, {"root": Vector((dx, 0, 0))})
     lib.key_mouth(arm, [(0.0, 0), (0.24, 0), (0.3, 1.0), (0.42, 1.0), (0.5, 0), (0.53, 0), (0.58, 0.9), (0.62, 0.9), (0.69, 0), (0.72, 0), (0.76, 0.35), (0.81, 0), (1.0, 0)], frames=M)
     lib.ease_all(feed); acts.append(feed)
     acts.append(_sulk(spec, arm))
     return acts
 
+SULK_DROOP_MIN = 30   # degrees nose-down; the 14 degree hang this archetype used to default to reads as idle at card size
+
 def _sulk(spec, arm):
-    """Mope loop (runtime plays it instead of idle while sad): nose down, tail drooping into a slump, fins clamped,
-    a slow tired tail beat, sunk a little, mouth corners down. Whole cycles only, so it loops seamlessly."""
+    """Mope loop (runtime plays it instead of idle while sad): hangs nose-down by motion.sulk.droop_deg (at least
+    SULK_DROOP_MIN), head bowed, tail limp, fins clamped, a slow tired tail beat, sunk a little, mouth corners down.
+    Whole cycles only, so it loops seamlessly. The tail stays near the body line: curling it down as well would undo
+    the tilt in silhouette (creature/qa.py measures the sulk against idle at card size)."""
     L, hh, hw = _dims(spec); mi = spec["motion"]["idle"]; ms = spec["motion"]["sulk"]
     N, k = ms["frames"], ms["cycles"]; amp = math.radians(mi.get("amp_deg", 14)) * ms.get("energy", 0.35)
-    droop = math.radians(ms.get("droop_deg", 14)); w = lambda kk, f, ph=0: math.sin(2 * math.pi * kk * f / N + ph)
+    droop = math.radians(max(ms.get("droop_deg", SULK_DROOP_MIN), SULK_DROOP_MIN)); w = lambda kk, f, ph=0: math.sin(2 * math.pi * kk * f / N + ph)
     act = lib.new_action(arm, "sulk")
     for f in range(0, N + 1):
-        rots = {bn: [(Z, amp * (0.6 + 0.3 * i) * w(k, f - 4 * i)), (Y, -droop * 0.18)] for i, bn in enumerate(CHAIN)}   # tail sags
-        rots["root"] = [(Y, droop + math.radians(2) * w(1, f))]                                                       # nose down, slow sigh
+        rots = {bn: [(Z, amp * (0.6 + 0.3 * i) * w(k, f - 4 * i)), (Y, -droop * 0.06)] for i, bn in enumerate(CHAIN)}   # limp tail
+        rots["root"] = [(Y, droop + math.radians(1.5) * w(1, f))]                                                     # nose down, slow sigh
         rots["head"] = [(Y, droop * 0.4)]
-        for side, sgn in (("pecL", 1), ("pecR", -1)): rots[side] = [(Xax, -sgn * math.radians(12) + sgn * math.radians(4) * w(k, f))]   # clamped in
+        for side, sgn in (("pecL", 1), ("pecR", -1)): rots[side] = _pec_open(sgn, -12 + 2 * w(k, f))   # clamped to the flank
         locs = {"root": Vector((0, 0, -L * (0.05 + 0.01 * w(1, f))))}
         locs.update(lib.frown_locs(ms.get("frown", 1.0)))
         lib.key_pose(arm, 1 + f, rots, locs)

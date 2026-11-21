@@ -1,12 +1,18 @@
-"""judge-panel inputs: fixed-rig QA renders of a creature .glb for the visual judge.
+"""judge-panel inputs: fixed-rig QA renders of a model .glb for the visual judge.
 Usage: blender -b --factory-startup --python qa_render.py -- <file.glb> <outdir> [golden1.glb golden2.glb ...]
+         [--clips a,b] [--pitch deg] [--card-px-per-m n [--card-scale s]]
 Writes: turn_0..7.png (turntable), idle_0..5.png, feed_0..5.png,
   onion_{idle,feed}_0..5.png (elevated 3/4 view; 0 opaque, 1..5 transparent, overlaid by verify.sh),
   panel_new.png + panel_<golden>.png (each alone, side view, SAME ortho scale = true relative size),
-  panel_mag_<golden>.png + panels.json when the new creature is < 50% of that golden's length (magnified to its length).
-Turntable/strip/onion views are framed to the creature's silhouette extents in that view (+15% margin), deterministic.
-verify.sh composites onion_*.png → motion_{idle,feed}.png, panels → side_<golden>.png, and packs contact.png."""
-import bpy, sys, os, math
+  panel_mag_<golden>.png + panels.json when the new creature is < 50% of that golden's length (magnified to its length),
+  card_size_<pose>.png + card_size.json (only with --card-px-per-m): side view at the pixel size the user sees on the
+  habitat card, 1 m of model = px_per_m x card-scale px, no fit-to-silhouette. Poses: the first clip's frame 0 (or "rest"
+  for a static model) and, when the clips include sulk, sulk frame 0, all on one canvas and centre. card_size.json
+  records canvas_px, model_px (first pose's silhouette), px_per_m and the pose labels.
+Turntable/strip/onion views are framed to the model's silhouette extents in that view (+15% margin), deterministic.
+verify.sh reads card_view.json for px_per_m (this script never does), composites onion_*.png → motion_{idle,feed}.png,
+panels → side_<golden>.png, card_size_*.png → the sheet's first row, and packs contact.png."""
+import bpy, sys, os, math, json
 from mathutils import Vector
 
 argv = sys.argv[sys.argv.index("--") + 1:]
@@ -15,6 +21,10 @@ CLIPS = ["idle", "feed", "sulk"]                   # creature default; plants pa
 if "--clips" in argv: i = argv.index("--clips"); CLIPS = [c for c in argv[i + 1].split(",") if c]; del argv[i:i + 2]
 PITCH = 8                                          # turntable elevation; flat scenery passes --pitch 35 (top face reads)
 if "--pitch" in argv: i = argv.index("--pitch"); PITCH = float(argv[i + 1]); del argv[i:i + 2]
+CARD_PPM = None                                    # --card-px-per-m: render the card-size view; kinds not drawn on the habitat card omit it
+if "--card-px-per-m" in argv: i = argv.index("--card-px-per-m"); CARD_PPM = float(argv[i + 1]); del argv[i:i + 2]
+CARD_SCALE = 1.0                                   # --card-scale: the runtime's extra display scale for this model (scenery: biomes.json)
+if "--card-scale" in argv: i = argv.index("--card-scale"); CARD_SCALE = float(argv[i + 1]); del argv[i:i + 2]
 GLB, OUT, GOLDEN = argv[0], argv[1], argv[2:]
 os.makedirs(OUT, exist_ok=True)
 sc = bpy.context.scene
@@ -105,6 +115,41 @@ def play(objs, name):
     if hasattr(ad, "action_slot") and getattr(act, "slots", None): ad.action_slot = act.slots[0]
     return tuple(map(int, act.frame_range))
 
+CARD_PAD_PX = 4      # background left around the model so edge pixels are not cropped by the canvas
+CARD_PITCH = 8       # the habitat camera looks slightly down on its subjects, so a flat prop shows a sliver of its top face
+
+def card_size_views(objs, cam, C, L):
+    """Side view at card pixel size: orthographic, 1 m of model = CARD_PPM * CARD_SCALE px, the real metres of the glb
+    (no fit-to-silhouette). One canvas and centre for every pose, so a pose change shows as a shift or reshape.
+    Poses: the first clip at its first frame (or "rest" when the model has no clips) and sulk at its first frame, which
+    is the held sulk pose (creature/qa.py compares the whole sulk loop with the whole idle loop). Writes card_size_<pose>.png and card_size.json."""
+    ppm = CARD_PPM * CARD_SCALE
+    poses = []                                   # (label, clip or None, first frame)
+    for clip in [CLIPS[0] if CLIPS else None] + (["sulk"] if "sulk" in CLIPS[1:] else []):
+        r = play(objs, clip) if clip else None
+        if r or not poses: poses.append((clip if r else "rest", clip if r else None, r[0] if r else 1))
+    aim(cam, C, L, 0, CARD_PITCH); bpy.context.view_layer.update()
+    q = cam.matrix_world.to_quaternion(); right, up, fwd = q @ Vector((1, 0, 0)), q @ Vector((0, 1, 0)), q @ Vector((0, 0, -1))
+    ext = []                                     # per pose: (min x, max x, min y, max y, min depth, max depth) in the view plane
+    for _, clip, f in poses:
+        if clip: play(objs, clip)
+        sc.frame_set(f); pts = silhouette_pts(objs)
+        xs, ys, zs = [p.dot(right) for p in pts], [p.dot(up) for p in pts], [p.dot(fwd) for p in pts]
+        ext.append((min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)))
+    x0, x1, y0, y1, z0, z1 = min(e[0] for e in ext), max(e[1] for e in ext), min(e[2] for e in ext), max(e[3] for e in ext), min(e[4] for e in ext), max(e[5] for e in ext)
+    W, H = math.ceil((x1 - x0) * ppm) + 2 * CARD_PAD_PX, math.ceil((y1 - y0) * ppm) + 2 * CARD_PAD_PX
+    cam.location = cam.location + right * ((x0 + x1) / 2 - cam.location.dot(right)) + up * ((y0 + y1) / 2 - cam.location.dot(up))
+    cam.data.ortho_scale = max(W, H) / ppm       # ortho_scale spans the larger canvas side
+    cam.data.clip_start = max(1e-4, (z0 - cam.location.dot(fwd)) * 0.5); cam.data.clip_end = (z1 - cam.location.dot(fwd)) + (z1 - z0) + 1.0
+    sc.render.resolution_x, sc.render.resolution_y = W, H
+    for label, clip, f in poses:
+        if clip: play(objs, clip)
+        sc.frame_set(f); shot(f"{OUT}/card_size_{label}.png")
+    e = ext[0]
+    json.dump({"px_per_m": ppm, "canvas_px": [W, H], "model_px": [round((e[1] - e[0]) * ppm, 1), round((e[3] - e[2]) * ppm, 1)],
+               "poses": [p[0] for p in poses]}, open(f"{OUT}/card_size.json", "w"))
+    sc.render.resolution_x = sc.render.resolution_y = 384
+
 clear(); setup_render()
 objs, _ = load(GLB); mn, mx = bbox(objs); L = hlen(mn, mx); C = (mn + mx) / 2
 cam = rig(L, C)
@@ -137,11 +182,11 @@ for name in CLIPS:
         sc.render.film_transparent = i > 0; sc.render.image_settings.color_mode = "RGBA" if i else "RGB"
         sc.frame_set(f); shot(f"{OUT}/onion_{name}_{i}.png")
 sc.render.film_transparent = False; sc.render.image_settings.color_mode = "RGB"
+if CARD_PPM: card_size_views(objs, cam, C, L)
 # side-by-side panels: each creature rendered ALONE, side view, with one shared ortho scale → true relative size.
 # When the new creature is < 50% of a golden's length, also render it magnified to that golden's length
 # (panel_mag_<golden>.png) so detail is judgeable; panels.json records the factors for verify.sh labels.
 if GOLDEN:
-    import json
     sizes, lens = {}, {}
     for path in [GLB] + GOLDEN:
         clear(); o, _ = load(path); a, b = bbox(o); sizes[path] = max(hlen(a, b), (b - a).z); lens[path] = hlen(a, b)

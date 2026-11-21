@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model pipeline map</title>
+<!--
+  Living map of the 3D model pipeline. Open this file in a browser (or the repo preview: /models/pipeline.html).
+  Hand-written: the diagram, stage text, callouts. Generated: the pipeline-data block at the bottom
+  (models/shared/tools/render_pipeline_map.py). Change the pipeline -> update this page in the same commit.
+-->
+<style>
+:root {
+  --bg: #f7f6f3; --panel: #ffffff; --ink: #1d1f23; --muted: #5d6470; --line: #d9dbe0;
+  --make: #3b6fd8; --make-bg: #e8effc; --code: #1f8a5b; --code-bg: #e3f4ec;
+  --judge: #b0570f; --judge-bg: #fbeee2; --run: #7b4fc9; --run-bg: #efe8fb; --ship: #374151; --ship-bg: #eceef1;
+  --pass: #1f8a5b; --fail: #c0392b; --warn: #a86b00; --warn-bg: #fff4d6; --note-bg: #eef3fb;
+  --radius: 10px; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15171b; --panel: #1f2228; --ink: #e8eaee; --muted: #9aa2ae; --line: #343944;
+  --make: #7ea6f5; --make-bg: #1d2a44; --code: #5cc996; --code-bg: #17332a; --judge: #f0a060; --judge-bg: #3a2717;
+  --run: #b597f0; --run-bg: #2b2140; --ship: #c3c9d2; --ship-bg: #2a2e35; --pass: #5cc996; --fail: #f07a6c;
+  --warn: #f0c060; --warn-bg: #3a3017; --note-bg: #1d2636;
+} }
+:root[data-theme="dark"] {
+  --bg: #15171b; --panel: #1f2228; --ink: #e8eaee; --muted: #9aa2ae; --line: #343944;
+  --make: #7ea6f5; --make-bg: #1d2a44; --code: #5cc996; --code-bg: #17332a; --judge: #f0a060; --judge-bg: #3a2717;
+  --run: #b597f0; --run-bg: #2b2140; --ship: #c3c9d2; --ship-bg: #2a2e35; --pass: #5cc996; --fail: #f07a6c;
+  --warn: #f0c060; --warn-bg: #3a3017; --note-bg: #1d2636;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 26px; margin: 0 0 4px; }
+h2 { font-size: 19px; margin: 40px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+h3 { font-size: 16px; margin: 0 0 6px; }
+p { margin: 6px 0; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--ship-bg); padding: 1px 5px; border-radius: 4px; }
+a { color: var(--make); }
+.lede { color: var(--muted); max-width: 70ch; }
+.meta { color: var(--muted); font-size: 13px; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 16px 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--panel); }
+.seg button { border: 0; background: none; color: var(--ink); padding: 6px 14px; font: inherit; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); }
+.dot { width: 10px; height: 10px; border-radius: 3px; }
+
+/* flow diagram */
+.flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; align-items: stretch; position: relative; }
+.group { border-radius: var(--radius); padding: 10px; display: flex; flex-direction: column; gap: 8px; position: relative; }
+.group > .gl { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+.group.make { background: var(--make-bg); } .group.make .gl { color: var(--make); }
+.group.code { background: var(--code-bg); grid-column: span 2; } .group.code .gl { color: var(--code); }
+.group.judge { background: var(--judge-bg); } .group.judge .gl { color: var(--judge); }
+.group.run { background: var(--run-bg); } .group.run .gl { color: var(--run); }
+.group.ship { background: var(--ship-bg); } .group.ship .gl { color: var(--ship); }
+.code-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.node { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%; }
+.node:hover, .node:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+.node b { display: block; font-size: 14px; }
+.node span { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; }
+.node.off { opacity: .45; }
+.group:not(:last-child)::after { content: "→"; position: absolute; right: -10px; top: 50%; transform: translate(50%, -50%); color: var(--muted); font-size: 18px; z-index: 1; }
+.loops { margin-top: 10px; display: grid; gap: 6px; font-size: 13px; }
+.loop { border: 1.5px dashed var(--line); border-radius: 8px; padding: 6px 10px; background: var(--panel); }
+.loop b { color: var(--judge); }
+.loop.fail b { color: var(--fail); }
+
+/* cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; border-top: 4px solid var(--line); scroll-margin-top: 16px; }
+.card.make { border-top-color: var(--make); } .card.code { border-top-color: var(--code); }
+.card.judge { border-top-color: var(--judge); } .card.run { border-top-color: var(--run); } .card.ship { border-top-color: var(--ship); }
+.card.flash { animation: flash 1.2s ease-out; }
+@keyframes flash { from { box-shadow: 0 0 0 4px var(--judge); } to { box-shadow: 0 0 0 0 transparent; } }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; font-size: 13px; margin: 8px 0; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; }
+details { margin-top: 8px; font-size: 13px; }
+summary { cursor: pointer; color: var(--muted); }
+details ul { margin: 6px 0 0; padding-left: 18px; }
+details li { margin: 2px 0; }
+.tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+
+/* callouts */
+.callout { border-left: 4px solid var(--make); background: var(--note-bg); border-radius: 6px; padding: 10px 12px; margin: 10px 0; font-size: 14px; }
+.callout.warn { border-left-color: var(--warn); background: var(--warn-bg); }
+.callout h4 { margin: 0 0 4px; font-size: 14px; }
+.callout .id { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+
+/* judge decision */
+.decide { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: center; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-size: 12px; color: var(--muted); font-weight: 600; }
+td.score button { width: 30px; height: 28px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; cursor: pointer; }
+td.score button:hover { border-color: var(--judge); }
+td.med { font-weight: 700; }
+td.ok { color: var(--pass); } td.bad { color: var(--fail); }
+.steps { display: grid; gap: 8px; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 14px; }
+.step .n { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.verdict { font-size: 22px; font-weight: 800; }
+.verdict.pass { color: var(--pass); } .verdict.fail { color: var(--fail); }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.presets button { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.presets button[aria-pressed="true"] { border-color: var(--judge); color: var(--judge); font-weight: 600; }
+.plain { width: 100%; }
+.plain td, .plain th { text-align: left; vertical-align: top; }
+
+@media (max-width: 860px) {
+  .flow { grid-template-columns: 1fr; }
+  .group.code { grid-column: auto; }
+  .group:not(:last-child)::after { content: "↓"; right: 50%; top: auto; bottom: -10px; transform: translate(50%, 50%); }
+  .decide { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Model pipeline</h1>
+  <p class="lede">How a 3D model goes from an idea to the habitat, and what it must pass at each gate. Pick a kind; click any stage to jump to its details.</p>
+  <p class="meta">Last reviewed: 2026-11-20 · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/model-pipeline-reaudit.md">re-audit</a>.</p>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Model kind" id="kinds"></div>
+    <div class="legend">
+      <span class="chip"><span class="dot" style="background:var(--make)"></span>Make (agent + Blender)</span>
+      <span class="chip"><span class="dot" style="background:var(--code)"></span>Code check (script, same answer every run)</span>
+      <span class="chip"><span class="dot" style="background:var(--judge)"></span>Judges (AI, scored, noisy)</span>
+      <span class="chip"><span class="dot" style="background:var(--run)"></span>Runtime (in the page)</span>
+      <span class="chip"><span class="dot" style="background:var(--ship)"></span>Ship</span>
+    </div>
+  </div>
+
+  <h2>1. The whole pipeline</h2>
+  <div class="flow" id="flow"></div>
+  <div class="loops" id="loops"></div>
+  <div class="callout">
+    <h4>Reading the diagram</h4>
+    Green gates are scripts: they measure and give the same answer every time. The orange gate is the only one that uses opinion (fresh AI judges), so it is the only one that can pass a model on one draw of judges and fail it on another. Everything before it is cheap; everything from it on costs judge time and run budget.
+  </div>
+
+  <h2>2. Each gate</h2>
+  <div class="cards" id="cards"></div>
+
+  <h2>3. How the judge panel decides</h2>
+  <p class="lede">Each judge scores every criterion 1–5 from the renders. A script (<code>judge_verdict.py</code>), not the agent, turns the scores into a verdict. Click a score to change it and watch the verdict move.</p>
+  <div class="presets" id="presets"></div>
+  <div class="decide">
+    <div class="tablewrap"><table id="scores"></table></div>
+    <div class="steps" id="steps"></div>
+  </div>
+  <div class="grid2">
+    <div class="callout"><h4>Why medians?</h4>With an odd panel, the median is the middle judge. One judge who loves or hates the model can't move a criterion by themselves; two can.</div>
+    <div class="callout"><h4>Floor vs bar</h4><b>Floor</b>: no single criterion may be worse than this. <b>Bar</b>: the average of the medians must reach this. A kind with no bar is judged on the floor alone.</div>
+    <div class="callout"><h4>The golden anchor</h4>Judges also see the kind's <b>golden</b> (a reference model) with its scores, and grade relative to it: "equal quality = equal score". The bar was set from the golden's own scores.</div>
+    <div class="callout"><h4>Fix notes</h4>Every judge also lists fixes, each tagged with the criterion it raises. The next build must take on a lowest-median criterion (<code>ledger.py plan</code>). Fixes tagged <b>placement</b> go to <code>habitat.js</code>, not the model.</div>
+  </div>
+
+  <h3 style="margin-top:20px">Known weak spots (open)</h3>
+  <div class="grid2" id="weak"></div>
+
+  <h2>4. Budget and loops</h2>
+  <div class="tablewrap"><table class="plain" id="budget"></table></div>
+  <div class="callout">
+    <h4>What counts as a round</h4>A judge round is one <b>build</b> that got judged. Polish rounds are rebuilds after a <b>pass</b>, to raise quality; the run keeps the best passing build (<code>ledger.py best</code>). Retries after a fail use the same loop but can't stop early.
+  </div>
+
+  <h2>5. Where it lives</h2>
+  <div class="tablewrap"><table class="plain" id="files"></table></div>
+
+  <h2>6. Keeping this page current</h2>
+  <p>Rule (<code>AGENTS.md</code>): a change to the pipeline updates this page in the same commit. <code>pnpm verify</code> runs <code>render_pipeline_map.py --check</code>, which fails when:</p>
+  <ul>
+    <li>the generated data block (criteria, pass rules, goldens, check lists, budget) no longer matches the code: run <code>python3 models/shared/tools/render_pipeline_map.py</code>;</li>
+    <li>a pipeline file changed on the branch but this page didn't: update the diagram or callouts, or bump "Last reviewed" if nothing visible changed.</li>
+  </ul>
+</main>
+
+<script id="pipeline-data" type="application/json">
+{
+ "source": "generated by models/shared/tools/render_pipeline_map.py; do not edit by hand",
+ "shared_checks": {
+  "shape-check": [
+   "meshes 1-kind limit",
+   "tris <= rarity limit",
+   "materials <= 3",
+   "texture <= rarity limit",
+   "no NaN/inf vertices",
+   "0 or 1 armature (sway yes/no)",
+   "one armature",
+   "build_meta.json present (eye size record)",
+   "eyes: none tagged eyeL/eyeR (allowed only if body plan has no eyes)",
+   "eye L/R diameter min-max of body height",
+   "bones <= rarity limit",
+   "<= 4 influences per vertex",
+   "weights normalized",
+   "every vertex weighted"
+  ],
+  "motion-check": []
+ },
+ "kinds": {
+  "creature": {
+   "pass_rule": {
+    "criteria": [
+     "species_read",
+     "anatomy",
+     "style_match",
+     "artifacts",
+     "idle_readable",
+     "feed_readable"
+    ],
+    "floor": 2,
+    "bar": 3.03,
+    "judges": 3
+   },
+   "judge_model": "sonnet",
+   "golden": "clownfish",
+   "golden_medians": {
+    "species_read": 4,
+    "anatomy": 3,
+    "style_match": 4,
+    "artifacts": 2,
+    "idle_readable": 3,
+    "feed_readable": 2
+   },
+   "checks": {
+    "shape-check": [
+     "length matches spec ±15%",
+     "longest axis is X (head/tail along X)",
+     "origin near body center",
+     "radially symmetric about Z (centred, footprint aspect 0.67-1.5)",
+     "symmetric about XZ plane",
+     "has 'mouth' empty",
+     "mouth on underside (below center, near vertical axis)",
+     "mouth at head end (+X half, inside bbox)",
+     "part:mouth exists (visible mouth geometry, lib.mouth)",
+     "mouth empty at the mouth part (<= 8% length)",
+     "build_meta.json records fin thickness (flat_parts)",
+     "fins recorded (lib.flat_part), or the archetype sets HAS_FINS = False"
+    ],
+    "motion-check": [
+     "has 'idle' animation",
+     "has 'feed' animation",
+     "idle length 48-144 frames",
+     "idle length matches spec",
+     "idle loops seamlessly",
+     "idle gentle (max speed <= 8% length/frame)",
+     "idle visible (max vertex displacement from frame 0 >= … length)",
+     "idle has no pops (no acceleration spikes)",
+     "feed length 36-96 frames",
+     "feed starts on idle pose",
+     "feed ends on idle pose",
+     "feed not flailing (max speed <= 25% length/frame)",
+     "feed visible (max vertex displacement from frame 0 >= … length)",
+     "feed has no pops (no acceleration spikes)",
+     "feed visibly moves the mouth (>= 5% length, any direction)",
+     "feed visibly reaches forward (mouth +X >= 5% length)",
+     "has 'sulk' animation (mood loop)",
+     "sulk length 48-144 frames",
+     "sulk loops seamlessly",
+     "sulk has no pops (no acceleration spikes)",
+     "sulk slower than idle (max speed below idle's)",
+     "sulk reads as its own pose at card size (side silhouette >= 25% changed vs every idle pose)",
+     "sulk frowns (mouth corners drop >= 15% mouth width)",
+     "sulk frowns (mouth corner bones cornerL/R, lib.mouth_corner_bones)",
+     "has 'perch' animation (spec motion.perch)",
+     "perch length 48-144 frames",
+     "perch loops seamlessly",
+     "perch has no pops (no acceleration spikes)",
+     "perch calmer than idle (max speed below idle's)"
+    ]
+   }
+  },
+  "plant": {
+   "pass_rule": {
+    "criteria": [
+     "species_read",
+     "anatomy",
+     "style_match",
+     "artifacts",
+     "growth_readable",
+     "sway_readable",
+     "tend_readable"
+    ],
+    "floor": 3,
+    "bar": 3.56,
+    "judges": 3
+   },
+   "judge_model": "sonnet",
+   "golden": "mermaids_cup",
+   "golden_medians": {
+    "species_read": 4,
+    "anatomy": 4,
+    "style_match": 4,
+    "artifacts": 4,
+    "growth_readable": 4,
+    "sway_readable": 4,
+    "tend_readable": 3
+   },
+   "checks": {
+    "shape-check": [
+     "height matches spec ±15% (bloom stage, all stages shown at rest)",
+     "rooted origin: soil point at z=0 (bbox min z within 5%)",
+     "rooted origin: centred over the soil point in X/Y",
+     "stage node stage_n (stage name)"
+    ],
+    "motion-check": [
+     "has 'sway_n' loop",
+     "sway_n length 48-144 frames",
+     "sway_n loops seamlessly",
+     "sway_n gentle (<= 6% size/frame)",
+     "sway_n has no pops",
+     "has 'tend' reaction",
+     "tend length 24-72 frames",
+     "tend starts on sway pose",
+     "tend ends on sway pose",
+     "tend visible (>= 6% size from frame 0)",
+     "tend has no pops"
+    ]
+   }
+  },
+  "scenery": {
+   "pass_rule": {
+    "criteria": [
+     "reads_as",
+     "style_match",
+     "artifacts",
+     "sway_readable"
+    ],
+    "floor": 3,
+    "bar": null,
+    "judges": 3
+   },
+   "judge_model": "sonnet",
+   "golden": "eelgrass_tuft",
+   "golden_medians": {
+    "reads_as": 4,
+    "style_match": 4,
+    "artifacts": 4,
+    "sway_readable": 3
+   },
+   "checks": {
+    "shape-check": [
+     "height matches spec +-20%",
+     "ground origin: contact point at z=0 (bbox min z within 3%)",
+     "ground origin: centred over the origin in X/Y (within 25%)",
+     "footprint matches spec +-30%",
+     "tris <= 3000 (scenery)"
+    ],
+    "motion-check": [
+     "no baked clips (static, or swayed by the habitat shader)",
+     "shader sway: per-vertex _SWAY_W/_SWAY_P present",
+     "shader sway: some parts free (max weight >= 0.5)",
+     "shader sway: anchored (base points in the inner quarter: mean weight <= 0.3)",
+     "has 'sway' loop",
+     "sway length 48-144 frames",
+     "sway loops seamlessly",
+     "sway gentle (<= 4% size/frame)",
+     "sway visible (>= 3% size from frame 0)",
+     "sway has no pops"
+    ]
+   }
+  }
+ },
+ "budget": {
+  "judge_rounds": 4,
+  "minutes": 30,
+  "polish_rounds": 2
+ },
+ "export_checks": [
+  "gltf validator (optimized glb): no errors",
+  "file size within budget (per kind / rarity)"
+ ]
+}
+</script>
+<script>
+const D = JSON.parse(document.getElementById("pipeline-data").textContent);
+const KIND_NAMES = { creature: "Creature", plant: "Plant", scenery: "Scenery" };
+let kind = new URLSearchParams(location.search).get("kind") || "creature";
+if (!D.kinds[kind]) kind = "creature";
+
+// What each judge criterion asks. Hand-written; the list of criteria per kind comes from the data block.
+const CRITERIA = {
+  species_read: "Would you name the species from the renders alone?",
+  reads_as: "Does the prop read as what it is (eelgrass, kelp, shell) in the habitat?",
+  anatomy: "Right parts, proportions and placement for the reference animal or plant.",
+  style_match: "Fits the world's look (STYLE.md, the golden): palette, softness, detail level.",
+  artifacts: "Mesh flaws: holes, spikes, floating or intersecting parts, smears, z-fighting.",
+  idle_readable: "Idle loop reads as this animal's resting motion, at a glance.",
+  feed_readable: "Feed action reads: anticipation, bite or reach, settle.",
+  growth_readable: "The five growth stages read as one plant growing.",
+  sway_readable: "Sway is visible and fits the medium (water, air) at game distance.",
+  tend_readable: "The tend reaction reads as distinct from the sway.",
+};
+
+// Stages per kind. Hand-written: update when a stage, owner or route changes.
+const STAGES = {
+  brief:  { g: "make", t: "Brief", s: "design the spec", owner: { creature: "creature-brief", plant: "plant-brief", scenery: "scenery-make" },
+            what: "Picks what to make: species, reference, palette, size, motion intent. Writes <code>models/&lt;kind&gt;/specs/&lt;id&gt;.json</code>.",
+            fail: "spec-check failures come back here." },
+  build:  { g: "make", t: "Build", s: "Blender, headless", owner: "model-build",
+            what: "Archetype generator builds the mesh: blockout, model, cleanup, UVs, material, bake (<code>build.py --run</code>). Refuses to rebuild without a plan once judged (exit 6).",
+            fail: "shape-check and mesh-artifact fixes come back here." },
+  animate:{ g: "make", t: "Animate", s: "rig + loops", owner: { creature: "creature-animate", plant: "plant-grow", scenery: "(none: habitat shader sways it)" },
+            what: { creature: "Armature, weights, idle loop, feed with jaw bite, sulk, optional perch; mouth node; glTF export.",
+                    plant: "Five growth stages, per-stage sway loops, tend reaction.",
+                    scenery: "No baked clips: build writes per-vertex sway weights and habitat.js sways them in a shader." },
+            fail: "motion-check failures come back here." },
+  spec:   { g: "code", t: "spec-check", s: "design file valid", owner: "check_spec.py", gate: null,
+            what: "Spec is complete and in range: required fields, sizes, rarity budgets, motion fields.", fail: "→ brief" },
+  shape:  { g: "code", t: "shape-check", s: "mesh, rig, size", owner: "qa_structural.py + &lt;kind&gt;/qa.py", gate: "shape-check",
+            what: "Measures the mesh at rest: triangle and texture budgets, size vs spec, origin, rig health, eyes and mouth placement, fin taper.", fail: "→ build" },
+  motion: { g: "code", t: "motion-check", s: "animation measured", owner: "qa_structural.py + &lt;kind&gt;/qa.py", gate: "motion-check",
+            what: "Measures the clips: lengths, seamless loops, no pops, motion big enough but not flailing, sulk distinct at card size.", fail: "→ animate" },
+  export: { g: "code", t: "export-check", s: "glb valid, small", owner: "verify.sh", gate: "export",
+            what: "Optimizes exactly like ship, then validates the optimized glb and checks its size budget.", fail: "→ animate export / ship optimize" },
+  judge:  { g: "judge", t: "judge-panel", s: "AI judges score renders; a script decides", owner: "model-verify + judge_verdict.py", gate: "judge",
+            what: { creature: "Fresh judges see the contact sheet (card-size row first), turntable and motion strips, plus the golden's sheet as anchor.",
+                    plant: "Fresh judges see the contact sheet (growth strip) and sway/tend motion panels, plus the golden's sheet.",
+                    scenery: "Fresh judges see the prop in the real habitat first (wide, turn, sway frames from capture_habitat.mjs), then the contact sheet, plus the golden's habitat image." },
+            fail: "fail → fix notes by criterion → <code>ledger.py plan</code> → build/animate; pass → polish rounds" },
+  page:   { g: "run", t: "page-test", s: { creature: "runs in the habitat", plant: "runs in the garden plot", scenery: "habitat capture + sway-check" }, owner: "model-verify",
+            what: { creature: "Candidate injected into the habitat page: no console errors, visible and nose-first, idle and feed play, never passes through solid scenery, fps above the limit on a visible page.",
+                    plant: "Candidate in its garden plot: stages and sway play, tend reacts, no console errors.",
+                    scenery: "Capture in the habitat (capture.html): placed among neighbours; sway-check measures the shader motion." },
+            fail: "→ animate, or runtime (habitat.js) for steering and placement" },
+  ship:   { g: "ship", t: "Ship", s: "roster + publish", owner: "model-ship",
+            what: "Refuses without a passing report.json. Optimizes, wraps as base64 JS, adds to roster.json, commits, publishes the board.", fail: "" },
+};
+const GROUPS = [
+  ["make", "Make", ["brief", "build", "animate"]],
+  ["code", "Code checks", ["spec", "shape", "motion", "export"]],
+  ["judge", "Judges", ["judge"]],
+  ["run", "Runtime", ["page"]],
+  ["ship", "Ship", ["ship"]],
+];
+const pick = (v) => (v && typeof v === "object" ? v[kind] : v);
+
+// Example panels. Scores are from the 2026-11-20 re-audit (docs/model-pipeline-reaudit.md); judge order illustrative.
+const PRESETS = {
+  creature: [
+    { name: "Gulf pipefish (3 of the 6 judges)", note: "Passes only because the creature floor lets a 2 through: feed is a 2 for most judges.",
+      judges: [{ species_read: 3, anatomy: 3, style_match: 3, artifacts: 2, idle_readable: 3, feed_readable: 2 },
+               { species_read: 4, anatomy: 3, style_match: 4, artifacts: 3, idle_readable: 3, feed_readable: 2 },
+               { species_read: 4, anatomy: 3, style_match: 4, artifacts: 3, idle_readable: 3, feed_readable: 2 }] },
+  ],
+  scenery: [
+    { name: "Drift algae mat: judges 1–3", note: "Same model, same images as the next preset. Three judges gave artifacts a 2.",
+      judges: [{ reads_as: 3, style_match: 3, artifacts: 2, sway_readable: 3 }, { reads_as: 3, style_match: 3, artifacts: 2, sway_readable: 3 },
+               { reads_as: 3, style_match: 3, artifacts: 2, sway_readable: 3 }] },
+    { name: "Drift algae mat: judges 4–6", note: "One judge gave a 2, two gave a 3: the median flips and the same model passes. All six named the same defect (dark base disc).",
+      judges: [{ reads_as: 3, style_match: 3, artifacts: 2, sway_readable: 3 }, { reads_as: 3, style_match: 3, artifacts: 3, sway_readable: 3 },
+               { reads_as: 3, style_match: 3, artifacts: 3, sway_readable: 3 }] },
+    { name: "Eelgrass tuft (golden)", note: "Comfortably above the floor on every draw of judges.",
+      judges: [{ reads_as: 4, style_match: 4, artifacts: 3, sway_readable: 3 }, { reads_as: 4, style_match: 3, artifacts: 3, sway_readable: 3 },
+               { reads_as: 4, style_match: 4, artifacts: 3, sway_readable: 2 }] },
+  ],
+  plant: [],
+};
+function presetsFor(k) {
+  const list = PRESETS[k].slice();
+  const g = D.kinds[k].golden_medians;
+  if (g) list.push({ name: `Golden (${D.kinds[k].golden}) medians`, note: "The reference model's recorded medians, as if all judges agreed.",
+                     judges: [0, 1, 2].map(() => ({ ...g })) });
+  return list;
+}
+let preset = 0, panel = null;
+
+const WEAK = [
+  { id: "coin flip", t: "Verdict depends on which judges you draw", b: "Near the floor or bar, three judges split, and the same model passes or fails. Drift algae mat: 4 of 20 possible 3-judge panels pass. See presets above." },
+  { id: "Q1", t: "Extra judges on one build are free", b: "Rounds count builds, not judges, and the verdict uses the latest panel. Spawning more judges until one panel passes isn't refused yet." },
+  { id: "creature floor", t: "Creature floor lets a weak feed ship", b: "It was lowered because the golden itself scores low on artifacts and feed, so any creature as weak there passes." },
+  { id: "Q3", t: "Card size isn't measured", b: "The phone draws a pipefish about 5 px tall. Judges see it on the sheet; no code check fails it." },
+  { id: "sway-check", t: "Sway check is more lenient than judges", b: "Eelgrass passes sway-check while all six judges call its sway too small at game distance." },
+  { id: "categorical rule", t: "Planned fix: pass/fail questions", b: "Judges agree on what is wrong (6 of 6 on each top defect) but not on numbers. Plan: identity + traits + major defects instead of score bars." },
+];
+
+const el = (tag, attrs = {}, html = "") => { const e = document.createElement(tag); Object.assign(e, attrs); if (html) e.innerHTML = html; return e; };
+
+function renderKinds() {
+  const seg = document.getElementById("kinds"); seg.innerHTML = "";
+  for (const k of Object.keys(D.kinds)) {
+    const b = el("button", { type: "button", textContent: KIND_NAMES[k] || k });
+    b.setAttribute("aria-pressed", k === kind);
+    b.onclick = () => { kind = k; preset = 0; panel = null; history.replaceState(null, "", "?kind=" + k); renderAll(); };
+    seg.append(b);
+  }
+}
+
+function renderFlow() {
+  const flow = document.getElementById("flow"); flow.innerHTML = "";
+  for (const [g, label, keys] of GROUPS) {
+    const box = el("div", { className: "group " + g }); box.append(el("div", { className: "gl", textContent: label }));
+    const inner = g === "code" ? el("div", { className: "code-row" }) : box;
+    for (const key of keys) {
+      const s = STAGES[key];
+      const n = el("button", { className: "node", type: "button" }, `<b>${s.t}</b><span>${pick(s.s)}</span>`);
+      if (key === "animate" && kind === "scenery") n.classList.add("off");
+      n.onclick = () => { const c = document.getElementById("card-" + key); c.scrollIntoView({ behavior: "smooth" }); c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash"); };
+      inner.append(n);
+    }
+    if (inner !== box) box.append(inner);
+    flow.append(box);
+  }
+  const b = D.budget;
+  document.getElementById("loops").innerHTML =
+    `<div class="loop fail"><b>Fail loop:</b> any gate fails → its fix notes go to the stage that owns them (each card's "On fail") → rebuild → re-check. Bounded per piece by ${b.judge_rounds} judged builds or ${b.minutes} minutes.</div>
+     <div class="loop"><b>Polish loop:</b> judge-panel passes → up to ${b.polish_rounds} more rounds on the lowest-scoring criteria → ship the best passing build.</div>`;
+}
+
+function renderCards() {
+  const cards = document.getElementById("cards"); cards.innerHTML = "";
+  const K = D.kinds[kind], R = K.pass_rule;
+  for (const [g, , keys] of GROUPS) for (const key of keys) {
+    const s = STAGES[key];
+    const c = el("div", { className: "card " + g, id: "card-" + key });
+    let html = `<h3>${s.t}</h3><p>${pick(s.what)}</p><dl class="kv"><dt>Owner</dt><dd><code>${pick(s.owner)}</code></dd>${s.fail ? `<dt>On fail</dt><dd>${s.fail}</dd>` : ""}</dl>`;
+    if (s.gate === "shape-check" || s.gate === "motion-check") {
+      const shared = D.shared_checks[s.gate] || [], own = K.checks[s.gate] || [];
+      html += `<details><summary>${shared.length + own.length} checks for ${KIND_NAMES[kind].toLowerCase()}s</summary><ul>` +
+        own.map((x) => `<li>${esc(x)}<span class="tag">${kind}</span></li>`).join("") +
+        shared.map((x) => `<li>${esc(x)}<span class="tag">shared</span></li>`).join("") + `</ul></details>`;
+    }
+    if (s.gate === "export") html += `<details><summary>${D.export_checks.length} checks</summary><ul>${D.export_checks.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>`;
+    if (s.gate === "judge") {
+      html += `<dl class="kv"><dt>Judges</dt><dd>${R.judges} fresh ${K.judge_model} subagents</dd><dt>Floor</dt><dd>every median ≥ ${R.floor}</dd>
+        <dt>Bar</dt><dd>${R.bar == null ? "none (floor only)" : "mean of medians ≥ " + R.bar}</dd><dt>Golden</dt><dd><code>${K.golden}</code></dd></dl>
+        <details open><summary>${R.criteria.length} criteria, scored 1–5</summary><ul>${R.criteria.map((c) => `<li><b>${c}</b>: ${CRITERIA[c] || ""}${K.golden_medians && K.golden_medians[c] != null ? ` <span class="tag">golden ${K.golden_medians[c]}</span>` : ""}</li>`).join("")}</ul></details>`;
+    }
+    c.innerHTML = html; cards.append(c);
+  }
+}
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const median = (xs) => { const v = xs.filter((x) => x != null).sort((a, b) => a - b); if (!v.length) return null; const m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
+
+function renderJudge() {
+  const list = presetsFor(kind), R = D.kinds[kind].pass_rule;
+  const pr = document.getElementById("presets"); pr.innerHTML = "";
+  list.forEach((p, i) => { const b = el("button", { type: "button", textContent: p.name }); b.setAttribute("aria-pressed", i === preset);
+    b.onclick = () => { preset = i; panel = null; renderJudge(); }; pr.append(b); });
+  if (!panel) panel = list[preset].judges.map((j) => R.criteria.map((c) => j[c] ?? 3));
+  const meds = R.criteria.map((_, ci) => median(panel.map((j) => j[ci])));
+  const t = document.getElementById("scores");
+  t.innerHTML = `<thead><tr><th>Criterion</th>${panel.map((_, i) => `<th>Judge ${i + 1}</th>`).join("")}<th>Median</th><th>≥ floor?</th></tr></thead>`;
+  const tb = el("tbody");
+  R.criteria.forEach((c, ci) => {
+    const tr = el("tr"); tr.append(el("td", {}, `<b>${c}</b>`));
+    panel.forEach((j, ji) => { const td = el("td", { className: "score" }); const b = el("button", { type: "button", textContent: j[ci], title: "click to change" });
+      b.onclick = () => { panel[ji][ci] = j[ci] % 5 + 1; renderJudge(); }; td.append(b); tr.append(td); });
+    const ok = meds[ci] >= R.floor;
+    tr.append(el("td", { className: "med", textContent: meds[ci] }), el("td", { className: ok ? "ok" : "bad", textContent: ok ? "yes" : "no" }));
+    tb.append(tr);
+  });
+  t.append(tb);
+  const floorOk = meds.every((m) => m >= R.floor), mean = meds.reduce((a, b) => a + b, 0) / meds.length;
+  const barOk = R.bar == null || mean >= R.bar, pass = floorOk && barOk;
+  document.getElementById("steps").innerHTML = `
+    <div class="step"><div class="n">Step 1</div>Each criterion: take the <b>median</b> of the ${panel.length} judges.</div>
+    <div class="step"><div class="n">Step 2 · floor</div>Every median ≥ <b>${R.floor}</b>? <b class="${floorOk ? "ok" : "bad"}" style="color:var(--${floorOk ? "pass" : "fail"})">${floorOk ? "yes" : "no: " + R.criteria.filter((_, i) => meds[i] < R.floor).join(", ")}</b></div>
+    <div class="step"><div class="n">Step 3 · bar</div>${R.bar == null ? "No bar for this kind: skipped." : `Mean of medians <b>${mean.toFixed(2)}</b> ≥ <b>${R.bar}</b>? <b style="color:var(--${barOk ? "pass" : "fail"})">${barOk ? "yes" : "no"}</b>`}</div>
+    <div class="step"><div class="n">Verdict</div><div class="verdict ${pass ? "pass" : "fail"}">${pass ? "PASS" : "FAIL"}</div><p class="meta">${list[preset].note}</p></div>`;
+}
+
+function renderWeak() {
+  document.getElementById("weak").innerHTML = WEAK.map((w) => `<div class="callout warn"><h4>${w.t} <span class="id">${w.id}</span></h4>${w.b}</div>`).join("");
+}
+
+function renderTables() {
+  const b = D.budget;
+  document.getElementById("budget").innerHTML = `<thead><tr><th>Command</th><th>What it does</th><th>Stops with</th></tr></thead><tbody>
+    <tr><td><code>ledger.py start</code></td><td>Opens a run: ${b.judge_rounds} judged builds, ${b.minutes} minutes per piece.</td><td></td></tr>
+    <tr><td><code>ledger.py build</code></td><td>Records a build against the budget.</td><td>exit 4 <code>BUDGET EXHAUSTED</code></td></tr>
+    <tr><td><code>ledger.py judge --reply</code></td><td>Records one judge's JSON reply under the latest build. Unrecorded judgements don't count.</td><td>exit 5 <code>REFUSED</code> (that agent already judged)</td></tr>
+    <tr><td><code>judge_verdict.py</code></td><td>Applies the pass rule to the latest panel.</td><td>exit 0 pass · 1 fail · 2 no verdict (too few usable replies)</td></tr>
+    <tr><td><code>ledger.py notes</code></td><td>Every judged build's medians and fixes, grouped by criterion; placement fixes apart.</td><td></td></tr>
+    <tr><td><code>ledger.py plan</code></td><td>Required before the next build; must take on a lowest-median criterion; snapshots a passing build. Max ${b.polish_rounds} polish rounds.</td><td><code>build.py</code> exit 6 <code>PLAN NEEDED</code> without it</td></tr>
+    <tr><td><code>ledger.py best</code></td><td>Names the passing build to ship (highest mean, ties: newer).</td><td></td></tr></tbody>`;
+  const rows = [
+    ["Pass rule (criteria, floor, bar, judges, golden)", "models/&lt;kind&gt;/qa_calibration.json"],
+    ["Applies the rule", "models/shared/tools/judge_verdict.py (self-test: test_judge_verdict.py)"],
+    ["Fails if a doc restates a rule number", "models/shared/tools/check_judge_rule.py"],
+    ["Code checks", "models/shared/tools/verify.sh → qa_structural.py + models/&lt;kind&gt;/qa.py"],
+    ["Judge images", "models/shared/blender/qa_render.py (contact sheet), capture_habitat.mjs (scenery in habitat)"],
+    ["Golden sheets (judge anchors)", "models/&lt;kind&gt;/calibration/&lt;golden&gt;/"],
+    ["Run budget, judge replies, plans", "models/shared/tools/ledger.py → models/out/runs/ (gitignored)"],
+    ["Step-by-step instructions", ".claude/skills/model-verify, model-build, model-ship, weekly-visitor, season-seeds, scenery-make"],
+    ["Per-kind contract", "models/&lt;kind&gt;/CONTRACT.md"],
+    ["This page's data block", "models/shared/tools/render_pipeline_map.py"],
+  ];
+  document.getElementById("files").innerHTML = `<thead><tr><th>What</th><th>Where</th></tr></thead><tbody>` +
+    rows.map(([a, b]) => `<tr><td>${a}</td><td><code>${b}</code></td></tr>`).join("") + `</tbody>`;
+}
+
+function renderAll() { renderKinds(); renderFlow(); renderCards(); renderJudge(); renderWeak(); renderTables(); }
+renderAll();
+</script>
+</body>
+</html>

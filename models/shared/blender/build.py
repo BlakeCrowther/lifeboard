@@ -7,7 +7,8 @@ was judged and no `ledger.py plan` follows it. Pipeline runs must always pass it
 --preview: an uncounted trial build into out/<id>/preview/ (with --run it still checks the run's minutes, never its builds).
 shared/tools/preflight.sh wraps it with verify.sh so size, bones and height fail before a counted build is spent.
 Writes outdir/blockout_{side,top}.png (only if the archetype defines blockout()), <id>_model.blend,
-<id>_color.png, build_meta.json (eye size vs body height, for shape-check), <id>.blend, <id>.glb (default outdir models/out/<id>).
+<id>_color.png, build_meta.json (eye size vs body height, mouth part, fin root/edge thickness, for shape-check), <id>.blend,
+<id>.glb (default outdir models/out/<id>).
 The archetype is looked up in models/<spec.kind>/archetypes/ (kind default creature). rig() may return (None, None)
 for a static model (scenery without sway): no armature, no actions."""
 import bpy, sys, os, json, importlib.util
@@ -50,9 +51,10 @@ if hasattr(arch, "blockout"):          # optional cheap silhouette check (side +
 else: print("BUILD blockout skipped: archetype has no blockout()")
 if stage == "blockout": sys.exit(0)
 
-lib.reset(); lib.EYES.clear(); lib.MOUTHS.clear()
+lib.reset(); lib.EYES.clear(); lib.MOUTHS.clear(); lib.FLAT_PARTS.clear()
 parts = arch.model(spec)
 arch.material(spec, parts)
+lib.measure_flat_parts()     # part identity is lost in the join, so fin thickness is measured per part now, for shape-check
 mesh = lib.finalize(parts, sid, spec.get("budget", {}).get("tris", 8000))
 # the mouth part is joined into the skinned mesh (and its tag dropped at skinning), so record it now for shape-check
 vg = mesh.vertex_groups.get("part:mouth")
@@ -60,8 +62,11 @@ mverts = [v for v in mesh.data.vertices if vg and any(g.group == vg.index and g.
 mouth_meta = [dict(m, verts=len(mverts)) for m in lib.MOUTHS]
 rough, coat = lib.gloss_from_spec(spec)
 lib.bake_to_single_material(mesh, sid, spec.get("budget", {}).get("texture", 1024), rough, coat, out_png=os.path.join(out, f"{sid}_color.png"))
+flat_meta = [{k: v for k, v in r.items() if k != "columns"} for r in lib.FLAT_PARTS]
+fin_meta = {"has_fins": getattr(arch, "HAS_FINS", True)} if kind == "creature" else {}   # an archetype without fins says so
 json.dump({"id": sid, "archetype": spec["archetype"], "tris": lib.tris(mesh), "roughness": rough, "coat": coat,
-           "eyes": lib.EYES, "eye_range": lib.EYE_RANGE, "mouth_parts": mouth_meta}, open(os.path.join(out, "build_meta.json"), "w"), indent=1)
+           "eyes": lib.EYES, "eye_range": lib.EYE_RANGE, "mouth_parts": mouth_meta, "flat_parts": flat_meta, **fin_meta},
+          open(os.path.join(out, "build_meta.json"), "w"), indent=1)
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, f"{sid}_model.blend"))
 print("BUILD model", sid, "tris", lib.tris(mesh))
 if stage == "model": sys.exit(0)

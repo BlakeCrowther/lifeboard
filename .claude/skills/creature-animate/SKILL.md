@@ -34,7 +34,7 @@ Write keys with Python on pose bones; Bezier interpolation, auto-clamped handles
 
 **sulk**: `spec.motion.sulk.frames`, a seamless loop (same whole-cycle rules as idle), follows `spec.motion.sulk.technique`:
 - A held posture (droop/slump/retract, never through the body) plus a slow, small loop; max speed must stay below idle's (motion-check).
-- Posture differs from idle frame 0 by ≥ 4% body length. Front mouths frown: add `lib.mouth_corner_bones()` to the rig, skin the mouth with `lib.mouth_weights(co)`, key `lib.frown_locs(spec.motion.sulk.frown)` as locs every frame (motion-check: corners drop ≥ 15% mouth width).
+- Sulk must read as its own pose at card size (motion-check compares the side silhouette with every idle pose; threshold `SULK_SILHOUETTE_CHANGE_MIN` in creature/qa.py). Hang nose-down; on a deep body don't curl the tail down, it cancels the tilt. Front mouths frown: add `lib.mouth_corner_bones()` to the rig, skin the mouth with `lib.mouth_weights(co)`, key `lib.frown_locs(spec.motion.sulk.frown)` as locs every frame (motion-check: corners drop ≥ 15% mouth width).
 
 **perch** (when `spec.motion.perch`; CONTRACT "Resting"): `spec.motion.perch.frames`, a seamless loop following `perch.technique` and `spec.rest`. Animate in the normal axes (head +X, up +Z) as if the resting surface were below; the runtime turns the whole body into the pose (head down for `hang`, belly to a rock face for `cling`). Only the body's own resting shape moves: wings folded and breathing, tentacles fanning, legs gripping, nothing travelling. Max speed below idle's (motion-check). For `hang`, add an empty `grip` at the feet (parented to the bone that holds on) so the runtime hangs it from there.
 

@@ -1,21 +1,42 @@
 {
  "golden": "clownfish",
- "contact": "out/clownfish/qa/contact.png",
- "date": "2026-11-18",
- "judge": {
-  "species_read": 5,
+ "contact": "creature/calibration/clownfish/contact.png",
+ "date": "2026-11-20",
+ "judge_model": "sonnet",
+ "golden_medians": {
+  "species_read": 4,
   "anatomy": 3,
   "style_match": 4,
   "artifacts": 2,
-  "idle_readable": 4,
-  "feed_readable": 2,
-  "mouth_correct": true
+  "idle_readable": 3,
+  "feed_readable": 2
  },
- "passes_g5": true,
- "status": "Sonnet-judge recalibration (2026-11-19): golden median-of-3 mean 3.33 -> bar 3.03, floor 2. Replaces the opus bar (3.67 -> 3.37).",
+ "pass_rule": {
+  "criteria": [
+   "species_read",
+   "anatomy",
+   "style_match",
+   "artifacts",
+   "idle_readable",
+   "feed_readable"
+  ],
+  "floor": 2,
+  "bar": 3.03,
+  "judges": 3,
+  "note": "Rule (judge_verdict.py): per criterion the median of the judges' scores; pass when every median >= floor and, unless bar is null, the mean of the medians >= bar. bar was set as the 2026-11-19 golden mean (3.33) - 0.3 and is held there: the rebuilt golden scores 3.00, under its own bar, as it did on fresh panels before the rebuild. When the golden or judge_model changes, re-judge the golden with a full panel, rewrite golden_medians and recompute bar. Sonnet recalibration 2026-11-19: floor lowered to 2 because sonnet scores the golden 2 on artifacts and feed."
+ },
+ "status": "Golden rebuilt 2026-11-20 (tapered fins, card-size sulk, pectoral mounted on the flank); two fresh sonnet panels both gave these medians (mean 3.00). Bar held at its 2026-11-19 value until the identity/traits/defects rule replaces the score bar.",
  "known_judge_errors": [
   "estimates eye at ~6% of body height; measured 10.0% (build_meta.json) - trust shape-check over judge for eye size"
  ],
+ "open_fix_notes": [
+  "taper snout/defined head + lower jaw",
+  "rounded dorsal fin, bigger orange pectorals",
+  "consistent stripe edging, tail-base seam",
+  "busier idle",
+  "distinct anticipation/strike/settle in feed"
+ ],
+ "history_note": "Opus-era scores are not comparable to sonnet scores.",
  "history": [
   {
    "run": 1,
@@ -320,80 +341,60 @@
      "feed_readable": 3
     }
    ]
-  }
- ],
- "remaining_notes": [
-  "taper snout/defined head + lower jaw",
-  "rounded dorsal fin, bigger orange pectorals",
-  "consistent stripe edging, tail-base seam",
-  "busier idle",
-  "distinct anticipation/strike/settle in feed"
- ],
- "status_2026-11-18": "FAILS judge-panel (median-of-3): best mean of medians 3.67 (iter 1 and 3). Anchor scores kept from run 3 (single judge) until a golden passes; assets/clownfish.* NOT re-shipped.",
- "judges": [
+  },
   {
-   "agent_id": "a8e8362194ae048d3",
-   "scores": {
-    "species_read": 4,
+   "date": "2026-11-18",
+   "method": "median-of-3",
+   "judge_model": "opus",
+   "note": "lib.mouth + jaw-bite build of the golden. FAILS judge-panel (median-of-3): best mean of medians 3.67 (iter 1 and 3). Anchor scores kept from run 3 (single judge) until a golden passes; assets/clownfish.* NOT re-shipped. The anchor then had mean 4.0 (run 3 single-judge scores).",
+   "medians": {
+    "species_read": 5,
     "anatomy": 3,
     "style_match": 4,
     "artifacts": 3,
     "idle_readable": 3,
     "feed_readable": 3,
     "mouth_correct": true
-   }
-  },
-  {
-   "agent_id": "a8264ea7884f6da29",
-   "scores": {
-    "species_read": 5,
-    "anatomy": 4,
-    "style_match": 4,
-    "artifacts": 3,
-    "idle_readable": 3,
-    "feed_readable": 3,
-    "mouth_correct": true
-   }
-  },
-  {
-   "agent_id": "ae1a6f72b24f8cfcf",
-   "scores": {
-    "species_read": 5,
-    "anatomy": 3,
-    "style_match": 4,
-    "artifacts": 3,
-    "idle_readable": 4,
-    "feed_readable": 3,
-    "mouth_correct": true
-   }
+   },
+   "mean": 3.5,
+   "judges": [
+    {
+     "agent_id": "a8e8362194ae048d3",
+     "scores": {
+      "species_read": 4,
+      "anatomy": 3,
+      "style_match": 4,
+      "artifacts": 3,
+      "idle_readable": 3,
+      "feed_readable": 3,
+      "mouth_correct": true
+     }
+    },
+    {
+     "agent_id": "a8264ea7884f6da29",
+     "scores": {
+      "species_read": 5,
+      "anatomy": 4,
+      "style_match": 4,
+      "artifacts": 3,
+      "idle_readable": 3,
+      "feed_readable": 3,
+      "mouth_correct": true
+     }
+    },
+    {
+     "agent_id": "ae1a6f72b24f8cfcf",
+     "scores": {
+      "species_read": 5,
+      "anatomy": 3,
+      "style_match": 4,
+      "artifacts": 3,
+      "idle_readable": 4,
+      "feed_readable": 3,
+      "mouth_correct": true
+     }
+    }
+   ]
   }
- ],
- "current_medians": {
-  "species_read": 5,
-  "anatomy": 3,
-  "style_match": 4,
-  "artifacts": 3,
-  "idle_readable": 3,
-  "feed_readable": 3,
-  "mouth_correct": true
- },
- "current_mean": 3.5,
- "mean": 4.0,
- "golden_median3": {
-  "species_read": 5,
-  "anatomy": 3,
-  "style_match": 4,
-  "artifacts": 2,
-  "idle_readable": 4,
-  "feed_readable": 2,
-  "mean": 3.33
- },
- "pass_rule": {
-  "type": "golden_relative",
-  "margin": 0.3,
-  "floor": 2,
-  "note": "PASS = every median >= floor, mean of medians >= golden_median3.mean - margin, mouth_correct in >= 2 of 3. The bar moves with the golden: re-judge the golden median-of-3 whenever a new golden is promoted and update golden_median3. Sonnet recalibration 2026-11-19: golden medians 5/3/4/2/4/2 (mean 3.33); floor lowered to 2 because sonnet scores the golden 2 on artifacts and feed."
- },
- "judge_model": "sonnet",
- "history_note": "Opus-era scores are not comparable to sonnet scores."
+ ]
 }

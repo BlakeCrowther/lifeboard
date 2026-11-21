@@ -1,7 +1,7 @@
 """Creature-kind gates (models/creature/CONTRACT.md), exec'd by shared/blender/qa_structural.py.
 shape-check (REST pose): length/axes/symmetry/origin by body plan, `mouth` empty + `part:mouth` geometry.
 motion-check (actions): idle loop + feed (start/end on idle, speed caps, visible amplitude, no pops, mouth reach) + sulk (mood loop:
- slower than idle, a visibly different posture, frown on front mouths) + perch when present (resting loop: seamless, no pops, calmer than idle)."""
+ slower than idle, a side silhouette at card size that no idle pose matches, frown on front mouths) + perch when present (resting loop: seamless, no pops, calmer than idle)."""
 
 def shape_check():
     global L, RADIAL, MOUTH_SIDE, ctr, mouth
@@ -36,6 +36,62 @@ def shape_check():
     if mps and mouth:
         dist = min((Vector(m["tip"]) - mouth.matrix_world.translation).length for m in mps)
         check("shape-check", "mouth empty at the mouth part (<= 8% length)", dist <= 0.08 * L, f"{dist / L:.3f} of length")
+    fin_taper_check()
+
+FIN_TAPER_MAX = 0.5      # edge thickness / root thickness; a uniform slab measures ~1
+
+def fin_taper_check():
+    """Fins and tails taper (thick root, thin free edge) so they read as fins, not cut-out slabs. Measured per part at
+    build time (lib.measure_flat_parts) because the join loses part identity. A finned archetype with no records fails."""
+    fins = meta.get("flat_parts")
+    if fins is None:
+        check("shape-check", "build_meta.json records fin thickness (flat_parts)", False, "rebuild with blender/build.py"); return
+    if not fins:
+        check("shape-check", "fins recorded (lib.flat_part), or the archetype sets HAS_FINS = False", not meta.get("has_fins", True),
+              f"has_fins {meta.get('has_fins', True)}, 0 flat parts"); return
+    for p in fins:
+        r, e = p.get("root_thickness_m"), p.get("edge_thickness_m")
+        name = f"fin {p['name']} tapers (edge thickness <= {FIN_TAPER_MAX:.0%} of root)"
+        if not p.get("tapered"): check("shape-check", name, False, "uniform plate: build it with lib.flat_part(..., root=n)")
+        elif not r or e is None: check("shape-check", name, False, f"not measured (root {r}, edge {e}): sample rays missed the part")
+        else: check("shape-check", name, e <= FIN_TAPER_MAX * r, f"root {r * 1000:.2f} mm, edge {e * 1000:.2f} mm ({e / r:.0%})")
+
+CARD_PX_PER_M = json.load(open(os.path.join(root, "shared", "card_view.json")))["px_per_m"]
+CELLS_PER_PX = 4          # raster cells per card pixel side: sub-pixel changes still count, as they do on an antialiased screen
+SULK_SILHOUETTE_CHANGE_MIN = 0.25   # changed cells / silhouette cells; sulks judges called idle-like measured ~0.1, one
+                                    # they called distinct ~0.5. A share, not px, so small and large bodies are held alike
+
+def side_silhouette(f):
+    """Side-view (XZ) silhouette at frame f at card scale: a set of raster cells (1/CELLS_PER_PX card px), shifted so its
+    centroid sits at 0. The runtime swims creatures around, so where the body sits (a sink, a bob) is not a pose."""
+    sc.frame_set(f); dg = bpy.context.evaluated_depsgraph_get(); k = CARD_PX_PER_M * CELLS_PER_PX; cells = set()
+    for o in meshes:
+        e = o.evaluated_get(dg); m = e.to_mesh(); mw = o.matrix_world; P = []
+        for v in m.vertices:
+            w = mw @ v.co; P.append((w.x * k, w.z * k))
+        for t in m.loop_triangles:
+            (ax, az), (bx, bz), (cx, cz) = (P[i] for i in t.vertices)
+            area = (bx - ax) * (cz - az) - (bz - az) * (cx - ax)
+            if area == 0: continue
+            sg = 1 if area > 0 else -1
+            for i in range(math.ceil(min(ax, bx, cx) - 0.5), math.floor(max(ax, bx, cx) - 0.5) + 1):
+                px = i + 0.5
+                for j in range(math.ceil(min(az, bz, cz) - 0.5), math.floor(max(az, bz, cz) - 0.5) + 1):
+                    if (i, j) in cells: continue
+                    pz = j + 0.5
+                    if (sg * ((bx - ax) * (pz - az) - (bz - az) * (px - ax)) >= 0 and sg * ((cx - bx) * (pz - bz) - (cz - bz) * (px - bx)) >= 0
+                            and sg * ((ax - cx) * (pz - cz) - (az - cz) * (px - cx)) >= 0): cells.add((i, j))
+        e.to_mesh_clear()
+    ci = round(sum(i for i, _ in cells) / len(cells)); cj = round(sum(j for _, j in cells) / len(cells))
+    return frozenset((i - ci, j - cj) for i, j in cells)
+
+def sulk_card_difference(idle, sulk):
+    """Card px that differ between the sulk's side silhouette and the nearest idle pose anywhere in the idle loop, for the
+    sulk frame closest to idle (a pose idle already passes through is not a different pose). Returns (px, silhouette px)."""
+    use(idle); s, e = map(int, idle.frame_range); idle_sils = [side_silhouette(f) for f in range(s, e)]
+    use(sulk); s, e = map(int, sulk.frame_range); sulk_sils = [side_silhouette(f) for f in range(s, e, 4)]
+    near = min(min(len(a ^ b) for b in idle_sils) for a in sulk_sils)
+    return near / CELLS_PER_PX ** 2, sum(len(a) for a in sulk_sils) / len(sulk_sils) / CELLS_PER_PX ** 2
 
 def motion_check():
     acts = {act.name: act for act in bpy.data.actions}
@@ -81,9 +137,9 @@ def motion_check():
         check("motion-check", "sulk has no pops (no acceleration spikes)", pk == 0, f"spike {pk:.3f}")
         if idle:
             check("motion-check", "sulk slower than idle (max speed below idle's)", sp < idle_sp, f"{sp:.3f} vs idle {idle_sp:.3f}")
-            sv = verts(s); use(idle); iv = verts(int(idle.frame_range[0])); use(sulk)
-            post = max((a - b).length for a, b in zip(sv, iv)) / L
-            check("motion-check", "sulk posture visibly differs from idle (>= 4% length)", post >= 0.04, f"{post:.3f}")
+            far, area = sulk_card_difference(idle, sulk); use(sulk)
+            check("motion-check", f"sulk reads as its own pose at card size (side silhouette >= {SULK_SILHOUETTE_CHANGE_MIN:.0%} changed vs every idle pose)",
+                  far / area >= SULK_SILHOUETTE_CHANGE_MIN, f"{far / area:.0%} changed ({far:.1f} of {area:.0f} card px)")
         if MOUTH_SIDE == "front":   # a frown: mouth corners drop relative to the jaw (the head pitching down does not count)
             pb = arms[0].pose.bones
             if "cornerL" in pb and "jaw" in pb:

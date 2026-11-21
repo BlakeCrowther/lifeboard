@@ -28,7 +28,7 @@ models/shared/tools/doctor.sh --fix    # install what brew can install
 3. Restart Claude (⌘Q). Test: ask Claude for the Blender scene summary.
 
 ## Known gotchas
-- `npx` gltf-transform/sharp needs node >= 20; under node 18 export-check fails with `SyntaxError: Unexpected token 'with'`. Put a newer node first on PATH (nvm) before verify.sh. (seen on this Mac, Nov 2026)
+- `npx` gltf-transform/sharp needs node >= 20; under node 18 export-check fails with `SyntaxError: Unexpected token 'with'`. Put a newer node first on PATH (nvm) before verify.sh; `doctor.sh` fails on an older node. (seen on this Mac, Nov 2026)
 - **Blender MCP extension fails with `pydantic-core`/`rpds-py` build errors.** `uv` picked a too-new Python (3.15) with no wheels, then tried to compile with Rust. Fix: pin 3.12 in the extension folder (doctor prints the exact command) and/or `uv python pin --global 3.12`. Reinstalling the extension wipes the folder pin.
 - **Rust "can't find crate for core" on Apple Silicon.** rustup default toolchain is x86_64. `rustup default stable-aarch64-apple-darwin`.
 - **Artifacts won't serve `.glb`.** Ship models as base64 JS (`assets/<id>-glb.js`) and parse with `GLTFLoader.parseAsync`. `model-ship` does this.

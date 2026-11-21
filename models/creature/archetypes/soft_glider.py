@@ -16,6 +16,7 @@ import lib
 from mathutils import Vector
 
 NOSE, BASE = 0.5, -0.5            # body spans the full length along X
+HAS_FINS = False                  # outgrowths are tubes, not lib.flat_part fins: shape-check expects no fin records
 DEFAULT_PROFILE = [(0, 0.0), (0.03, 0.5), (0.1, 0.82), (0.25, 1.0), (0.55, 0.95), (0.8, 0.6), (0.95, 0.22), (1.0, 0.08)]
 
 def _dims(spec):
@@ -225,21 +226,27 @@ def animate(spec, arm):
     acts.append(_sulk(spec, arm, names))
     return acts
 
+SULK_DROOP_MIN = 20   # degrees; a smaller head dip reads as idle at card size
+
 def _sulk(spec, arm, names):
-    """Mope loop (runtime plays it instead of idle while sad): rhinophores folded back, cerata flattened outward,
-    head dipped, a barely-there ripple, mouth corners down. Whole cycles only, so it loops seamlessly."""
-    ms = spec["motion"]["sulk"]; N, k = ms["frames"], ms["cycles"]; mi = spec["motion"]["idle"]
-    amp = math.radians(mi.get("amp_deg", 6)) * ms.get("energy", 0.35); droop = math.radians(ms.get("droop_deg", 12))
+    """Mope loop (runtime plays it instead of idle while sad): goes limp. Head dipped by motion.sulk.droop_deg (at
+    least SULK_DROOP_MIN), the tail end draped down, rhinophores folded back, cerata flattened outward, sunk a little,
+    a barely-there ripple, mouth corners down. Whole cycles only, so it loops seamlessly."""
+    ms = spec["motion"]["sulk"]; N, k = ms["frames"], ms["cycles"]; mi = spec["motion"]["idle"]; L = spec["size"]["length_m"]
+    amp = math.radians(mi.get("amp_deg", 6)) * ms.get("energy", 0.35)
+    droop = math.radians(max(ms.get("droop_deg", SULK_DROOP_MIN), SULK_DROOP_MIN))
     w = lambda kk, f, ph=0: math.sin(2 * math.pi * kk * f / N + ph)
     act = lib.new_action(arm, "sulk")
     for f in range(0, N + 1):
-        rots = {bn: [(Z, amp * 1.3 ** i * w(k, f - 5 * (i + 1)))] for i, bn in enumerate(CHAIN)}
+        rots = {bn: [(Z, amp * 1.3 ** i * w(k, f - 5 * (i + 1))), (Y, -droop * 0.25)] for i, bn in enumerate(CHAIN)}
         rots["head"] = [(Y, droop)]
         rots["root"] = [(Y, math.radians(1) * w(1, f))]
         for sgn, side in ((1, "L"), (-1, "R")):
             for g in range(3):
-                if f"cer{side}{g}" in names: rots[f"cer{side}{g}"] = [(Xax, -sgn * math.radians(30) + sgn * math.radians(3) * w(k, f - 5 * g))]
-            if "rhino" + side in names: rots["rhino" + side] = [(Y, -math.radians(40))]
+                if f"cer{side}{g}" in names: rots[f"cer{side}{g}"] = [(Xax, -sgn * math.radians(45) + sgn * math.radians(3) * w(k, f - 5 * g))]
+            if "rhino" + side in names: rots["rhino" + side] = [(Y, -math.radians(60))]
             if "oral" + side in names: rots["oral" + side] = [(Z, -sgn * math.radians(8))]
-        lib.key_pose(arm, 1 + f, rots, lib.frown_locs(ms.get("frown", 1.0)))
+        locs = {"root": Vector((0, 0, -L * (0.03 + 0.005 * w(1, f))))}
+        locs.update(lib.frown_locs(ms.get("frown", 1.0)))
+        lib.key_pose(arm, 1 + f, rots, locs)
     lib.ease_all(act); return act

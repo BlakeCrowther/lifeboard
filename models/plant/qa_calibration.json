@@ -1,17 +1,9 @@
 {
  "golden": "mermaids_cup",
- "contact": "out/mermaids_cup/qa/contact.png",
+ "contact": "plant/calibration/mermaids_cup/contact.png",
  "date": "2026-11-18",
- "criteria": [
-  "species_read",
-  "anatomy",
-  "style_match",
-  "artifacts",
-  "growth_readable",
-  "sway_readable",
-  "tend_readable"
- ],
- "judge": {
+ "judge_model": "sonnet",
+ "golden_medians": {
   "species_read": 4,
   "anatomy": 4,
   "style_match": 4,
@@ -20,14 +12,28 @@
   "sway_readable": 4,
   "tend_readable": 3
  },
- "golden_median3_mean": 3.86,
  "pass_rule": {
+  "criteria": [
+   "species_read",
+   "anatomy",
+   "style_match",
+   "artifacts",
+   "growth_readable",
+   "sway_readable",
+   "tend_readable"
+  ],
   "floor": 3,
-  "margin": 0.3,
-  "bar": 3.56
+  "bar": 3.56,
+  "judges": 3,
+  "note": "Rule (judge_verdict.py): per criterion the median of the judges' scores; pass when every median >= floor and, unless bar is null, the mean of the medians >= bar. bar = mean of golden_medians (3.86) - 0.3. When the golden or judge_model changes, re-judge the golden with a full panel, rewrite golden_medians and recompute bar."
  },
- "passes_g5": true,
  "status": "Sonnet recalibration (2026-11-19): golden median-of-3 mean 3.86 -> bar 3.56 (opus said 3.29 -> 2.99).",
+ "open_fix_notes": [
+  "cap ribs faint; coral centre small",
+  "hair whorls read as spikes",
+  "stalk barely bends in sway (cap leads)",
+  "tend still close to sway"
+ ],
  "history": [
   {
    "run": 1,
@@ -41,7 +47,7 @@
     "sway_readable": 3,
     "tend_readable": 2
    },
-   "passes_g5": false
+   "passed_judge_panel": false
   },
   {
    "run": 2,
@@ -55,14 +61,7 @@
     "sway_readable": 4,
     "tend_readable": 3
    },
-   "passes_g5": true
+   "passed_judge_panel": true
   }
- ],
- "fix_notes_open": [
-  "cap ribs faint; coral centre small",
-  "hair whorls read as spikes",
-  "stalk barely bends in sway (cap leads)",
-  "tend still close to sway"
- ],
- "judge_model": "sonnet"
+ ]
 }

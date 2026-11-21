@@ -1,25 +1,26 @@
 {
-  "golden": "eelgrass_tuft",
-  "contact": "out/eelgrass_tuft/qa/habitat/ + out/eelgrass_tuft/qa/contact.png",
-  "date": "2026-11-20",
-  "judge_model": "sonnet",
+ "golden": "eelgrass_tuft",
+ "contact": "scenery/calibration/eelgrass_tuft/contact.png",
+ "habitat_wide": "scenery/calibration/eelgrass_tuft/habitat_wide.png",
+ "date": "2026-11-20",
+ "judge_model": "sonnet",
+ "golden_medians": {
+  "reads_as": 4,
+  "style_match": 4,
+  "artifacts": 4,
+  "sway_readable": 3
+ },
+ "pass_rule": {
   "criteria": [
-    "reads_as",
-    "style_match",
-    "artifacts",
-    "sway_readable"
+   "reads_as",
+   "style_match",
+   "artifacts",
+   "sway_readable"
   ],
-  "judge": {
-    "reads_as": 4,
-    "style_match": 4,
-    "artifacts": 4,
-    "sway_readable": 3
-  },
-  "golden_median3_mean": 3.75,
-  "pass_rule": {
-    "floor": 3,
-    "margin": null,
-    "bar": null
-  },
-  "status": "Re-judged 2026-11-20 after the shader-sway rebuild (run scenery-eelgrass_tuft-2026-11-20, build 2), sonnet median-of-3 on the habitat capture: mean 3.75; bar stays absolute (every median >= 3)."
+  "floor": 3,
+  "bar": null,
+  "judges": 3,
+  "note": "Rule (judge_verdict.py): per criterion the median of the judges' scores; pass when every median >= floor and, unless bar is null, the mean of the medians >= bar. bar is null: judged absolute, every median >= floor (golden_medians mean 3.75). A static prop scores sway_readable null; it is left out."
+ },
+ "status": "Re-judged 2026-11-20 after the shader-sway rebuild (run scenery-eelgrass_tuft-2026-11-20, build 2), sonnet median-of-3 on the habitat capture: mean 3.75; bar stays absolute (every median >= floor). Judges anchor on habitat_wide first (the habitat's own lighting), contact for structure and scale."
 }

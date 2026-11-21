@@ -10,19 +10,19 @@ Autonomous pipelines that design, build, animate, verify and ship 3D models for 
 - **Safe path / novel path**: safe starts from an existing archetype (copied per species); novel writes a generator for a body plan the library lacks. **Design first, every kind** (creature, plant, scenery, biome): decide what the thing should be, then find or write the archetype that builds it. A missing archetype is never a reason to change or drop a design; it is the cue to take the novel path. A shipped novel archetype joins the library.
 - **Biome**: a habitat stage in `biomes.json` (name, medium, look, owned motifs). Creatures are briefed for the current biome.
 - **Gates**: the six checks every model must pass to ship, listed under "Gates" below.
-- **Golden**: the reference creature (today the clownfish) whose judge scores set the judge-panel bar (`creature/qa_calibration.json`).
-- **Polish round**: after a judge-panel pass, the run fixes the judges' shared notes, rebuilds and re-judges, shipping the better-scoring version.
-- **Roster**: `roster.json`, every shipped model. **Quarantine**: `out/quarantine/<id>/`, failed attempts kept for inspection.
+- **Golden**: a kind's reference model (`golden` in `<kind>/qa_calibration.json`). Its judge-panel medians (`golden_medians`) anchor the judges and set the kind's `pass_rule.bar`.
+- **Polish round**: after a judge-panel pass, `ledger.py plan` takes on a lowest-median criterion, the run rebuilds and re-judges, and `ledger.py best` ships the better-scoring passing build.
+- **Roster**: `roster.json`, every shipped model. **Quarantine**: `out/quarantine/<id>/`, failed attempts kept for inspection; the spec moves to `<kind>/specs/quarantined/<id>.json` so nothing treats it as live.
 
 ```
 models/
   README.md  STYLE.md (shared style lock)  biomes.json  roster.json (every shipped model, with kind)
   assets/    shipped <id>.glb + <id>-glb.js            out/  local work dir (gitignored): builds, QA, runs/, quarantine
   shared/blender/  lib.py  build.py  qa_structural.py (shared gates)  qa_render.py
-  shared/tools/    doctor.sh  verify.sh  check_spec.py  optimize.sh  ledger.py  capture_habitat.mjs  watch_creatures.mjs (creature behaviour over time, headless)  capture_habitat.mjs  preflight.sh
-  creature/  CONTRACT.md  archetypes/  specs/  qa.py (creature gates)  qa_calibration.json (golden judge scores)
-  plant/     CONTRACT.md  archetypes/stem_bloom.py  specs/mermaids_cup.json  qa.py (plant gates)
-  scenery/   CONTRACT.md  archetypes/{clump,solid}.py  specs/  qa.py (scenery gates)
+  shared/tools/    doctor.sh  verify.sh  check_spec.py  optimize.sh  ledger.py  judge_verdict.py  check_judge_rule.py  capture_habitat.mjs  watch_creatures.mjs (creature behaviour over time, headless)  preflight.sh
+  creature/  CONTRACT.md  archetypes/  specs/  qa.py (creature gates)  qa_calibration.json (golden + judge-panel pass_rule)  calibration/ (golden sheet)
+  plant/     CONTRACT.md  archetypes/stem_bloom.py  specs/mermaids_cup.json  qa.py (plant gates)  qa_calibration.json  calibration/
+  scenery/   CONTRACT.md  archetypes/{clump,solid,tangle}.py  specs/  qa.py (scenery gates)  qa_calibration.json  calibration/
 ```
 
 Every spec has `kind` (`creature` default | `plant`). Shared code dispatches on it: `build.py` loads `models/<kind>/archetypes/<archetype>.py`; `qa_structural.py` runs the shared gates (tris, materials, texture, NaN, armature, weights, eye meta, rest-pose bbox) and then `models/<kind>/qa.py` (creature: body-plan axes/symmetry, mouth, idle/feed/reach; plant: soil origin, stage nodes, sway/tend); `check_spec.py` and `verify.sh` likewise.
@@ -43,7 +43,7 @@ Six gates a model must pass to ship (names appear in `report.json`, `qa/*.json`,
 - **shape-check** (formerly G2): mesh, rig, size, rest pose.
 - **motion-check** (formerly G3): animation measured by code (loops, speed, amplitude, pops).
 - **export-check** (formerly G4): glb valid and small, measured on the optimized file.
-- **judge-panel** (formerly G5): 3 fresh AI judges view renders, median vs the golden. Scenery judges look first at the prop in the real habitat (`shared/tools/capture_habitat.mjs` drives the standalone `capture.html` at the repo root, which runs habitat.js alone: wide, 4 angles, sway frames), so they judge the lighting the player sees; Blender's QA lighting is only for structure and scale.
+- **judge-panel** (formerly G5): fresh AI judges score the renders against the golden; `shared/tools/judge_verdict.py` applies the kind's `pass_rule` (`<kind>/qa_calibration.json`, the only place its numbers live; `shared/tools/check_judge_rule.py` fails on copies elsewhere). Scenery judges look first at the prop in the real habitat (`shared/tools/capture_habitat.mjs` drives the standalone `capture.html` at the repo root, which runs habitat.js alone: wide, 4 angles, sway frames), so they judge the lighting the player sees; Blender's QA lighting is only for structure and scale.
 - **page-test** (formerly G6): runs in the real habitat page.
 
 Shape-check and motion-check share one output file, `qa/shape-motion-check.json`.
@@ -53,7 +53,7 @@ Shape-check and motion-check share one output file, `qa/shape-motion-check.json`
 - `STYLE.md`: the art-direction lock: what is fixed vs. what is free to vary (all kinds).
 - `roster.json`: shipped models, `{"models": [{id, kind, spec, glb, js, ...}]}` (the runtime reads this; paths relative to `models/`).
 - `biomes.json`: the habitats a run can target (medium, ecology, examples).
-- `<kind>/specs/`: one design spec per model (`specs/examples/` = reference specs) (input to build/animate, also the judge's reference).
+- `<kind>/specs/`: one design spec per model (`specs/examples/` = reference specs; `specs/quarantined/` = specs of models that failed every retry, not live) (input to build/animate, also the judge's reference).
 
 Creature pipeline detail follows.
 
@@ -69,14 +69,14 @@ Creature pipeline detail follows.
 | 7 | Bake | Bake base color (+ roughness) to one 1024 texture; replace with single glTF-friendly PBR material | lib |
 | 8 | Rig | Armature chains by archetype (spine, tail, fin/wing, tentacle, leg, neck); automatic weights; ≤4 influences, normalized | `rig()` |
 | 9 | Animate | `idle` loop and `feed` action; cyclic F-curves; secondary motion (follow-through) on chains | `animate()` |
-| 10 | QA lighting + renders | Fixed three-point + water-world rig, turntable + animation strips + side-by-side with golden refs | `shared/blender/qa_render.py` + `shared/tools/verify.sh` (contact sheet: turntable, idle/feed strips, onion-skin motion panels, each view framed to the silhouette +15%; golden side-by-side at true scale, plus a "magnified to same length" panel when the new creature is < 50% of the golden's length) |
+| 10 | QA lighting + renders | Fixed three-point + water-world rig, turntable + animation strips + side-by-side with golden refs | `shared/blender/qa_render.py` + `shared/tools/verify.sh` (contact sheet: card-size row first for creatures and scenery (scale from `shared/card_view.json`), turntable, idle/feed strips, onion-skin motion panels, each view framed to the silhouette +15%; golden side-by-side at true scale, plus a "magnified to same length" panel when the new creature is < 50% of the golden's length) |
 | 11 | Export | glTF binary, actions as animations, +Y up, WEBP texture | lib |
 | 12 | Validate | Structural, animation, export, visual (judge), runtime gates | `shared/tools/verify.sh` |
 
 Runtime lighting belongs to each habitat page (e.g. the reef's caustics, fog, absorption). Blender lighting exists only to make QA renders comparable week to week.
 
 ## Archetypes
-Builders are parametric generators per body plan in `creature/archetypes/` (start: `streamlined_swimmer`). The brief picks an existing archetype + parameters (safe path) or asks for a new archetype (novel path: the agent writes a new generator; same gates, plus a stricter judge pass and one extra retry). Proven archetypes accumulate, so the library grows and the safe path gets richer.
+Builders are parametric generators per body plan in `creature/archetypes/` (start: `streamlined_swimmer`). The brief picks an existing archetype + parameters (safe path) or asks for a new archetype (novel path: the agent writes a new generator; same gates, plus one extra retry). Proven archetypes accumulate, so the library grows and the safe path gets richer.
 
 Archetypes are named by **body plan**, not species or biome, so one generator serves many habitats. Planned:
 
@@ -99,12 +99,12 @@ Archetypes are named by **body plan**, not species or biome, so one generator se
 Doing a lesson drops food into the habitat. Every creature within range plays `feed` aimed at the food (runtime steers the root toward the food, `feed` supplies the body action). That's why every creature must have a `feed` action and a `mouth` node, whatever its body plan (swimmer lunge-bite, octopus arm curl-to-mouth, jelly tentacle wrap, crab claw-to-mouth, anemone tentacle close, bird peck, bee land-and-sip).
 
 ## Run ledger (budget)
-`shared/tools/ledger.py` is the only budget counter: `start <run> --rounds 4 --minutes 30` (judge rounds are the token cost, so they are the limit; `preflight.sh` trial builds are free, 5 between counted builds), every build is `build.py ... --run <run>` (exits 4 `BUDGET EXHAUSTED`; pre-build spec-check failures don't count), every judge is `ledger.py judge <run> <id> <agent_id> --reply '<json>'` (a reused agent id is refused), `status <run>`. Run log: judges tag each fix with the criterion it raises; `notes` lists each judged build's medians and the fixes by criterion; `plan` (required before rebuilding a judged build, build.py exits 6 otherwise) must take on a lowest-median criterion, caps polish at 2 rounds (failed-build retries don't count) and snapshots a passing build; `best` names the version to ship. `preflight.sh` is an uncounted trial build + code gates (counts minutes, not builds; swaying scenery also gets the habitat sway check), so size/bones/height/motion never cost a counted build. Scenery sways in habitat.js's vertex shader (per-point weights baked by the build, no bones) and is seated by its spec's reasoned `sit` mode; see `scenery/CONTRACT.md`. State: `out/runs/<run>.json`.
+`shared/tools/ledger.py` is the only budget counter: `start <run> --rounds 4 --minutes 30` (judge rounds are the token cost, so they are the limit; `preflight.sh` trial builds are free, 5 between counted builds), every build is `build.py ... --run <run>` (exits 4 `BUDGET EXHAUSTED`; pre-build spec-check failures don't count), every judge is `ledger.py judge <run> <id> <agent_id> --reply '<json>'` (a reused agent id is refused; `judge_verdict.py <kind> <run> <id>` reads the replies for the verdict), `status <run>`. Run log: judges tag each fix with the criterion it raises; `notes` lists each judged build's medians and the fixes by criterion; `plan` (required before rebuilding a judged build, build.py exits 6 otherwise) must take on a lowest-median criterion, caps polish at 2 rounds (failed-build retries don't count) and snapshots a passing build; `best` names the version to ship. `preflight.sh` is an uncounted trial build + code gates (counts minutes, not builds; swaying scenery also gets the habitat sway check), so size/bones/height/motion never cost a counted build. Scenery sways in habitat.js's vertex shader (per-point weights baked by the build, no bones) and is seated by its spec's reasoned `sit` mode; see `scenery/CONTRACT.md`. State: `out/runs/<run>.json`.
 
 ## Failure policy
 - Each gate failure returns machine-readable reasons; the failing step retries with them (max 2 retries, 3 for novel archetypes).
 - Still failing → fall back to a safe-path variant (proven archetype, new params/palette) and re-verify.
-- Still failing → no visitor this week; work is moved to `out/quarantine/<id>/` (dry runs: `out/dryrun/quarantine/<id>/`) with the report. Never ship unverified.
+- Still failing → no visitor this week; work is moved to `out/quarantine/<id>/` (dry runs: `out/dryrun/quarantine/<id>/`) with the report, and the spec to `<kind>/specs/quarantined/`. Never ship unverified.
 - Every run writes `out/<id>/report.json` and a contact sheet, so a human can audit later without being needed now.
 
 ## Where it runs

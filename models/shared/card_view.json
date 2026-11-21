@@ -1,0 +1,5 @@
+{
+ "px_per_m": 207,
+ "viewport_css_px": 375,
+ "note": "Card size = how big a model is drawn on the habitat card. CSS px per metre of model at mid-scene depth on a 375 px wide phone, from habitat.js (DISPLAY_SCALE, camera fov and distance). Re-derive when either changes. Checks and the contact sheet's card-size view read this file; no other file states the number."
+}

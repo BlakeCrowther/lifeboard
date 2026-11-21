@@ -1,6 +1,6 @@
 # Plant contract
 
-Status: first generator built (`archetypes/stem_bloom.py`, example `specs/mermaids_cup.json`, passes `verify.sh`). Runtime hookup built (`garden.js`, SPEC.md Garden "3D plants, one per plant"). Still open: a plant golden + `qa_calibration.json`. `models/plant/qa.py` encodes the ✓ rules. Shared rules are **not repeated here**: units, meters, Blender scene scale, glTF export settings, materials/texture/bake, ≤ 4 weights normalized, no pops, eased Bezier motion, file-size optimize + `-glb.js` shipping format and the export-check export gate all follow `models/creature/CONTRACT.md` and `models/STYLE.md`. Lines marked ✓ are checked by `models/shared/tools/verify.sh` (shared gates + `plant/qa.py`).
+Status: first generator built (`archetypes/stem_bloom.py`, example `specs/mermaids_cup.json`, passes `verify.sh`). Runtime hookup built (`garden.js`, SPEC.md Garden "3D plants, one per plant"). Golden: `mermaids_cup` (`qa_calibration.json`). `models/plant/qa.py` encodes the ✓ rules. Shared rules are **not repeated here**: units, meters, Blender scene scale, glTF export settings, materials/texture/bake, ≤ 4 weights normalized, no pops, eased Bezier motion, file-size optimize + `-glb.js` shipping format and the export-check export gate all follow `models/creature/CONTRACT.md` and `models/STYLE.md`. Lines marked ✓ are checked by `models/shared/tools/verify.sh` (shared gates + `plant/qa.py`).
 
 ## One glb per species, five stages
 - ✓ Stage nodes `stage_0` … `stage_4`, matching `game.js RULES.garden.stages`: `seed`, `sprout`, `leafy`, `bud`, `bloom`. Each is an empty (or mesh root) whose children are that stage's geometry. `stem_bloom` ships each stage as one skinned mesh named `stage_<n>`, all sharing one baked material/texture.
@@ -20,6 +20,9 @@ Status: first generator built (`archetypes/stem_bloom.py`, example `specs/mermai
 | `sway_<n>` (n = 0…4) | ✓ one per stage | 48–144 | ✓ Seamless loop (bone delta < 1e-3), whole cycles, gentle (≤ 6% size/frame). Wind (`medium: land/air`) = stem bend + leaf flutter lagging up the chain; water (`medium: water`) = slower, larger-phase drift. Per stage, because a seed barely moves and a bloom nods. |
 | `tend` | ✓ | 24–72 | ✓ Reaction to logging a habit session: the plant perks up (stem straightens, leaves lift, bloom opens a little), then settles. Starts and ends on the `sway_<n>` frame-0 pose (delta < 1e-2) so it crossfades both ways; visible (≥ 6% size). |
 | `wilt` | optional | pose or 24–48 | A died week: drooped pose (stem bend, leaves down, desaturation is the runtime's job). |
+
+## Visual gate (judge-panel)
+Same judge harness as creatures (model-verify skill; `models/shared/tools/judge_verdict.py` decides), with the growth strip and the sway and tend clips. Criteria, floor, bar and panel size live only in `models/plant/qa_calibration.json` `pass_rule`.
 
 ## Rarity tiers and budgets (per stage)
 | | common | rare | exotic |
