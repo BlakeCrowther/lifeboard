@@ -592,7 +592,9 @@ function taskMeta(t, opts = {}) {
   /* missed: days since first committed, whether it sat overdue or kept getting pushed (SPEC.md aged tasks) */
   if (!t.done) {
     const f = t.days[0] || (e && e < TODAY ? e : null), age = f ? diffDays(f, TODAY) : 0, pushes = t.days.length - 1;
-    if (age > 0) bits.push(`<span class="chip${age >= LBG.RULES.tide.blightAfter ? ' bad' : ''}" title="First committed ${relDate(f)}; it hasn't been done since">Missed ${age}d${pushes > 0 ? ` · pushed ${pushes}×` : ''}</span>`);
+    /* red = this task grows blight; blight counts age from the game start at the earliest (garden.js ageAt) */
+    const blightAge = f && GAME.start && f < GAME.start ? diffDays(GAME.start, TODAY) : age;
+    if (age > 0) bits.push(`<span class="chip${blightAge >= LBG.RULES.tide.blightAfter ? ' bad' : ''}" title="First committed ${relDate(f)}; it hasn't been done since">Missed ${age}d${pushes > 0 ? ` · pushed ${pushes}×` : ''}</span>`);
     const left = e === TODAY ? lockLeft(t) : 0;
     if (left > 0 && left !== Infinity) bits.push(`<span class="chip" title="Moving it off today before then won't count as missed">${ic('snooze', 13)}Locks in ${lockLabel(left)}</span>`);
   }

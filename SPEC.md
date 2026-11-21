@@ -127,7 +127,7 @@ Aged-task drops are capped: `visitor.overdueDropsPerWeek = 1` a week and `visito
 **Murk and blight** (both gradual, both reverse as you clear tasks):
 
 - **Murk** = how many tasks are overdue: each fouls the water or air, fully murky at `tide.cloudyAt = 10` (1 task 10%, 5 tasks 50%).
-- **Blight** = how long tasks have been neglected: open tasks first committed `tide.blightAfter = 7`+ days ago grow blight, whether they sit overdue or keep getting pushed; `tide.blightAt = 10` such tasks cover it.
+- **Blight** = how long tasks have been neglected: open tasks first committed `tide.blightAfter = 4`+ days ago grow blight, whether they sit overdue or keep getting pushed (the task's "Missed Nd" chip turns red at that age); `tide.blightAt = 10` such tasks cover it.
 - **Each biome shows them its own way** (`biomes.json` `neglect`): murk is the biome's own fouling (silt, dust haze, spore fog, tannin) in its own colour, and blight is a scenery prop made for that biome (hair algae on a reef, weeds in a meadow, mold in a cave, sand drifts in a desert, ash fall on a volcano). More copies appear and grow as blight rises; clearing old tasks makes them recede. Biomes without a `neglect` entry fall back to generic green tufts and a green tint.
 - **Bleaching** (separate) = your rings, not your backlog. An average ring below `bleach.below = 0.25` over `bleach.days = 14` days bleaches the scene grey; it recovers when the average over `bleach.recoverDays = 7` days reaches `bleach.recoverAt = 0.5`. No visitors while bleached. It never dies.
 

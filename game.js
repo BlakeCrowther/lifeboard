@@ -7,7 +7,7 @@
        seasons are the real calendar seasons (meteorological, by hemisphere): flavour and reviews only, they don't end plants.
        points: what each growing week adds to the plant's score (floor / target / above target); rarity: score needed for the next seed. */
     garden: { stages: ['seed', 'sprout', 'leafy', 'bud', 'bloom'], bloomWeeks: 1, restWeeks: 1, points: { floor: 1, target: 2, above: 3 }, rarity: { rare: 6, exotic: 10 }, mutation: 0.05, wilt: false, hemisphere: 'north' },
-    tide: { perPct: 10, fullBonus: 5, phases: 5, targetWeeks: 4.5, defaultDaily: 9, trailingDays: 28, cloudyAt: 10, blightAfter: 7, blightAt: 10 },
+    tide: { perPct: 10, fullBonus: 5, phases: 5, targetWeeks: 4.5, defaultDaily: 9, trailingDays: 28, cloudyAt: 10, blightAfter: 4, blightAt: 10 },
     visitor: { fullDaysForRare: 6, rareOverdue: 7, exoticOverdue: 30, overdueDropsPerWeek: 1, exoticPerBiome: 1 },
     bleach: { days: 14, below: 0.25, recoverDays: 7, recoverAt: 0.5 },
     /* feedings: decks a day, perFeeding cards each; the waking day dayStart..dayEnd (hours) splits evenly between them.
