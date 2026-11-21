@@ -37,14 +37,14 @@ Each step is its own skill, so steps can be re-run alone (e.g. re-animate withou
 
 ## Gates
 
-Six gates a model must pass to ship (names appear in `report.json`, `qa/*.json`, skills and logs). The first four are code (`shared/tools/verify.sh`); the last two are run by `model-verify`.
+Six gates a model must pass to ship (names appear in `report.json`, `qa/*.json`, skills and logs). The first four are code (`shared/tools/verify.sh`), and so is page-test for creatures; the judge-panel is run by `model-verify`.
 
 - **spec-check** (formerly G1): design file valid (`shared/tools/check_spec.py`).
 - **shape-check** (formerly G2): mesh, rig, size, rest pose.
 - **motion-check** (formerly G3): animation measured by code (loops, speed, amplitude, pops).
 - **export-check** (formerly G4): glb valid and small, measured on the optimized file.
 - **judge-panel** (formerly G5): fresh AI judges score the renders against the golden; `shared/tools/judge_verdict.py` applies the kind's `pass_rule` (`<kind>/qa_calibration.json`, the only place its numbers live; `shared/tools/check_judge_rule.py` fails on copies elsewhere). Scenery judges look first at the prop in the real habitat (`shared/tools/capture_habitat.mjs` drives the standalone `capture.html` at the repo root, which runs habitat.js alone: wide, 4 angles, sway frames), so they judge the lighting the player sees; Blender's QA lighting is only for structure and scale.
-- **page-test** (formerly G6): runs in the real habitat page.
+- **page-test** (formerly G6): runs in the real habitat page (`shared/tools/page-test.mjs`, called by `verify.sh` for creatures; headless Chromium, no roster edit).
 
 Shape-check and motion-check share one output file, `qa/shape-motion-check.json`.
 

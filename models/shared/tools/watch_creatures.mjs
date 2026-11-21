@@ -10,10 +10,12 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const MODELS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..'), REPO = path.dirname(MODELS);
-const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const playwrightChromium = () => { try { const f = createRequire(path.join(REPO, 'package.json'))('playwright').chromium.executablePath(); return fs.existsSync(f) ? f : null; } catch { return null; } };
+const CHROME = process.env.CHROME || playwrightChromium() || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const argv = process.argv.slice(2), id = argv[0], opt = (k, d) => { const i = argv.indexOf(k); return i > 0 ? argv[i + 1] : d; };
 if (!id || id.startsWith('-')) { console.error('usage: watch_creatures.mjs <id> [--secs n] [--query q] [--at s:expr] [--expect a,b] [--out dir]'); process.exit(2); }
 const secs = +opt('--secs', 110), query = opt('--query', ''), at = opt('--at', null), expect = (opt('--expect', '') || '').split(',').filter(Boolean);
@@ -26,7 +28,7 @@ const srv = spawn('python3', ['-u', '-m', 'http.server', '0', '--bind', '127.0.0
 const port = await new Promise((res, rej) => { let b = ''; const t = setTimeout(() => rej(new Error('server did not start')), 10000);
   const on = (d) => { b += d; const m = b.match(/port (\d+)/); if (m) { clearTimeout(t); res(+m[1]); } }; srv.stdout.on('data', on); srv.stderr.on('data', on); }).catch((e) => fail(e.message));
 const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'lb-watch-'));
-kids.push(spawn(CHROME, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${prof}`, '--window-size=960,720', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--no-first-run', 'about:blank'], { stdio: 'ignore' }));
+kids.push(spawn(CHROME, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${prof}`, '--window-size=960,720', ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []), '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--no-first-run', 'about:blank'], { stdio: 'ignore' }));
 let wsUrl = null;
 for (let i = 0; i < 100 && !wsUrl; i++) { await sleep(100); try { const [p] = fs.readFileSync(path.join(prof, 'DevToolsActivePort'), 'utf8').split('\n'); const l = await (await fetch(`http://127.0.0.1:${p}/json/list`)).json(); wsUrl = (l.find((t) => t.type === 'page') || {}).webSocketDebuggerUrl; } catch { /* not up yet */ } }
 if (!wsUrl) fail('chrome did not start (set CHROME=<path>)');

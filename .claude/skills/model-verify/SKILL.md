@@ -1,6 +1,6 @@
 ---
 name: model-verify
-description: Shared step, any kind. Independently verify a model .glb before it ships: the four automated code checks (spec, shape, motion, export) (shared gates + the kind's models/<kind>/qa.py via models/shared/tools/verify.sh), a fresh-eyes visual judge judge-panel (recorded in the run ledger), and an in-page runtime test page-test. Writes models/out/<id>/report.json. Nothing ships without a PASS. Called by weekly-visitor and season-seeds.
+description: Shared step, any kind. Independently verify a model .glb before it ships: the four automated code checks (spec, shape, motion, export) (shared gates + the kind's models/<kind>/qa.py via models/shared/tools/verify.sh), a fresh-eyes visual judge judge-panel (recorded in the run ledger), and an in-page runtime test page-test (automatic for creatures). Writes models/out/<id>/report.json. Nothing ships without a PASS. Called by weekly-visitor and season-seeds.
 ---
 
 # Model verify (any kind)
@@ -48,16 +48,9 @@ A first pass is a floor, not the finish. Every pipeline (creature, plant, scener
 4. `ledger.py best <run> <id>` names the version to ship (highest mean among passing builds, ties: the newer one) and where its files are; restore a snapshot into `out/<id>/` before model-ship when it isn't the latest build. Stop early when a round doesn't raise the mean. Report each round's mean. The same loop runs on a **failed** judge-panel as the retry loop; the only difference is that a pass can stop.
 
 ## page-test: runtime (in the habitat page)
-1. Wrap: `printf 'window.LB_CREATURES=window.LB_CREATURES||{};window.LB_CREATURES["<id>"]="%s";' "$(base64 -i out/<id>/<id>.glb | tr -d '\n')" > out/<id>/<id>-glb.js` (plants: `window.LB_PLANTS`, runtime check in the garden plots, see season-seeds).
-2. Open the habitat page (the card for the creature's biome) with the candidate injected (`?visitor=<id>` test hook) in the built-in browser via `preview_start` (launch config "scratch" or a repo config), at desktop and 375 px widths.
-3. Check:
-   - console has no errors;
-   - the creature is visible, at a sane size, and nose-first while moving;
-   - `idle` plays;
-   - triggering a lesson ("feed") plays `feed` aimed at the food and returns to `idle` without a pop;
-   - over ~30 s of watching, the creature never passes through the ground, other creatures or any solid scenery (every registered scenery kind not listed in the biome's `pass_through` in `biomes.json`); it may pass through listed kinds. Runtime steering (`keepClear` in habitat.js) owns this, not the clip; a failure routes to runtime;
-   - the frame rate stays above 40 fps, measured only on a visible page. A hidden page's timers are throttled, so first check: the `tabs_context` result says whether the Browser pane is displayed or hidden, and `document.visibilityState` (javascript_tool) must be `"visible"`. If either says hidden, record `fps: "not measured: page hidden"` in `gates.page-test`; that is neither a number nor a fail.
-4. Save screenshots `out/<id>/qa/runtime_*.png`.
+**Creatures: automatic.** `verify.sh` runs `models/shared/tools/page-test.mjs` after export-check and writes `<qa>/page-test.json` + `runtime_*.png`. It loads `capture.html?visitor=<id>` in headless Chromium (playwright; `CHROMIUM_PATH` overrides), answers the roster request with an in-memory roster that includes the candidate (no roster edit, no `-glb.js` wrap needed) and checks: no console/page errors at 960 and 375 px; creature present at a sane size; `idle` plays; nose-first while moving; `Habitat.feed` reaches the food and returns to idle; stays above the sand; fps >= 40 (reported "not measured" when the renderer is below 20 fps, e.g. software GL in a cloud VM). A FAIL routes to animate or runtime as in the table below. Look at `runtime_*.png` yourself.
+**Not automated** (check by eye in the built-in browser when you can, `?visitor=<id>` at desktop and 375 px): the creature never passes through other creatures or solid scenery (every registered kind not in the biome's `pass_through`) over ~30 s, and fps on a real GPU, measured only on a visible page (a hidden page's timers are throttled: check `document.visibilityState` is `"visible"`, otherwise record `fps: "not measured: page hidden"` in `gates.page-test`, which is neither a number nor a fail). Runtime steering (`keepClear` in habitat.js) owns pass-through, so a failure routes to runtime, not the clip.
+**Plants** (`window.LB_PLANTS`, garden plots, see season-seeds) and **scenery** (`capture_habitat.mjs`) keep their own runtime checks.
 
 ## Report
 Write `out/<id>/report.json`: `{id, pass, gates:{spec-check, shape-check, motion-check, export-check, judge-panel, page-test}, judge, fix_notes:[...], attempts}`. On FAIL the orchestrator routes `fix_notes` to the step that owns them (spec-check → brief, shape-check/model artifacts → build, motion-check/rig/motion → animate, export-check → animate export or ship optimize, page-test → animate or runtime).

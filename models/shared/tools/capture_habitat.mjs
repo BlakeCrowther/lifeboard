@@ -13,11 +13,13 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const MODELS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const REPO = path.dirname(MODELS);
-const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const playwrightChromium = () => { try { const f = createRequire(path.join(REPO, 'package.json'))('playwright').chromium.executablePath(); return fs.existsSync(f) ? f : null; } catch { return null; } };
+const CHROME = process.env.CHROME || playwrightChromium() || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const W = 960, Hh = 720;
 
 const argv = process.argv.slice(2), id = argv[0];
@@ -53,7 +55,7 @@ const port = await new Promise((res, rej) => {
 /* headless Chrome with DevTools on a free port */
 const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'lb-capture-'));
 const chrome = spawn(CHROME, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${prof}`, `--window-size=${W},${Hh}`,
-  '--hide-scrollbars', '--mute-audio', '--no-first-run', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', 'about:blank'], { stdio: 'ignore' });
+  '--hide-scrollbars', '--mute-audio', '--no-first-run', ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []), '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', 'about:blank'], { stdio: 'ignore' });
 kids.push(chrome);
 let wsUrl = null;
 for (let i = 0; i < 100 && !wsUrl; i++) {

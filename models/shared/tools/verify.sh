@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The four code checks (spec, shape, motion, export) + renders for the judge-panel. The judge-panel and page-test are done by the model-verify skill.
+# The code checks (spec, shape, motion, export, and for creatures page-test) + renders for the judge-panel. The judge-panel is run by the model-verify skill.
 # Usage: models/shared/tools/verify.sh <id> [path/to/<id>.glb] [path/to/spec.json]
 #   Any kind (spec.kind, default creature): shared gates + the kind's models/<kind>/qa.py.
 #   The glb must sit directly in models/out/<id>/, its preview/ (preflight.sh) or models/out/dryrun/<id>/ (any file name; a relative path is tried from
@@ -52,6 +52,12 @@ json.dump({"checks":c,"pass":all(x["pass"] for x in c)},open(out,"w"),indent=1)
 [print(('  ok  ' if x['pass'] else '  FAIL'),x['gate'],x['check'],'|',x['detail']) for x in c]
 sys.exit(0 if all(x["pass"] for x in c) else 1)
 EOF
+KIND=$(python3 -c "import json;print(json.load(open('$SPEC')).get('kind','creature'))")
+if [[ $KIND == creature ]]; then   # plants are checked in the garden plots and scenery by capture_habitat.mjs (model-verify)
+  echo "== page-test (real habitat page, headless browser)"
+  PT_GLB=$OPT; [[ -f $PT_GLB ]] || PT_GLB=$GLB
+  node "$ROOT/shared/tools/page-test.mjs" "$ID" "$PT_GLB" "$SPEC" "$OUT" || { rc=1; [[ -s "$OUT/page-test.json" ]] || echo "  FAIL page-test did not run (browser missing? run pnpm bootstrap)"; }
+fi
 echo "== judge-panel renders"
 CLIPS=$(python3 -c "import json;s=json.load(open('$SPEC'));k=s.get('kind','creature');print({'plant':'sway_4,tend','scenery':'sway' if (s.get('motion') or {}).get('sway') else ''}.get(k,'idle,feed,sulk'))")
 PITCH=$(python3 -c "import json;print(30 if json.load(open('$SPEC')).get('kind')=='scenery' else 8)")   # scenery: see the top face (sand dollar petals)
@@ -130,8 +136,9 @@ EOF
     else echo "  FAIL card-size row not built"; rc=1; fi
   fi
   magick "${rows[@]}" -background '#0b2230' -gravity west -append "$OUT/contact.png"
+  [[ -s "$OUT/contact.png" ]] || { echo "  FAIL contact sheet was not written (ImageMagick failed above)"; rc=1; }
   echo "  contact sheet: $OUT/contact.png"; for f in "$OUT"/renders/side_*.png; do echo "  side-by-side: $f"; done
   for f in "$OUT"/renders/card_size_*.png; do [[ $f == *_enlarged.png ]] || echo "  card size (1x): $f"; done
 else echo "  FAIL renders missing"; rc=1; fi
-echo "== automated gates: $([[ $rc -eq 0 ]] && echo PASS || echo FAIL)  (next: judge-panel + page-test via model-verify skill)"
+echo "== automated gates: $([[ $rc -eq 0 ]] && echo PASS || echo FAIL)  (next: judge-panel via model-verify skill)"
 exit $rc

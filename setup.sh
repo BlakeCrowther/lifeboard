@@ -60,14 +60,14 @@ install_blender() {
 }
 
 install_imagemagick() {
-  # verify.sh calls `magick montage ...`; ImageMagick 6 (apt) has no `magick`, so shim it.
+  # verify.sh calls `magick montage ...` and `magick in.png -op out.png`; ImageMagick 6 (apt) has no `magick`, so shim both forms.
   if have magick; then log "imagemagick ok"; return; fi
   case $OS in
     mac) brew install imagemagick ;;
     windows) winget install -e --id ImageMagick.ImageMagick --accept-source-agreements --accept-package-agreements ;;
     linux)
       have montage || pkg_install imagemagick
-      have magick || { printf '#!/bin/sh\ncmd=$1; shift\nexec "$cmd" "$@"\n' | $SUDO tee /usr/local/bin/magick >/dev/null; $SUDO chmod +x /usr/local/bin/magick; } ;;
+      have magick || { printf '#!/bin/sh\ncase "$1" in montage|convert|identify|composite|mogrify|compare|display) exec "$@";; *) exec convert "$@";; esac\n' | $SUDO tee /usr/local/bin/magick >/dev/null; $SUDO chmod +x /usr/local/bin/magick; } ;;
   esac
 }
 
