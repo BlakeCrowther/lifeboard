@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b93161fd33fd1d1fe1444ca34ef5eed4898f02af2426a2840ffcd1b23398978e",
+  "claims": [
+    {
+      "id": "claim_81fb6c7f1c8d4cc6b789b2282a742cdd",
+      "statement": "verify.sh runs every check without stopping at the first failure, prints a PASS/FAIL/SKIP table and exits 1 on any failure, skipping steps whose tools are missing.",
+      "evidence": [
+        {
+          "resource": "repo://tools/verify.sh#L1-L27",
+          "version": "repo-lines-v1:sha256:29bddde0e272d1610afed3719bb02f49ae6f6545984abd0d7ee7d6f61001660a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5YTkzN2MxODcyODgyMWQ2ZDZhNTlmZjE2NGE5ZDVjMDAxNzQ1YTFmOGY2ZDJkNGZhOTlkOTg1NmNmYTY0NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ffaebc306ab54ec0afa5f6f71b233528",
+      "statement": "The verify steps are syntax, spec-check, a short sim, typecheck, lint, build, vitest, eval grader self-test, pipeline map currency, UI smoke and doc frontmatter.",
+      "evidence": [
+        {
+          "resource": "repo://tools/verify.sh#L12-L24",
+          "version": "repo-lines-v1:sha256:7002237b531ba393e17712ea65b00a6cdcccbd629357750cd08a9e6794e3e119:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhNzlhMDBhZjIwM2Q3NDc1NjlhNDVkZmE5NTI3YWIwZjI5ZTlmNmJiNjU2NzEwMjhkMWNiNWIwYWYwMDU3MWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiZjI4MDc1NGIyY2Q2ZjlhN2MwN2ExZjgzZGVlODMzNGY4ZGM1NTYxNGI5ODYzMmJiMWNmYzU0MjJhNzJlOGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4OTJiN2I3MjlkNzUzZDYwNjQwYjA3YWIxMmUyYmY2MjlmZmNjNzA3NzkzOGM3MzkwNWEwNWE4Mzg0ZGU5NDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhODhlZWE3ZGNhNjNmYjZiZDZlZmY2MmE4ZjcyNjJlYWMxN2VjMTczOTNmZTU3Mjc5MzI2YjM1YjllYTEwZjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3ba3e4d584104c5a9e78685b436709c1",
+      "statement": "CI runs bootstrap then verify on pull requests and pushes to main using Node 24, pnpm and uv.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/verify.yml#L1-L19",
+          "version": "repo-lines-v1:sha256:499ea640eed5a6c56d42a7edf8f3407f01f439d166942de61cf729542041d848:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZGJiNTkxYThkNTY2YTBhZDU5NjM4ZDE3NjY5N2E2OWJlNzNjOWQ2MDQ3YjM4N2VjYjk1NjRiYzc1NzFiMmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYmFlZGM1ZjE2YzE3MDg4MTI2MTcxZGUwZmQ3MjYzZjc5MWNlYmM1MDFjMzgxZmQ4MTIyNjQxOTVjMmI5ZWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9e8a3a728d734747b6bf69d659b02e7a",
+      "statement": "The UI smoke test serves the repo, injects a fixture and the fake db into headless Chromium, clicks every tab with a db write, and fails on page errors, console errors or failed local requests, with a 120 second timeout.",
+      "evidence": [
+        {
+          "resource": "repo://tools/ui-smoke/run.js#L1-L30",
+          "version": "repo-lines-v1:sha256:f3dfee3c1790a9cc321871990e4a75c98d9a0aff4c347b9586e603250aa8d5af:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhODIyMjNmYWE5ZWIwMTNiN2Q2MzlkZGJmMDc1N2VmMGE3OTIwMDY0YTRmMDc5YjExNzA2MmQxODdiNzEwMDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNzUyODk1OTk3YTNiMWE2ZmUyOGUwNzhmNjg2OGY1MGIxZWNjOGU5MDdhM2I3MjdjYTljYjFjOTUwODI2NTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI1NThmY2IzZDJlOTgwNWE4OTkwODE3YzkzN2ZhOTcxYmM1Mjc4MjhlYTdkMmU0MTE2ZDY0YTA2YmNkZTdkNGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fa9a3952cd054de6886407961a37a874",
+      "statement": "Skill evals are not part of verify because they cost tokens; each live case runs claude -p in a sandbox of a frozen world and grades output with existing script graders.",
+      "evidence": [
+        {
+          "resource": "repo://evals/README.md#L1-L26",
+          "version": "repo-lines-v1:sha256:c59b7132b8e1b43ed62b083556652643798b13df062cad50f061fe540b2c19fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4MzY1ZDNlNGM4NDE2N2FiMmZjOTRhOWU4OTMwMjUzNjUxN2ZjYWE0YzE4MzM4NTcxZWU1OWJiZDIyMTllYTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3M2YyNWZjYWJjM2I2MTI1YTc1ZGIwNTIwMDc4ZjI3ZjBiNTNkYjk4NDRkMDRmZmRlMjkyMTRhZGVjNzkzY2UifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ae1eff524d8430a87587bc63112d370",
+      "statement": "Vitest runs tests under src package tests folders and tools.",
+      "evidence": [
+        {
+          "resource": "repo://vitest.config.ts#L1-L8",
+          "version": "repo-lines-v1:sha256:08d61ff5c59627c459686a608fa42904232c3dcddbfa4c2b767e84c001406553:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjRhMTkyMTFjM2EwM2I5ODc5NDdmMjRiNjliZGNjNDY5ZjQ3OTQ4MjlhNWY1YTRhMTg4ZWEyZTE4MTY1NGI5YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjZmNWI0MGIxNTg0NTdkMTc4NjRmMjE3OTA3ODZkZDVhMmVjZGI2NGI2NmE2NTFmNzg4ZDRlMjVjZDMzMDNkMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}

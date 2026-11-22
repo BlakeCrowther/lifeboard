@@ -1,0 +1,10 @@
+dist/
+node_modules/
+models/out/
+models/assets/
+models/*.archive.json
+mockdata.js
+test.html
+evals/out/
+pnpm-lock.yaml
+uv.lock

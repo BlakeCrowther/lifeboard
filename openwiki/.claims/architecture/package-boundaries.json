@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:61f84485d6df89a5ab84613191a62075f83e8bfd342531e106fe5b9e596c87cf",
+  "claims": [
+    {
+      "id": "claim_8cce63b458c84b27a3902eadc5d1f4e6",
+      "statement": "Each package under src/packages exposes only its root files as entry points; code outside the package, including other packages, may not import anything inside its subfolders, while a package's own files import each other freely.",
+      "evidence": [
+        {
+          "resource": "repo://.dependency-cruiser.cjs#L1-L55",
+          "version": "repo-lines-v1:sha256:fde5ea34b76a0234679e2d0ae1b2e20dbe864e068fde252ce67c5ae139b12c11:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmOTQzMDUyNGRjNDIyMWIxNTJhNjI1ZjU5NWVjMTJhNzhmY2MxN2EwMjFmNGNlZGJiN2ZkMTM2ZjA0OWQ1MDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxZGIzOGY5ZTdhOTEwMGQxZWJjMmE5ZjYyYjIxZDAxYzlmZGNmZGQ2MzVlYWJjMjJhYzI5YjYxNDg1MGUwNDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1ZTIwYzU4M2EzYzkzYjZmODdmZjY3ODU1MTdjMmVhNDFkY2ZlZjM2YWZjYTMxZGQ1OTk1ZjU4NDY1NGU3M2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1dc0825b925b40aa80e94fcfad3b147c",
+      "statement": "Tests may import any package's entry points and their own tests/ fixtures but never any package's lib/ or other subfolder, not even their own, and only tests may import a tests/ folder.",
+      "evidence": [
+        {
+          "resource": "repo://.dependency-cruiser.cjs#L43-L67",
+          "version": "repo-lines-v1:sha256:b195ec6ffb835e4c43803e29d37e354f83384411c895b78957bfed7441a957c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjOTQ4MDMwNDIwNzg3MTE3MjZhYWQzYzlkNTAyMjM1Y2YyZTQzM2RmODkwN2MxZGI0OWRiNDY4Yzg1MzU5M2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczODdhNDIzMTg3YzgzMDZiZDU0YjY3ZTY5NjJjNDMzZDZjM2U3ZmZjYWU0YzVkMWFlMzVlOTdiYmU2MjcyNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkMWMwMTgxM2JlNWY4MTM3ZGNhZWZkYTE1NjExYzNiY2M1NmU3MTJkNTc3NWZiMjI2MDVmMTg3Zjc3Y2Y4YzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3065b640ad144454aa6d09a50177ff43",
+      "statement": "Dependency cycles are forbidden anywhere, as an error-severity dependency-cruiser rule.",
+      "evidence": [
+        {
+          "resource": "repo://.dependency-cruiser.cjs#L68-L74",
+          "version": "repo-lines-v1:sha256:b881a16e8813d7b6ad1d9f70af76ce2e088ab77313fc351bb8f4d9e70cb64bc8:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjljYTg5MWJmZjdhYzFmN2NlYWFlNDBlZjA1MTA2NmJlOWVmZTQ3YjRlNDI4MWU4NmMzMTliZTJjNTVlYmNlNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYwY2RiOTcyYTdiZmI3ZWQyNDZmOWZmNjcyMzg1ZTU1ZjQ5NjhmYzExMDQzZGM1YjY4NGQ1MWRmYTMxZGJjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGRiZDkxY2UyZTRkNmJhNzNlMTgyMmE5MmJlM2VkMzA2N2M1M2ZiOGEwMGY3ZjY2YTUwMzk1Y2EzNTk2YTk4ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTVjZDczNDhiMTEwN2NlYTdmZWM4Y2MwYmM5NzkyODZiYjJiNTY4NGQ4NDM4ODdlMmJmODE3MDIwOTExZTAxNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_fb137b3743964af1b19d5dbef3b2cccb",
+      "statement": "Layering is dates, then recurrence, then tasks and habits (side by side, neither importing the other or game), then game; domain packages never import ui, ecosystem, garden or db.",
+      "evidence": [
+        {
+          "resource": "repo://.dependency-cruiser.cjs#L76-L129",
+          "version": "repo-lines-v1:sha256:d44582933598ee21fa7167a5906ffa28b09d032bc9aa3fe42fa131e2ebd3fdbf:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzZDQyZjQ0YTJmMGZmZjMwYzk5ZWQyZjJlNDdmMjZlYzg1NjIzMjM4YjhiMGI0NjE3NmI0OTYzNjhlNzEyMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhMjRkZDY5MzI5NTZmNDAxMzkwNDZhMjkxMDQ2NGI0MTY3ODE2ZjJlNWU5NTFjNDJiZWZlMzBjMjczMjQyZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZkNTA5MTc1YWU1NTA1NGIxZGQzYWI5NGY3ZWExZmQ2YmEyOGVlOTJiMDkxMzE5OWNmZmI4NGQxZTQ1MmM4OGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_942d288e82fc425cbd32a1a83f862623",
+      "statement": "db is independent of the domain packages, and ecosystem and garden may import domain packages but never ui or db.",
+      "evidence": [
+        {
+          "resource": "repo://.dependency-cruiser.cjs#L84-L106",
+          "version": "repo-lines-v1:sha256:460bedf79a47f0eff3317869411995980e138e6b9473dfca68472a1382ef43c4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5Y2E4OTFiZmY3YWMxZjdjZWFhZTQwZWYwNTEwNjZiZTllZmU0N2I0ZTQyODFlODZjMzE5YmUyYzU1ZWJjZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMDUwOTdiNDhkMGE2NDBhYTdhOTNhN2NiN2MyZTczMTU1MDRhNTU3ZWY5YjQzNjZmYTQ1YWIxNGZiMjkyODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3YmRlMDgzNDcxYmJkOWZiN2ZlMjk4NDZkYjM4NDg3ZDMwMDI1MThiNzZjN2RhNmEwMGJhNTdiZDNlYTMyYmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiMTI2ZmM2NjhjZmYyNDQyZDJmN2MyMWMzYjNlOGI5MDNjYTM3ZTUzNTFkZGRiMjhiNWZhNGQyNDQ5NTI2ZTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7f0adf4d0fc54588804fb2fa69f00f55",
+      "statement": "ui is the top layer: only the page entry src/main.ts may import it.",
+      "evidence": [
+        {
+          "resource": "repo://.dependency-cruiser.cjs#L99-L105",
+          "version": "repo-lines-v1:sha256:a59b0a2623a7357c9cd0a7c05715fda78c54ff7b5591dfe8804fa44e19e5f54d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDkyMDEwNThlZjRhOGIzMjAwZWE5OGVjN2IwMGY5Y2RmYWU4YWJjNzNlNmE3ZTMwODBmODFjYmI1MmE5OGRmMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjljYTg5MWJmZjdhYzFmN2NlYWFlNDBlZjA1MTA2NmJlOWVmZTQ3YjRlNDI4MWU4NmMzMTliZTJjNTVlYmNlNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjI4ZTRjZGE3ZTA3NmIzZjJjOWM1M2RlM2VhOWNmOGVlOWM1NWRkMDY4NzM3MGEzNzAyZjI3YTVmYTdlZGQ5ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjQ0MTUyNTMzZDQ3YzRmOGExYmJhYmYzY2M0ZDNlNWQyYWE0MzM2ZDZhNDUxMWRmNGMzNDVkOTlmYzkxOWZjMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_838b730940e24ad3af300d330dbfb1c1",
+      "statement": "ESLint forbids DOM and global access (window, document, navigator, location, localStorage, sessionStorage, fetch, requestAnimationFrame) inside dates, recurrence, tasks, habits, game and db, because globals are not imports and dependency-cruiser cannot see them.",
+      "evidence": [
+        {
+          "resource": "repo://eslint.config.mjs#L18-L25",
+          "version": "repo-lines-v1:sha256:d614f2797750e1f571f8bdbd6c6eea09a1622bd3d29398ca45063728fc806d18:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjExMWYyMzlhYzY1YzlmZWNkNGY3OTc1ZDRlZTBjNjc3YjU4YThlYTY3ODUyZWEyNWQyNzkyMzkyNTE4ZDJmOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGQ1Y2QyZmI0ZjNkZjg4NDUxNTI1NWIzOTUyM2YyZjhiNTQ3MmJlZWE5ZjU2NmZmY2EyMDRkYjgwMjU2MTA0MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWExNTMzMDNlNzNkNGRkOWZjYjk3NGVmYmYyNWMyMGMyODM1OWE2NjAwZDQwNGYwZDMxOWQ1YmIyM2ZjYWYzZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDk5NjdlYzFlZDM4MzZmOGViMTdhZmYxNzJiNWJmZWY3ZGU2MDQ4NWE0MzljNmNhMTFjNTkxZTE3NTU3MzlhZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7cbc629161ac4c70a3bb973fcea702dc",
+      "statement": "ESLint runs the strictTypeChecked preset with no-explicit-any as an error and ignores dist, node_modules, models, evals and plain JS files.",
+      "evidence": [
+        {
+          "resource": "repo://eslint.config.mjs#L1-L17",
+          "version": "repo-lines-v1:sha256:49773e65317a12c859b6ef8c55da261954b61384e9c15782e9c2063d0816066a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlYjgyNzhjMDRjOGQzMTgwYzllOGY1ZTg2NzJiMWE4NTViMGYyOTQ3M2FhMzhiZmVmZmEzY2YxYTdmZWQ4ZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRlYmFlNjdlODIwZTBmN2Y1NzE2YmEyZDMxOWQzNGNiNTQ0MzcxOWQ2MWE0MzAzYWRkZjUyYTZlOTc1OWE4MmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_389563a9c91e4db9beba3eb82d5c6b13",
+      "statement": "The architecture decision records that packages are flat deep modules whose layering and entry-point rules are enforced by dependency-cruiser rather than by convention.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adr/0001-modernize-typescript-deep-modules.md#L28-L40",
+          "version": "repo-lines-v1:sha256:4d717cf3e8075b449a8bf7d8655d881669a6fb5cf553e72ac067752369df5f85:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjOTJkMWIwOTFiMjVhZmNlZDQyNjVhYjhjYzJmNDBhZjBhZDhmZmExM2QzYmE1NjA3MTBhMWNhYTE0YmZhMDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiNGVjMTEzZmQ1OTdlZjg1MWQwMDI0ODM5ZGQzODkyNzI3YjE0NGQ1MDM0ZmMxMzdmYjQ2NDAwMGIzZjIxZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxOTUwODNjMTk0OTNiOTAwYjAxZDdmYjliMzE2NWFlNGJjMTI1MWIyYWMxZWQxMjQ2YzVmMDk3ZTEwMGExN2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkMDYxMDA0NzllMDg3ODMwZWFjMThiY2JkOGFkNzcwNzQ5NmQzMDNkYjgxM2NmN2EzNTRhYjU4MzRhYjQwY2YifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}

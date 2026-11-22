@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:aa8a422a54da66fcf32dd2f2b9117bedf0b092b3ef5c30b29afd37a76b313a0c",
+  "claims": [
+    {
+      "id": "claim_66693fa7417d4642b0c1e12a3ba2c95f",
+      "statement": "Collection documents are zod looseObjects: unknown extra fields are allowed so older docs keep working, while known fields must have the right type and optional fields may be missing or null.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/schemas.ts#L1-L3",
+          "version": "repo-lines-v1:sha256:9e009b9b17d6ffb634eb030b1117bf86690db8da76bda01f1028e93a017b7569:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTQwYTkzYzI3NGNhNzQ2ZjU5MDQwOTAyYmMwNjY0YjlmYmRlM2I3Y2ZhZGM3M2Y2ZGIyMTkzMTUwYmRjMzIzMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGNiNmM2ZGVhN2Y3NzNlNzYzZWI2Y2E1OGM4N2JjOTBjYWU4ODZkY2ZlNDI4ZTRiMzYwNjUzMTU3ZWQ0ZTVmNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjBhYzZmZTk2Y2Y3ODIxMDE2NTBhN2ZkOWNkMzc4NmFiNTQxMDAzMTE3NjlmYmU1OTZmYzljZTI2NWIwZTMxNCJ9"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/schemas.ts#L47-L50",
+          "version": "repo-lines-v1:sha256:e5afd43819a78079c15a9f4b60060dbe76fccc6aeb345c2c3c83fe8d8eae2525:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjcwZDMzMTYyYmVjNTZhN2U0MjVkYWRlNmQwZjE4ODEyM2YyOWE4MDFiNDhlNjc2ZjBkNTUzMDAzOGVlNzg3MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTRlNmM1NWY2MDFmMmE2OGM3ZGIxZTIwMmNjY2I4YjA5OTE5YWY0MTk4OThlMzA2YzVlMWE3NWNiYTA3NjkxZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGU0NTBiZTM5MjU3YTFiNTE0M2FlZWE2ZTdjNzE4OGUwOTA0YmQxZjU2YmQyMmU4M2Y4Yzk5NjZjODk4MDZkNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTAzMDk5ZTVkOTkwMGQyOWRlYWFlNGJjY2NjMTZmNGMyYWI4ODlhOGNlM2I1M2IwN2EwODIxZTNjNWMxODJjOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d67e072ac84c4d49af31d7ea21199285",
+      "statement": "The schemas import zod/mini rather than full zod to keep dist/app.js small, since the full build bundles every locale.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/schemas.ts#L4-L5",
+          "version": "repo-lines-v1:sha256:0ae20ac84a59b7c40f65c3d692d93cbe93fc98b3183a93dcd86dcb0b01b850d8:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjgyYzc5YzI1ODM0YjU4MzAwM2NiN2VkYTk0ZmFlMzAxMDA2MTk0ZjRkYzc3NDUwM2I1ZDFmMzRjYmEzNzE3ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWUwMDliOWIxN2Q2ZmZiNjM0ZWIwMzBiMTExN2JmODY2OTBkYjhkYTc2YmRhMDFmMTAyOGU5M2EwMTdiNzU2OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTBmYzdiMDE2NzE2Mzc0M2IwNWFiMDY1MDcwMTYxMzgyZWZkMWVjMzdkYjQ1ZjQwM2IxYTU3ODNkMTVjOGQ2YSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_69e7792e2e914fde824e2a5a1ca877c9",
+      "statement": "STORE_COLLECTIONS get a live store listener, while OPTIONAL_COLLECTIONS (visitors_met, keepsakes, sources, lessons, lesson_answers) are read on demand and never listened to by the store.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/schemas.ts#L123-L128",
+          "version": "repo-lines-v1:sha256:f994b37722a4050e8a89d4b912ea2346b86c4d556339eea5ff63efb25a0af651:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTAwZDMyMDlkZWVhY2Y4ZmEyNjIzNTBjNDRlYzlmMGQxYWVjZDhiMWJiYmNhMzU1NTUxZGVmNTk0ZjNlNWJiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjAyZDJjMGQ2ZGM1ZTc0ZDkyZmExNGI5MWRiZWEyNjQwOTBiZWIzNWZkYjkxODhkOWIzNDExODFkY2U5ZjRjZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWE3NmZiM2UyZTc4YjcwODFjNzMxYzNhMzI0MGQwYmIxYTI3NjQ4MjUwNzAwNTJiMDg0NTUyZTVhMjRkZWVjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8348ad9cfadc489d8a8ceeb1f85f2ff6",
+      "statement": "validate returns the first problem in schema order as a short reason (unknown collection, not an object, missing or bad field), with recurrence rules reported through ruleError, or null when the doc is acceptable.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/validate.ts#L7-L27",
+          "version": "repo-lines-v1:sha256:447462e1b4bcc3860f61f33ed3adb023fc22b39d58c779a57d158251fe4dc523:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2YjQxZjhkZmRlM2JiZGVkNjNmNTc4YjI1OGE4Y2Q0YTg1MmIyNThjOWRkMDI4M2FjM2RmM2VjMDAyMmM4OTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczODIyZjZhZjE4YjQ1Y2U3ZDhlNTk4NDQzMjhjN2UwMDM0YTgzZDRlN2QyMDlkZjM5MDViNTg2NTNjZWYyNWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_32ead67ae735488a8d6e956af9267ba9",
+      "statement": "DbAdapter mirrors window.claude.use('db') and is the only boundary the store crosses; the in-memory fake implements the same shape.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/adapter.ts#L1-L26",
+          "version": "repo-lines-v1:sha256:5bac8adf0b1290f0012ca84db9ad77ead3a23d75527cf6f7e049ca7d88da5007:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwNjc4Y2E2M2FkNGM5MTg0YjM0OWViNGRkM2YyMmY2YTVmZTk5MTBiZTcyZTdkMWQyZjg2MGY4OWQ3ZDFiNzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/fake-db.ts#L1-L14",
+          "version": "repo-lines-v1:sha256:45b8b9230f0a112ad65410f61f9022a419a62ff2080a95c9fe165a4389672c13:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1MjI4YTdmN2Y0OWNjM2VlZjk4MjRhOTA3ZWY4ZjliN2JiZTM3Mzc2OTM2MzI5ZjRmMjU1YmM0MjhmNDJmYTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzYWE3ZDMyNmU5OTU0YzU5ZmU2MjY3NTFjNTQwZDZiZWUyNTYwNDFlMDgyOWUyM2YyNzhlYzAzMDNmMzQ4ZTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c0801736eed34718a58e08a9eca0f289",
+      "statement": "The store attaches one onSnapshot listener per store collection, validates each doc, skips and counts invalid ones, and moves status from loading to ready only after every collection has delivered (slow after a wait, error if a listener fails, nodb when no adapter exists).",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L10-L14",
+          "version": "repo-lines-v1:sha256:410a55d8b22a9ec1dc6b04e4e9e86cce56ea500180ebe25beee99919c3998d93:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGYxMmQ3YjBlNDVjYmJjZDE2NjU3NjAyYTdmMjVkNzE2ZjM0NzZmZjc4NzYwNWQ0MmUzMjg0MjZjMmJkMzE4YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWUwY2ZmMGIyMzE2YWY3NGZhN2FhNGQyMGYxNTI2NDM5NTdjNmQxMzZlNzExZTE3N2YyYTNmYzVmMjA4MmM0YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmM0OGIwZjQwMDQzZDdlZWM5ZmMyMmUxNzliZDIzZmU5MTgwMDg4OTcwMmI5MzM4ODJkMGEwY2UyNDRmZGQzNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmZkYWJkMmY0NWU5ZTdlMDNhMDA5Y2E5MzNlMWZiM2JmNTNjZjAyNGMwNmQyYjUxZmU5ZmM3NjFlNzliOGNiYiJ9"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L49-L85",
+          "version": "repo-lines-v1:sha256:6e4dffdbf3b084e5e350733ca5502f0856df61e3889f3cc3bdcbfccf5068cc18:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlMDYzMzcyNzljODA3MzUxOTY1YWRlOTYxYjIyMDJiYzViYmJjNjgwZjMwYzRiZjAyMGFiYzEzZTZiMGI5OTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1MjkxYjE4OWQxYWE2NjAxNGNiNTY5YmFlY2FiZDEyOWJiNzYzMzFlN2M3MGE4Njg4ZmNmODhkMDczMmRiNTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwN2UxNzNkYTIxNDZkM2U1YjM4ZDZjODI0MTM2NDdlNmVmMTM5YWJmOWVmZjQ1MTc5OGZmMGM2NDgxMjc0NWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_15c60ba53b0640709bd109f76b3b2e40",
+      "statement": "Writes are applied optimistically to local state after validation and rolled back if the db rejects them; invalid bodies reject with InvalidDocError (code invalid_doc).",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L123-L144",
+          "version": "repo-lines-v1:sha256:9a52f7c2a364a238d9f1efbc44e1713c367d7a2d4b3a0db83fdd8b9c339d428d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxZTgwMzQ2ZjIzNWQ1ODJlM2Y5N2JjNTYyMWQ3MDZlZDQ0ZmViYzczMmUyYzJjYmVhODAwZTU1MmM2ZDc0ZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhMmYwNzZhNjJlN2Y3MGQxYzA1YzkwY2QyYTBiZjMxOGVjM2UwOWNjZGFhYjA4MjQ1OTUwMDRjNDJhYmM5M2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzNmU0OTJiMDUwMzBjYTU2ZTY4NzVlMmI0M2M2ZDc2MDBkODhlOWJkNmExM2Q0Y2VjYWQ2NzExYTMzOTRmMTcifQ"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L26-L28",
+          "version": "repo-lines-v1:sha256:354bc2bb105754eb5653a3652d526e12c08841ec23afcac1617aded6e1f6b3a8:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWRiZjM5MzJhYzQ5ODU2OTU1MjVkODBjMjJkZWEyZGQwZDc3NTk4Mzc1YjE1ZTNkYTRiZDFjODkyZGQ2NmNiMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGQ3MTZjMzdkMTE5ZWE2YjU3YTM4OTM5Mzk4YjFhNzVhYjU0NjEyNTJkNjMxNzkyZTVmN2JhZDgxMGI0NDYwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmY0MjI5NWQ3ZTE4NmM2Y2VkNzg5NzgzYWIzY2NkZmI5YTY1MWZhY2E2MDNjMmJhZmNjYTYwNjZhNzk1NDlmNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_62ca79b8d99448ae9e57917cf1793345",
+      "statement": "Writes to the same document are serialized through a per-document promise chain, and a per-document in-flight count makes snapshots keep the optimistic body for docs whose writes have not settled.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L101-L117",
+          "version": "repo-lines-v1:sha256:cf8ada2b4785eb75d376bb7a0c92b45515d1a3ffd376e0fe2fc20ce310b36598:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViOGI2ZjhlODEyN2ExM2M3NmYxNjEwZTk3ODQ3NjVhZjYyZGViOWY0N2U5MGY1ODc1ZDU4ZGIzNmMzNzExYmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2NTlkY2YxMTQ5OTBjMTNjYzBhMGY5MDY2YjI1NzYyM2Y0MGViNWE1YmE3NThkODEwNGEwYjA4MTJlYWM0MTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2OTliYjlmNDFiMzYxZWRkOTAzNjAxOTZhMDEzYWEzNWJjMjE2YjAzMDgxYTNiMGVmZmZmY2RmMmMwNjhkZmUifQ"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L70-L76",
+          "version": "repo-lines-v1:sha256:b8e5c185c19cd4eb2a223b764f5ce0a0a046ab4f92594af8c7900f64c64ad6f2:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWEwMTM1YjU0ZmIyNDhjMmE3Yjc3MWQwM2U4ZDYzZmVlYjEzM2E3MGIwYTE3NjJjZWI4NjUyODY5NjhhYTEzYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODgwMDVkNTcxMDZhMzYyZWIwMDBkYWYzZGE0Njc0YzgyYjUxOGZmNWEyZTJmNjdlZThlNzU3YTMzM2MyYWY2NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzJkNTUwOGQxNzM4NTQ1MDM4MGEyZTZhMmI5MzcwOWY1MzhlYWQ1YmEzNGIyN2UyNDkyZWMxMWIyYjNiYmM3ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjI3ZjRlNGFjMDg5NGZhY2EzYzE0MmRhYzAxY2ZmY2ZkYzNmYWQ3ZmFhOWVlZTMyZjJkMjRiNGVjMzI1YjUzMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_58f4082733db407390c33c5c2efd70da",
+      "statement": "patch writes the whole merged doc with set when the patch contains an object, because the db's update merges nested objects and would leave stale recurrence_rule keys.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L155-L173",
+          "version": "repo-lines-v1:sha256:493335db815ab609b4f777ecd55c03a987eedfc1a459700af5dd886bd3ad0677:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4MzJjMzY2N2Y5MGY1MGE3MDNmYWVkZjA3MTk2N2M4MzRiMmI0M2NkNTJkMmZlMDVkNzIzOTIxYzQ4ODRhMzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjExNmMxOTQxMDBmZTJmZWEwMWI3YWFlM2E2MDUzNzgzYmYyYTg3OGU0Njc1YzFiYWI3YjMxMTQ3NDc3ZGQ3NzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4MjBmZTFjMjcwMmEwOTljOGQ3M2I0NmMxNzBkYjcyM2RlNDBkNWM4MTY0N2I4MDZlNWQ2OGY2OTQwMWE2YWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7aa8bc26b79d4309bd7b9e906eabbf2f",
+      "statement": "Undo replays an UndoRecord newest first, putting back each touched doc's prior body or removing docs the write had created.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L18-L24",
+          "version": "repo-lines-v1:sha256:a04329e515e4e222cd27e6d1b11800561099413568ce62b0dc9c99f2233b7203:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWZlOTNmNTUwNGQ2MGRiNTZjYzE3MTdhMzQzZTUwNzc5NjExN2EyN2U2ODEwMGVkMWMxOTA3MWYzOGI3YzdlNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2I4OTE5YWVhNDUzNzIwNmM2YjAzYzEyNTkwODg4OWQzZGM5MmEyNzQ1ZGMwNTcxOTk4MzliYzVhNGUwZWY2OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmZkYWJkMmY0NWU5ZTdlMDNhMDA5Y2E5MzNlMWZiM2JmNTNjZjAyNGMwNmQyYjUxZmU5ZmM3NjFlNzliOGNiYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmJhMmI4YTE5Yzg3YzhlZTUzNGNiNGY2YjIzYThjMTJhM2Q2MjAyYWRjOTllZmI1MTdmNzViYTk2ODU0NTg2ZSJ9"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L181-L184",
+          "version": "repo-lines-v1:sha256:1582dcf2b30ecbeab78624983925f1fc94d0e63a7cc150a6ad55090f27f424a8:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGY3MzEyOWEwNDlhYmMzNWNhZTJiYmY3M2NhNzdmNDJkOWI3NDg1NDY4MTNjMDgxYzdlNDkwNGNhOWU1ZjcxZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjdlNTc4OGQ1ZDlkNzNkMjRhODFkYmMwYTVhNzRiZmE4MmM5YzNiM2FmOTllNTJhZjc5NmU5MGI0NjhhOGEzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWQ5NzM0MzRmODc2MWNmZDk1YzQ3YmFkODUzNmUwY2EzY2M0NjU4YWViN2Y2NWJmNTE1M2EyNzg3NjRjYmQxOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTE4ZjI3YjI3YTEzMDc5ODNhOTQwMDA0MmI3YmM5Y2ZiY2U1MzZjMjFiZmY5ZGEyZmVjMDY3ODlhMTAwODdmNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_319a6c44eb96423eb22979f850051c7c",
+      "statement": "The fake db deep-merges on update like the real db, and offers failNextWrites (reject writes without changing data) and remoteWrite (simulate another device) test hooks.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/fake-db.ts#L65-L73",
+          "version": "repo-lines-v1:sha256:7502b1b9c0f57951827c2ff5c83706b1a3e2db59863e31dd19b907eea7f79945:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDk1ZmEwZjExMTdiNWVhNDA0MzQxNDBkZGUxYTM0MGM3MjBkZGJmMzI2MjEyZTE5MTgzOGQ0YjE1NmQzMTZiYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJhMmNiMjVhMTIyYjQ0MjIxYTYyMzRlYzY2MGE3YjVmYjdmOWJkZTdiM2I5ZTJiM2M1NTlhMGQ5NmZhYzczOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDljZDMzYTQ5Y2NjYWNhZDI3ZWYxYjQxYzIyZDYyYzIyOWJjYjc0YzQ3YzI3NzQ5MmRiODM0NWNkZGRiOGEyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/fake-db.ts#L8-L26",
+          "version": "repo-lines-v1:sha256:680f9c89171bb5525f405e6a45dfb04934d0be5cc44b15734f9f4591b5bdce40:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhYmEyZmNhNDFiZjdjNGYxOGM5YjQ5MjJmYTU5MmMzMjAwNmU0M2U0ODBlZjJiNTNhYjIwMTI5Y2E5NzMxM2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyNmU4MzAyNjllMDRjMGMwZWFiZTczNWUyZDcyNzcxMzdmMDhjYjNmYjY2OTZjMWJiYTYzNDllYjg1MmRkOWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlZDc1NzE4NTgxMDc5M2JiZjYwZjczYTZmNjQ5YzIzODQ0ZGQ4Mzk4M2Q0MTU1NjRmZjhmNmU3MmZkOGQyNWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7b9dd44b624a46049134b0d3e0ca2b9d",
+      "statement": "The lesson-make skill eval grades generated rows with the board's own validate function from the db package.",
+      "evidence": [
+        {
+          "resource": "repo://evals/lesson-make/grade.ts#L1-L2",
+          "version": "repo-lines-v1:sha256:09234b7d084e1bfe07523fe6e7f7940742642e0e5293058890805ee2f945ea6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDkxNjVlOTExNDc1ZjQ1Mjc3MTVlMzU0Mzg3YWVkNjRlYjY3MjMzNWIwMDc0N2ZhNmFkZjdkMjBkNmRjOWE3YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWNjNTc4ZjRhMmU5MzAwNDczOTA4NDgxYzk5YTlmY2ZkOTg5ZjhmYzY3OWJjMTg2OGE5ZTdiMWFkZmQwMjc0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjYyOWJkZjRiYzY5OTk0Y2M5ODlkNTYzMDVlODM2YjQzNGQ5NDM1MTAwYzM0ZjgwMDBjNWI3NzhlYWMxMTI2YiJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}

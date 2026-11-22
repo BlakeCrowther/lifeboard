@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:16f42938028df27e06ebf9f2635929d8ef32aaa35dd08bca243e1c8e974b0467",
+  "claims": [
+    {
+      "id": "claim_bceee1a5f7474b6dbc583fa57f6e488e",
+      "statement": "Repo commands are pnpm scripts: bootstrap, dev, build, typecheck, lint, test, spec-check, sim, test:ui and verify, where verify runs tools/verify.sh.",
+      "evidence": [
+        {
+          "resource": "repo://package.json#L6-L18",
+          "version": "repo-lines-v1:sha256:103459a1ba67d743ed056187ff41b9211a37f7aed955c093adcb3dfd6dde3aad:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0ODMzZDU5NDljMDNhNDBjYTk1MjQ5MTYxMGE2NjU5NjQ0YjNhYTQ2NjM2MmY3OTkwMjBkYmYxOTgxNTQ3ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2YzE3M2Q2ZDIyMDdjNzhhMmJhZmQ1OWVhN2U4MTE5MGM3OWFjYzBiMDE3NDA3ZWViZjQ0YmMzNGMxMGQ2ZTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmNjBmNGE4YjIzMGM5MzNkNzFmOWI2NjFkZThkZGI2M2JiOGFjMTQ0MWYzYWE4ZWNmNWU4MGM3ZjIyM2Q4YTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0a5d6b0220bb4862a90da986e6314a52",
+      "statement": "The repo is a personal dashboard published as a claude.ai Artifact with the db capability, built from strict TypeScript in src/ by esbuild into dist/.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L1-L7",
+          "version": "repo-lines-v1:sha256:6f684def1954ed7a0b9ab6a753bcc75629cc9dd30093a8b4e89bb085795e7860:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTk0ZGIwNzc2YTZmNWE1MmY4YzFjMTk4ZDAwZTdjMTQ3Y2ZiNDI3ZjhkMWYwY2E1MjA1NjYwNzlkOWZiNDQ4MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzRlMGIwNThlMTA5ZDU5MzFkYjdhNzQ0ODc0Y2VhZmZjYTQ4YWFlYTAwM2M4YzlkMWNkOGU5NTBkZDkzYzIyNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzhlOWEzMzlkZTg2NjU3NDI5ZTA2YmM1YmEwNmJiYjhjZWIwMTYyMWE4MjU0Nzk2NWExYzY3OGFlY2E2MGU2MCJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}
