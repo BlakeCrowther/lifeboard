@@ -12,6 +12,9 @@ Runs unattended. Do not ask the user anything; decide, log, and report.
 ## 0. Preflight
 `./setup.sh --check`. If anything required fails, there's no visitor this week. Report the failing line and point to the lifeboard-setup skill.
 
+## 0a. Live drift check
+`pnpm build`, then pull the files `pnpm live-diff --list` names from the live artifact (Artifact `read` with `paths`, `out_dir` under the scratchpad) and run `pnpm live-diff <dir>`. Exit 0: live matches `main`. Exit 1 on a clean `main` checkout: live is stale (a merge never got published); publish it (AGENTS.md "Publish", pre-approved) and say so in the report. If a differing file is one `main` never had (live-only edit), port it first or stop and report; never overwrite it.
+
 ## 0b. Start the run ledger
 `python3 models/shared/tools/ledger.py start <run_id> --rounds 4 --minutes 30` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).
 
