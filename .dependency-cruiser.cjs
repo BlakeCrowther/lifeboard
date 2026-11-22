@@ -73,32 +73,45 @@ module.exports = {
       to: { circular: true },
     },
 
-    // --- Layering (agreed; uncomment each rule as its packages land) ----------
+    // --- Layering ----------------------------------------------------------
     // Interface-hiding controls HOW you import (through the entry points).
     // Layering controls WHICH packages may depend on which:
     //   dates <- recurrence <- tasks/habits <- game
     //   db is independent of those.
     //   ui/ecosystem/garden may import domain packages.
-    //   No domain package imports ui, db or the DOM.
-    //
-    // {
-    //   name: "domain-not-on-ui-or-db",
-    //   severity: "error",
-    //   from: { path: `^${R}/(dates|recurrence|tasks|habits|game)/` },
-    //   to:   { path: `^${R}/(ui|ecosystem|garden|db)/` },
-    // },
-    // {
-    //   name: "db-independent-of-domain",
-    //   severity: "error",
-    //   from: { path: `^${R}/db/` },
-    //   to:   { path: `^${R}/(dates|recurrence|tasks|habits|game)/` },
-    // },
-    // {
-    //   name: "dates-is-the-base-layer",
-    //   severity: "error",
-    //   from: { path: `^${R}/dates/` },
-    //   to:   { path: `^${R}/(recurrence|tasks|habits|game)/` },
-    // },
+    //   No domain package imports ui, db or the DOM (DOM globals: eslint.config.mjs).
+    {
+      name: "domain-not-on-ui-or-db",
+      comment: "Domain packages are pure: they never reach the UI, the scene or the db.",
+      severity: "error",
+      from: { path: `^${R}/(dates|recurrence|tasks|habits|game)/` },
+      to: { path: `^${R}/(ui|ecosystem|garden|db)/` },
+    },
+    {
+      name: "db-independent-of-domain",
+      severity: "error",
+      from: { path: `^${R}/db/` },
+      to: { path: `^${R}/(dates|recurrence|tasks|habits|game)/` },
+    },
+    {
+      name: "dates-is-the-base-layer",
+      severity: "error",
+      from: { path: `^${R}/dates/` },
+      to: { path: `^${R}/(recurrence|tasks|habits|game)/` },
+    },
+    {
+      name: "recurrence-below-tasks-habits-game",
+      severity: "error",
+      from: { path: `^${R}/recurrence/` },
+      to: { path: `^${R}/(tasks|habits|game)/` },
+    },
+    {
+      name: "tasks-and-habits-below-game",
+      comment: "tasks and habits sit side by side: neither imports the other or game.",
+      severity: "error",
+      from: { path: `^${R}/(tasks|habits)/` },
+      to: { path: `^${R}/(game|tasks|habits)/`, pathNot: `^${R}/$1/` },
+    },
   ],
   options: {
     doNotFollow: { path: "node_modules" },

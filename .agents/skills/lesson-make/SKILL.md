@@ -5,7 +5,7 @@ description: Turn a book, video, post, article, talk, podcast, course or note in
 
 # Make lessons
 
-Rules live in `SPEC.md` → Lessons (read it first). Data shapes: `schema.js` (`sources`, `lessons`). Deck logic: `game.js` (`buildDeck`, `answer`, `rungOf`).
+Rules live in `SPEC.md` → Lessons (read it first). Data shapes: `schema.js` (`sources`, `lessons`). Deck logic: `src/packages/game/lib/lessons.ts` (`buildDeck`, `answerLesson`, `rungOf`).
 
 ## 0. Target board
 The user's live lifeboard artifact (never a mock/test build; see break-setup for how to pick it). Never hardcode its URL in this repo.

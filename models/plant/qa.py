@@ -3,7 +3,7 @@ No plant generator exists yet: these checks encode the draft contract so the fir
 shape-check (REST pose): rooted origin at the soil point, +Z up, height matches spec, stage_0..stage_4 nodes.
 motion-check (actions): per-stage seamless sway_<n> loops, tend starts/ends on the sway pose, optional wilt."""
 
-STAGES = ["seed", "sprout", "leafy", "bud", "bloom"]  # game.js RULES.garden.stages
+STAGES = ["seed", "sprout", "leafy", "bud", "bloom"]  # RULES.garden.stages (src/packages/game/lib/rules.ts)
 
 
 def shape_check() -> None:

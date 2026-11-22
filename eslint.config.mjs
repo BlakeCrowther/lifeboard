@@ -11,4 +11,11 @@ export default tseslint.config(
     },
     rules: { '@typescript-eslint/no-explicit-any': 'error' },
   },
+  {
+    // Domain packages are pure (layering: .dependency-cruiser.cjs); this covers the DOM, which isn't an import.
+    files: ['src/packages/{dates,recurrence,tasks,habits,game}/**/*.ts'],
+    rules: {
+      'no-restricted-globals': ['error', 'window', 'document', 'navigator', 'location', 'localStorage', 'sessionStorage', 'fetch', 'requestAnimationFrame'],
+    },
+  },
 );

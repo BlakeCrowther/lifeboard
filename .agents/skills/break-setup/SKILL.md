@@ -34,7 +34,7 @@ The page logs every break end to `logs` (`kind: 'break'`, `label: skip|done|post
 - 5 (default): about half a good day's growth
 - 10: about a full day's growth
 
-Write it with ArtifactData `set` on the user's live lifeboard: collection `checks`, doc `break_rules`, data `{ "value": { "skipCost": <n> }, "updated_at": <ms now> }`. Deleting the doc falls back to `RULES.breaks.skipCost` in `game.js`. The fish only show with the Ecosystem on (display menu, or `#eco` on the link).
+Write it with ArtifactData `set` on the user's live lifeboard: collection `checks`, doc `break_rules`, data `{ "value": { "skipCost": <n> }, "updated_at": <ms now> }`. Deleting the doc falls back to `RULES.breaks.skipCost` in `src/packages/game/lib/rules.ts`. The fish only show with the Ecosystem on (display menu, or `#eco` on the link).
 
 ## 2. Apply
 ```bash

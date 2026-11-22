@@ -33,7 +33,7 @@ You need a Claude account with Artifacts and Claude Code (desktop app or CLI). L
 
 ## Working on it
 
-Legacy code needs no build: `index.html` loads plain scripts (`logic.js` → `schema.js` → `store.js` → `app.js`, plus `game.js`, `garden.js`, `habitat.js`).
+`index.html` loads the built domain bundle then plain scripts (`dist/app.js` → `schema.js` → `store.js` → `app.js`, plus `garden.js`, `habitat.js`); run `pnpm build` (or `pnpm dev`) first. Domain logic lives in `src/packages/` (dates, recurrence, tasks, habits, game).
 
 ```bash
 pnpm bootstrap   # install dev tools (Playwright for the UI check)

@@ -4,15 +4,15 @@ Personal life dashboard, published as a claude.ai Artifact with the `db` capabil
 
 - `src/`: TypeScript. `src/main.ts` is the bundle entry; `src/packages/<name>/` are deep modules, see [src/packages/README.md](./src/packages/README.md) before adding or importing one. Unit tests (Vitest) sit in each package's `tests/`; e2e in `tests/e2e/`. `.dependency-cruiser.cjs` enforces boundaries (`pnpm lint:boundaries`).
 - Commands: `pnpm bootstrap`, `dev` (serve + watch build; `PORT` env, default 8765), `build`, `typecheck`, `lint`, `test`, `verify`, `test:ui`.
-- `index.html`: page + styles. Loads `logic.js`, `schema.js`, `store.js`, `app.js` in that order.
-- `logic.js`: pure date/task/habit/recurrence logic (day boundary in the browser's timezone, or `checks/profile.tz`). No DOM.
+- `index.html`: page + styles. Loads `dist/app.js` (built from `src/main.ts` by `pnpm build`), `schema.js`, `store.js`, `app.js` in that order.
+- `src/packages/`: strict TypeScript domain packages, pure, no DOM: `dates` (day boundary in the browser's timezone, or `checks/profile.tz`), `recurrence`, `tasks`, `habits`, `game`. Map: `src/packages/README.md`. `src/legacy-globals.ts` hands them to the classic scripts as `window.LB` / `window.LBG` until the ui step.
 - `schema.js`: db collection shapes; `validate(col, doc)`.
 - `store.js`: artifact-db data layer (live listeners, optimistic writes).
 - `app.js`: views and actions.
 - `package.json`: pnpm only (never npm/yarn). `pnpm verify` runs `tools/verify.sh`.
 - `mock.js` + `mockdata.js`: local `window.claude.use('db')` stub for testing. `mockdata.js` holds a real-data snapshot and is gitignored.
 
-Game spec: `SPEC.md` is the source of truth for game mechanics (garden, habitat, lessons, rewards). Read it before touching `game.js`, `garden.js`'s `deriveGame`, rewards or anything that changes what earns what. Any mechanic change updates `SPEC.md` (rule text and the section's **Status**) in the same commit, and `node tools/spec-check.js` must pass (it checks every `RULES` number in `game.js` against the spec, both ways). No mechanic may exist only in the UI or only in the spec unmarked; UI look and wording are free to differ. The old "Lifeboard Game Spec" doc is frozen; don't edit it.
+Game spec: `SPEC.md` is the source of truth for game mechanics (garden, habitat, lessons, rewards). Read it before touching `src/packages/game/` (rules in `lib/rules.ts`, `deriveGame` in `lib/derive-game.ts`), rewards or anything that changes what earns what. Any mechanic change updates `SPEC.md` (rule text and the section's **Status**) in the same commit, and `pnpm spec-check` (`tools/spec-check.ts`) must pass (it checks every `RULES` number in `src/packages/game/lib/rules.ts` against the spec, both ways). No mechanic may exist only in the UI or only in the spec unmarked; UI look and wording are free to differ. The old "Lifeboard Game Spec" doc is frozen; don't edit it.
 
 Game layer derives state from db history on load (habit_sessions, checks).
 
@@ -36,7 +36,7 @@ Every subagent a skill spawns uses `model: "sonnet"`, judge-panel judges include
 
 ## Improve as you go (verify → fix the cause → log)
 Every task and every skill run in this repo ends with this loop. It's how the prompts, skills and gates get better instead of the same mistake repeating.
-1. **Verify before saying done**: `pnpm verify` runs the checks below (syntax, spec-check, sim, doc frontmatter, UI smoke via headless Chromium: `tools/ui-smoke/`, synthetic `fixture.js`) and fails if any fail. Run single ones when iterating: `node tools/spec-check.js` (game rules), `node sim/run.js` (balance), `node --check` on touched scripts, `tools/check-doc-frontmatter` (ADRs and design docs; needs `uv`), `pnpm test:ui` + the preview (UI), `verify.sh` + judges (models). Not in `verify`: visual review in the preview, model gates (`verify.sh` + judges). Say what you couldn't check.
+1. **Verify before saying done**: `pnpm verify` runs the checks below (syntax, spec-check, sim, doc frontmatter, UI smoke via headless Chromium: `tools/ui-smoke/`, synthetic `fixture.js`) and fails if any fail. Run single ones when iterating: `pnpm test` (vitest, package tests in `src/packages/*/tests/`), `pnpm spec-check` (game rules), `pnpm sim` (balance, `tools/sim.ts`), `node --check` on touched scripts, `tools/check-doc-frontmatter` (ADRs and design docs; needs `uv`), `pnpm test:ui` + the preview (UI), `verify.sh` + judges (models). Not in `verify`: visual review in the preview, model gates (`verify.sh` + judges). Say what you couldn't check.
 2. **Retro**: list each thing that went wrong or wasted time (a failed gate, a wrong assumption, a retry, a user correction).
 3. **Fix the cause where it lives**, in the same commit: the skill step, prompt wording, gate threshold or tool that let it happen, not just this instance. Prefer a check that fails loudly (a gate, an assert, spec-check) over a sentence of advice.
 4. **Log it**: one line in `LESSONS.md` (date, what happened, what changed). Read `LESSONS.md` before starting a skill run or a big change.

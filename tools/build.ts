@@ -6,7 +6,8 @@ const options: BuildOptions = {
   entryPoints: ['src/main.ts'],
   outfile: 'dist/app.js',
   bundle: true,
-  format: 'esm',
+  // iife, not esm: the page loads it as a classic script so its globals exist before the legacy scripts after it run.
+  format: 'iife',
   target: 'es2023',
   sourcemap: true,
   // three stays on the page's import map.

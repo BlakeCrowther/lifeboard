@@ -6,7 +6,7 @@ Moved here from the "Lifeboard Game Spec" doc on Nov 18, 2026; that doc is froze
 
 ## How this spec stays true
 
-- **Mechanics live in two places only: this file and `game.js`.** Every tunable number is in `RULES` in `game.js`. This file names each one in code formatting as the RULES path, an equals sign and the value (for example `garden.bloomWeeks = 1`), and `node tools/spec-check.js` fails if a number here differs from `RULES`, or if a `RULES` entry is never mentioned here.
+- **Mechanics live in two places only: this file and the game package (`src/packages/game/`).** Every tunable number is in `RULES` in `src/packages/game/lib/rules.ts`. This file names each one in code formatting as the RULES path, an equals sign and the value (for example `garden.bloomWeeks = 1`), and `pnpm spec-check` fails if a number here differs from `RULES`, or if a `RULES` entry is never mentioned here.
 - **Same change, same commit.** A change to how the game works (a rule, a reward, a number, a new mechanic) updates this file in the commit that changes the code. A mechanic that exists only in the UI, or only here without a **Status** saying it isn't built, is a bug.
 - **UI is free to differ; mechanics are not.** Layout, colours, wording and animation can vary between copies of lifeboard. What earns what, and when, cannot.
 - Each section carries a **Status**: *Built*, *Partly built* (what's missing is listed) or *Planned*.
@@ -25,7 +25,7 @@ Each input drives exactly one thing, so no system can game another.
 
 - **Week start.** Habit weeks (streaks, the garden, the weekly check message) start on one board-wide day, `checks/week_start` (0 Sunday … 6 Saturday, default 1 Monday). `lifeboard-setup` asks for it; it's usually the same day as the weekly check. Every habit uses it, so nothing is asked per habit.
 - **Game start.** The game starts at zero on the day the game is first turned on (`game_state/game.started`, written once and never overwritten; `game_state` is store-tracked so it is read only after the db fully loads). History before that is ignored; tasks already overdue then count as overdue from that day. The garden opens on the first week-start day on or after the start; until then every plot is a seed and the Habits card says when the garden opens.
-- **Derived, not stored.** All game state (plants, seeds, ecosystem phase, biomes, dioramas, visitors due) is recomputed from db history on every load by `deriveGame` in `garden.js`. Only things that can't be recomputed are stored: the start date, titles and notes you write (`keepsakes`), and visitors met (`visitors_met`). Task commitments are recorded as they happen (`tasks.committed_days`, see Ring %), so rescheduling never rewrites a past day's ring. *Planned:* freezing closed weeks (`week_results`) so a changed floor or target never re-scores past weeks.
+- **Derived, not stored.** All game state (plants, seeds, ecosystem phase, biomes, dioramas, visitors due) is recomputed from db history on every load by `deriveGame` in `src/packages/game/lib/derive-game.ts`. Only things that can't be recomputed are stored: the start date, titles and notes you write (`keepsakes`), and visitors met (`visitors_met`). Task commitments are recorded as they happen (`tasks.committed_days`, see Ring %), so rescheduling never rewrites a past day's ring. *Planned:* freezing closed weeks (`week_results`) so a changed floor or target never re-scores past weeks.
 - **Surprises are decoration only.** They show up at reward moments and never change numbers.
 - **Claude suggests, never changes.** Weekly-job suggestions need a tap to apply.
 - **Display:** (Ecosystem and Garden each have an on/off toggle in the display menu, both on by default, synced board-wide via `checks/ui_prefs`) Today's first column is the ring card, which holds the task lists (tap a day's ring for that day: today's lists, or a past day's Done and Missed); the second column has the Lessons card, the ecosystem scene right under it, then the habit plants. On phones the task lists start folded so the scene stays near the top. Grow → Collection holds dioramas and pressed plants (and, when built, finished lesson sources).
@@ -79,7 +79,7 @@ Each habit tile shows its week at a glance (`habitPips` in app.js). Daily and we
 
 Every day earns **Growth** from the day's ring %, and Growth moves the current biome through its phases. Biomes take as long as they take, independent of the garden calendar.
 
-**Ring % = done ÷ committed** (built: `LBGame.ringTally` / `ringPct` in `game.js`, used by the rings, ring history and Life points; no fixed goal).
+**Ring % = done ÷ committed** (built: `ringTally` / `ringPercent` in `src/packages/tasks/`, used by the rings, ring history and Life points; no fixed goal).
 
 - **Commitment.** A task is committed to a day when that day arrives with the task due on it (its due date, or its deadline if that's earlier), or when it's put on today. The board records each such date in `tasks.committed_days`, so moving a task later never erases the day it was committed to. Putting a task on a day in the future commits nothing until that day comes (moving it from next month to next week changes nothing).
 - **Commit lock** (`checks/ui_prefs.commitLock`, asked by `lifeboard-setup`): how long after a task lands on today you can still move it off without it counting as missed: minutes (`0` = locked at once, the default; e.g. `5`, `180`), or `"end"` (never locks during the day). A task already due when the day begins lands at midnight; one put on today lands when you put it there. Today's tasks inside the window show "Locks in 2h 10m".
@@ -257,11 +257,11 @@ Everything sits in the lifeboard artifact db; no hippocampus dependency. Claude 
 
 Seeds, plantings, the herbarium, the ecosystem and dioramas were planned as stored collections; they're derived from history instead (see Core rules) and only need storing if derivation stops being enough.
 
-**Code:** this repo. Rules: `game.js`. Derivation and Collection UI: `garden.js`. Scene: `habitat.js`. Balance simulation: `sim/run.js`.
+**Code:** this repo. Rules and derivation: `src/packages/game/`. Collection UI: `garden.js`. Scene: `habitat.js`. Balance simulation: `tools/sim.ts` (`pnpm sim`).
 
 ## Simulation
 
-Before building UI, the rules became one pure module (`game.js`, no DOM, like `logic.js`) and `node sim/run.js` runs it against made-up people for 26+ weeks to find gaps and tune numbers.
+Before building UI, the rules became one pure module (now the game package, no DOM) and the balance sim (`pnpm sim`) runs it against made-up people for 26+ weeks to find gaps and tune numbers.
 
 **Personas (seeded random, so runs repeat):**
 
@@ -301,7 +301,7 @@ Before building UI, the rules became one pure module (`game.js`, no DOM, like `l
 
 **Update (Nov 18, feedings):** two feedings of 5 a day → at 1 book a month the backlog stays ~0 and a book takes ~71 days (was ~14 and ~82 with one deck); 2 books a month backlog ~6.
 
-**Decision (Nov 18):** strict death kept, 4-week seasons kept, no wilt. Everything else adopted as defaults in `game.js`: dead plots stay dead until next season, overdue rewards capped at 1 a week and exotic at 1 per biome, deck of 5 on a 3-7-21 schedule, starting pace 9 a day, water murk and blight scaled gradually. Re-run: steady still blooms 1.7 of 4 (by design), dead plot-weeks ~30%, about 3 rare and 0.5 exotic visitors a month, first biome 3.9 weeks, lesson backlog flat at 1 book a month.
+**Decision (Nov 18):** strict death kept, 4-week seasons kept, no wilt. Everything else adopted as defaults in `RULES`: dead plots stay dead until next season, overdue rewards capped at 1 a week and exotic at 1 per biome, deck of 5 on a 3-7-21 schedule, starting pace 9 a day, water murk and blight scaled gradually. Re-run: steady still blooms 1.7 of 4 (by design), dead plot-weeks ~30%, about 3 rare and 0.5 exotic visitors a month, first biome 3.9 weeks, lesson backlog flat at 1 book a month.
 
 **Run 2 (task cleanup added):** personas now reschedule or delete overdue tasks at their own rate. Murk = 1 task 10%, 5 tasks 50%.
 

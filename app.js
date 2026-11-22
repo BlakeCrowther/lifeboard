@@ -1,7 +1,7 @@
 'use strict';
 /* =========================================================
    lifeboard: views and actions. Data comes from the artifact db
-   (store.js), validated by schema.js; dates and recurrence from logic.js.
+   (store.js), validated by schema.js; dates, recurrence, tasks, habits and game rules from the domain packages (src/packages, via window.LB / window.LBG).
    ========================================================= */
 
 /* ---------- icons: one stroke family, 24px grid ---------- */
@@ -111,31 +111,23 @@ social:[['path','d="M11.5 18.5c0-3.3 2.3-5.2 5.3-5.2s5.2 1.9 5.2 5.2z"','plum'],
 const artSvg = (k, s, label) => `<svg class="i art" style="--s:${s}px" viewBox="0 0 24 24" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'}><g class="art-sh" transform="translate(.8 1.1)">${ART[k].map(([t, a]) => `<${t} ${a}/>`).join('')}</g>${ART[k].map(([t, a, c]) => `<${t} ${a} class="ac-${c}"/>`).join('')}</svg>`;
 const ic = (k, s = 22, label) => ART[k] ? artSvg(k, s, label) : `<svg class="i" style="--s:${s}px" viewBox="0 0 24 24" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'}>${P[k] || P.spark}</svg>`;
 
-/* ---------- dates: string math is zone-free; "today" and "now" are Pacific, like the original app ---------- */
-const pad = (n) => String(n).padStart(2, '0');
-const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const toD = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
-const addDays = (s, n) => { const d = toD(s); d.setDate(d.getDate() + n); return ymd(d); };
-const diffDays = (a, b) => Math.round((toD(b) - toD(a)) / 864e5);
-const dow = (s) => toD(s).getDay();
-const mondayOf = (s) => addDays(s, -((dow(s) + 6) % 7));
+/* ---------- dates: one implementation in the dates package (window.LB); "today" and "now" use the board's zone ---------- */
+const { pad, addDays, diffDays, dow, addMonths, longDate, shortDate, MONTHS, MON3, WD, WD3 } = LB;
+/* year, month (1-12), day, weekday of a 'YYYY-MM-DD' date */
+const dateParts = LB.dateParts;
+/* a local Date (from parsing typed text) as 'YYYY-MM-DD'; overflow like Feb 31 rolls into March, as Date does */
+const dateKeyOf = (d) => LB.ymd(d.getFullYear(), d.getMonth() + 1, d.getDate());
 /* habit weeks (streaks, garden) start on WS: checks/week_start value 0 Sun .. 6 Sat, default 1 Monday (lifeboard-setup asks) */
 let WS = 1;
-const weekOf = (s) => addDays(s, -((dow(s) - WS + 7) % 7));
+const weekOf = (s) => LB.weekStartOf(s, WS);
+const mondayOf = (s) => LB.weekStartOf(s, 1);
 const wkFirst = () => WD[WS], wkLast = () => WD[(WS + 6) % 7];
-const addMonths = (s, n) => { const d = toD(s); const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + n); const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); d.setDate(Math.min(day, last)); return ymd(d); };
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const MON3 = MONTHS.map((m) => m.slice(0, 3));
-const WD = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const WD3 = WD.map((w) => w.slice(0, 3));
-const longDate = (s) => { const d = toD(s); return `${WD[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`; };
-const shortDate = (s) => { const d = toD(s); return `${WD3[d.getDay()]} ${MON3[d.getMonth()]} ${d.getDate()}`; };
 let TODAY = LB.todayStr();
 const relDate = (s) => {
   const n = diffDays(TODAY, s);
   if (n === 0) return 'Today'; if (n === 1) return 'Tomorrow'; if (n === -1) return 'Yesterday';
   if (n > 1 && n < 7) return WD[dow(s)];
-  const d = toD(s); return `${MON3[d.getMonth()]} ${d.getDate()}${d.getFullYear() !== toD(TODAY).getFullYear() ? ', ' + d.getFullYear() : ''}`;
+  const d = dateParts(s); return `${MON3[d.month - 1]} ${d.day}${d.year !== dateParts(TODAY).year ? ', ' + d.year : ''}`;
 };
 const minLabel = (m, ap = true) => { const h = Math.floor(m / 60) % 24, mm = m % 60; return `${(h % 12) || 12}${mm ? ':' + pad(mm) : ''}${ap ? (h < 12 ? ' AM' : ' PM') : ''}`; };
 const durLabel = (m) => (m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`);
@@ -192,7 +184,7 @@ const TABS = [
 const LIFE = [['health', 'Health', 'heart'], ['money', 'Money', 'coin'], ['home', 'Home & Pets', 'house'], ['hobbies', 'Hobbies', 'wave']];
 const GROW = [['habits', 'Habits', 'flame'], ['goals', 'Goals', 'target']];
 
-/* ---------- recurrence (rule shapes and math from the original app: logic.js) ---------- */
+/* ---------- recurrence (rule shapes and math: src/packages/recurrence) ---------- */
 const PRESETS = [
   ['none', "Doesn't repeat"], ['daily', 'Every day'], ['weekly', 'Every week'], ['biweekly', 'Every two weeks'], ['monthly', 'Every month'],
   ['interval', 'Every N days / weeks / months / years'], ['monthly_day', 'On a day of the month'], ['monthly_first', 'First day of the month'],
@@ -366,23 +358,7 @@ function buckets(tasks) {
 }
 
 /* ---------- habits & wish timers ---------- */
-function habitStats(h, sessions) {
-  const ss = sessions.filter((s) => (s.h === h.key || s.h === h.id) && s.date <= TODAY).map((s) => s.date);
-  const wk = weekOf(TODAY), mon = TODAY.slice(0, 7), yr = TODAY.slice(0, 4);
-  const counts = {}, perDay = {}; ss.forEach((d) => { const m = weekOf(d); counts[m] = (counts[m] || 0) + 1; perDay[d] = (perDay[d] || 0) + 1; });
-  /* floor met: weekly = the week's count; daily = every day of the week (so far) at its floor. missed: a daily habit already broke this week */
-  const missed = (m) => { for (let i = 0; i < 7; i++) { const d = addDays(m, i); if (d >= TODAY) break; if ((perDay[d] || 0) < h.floor) return true; } return false; };
-  const c = (m) => counts[m] || 0, ok = (m) => (h.daily ? !missed(m) && (m < wk ? (perDay[addDays(m, 6)] || 0) >= h.floor : (perDay[TODAY] || 0) >= h.floor) : c(m) >= h.floor);
-  const weeks = []; for (let i = 0, m = wk; i < 12; i++, m = addDays(m, -7)) weeks.unshift({ m, n: c(m), cur: i === 0 });
-  const curMet = ok(wk); let streak = curMet ? 1 : 0;
-  for (let m = addDays(wk, -7); ok(m); m = addDays(m, -7)) streak++;
-  /* best run of floor-met weeks, from the first logged week through this one */
-  let best = 0, run = 0;
-  const first = ss.length ? weekOf(ss.reduce((a, b) => (a < b ? a : b))) : wk;
-  for (let m = first; m <= wk; m = addDays(m, 7)) { run = ok(m) ? run + 1 : 0; if (run > best) best = run; }
-  return { best: Math.max(best, streak), week: c(wk), month: ss.filter((d) => d.startsWith(mon)).length, year: ss.filter((d) => d.startsWith(yr)).length, total: ss.length, today: ss.filter((d) => d === TODAY).length, weeks, streak, pending: !curMet && streak > 0 && !(h.daily && missed(wk)),
-    missed: !!h.daily && missed(wk), days: Array.from({ length: 7 }, (_, i) => { const d = addDays(wk, i); return { d, n: perDay[d] || 0, future: d > TODAY, today: d === TODAY }; }) };
-}
+const habitStats = (h, sessions) => LB.habitStats(h, sessions, TODAY, WS);
 function buyCalc(it) {
   const days = TAGS[it.tag] ? TAGS[it.tag].days : null;
   const ready = days == null ? null : addDays(it.added, days);
@@ -685,7 +661,7 @@ function groupTasks(filter, empty) {
 function nextBigDay() { return S.bigDays.filter((w) => w.date >= TODAY)[0]; }
 const vv = (x, u = '') => (x == null || x === '' ? '–' : esc(x) + u);
 const nextTideOf = (c) => (c && c.tides.length ? c.tides.find((t) => t.upcoming) || c.tides[0] : null);
-function dayLabel(s) { const d = toD(s); return `${WD3[d.getDay()]}, ${MON3[d.getMonth()]} ${d.getDate()}`; }
+function dayLabel(s) { const d = dateParts(s); return `${WD3[d.weekday]}, ${MON3[d.month - 1]} ${d.day}`; }
 function greeting() { const h = Math.floor(nowMins() / 60); return h < 5 ? 'Still up' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
 function daySummary() {
   const B = buckets(S.tasks), ev = eventsOn(S.events, TODAY), nm = nowMins();
@@ -874,10 +850,9 @@ const committedOn = (t, d) => (t.days.length ? t.days.includes(d) : eff(t) === d
 /* a missed task's status now: done late, moved to another date, or still sitting on a past date (overdue/slipped) */
 function missStatus(t, d) {
   if (t.done) return `<span class="m">${ic('check', 15)}Done late · ${relDate(LB.localDateOf(t.doneAt))}</span>`;
-  const e = eff(t), st = tstate(t);
-  if (!e) return '<span class="m hot">Moved · no date</span>';
-  if (e !== d && e >= TODAY) return `<span class="m hot">Moved ${ic('arrow', 13)} ${relDate(e)}</span>`;
-  return `<span class="m bad">${e !== d ? `Moved ${ic('arrow', 13)} ${relDate(e)} · ` : ''}${st.overdue ? 'Overdue' : 'Slipped'}</span>`;
+  const st = LB.missedTaskStatus({ due_date: t.due, deadline_date: t.deadline, done: false }, d, TODAY);
+  if (st.kind === 'moved') return st.to ? `<span class="m hot">Moved ${ic('arrow', 13)} ${relDate(st.to)}</span>` : '<span class="m hot">Moved · no date</span>';
+  return `<span class="m bad">${st.movedTo ? `Moved ${ic('arrow', 13)} ${relDate(st.movedTo)} · ` : ''}${st.kind === 'overdue' ? 'Overdue' : 'Slipped'}</span>`;
 }
 /* a past day's tasks: what got done that day, then what it committed to and missed */
 function pastDayTasks(d) {
@@ -975,10 +950,10 @@ function scheduleCard(day, isToday) {
 
 /* ---------- Plan (calendar) ---------- */
 function viewPlan() {
-  const first = toD(U.calMonth), y = first.getFullYear(), m = first.getMonth();
-  const start = addDays(U.calMonth, -((first.getDay() + 6) % 7));
+  const first = dateParts(U.calMonth), y = first.year, m = first.month - 1;
+  const start = addDays(U.calMonth, -((first.weekday + 6) % 7));
   const cells = Array.from({ length: 42 }, (_, i) => addDays(start, i));
-  const weeks = cells[35] && toD(cells[35]).getMonth() !== m ? 35 : 42;
+  const weeks = cells[35] && dateParts(cells[35]).month - 1 !== m ? 35 : 42;
   const sel = U.calSel, { ad, tm } = eventsOn(S.events, sel);
   const dayTasks = S.tasks.filter((t) => !t.done && eff(t) === sel);
   return `${phead('plan', 'calendar', 'Plan', 'Your month, and what lands on each day.')}
@@ -987,7 +962,7 @@ function viewPlan() {
       <div class="grid7" role="grid" aria-label="${MONTHS[m]} ${y}">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => `<span class="wdh" aria-hidden="true">${d}</span>`).join('')}
       ${cells.slice(0, weeks).map((d) => { const x = eventsOn(S.events, d), n = x.ad.length + x.tm.length, tk = S.tasks.some((t) => !t.done && eff(t) === d);
         const dots = [...x.ad, ...x.tm].slice(0, 3).map((e) => `<i style="--c:${evColor(e)}"></i>`).join('') + (tk ? '<i style="--c:var(--accent)"></i>' : '');
-        return `<button class="day${toD(d).getMonth() !== m ? ' out' : ''}${d === TODAY ? ' today' : ''}" data-act="day" data-d="${d}" aria-pressed="${d === sel}" aria-label="${longDate(d)}${n ? ', ' + plural(n, 'event') : ''}${tk ? ', tasks due' : ''}"><span class="num">${toD(d).getDate()}</span><span class="dd">${dots}</span></button>`; }).join('')}</div>
+        return `<button class="day${dateParts(d).month - 1 !== m ? ' out' : ''}${d === TODAY ? ' today' : ''}" data-act="day" data-d="${d}" aria-pressed="${d === sel}" aria-label="${longDate(d)}${n ? ', ' + plural(n, 'event') : ''}${tk ? ', tasks due' : ''}"><span class="num">${dateParts(d).day}</span><span class="dd">${dots}</span></button>`; }).join('')}</div>
       <div class="legend" style="margin-top:12px">${[...new Map(S.events.map((e) => [e.cal || 'Calendar', evColor(e)])).entries()].slice(0, 6).map(([k, c]) => `<span><i style="background:${c};border-radius:50%"></i>${esc(k)}</span>`).join('')}<span><i style="background:var(--accent);border-radius:50%"></i>Task due</span></div>
     </div></section></div>
     <div class="col"><section class="sec">${secH(sel === TODAY ? 'Today' : relDate(sel) === WD[dow(sel)] || /^(Tomorrow|Yesterday)$/.test(relDate(sel)) ? relDate(sel) : shortDate(sel), `<span class="small muted">${longDate(sel)}</span>`)}
@@ -1226,8 +1201,8 @@ function recordsCard() {
     const pc = (x) => (x == null ? '–' : Math.round(x * 100) + '%');
     const wk0 = R[0].st.weeks;
     body = `<div class="tg" role="table" aria-label="Sessions per week, last 12 weeks">
-      <span></span>${wk0.map((w, i) => `<span class="h">${w.cur ? 'now' : (11 - i) % 4 === 0 ? `${MON3[toD(w.m).getMonth()]} ${toD(w.m).getDate()}` : ''}</span>`).join('')}<span class="h">hit</span><span class="h">trend</span>
-      ${R.map((r) => `<button type="button" class="nm" data-act="edit-habit" data-id="${r.h.id}" title="${esc(r.h.name)}: target ${r.h.target}, floor ${r.h.floor}${r.st.streak ? `, ${r.st.streak}-week streak (best ${r.st.best})` : ''}. Tap to edit.">${esc(r.h.name)}</button>${r.st.weeks.map((w) => `<span class="c l${lvl(r.h, w.n)}${w.cur ? ' cur' : ''}" title="Week of ${MON3[toD(w.m).getMonth()]} ${toD(w.m).getDate()}: ${w.n} of ${r.h.target}">${w.n || ''}</span>`).join('')}<span class="s${r.hit == null ? '' : r.hit >= 0.7 ? ' good' : r.hit < 0.4 ? ' bad' : ''}">${pc(r.hit)}</span><span class="tr">${arrow(r)}</span>`).join('')}
+      <span></span>${wk0.map((w, i) => `<span class="h">${w.cur ? 'now' : (11 - i) % 4 === 0 ? `${MON3[dateParts(w.m).month - 1]} ${dateParts(w.m).day}` : ''}</span>`).join('')}<span class="h">hit</span><span class="h">trend</span>
+      ${R.map((r) => `<button type="button" class="nm" data-act="edit-habit" data-id="${r.h.id}" title="${esc(r.h.name)}: target ${r.h.target}, floor ${r.h.floor}${r.st.streak ? `, ${r.st.streak}-week streak (best ${r.st.best})` : ''}. Tap to edit.">${esc(r.h.name)}</button>${r.st.weeks.map((w) => `<span class="c l${lvl(r.h, w.n)}${w.cur ? ' cur' : ''}" title="Week of ${MON3[dateParts(w.m).month - 1]} ${dateParts(w.m).day}: ${w.n} of ${r.h.target}">${w.n || ''}</span>`).join('')}<span class="s${r.hit == null ? '' : r.hit >= 0.7 ? ' good' : r.hit < 0.4 ? ' bad' : ''}">${pc(r.hit)}</span><span class="tr">${arrow(r)}</span>`).join('')}
     </div>
     <div class="legend" style="margin-top:10px"><span><i></i>None</span><span><i class="l1"></i>Below floor</span><span><i class="floor"></i>Floor</span><span><i class="hit"></i>Target</span><span><i class="l4"></i>Above target</span></div>
     ${attn.length ? `<ul class="recn">${attn.map((r) => `<li><span class="vchip ${r.v}">${esc(r.vt)}</span><span><b>${esc(r.h.name)}</b> ${esc(r.why)} <button type="button" class="link" data-act="edit-habit" data-id="${r.h.id}">Adjust</button></span></li>`).join('')}</ul>` : ''}
@@ -1236,7 +1211,7 @@ function recordsCard() {
     const R = ringHistory(12), lv = (x) => (x.future ? ' fut' : !x.due ? '' : x.n <= 0 ? ' l0' : x.n < x.due ? ' l1' : ' l3');
     body = `<div class="tg rg" role="table" aria-label="Tasks finished per day, last 12 weeks">
       <span></span>${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => `<span class="h">${d}</span>`).join('')}<span class="h">rings</span><span class="h">done/due</span>
-      ${R.map((r) => `<span class="nm">${r.cur ? 'This week' : `${MON3[toD(r.m).getMonth()]} ${toD(r.m).getDate()}`}</span>${r.days.map((x) => `<span class="c${lv(x)}${x.today ? ' cur' : ''}" title="${x.d}: ${x.n} of ${x.due} done">${x.future ? '' : x.n || ''}</span>`).join('')}<span class="s">${r.closed}</span><span class="s${r.done >= r.due ? ' good' : ''}">${r.done}/${r.due}</span>`).join('')}
+      ${R.map((r) => `<span class="nm">${r.cur ? 'This week' : `${MON3[dateParts(r.m).month - 1]} ${dateParts(r.m).day}`}</span>${r.days.map((x) => `<span class="c${lv(x)}${x.today ? ' cur' : ''}" title="${x.d}: ${x.n} of ${x.due} done">${x.future ? '' : x.n || ''}</span>`).join('')}<span class="s">${r.closed}</span><span class="s${r.done >= r.due ? ' good' : ''}">${r.done}/${r.due}</span>`).join('')}
     </div>
     <div class="legend" style="margin-top:10px"><span><i></i>None</span><span><i class="l1"></i>Part done</span><span><i class="hit"></i>Ring closed</span></div>
     <p class="wcnote">A ring closes when everything committed that day is done: tasks due that day, plus anything you finish. Overdue tasks count once you move them to a day. Older weeks are approximate (a rescheduled task only keeps its latest date).</p>`;
@@ -1305,9 +1280,9 @@ function parseCmd(raw) {
     else if ((m = s.match(new RegExp('\\s(?:on\\s+|next\\s+|this\\s+)?' + DOW_RE + '\\b', 'i')))) { date = nextDow(DOWS[m[1].slice(0, 3).toLowerCase()]); cut(); }
     else if ((m = s.match(new RegExp('\\s(?:on\\s+)?' + MONRE + '\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b', 'i')))) {
       const mi = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(m[1].slice(0, 3).toLowerCase());
-      const y = +TODAY.slice(0, 4); let c = ymd(new Date(y, mi, +m[2])); if (c < TODAY) c = ymd(new Date(y + 1, mi, +m[2])); date = c; cut();
+      const y = +TODAY.slice(0, 4); let c = dateKeyOf(new Date(y, mi, +m[2])); if (c < TODAY) c = dateKeyOf(new Date(y + 1, mi, +m[2])); date = c; cut();
     } else if ((m = s.match(/\s(\d{1,2})\/(\d{1,2})\b/)) && +m[1] <= 12 && +m[2] <= 31) {
-      const y = +TODAY.slice(0, 4); let c = ymd(new Date(y, +m[1] - 1, +m[2])); if (c < TODAY) c = ymd(new Date(y + 1, +m[1] - 1, +m[2])); date = c; cut();
+      const y = +TODAY.slice(0, 4); let c = dateKeyOf(new Date(y, +m[1] - 1, +m[2])); if (c < TODAY) c = dateKeyOf(new Date(y + 1, +m[1] - 1, +m[2])); date = c; cut();
     }
   }
   let title = s.replace(/^\s*(remind me to|remember to|todo:?)\s+/i, ' ').replace(/\s+(at|on|by|for|every)\s*$/i, ' ').replace(/\s+/g, ' ').trim();
@@ -2043,7 +2018,7 @@ function lesRules() {
 }
 const lesHour = (ms) => { const p = new Intl.DateTimeFormat('en-US', { timeZone: LB.tz(), hour: 'numeric', minute: 'numeric', hourCycle: 'h23' }).formatToParts(new Date(ms)), g = (t) => +p.find((x) => x.type === t).value; return g('hour') + g('minute') / 60; };
 const lesRung = (l) => l.rungs[LBG.rungOf(l.level, l.rungs.length)];
-/* today's deck: due reviews then new lessons (game.js buildDeck), from active sources, shuffled the same way all day */
+/* today's deck: due reviews then new lessons (game package buildDeck), from active sources, shuffled the same way all day */
 function lessonDeck() {
   const live = Object.values(LES.lessons).filter((l) => { const s = LES.sources[l.source_id]; return s && (s.status || 'active') === 'active'; });
   const R = lesRules(), f = LBG.feedingOf(lesHour(Date.now()), R);
@@ -2090,7 +2065,7 @@ function lessonBody() {
 function lessonOpen() { LES.deck = lessonDeck(); LES.i = 0; LES.fb = null; LES.n = 0; render(); lesFocus(); }
 function lessonClose() { LES.deck = null; LES.fb = null; render(); }
 function lesFocus() { const i = document.getElementById('lesIn'); if (i) i.focus(); }
-/* one action on the current card: game.js answer() moves level/due/state; writes the lesson and a lesson_answers doc */
+/* one action on the current card: the game package's answerLesson() moves level/due/state; writes the lesson and a lesson_answers doc */
 async function lessonAct(action, text) {
   const id = LES.deck && LES.deck[LES.i], l = id && LES.lessons[id]; if (!l) return;
   const r = lesRung(l), body = { ...l }; delete body.id;

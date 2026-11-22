@@ -21,6 +21,20 @@ Import only through a package's entry points (its root files), never its subfold
 3. **Tests through entry points** (`tests-through-entrypoints`): files in `<pkg>/tests/` may import any package's entry points and their own `tests/` fixtures, never any package's `lib/` or other subfolder, not even their own.
 4. **No cycles**.
 
-Layering (which package may depend on which) is a commented stub in `.dependency-cruiser.cjs`: `dates <- recurrence <- tasks/habits <- game`; `db` independent of those; `ui`/`ecosystem`/`garden` may import domain packages; no domain package imports `ui`, `db` or the DOM. Uncomment each rule as its packages land.
+## Layering (`.dependency-cruiser.cjs`, DOM globals in `eslint.config.mjs`)
+
+```
+dates  <-  recurrence  <-  tasks, habits  <-  game
+```
+
+| Package | Entry points | Owns | May import |
+|---|---|---|---|
+| `dates` | `index.ts` (zone-free 'YYYY-MM-DD' math, labels), `clock.ts` (board day boundary, time zone, clock labels) | calendar dates | nothing |
+| `recurrence` | `index.ts` | rule kinds, next due date, rule labels | dates |
+| `tasks` | `index.ts` (state, ordering, commitment, ring tally, age), `icons.ts` (title icon, wish list tags) | tasks | dates, recurrence |
+| `habits` | `index.ts` | session counts, floor-met weeks, streaks | dates, recurrence |
+| `game` | `index.ts` (RULES, garden plots, habitat growth, visitors, lessons), `derive.ts` (`deriveGame`) | game mechanics (SPEC.md) | all of the above |
+
+`db` is independent of those; `ui`/`ecosystem`/`garden` may import domain packages; no domain package imports `ui`, `db` or the DOM. Add a rule when a new package lands.
 
 Check: `pnpm lint:boundaries` (also part of `pnpm lint` and `pnpm verify`).

@@ -7,7 +7,7 @@ description: Restart the game (garden, ecosystem, visitors) from zero on the use
 
 Destructive and can't be undone except from the backup. **Confirm with the user before step 3**, showing exactly what will be cleared.
 
-The game is derived from history counted from `game_state/game.started` (see `SPEC.md` Core rules and `garden.js` `deriveGame`): growth, phases, biomes, plants, seasons and dioramas all restart when that date moves to today. Tasks, habits and sessions are kept; days before the new start simply don't count.
+The game is derived from history counted from `game_state/game.started` (see `SPEC.md` Core rules and `deriveGame` in `src/packages/game/`): growth, phases, biomes, plants, seasons and dioramas all restart when that date moves to today. Tasks, habits and sessions are kept; days before the new start simply don't count.
 
 ## 1. Find the board
 The user's live lifeboard artifact (never a mock/test build; see break-setup for how to pick it). Never hardcode its URL in the repo.

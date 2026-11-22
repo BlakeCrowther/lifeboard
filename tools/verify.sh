@@ -9,10 +9,9 @@ run() { # name, cmd...
 }
 skip() { rows+=("SKIP  $1 ($2)"); }
 
-run "syntax (node --check)" bash -c 'for f in *.js tools/*.js sim/*.js; do node --check "$f" || exit 1; done'
-run "game rules vs SPEC.md" node tools/spec-check.js
-run "garden derivation checks" node tools/garden-check.js
-run "sim runs (balance report)" node sim/run.js 20 8
+run "syntax (node --check)" bash -c 'shopt -s nullglob; for f in *.js tools/*.js tools/ui-smoke/*.js; do node --check "$f" || exit 1; done'
+run "game rules vs SPEC.md" pnpm -s spec-check
+run "sim runs (balance report)" pnpm -s sim 20 8
 if [ -d node_modules/typescript ]; then
   run "typecheck (tsc)" pnpm -s typecheck
   run "lint (eslint + boundaries)" pnpm -s lint

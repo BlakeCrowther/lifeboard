@@ -16,7 +16,7 @@ Runs unattended. Do not ask the user anything; decide, log, and report.
 `python3 models/shared/tools/ledger.py start <run_id> --rounds 4 --minutes 30` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).
 
 ## 1. Should a visitor come?
-Read the game state from the lifeboard artifact db (see AGENTS.md / `game.js`). The board writes the habitat's status to `checks/game_status` whenever it changes: `value = { biome, phase, phases, bleached, dioramas, visitor, visitorWeek }` (ArtifactData `get`). If it's missing, try the old name `checks/labs_reef` (boards before Nov 19 2026); if both are missing (the game was never opened), use biome 0 and common.
+Read the game state from the lifeboard artifact db (see AGENTS.md / `src/packages/game/`). The board writes the habitat's status to `checks/game_status` whenever it changes: `value = { biome, phase, phases, bleached, dioramas, visitor, visitorWeek }` (ArtifactData `get`). If it's missing, try the old name `checks/labs_reef` (boards before Nov 19 2026); if both are missing (the game was never opened), use biome 0 and common.
 - current `biome`;
 - this week's visitor result (`value.visitor`: `rare`, `common`, or null when bleached);
 - overdue drops (`overdueReward` → `rare` or `exotic`, capped per week and per biome).
@@ -66,7 +66,7 @@ Keep it short. The surprise is the point.
 
 ## Dry run (`--dry-run <event-json>`)
 Tests the whole pipeline on a simulated week without touching anything live.
-- Get events with `node sim/run.js 1 28 --visitors=steady:1000`. Pass one event, e.g. `{"week":11,"biome":2,"rarity":"rare"}`, in place of step 1.
+- Get events with `pnpm -s sim 1 28 --visitors=steady:1000`. Pass one event, e.g. `{"week":11,"biome":2,"rarity":"rare"}`, in place of step 1.
 - Run steps 2–3 fully: real Blender, real gates, retries and fallbacks.
 - **Skip ship.** No roster edit, no commit, no publish. All dry-run work goes in `models/out/dryrun/<id>/` (spec as `spec.json`, build outdir = that folder: `build.py out/dryrun/<id>/spec.json out/dryrun/<id>`), not `creature/specs/` or `out/<id>/`, unless a human promotes it. Verify with `verify.sh <id> out/dryrun/<id>/<id>.glb`. Dry-run quarantine: `out/dryrun/quarantine/<id>/`.
 - page-test runs if the habitat page has the `?visitor=` hook; otherwise mark it `"skipped: no runtime hook"` (the dry run still counts as PASS on the first five gates).

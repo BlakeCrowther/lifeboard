@@ -3,7 +3,7 @@
 Status: first generator built (`archetypes/stem_bloom.py`, example `specs/mermaids_cup.json`, passes `verify.sh`). Runtime hookup built (`garden.js`, SPEC.md Garden "3D plants, one per plant"). Golden: `mermaids_cup` (`qa_calibration.json`). `models/plant/qa.py` encodes the ✓ rules. Shared rules are **not repeated here**: units, meters, Blender scene scale, glTF export settings, materials/texture/bake, ≤ 4 weights normalized, no pops, eased Bezier motion, file-size optimize + `-glb.js` shipping format and the export-check export gate all follow `models/creature/CONTRACT.md` and `models/STYLE.md`. Lines marked ✓ are checked by `models/shared/tools/verify.sh` (shared gates + `plant/qa.py`).
 
 ## One glb per species, five stages
-- ✓ Stage nodes `stage_0` … `stage_4`, matching `game.js RULES.garden.stages`: `seed`, `sprout`, `leafy`, `bud`, `bloom`. Each is an empty (or mesh root) whose children are that stage's geometry. `stem_bloom` ships each stage as one skinned mesh named `stage_<n>`, all sharing one baked material/texture.
+- ✓ Stage nodes `stage_0` … `stage_4`, matching `RULES.garden.stages` (`src/packages/game/lib/rules.ts`): `seed`, `sprout`, `leafy`, `bud`, `bloom`. Each is an empty (or mesh root) whose children are that stage's geometry. `stem_bloom` ships each stage as one skinned mesh named `stage_<n>`, all sharing one baked material/texture.
 - Every action's frame 0 is the rest pose (each stage's bones are its own, `s<n>_*`), so `tend` crossfades with any `sway_<n>`.
 - Exactly one stage is visible at a time; the runtime toggles visibility. The glb ships all five, all visible at rest (QA measures the union).
 - Stages may share one armature (preferred: one rig, bones unused by early stages stay still) or have per-stage rigs under their stage node.
@@ -31,7 +31,7 @@ Same judge harness as creatures (model-verify skill; `models/shared/tools/judge_
 | ✓ Triangles whole file (shape-check) | ≤ 8k | ≤ 12k | ≤ 20k |
 | Texture | 1 × 1024² | 1024² | 2048² allowed |
 | Final file | ≤ 400 KB | ≤ 600 KB | ≤ 1.2 MB |
-Rarity comes from the garden (`game.js` `rarityOf`: rare ≥ 4, exotic ≥ 7, the finished plant's score). Rare/exotic plants carry a habit accessory (plant-brief step 6): `s<n>_acc_*` parts, counted in the same budget.
+Rarity comes from the garden (`rarityOf` in the game package: rare at `garden.rarity.rare`, exotic at `garden.rarity.exotic` in SPEC.md, the finished plant's score). Rare/exotic plants carry a habit accessory (plant-brief step 6): `s<n>_acc_*` parts, counted in the same budget.
 
 ## One plant per model
 Each model is one plant in one plot: the garden matches a roster plant to a plot by `plot` (habit key) and `gen` (0 = the plot's first plant). There are no hybrids. Prefer numeric params anyway (they keep generators reusable).
