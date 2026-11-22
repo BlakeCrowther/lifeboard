@@ -20,6 +20,8 @@ export interface HabitTile {
   st: HabitStats;
   met: boolean;
   low: boolean;
+  /** the floor's final chance: the week's last day, or a daily habit's evening */
+  last: boolean;
 }
 
 export const PIP_DROP = 'M10 2C10 2 3 11 3 15a7 7 0 0 0 14 0C17 11 10 2 10 2Z';
@@ -96,7 +98,7 @@ export function gardenHabits(hs: HabitTile[], done: number, total: number, daysL
   const plotByKey = new Map(g.plots.map((p) => [p.key, p])), pulse = viewState.habitPulse;
   const label = (name: string): string => (garden.LOOK_LABELS[name] ?? '').toLowerCase();
   const firstDay = firstDayOfHabitWeek(), lastDay = lastDayOfHabitWeek();
-  const tile = ({ h, st, met, low }: HabitTile): string => {
+  const tile = ({ h, st, met, low, last }: HabitTile): string => {
     let anim = '';
     if (pulse && !pulse.used && pulse.id === h.id && pulse.week === st.week) { pulse.used = true; anim = pulse.d > 0 ? ' add' : ' sub'; }
     const pl = plotByKey.get(h.key);
@@ -107,6 +109,7 @@ export function gardenHabits(hs: HabitTile[], done: number, total: number, daysL
     const status = pl.waiting ? `Seed · goes in ${firstDay}`
       : pl.showing === 'withered' ? `Withered · new seed ${firstDay}`
       : pl.showing === 'bloom' ? `In bloom · pressed ${firstDay}${nextRarity !== 'common' ? ` · ${nextRarity} seed next` : ''}`
+      : last && pl.alive ? (pl.daily ? `${String(pl.need)} more before bed` : `${String(pl.need)} more today`)
       : pl.daily ? (pl.need > 0 ? `${String(pl.need)} more today${pl.stage ? ' or it withers' : ' to sprout'}` : pl.grows ? `Grows to ${label(pl.next ?? '')} ${firstDay}` : `Today done · every day to ${lastDay}`)
       : vis === 'wilt' ? `Thirsty · ${String(pl.need)} more by ${lastDay}`
       : pl.grows ? (pl.stage >= 4 ? (met ? 'In full bloom' : 'Blooming') : `Grows to ${label(pl.next ?? '')} ${firstDay}`)
@@ -114,7 +117,8 @@ export function gardenHabits(hs: HabitTile[], done: number, total: number, daysL
     const cls = !pl.alive || vis === 'wilt' ? ' warn' : pl.grows ? ' good' : '';
     const count = h.daily ? st.today : st.week;
     const aria = `Log a ${h.name} session today. ${String(count)} of ${String(h.target)} ${h.daily ? 'today' : 'this week'}. Plant: ${label(vis)}. ${status}.`;
-    return `<li class="gt${met ? ' met' : ''}${low ? ' low' : ''}${anim}"><button class="gtp" data-act="log" data-id="${h.id}" aria-label="${escapeHtml(aria)}">${garden.plotSVG(pl, 84)}</button>
+    const risk = pl.alive && !pl.showing && !pl.waiting ? (last ? ' last' : low ? ' low' : '') : '';
+    return `<li class="gt${met ? ' met' : ''}${risk}${anim}"><button class="gtp" data-act="log" data-id="${h.id}" aria-label="${escapeHtml(aria)}">${garden.plotSVG(pl, 84)}</button>
       <div class="gtm"><span class="ptt"><span class="ptn">${escapeHtml(h.name)}</span>${flameBadge(st, low)}</span><span class="ptp" aria-hidden="true">${p}</span><span class="gts${cls}">${escapeHtml(status)}</span></div>
       <div class="gstep"><button class="gs-m" data-act="unlog" data-id="${h.id}" aria-label="Remove a ${escapeHtml(h.name)} session from ${h.daily ? 'today' : 'this week'}"${count ? '' : ' disabled'}>${icon('minus', 15)}</button><span class="gs-n num" aria-hidden="true">${String(count)}<small>/${String(h.target)}${h.daily ? ' today' : ''}</small></span><button class="gs-p" data-act="log" data-id="${h.id}" aria-label="Log a ${escapeHtml(h.name)} session today">${icon('plus', 17)}</button></div></li>`;
   };

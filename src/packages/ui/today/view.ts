@@ -7,6 +7,7 @@ import { lessonCard } from '../game/lessons.ts';
 import type { BoardTask } from '../board-model.ts';
 import { eventsOn } from '../shared/calendar-feed.ts';
 import { clock, dayLabel, habitWeekOf, minutesNow, relativeDay } from '../shared/clock.ts';
+import { habitRisk } from '../habit-risk.ts';
 import { clockLabel, escapeHtml, plural, readingOrDash } from '../shared/format.ts';
 import { statsOf } from '../shared/habit-weeks.ts';
 import { icon } from '../shared/icons.ts';
@@ -96,11 +97,11 @@ export function viewToday(): string {
   /* tier 3: at a glance. Each part shows only when its data exists; with none, the row is gone */
   const daysLeft = 7 - daysBetween(habitWeekOf(today), today);
   /* daily habits: met = today's target hit; low = today's floor still open (and the week not already broken) */
+  const minute = minutesNow();
   const hs = model.habits.map((h): HabitTile => {
     const st = statsOf(h);
-    if (h.daily) return { h, st, met: !st.missed && st.today >= h.target, low: !st.missed && st.today < h.floor };
-    const need = h.floor - st.week;
-    return { h, st, met: st.week >= h.target, low: need > 0 && daysLeft <= need + 2 };
+    const met = h.daily ? !st.missed && st.today >= h.target : st.week >= h.target;
+    return { h, st, met, ...habitRisk(h, st, daysLeft, minute) };
   });
   const habitsDone = hs.reduce((n, x) => n + Math.min(x.st.week, x.h.target), 0), habitsTotal = model.habits.reduce((n, h) => n + h.target, 0);
   const bigDays = big ? daysBetween(today, big.date) : 0;
