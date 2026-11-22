@@ -114,3 +114,22 @@ describe('deriveGame: a habit created mid-week (SPEC.md Garden)', () => {
     expect(plotOf(daily, ['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08'])?.stageName).toBe('sprout');
   });
 });
+
+describe('deriveGame: the garden opens on the game start day (SPEC.md Game start)', () => {
+  // weeks start Monday; game started Thursday 2026-11-05
+  const plotOf = (habit: GameHabit, dates: string[]) =>
+    deriveGame({ today: '2026-11-10', start: '2026-11-05', tasks: [], habits: [habit], sessions: dates.map((date) => ({ h: habit.key, date })) }).plots[0];
+
+  it('sprouts a habit that hits the floor in the start week', () => {
+    expect(plotOf({ key: 'run', name: 'Run', floor: 2, target: 3 }, ['2026-11-05', '2026-11-07'])?.stageName).toBe('sprout');
+  });
+
+  it('sprouts a habit created after the start, within the start week', () => {
+    expect(plotOf({ key: 'run', name: 'Run', floor: 2, target: 3, since: '2026-11-06' }, ['2026-11-06', '2026-11-08'])?.stageName).toBe('sprout');
+  });
+
+  it('does not count days before the start as misses for a daily habit', () => {
+    const daily: GameHabit = { key: 'read', name: 'Read', floor: 1, target: 1, daily: true };
+    expect(plotOf(daily, ['2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08'])?.stageName).toBe('sprout');
+  });
+});

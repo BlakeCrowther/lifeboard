@@ -225,10 +225,10 @@ export function deriveGame(input: GameInput) {
   const todayTide = tides[tides.length - 1] ?? null;
 
   /* ---- garden ---- */
-  /* with a start date the garden opens the first week start on/after it; until then every plot is a seed.
-     A habit added later gets its plot in the week it was created. */
-  const gardenStart = start == null ? null : weekStartDay(start) === start ? start : weekStartDay(start) + 7;
-  const waiting = gardenStart != null && today < gardenStart;
+  /* with a start date the garden opens that day: its first (partial) week is scored like a new habit's, and days before
+     the start are never misses. A habit added later gets its plot in the week it was created. */
+  const gardenStart = start == null ? null : weekStartDay(start);
+  const waiting = start != null && today < start;
   const gardenSessions = gardenStart == null ? sessions : sessions.filter((session) => dayNumber(session.date) >= gardenStart);
   const firstWeek = gardenStart ?? (gardenSessions.length ? weekStartDay(Math.min(...gardenSessions.map((session) => dayNumber(session.date)))) : thisWeek);
   const weeksDone = waiting ? 0 : Math.max(0, Math.round((thisWeek - firstWeek) / 7));
@@ -268,7 +268,7 @@ export function deriveGame(input: GameInput) {
     }
     /* daily habits: a day below the floor kills the plant that week; otherwise the week is scored on its total vs 7x floor/target */
     /* days before the habit existed never count as misses (it can be planted mid-week) */
-    const born = habit.since ? dayNumber(habit.since) : -Infinity;
+    const born = Math.max(habit.since ? dayNumber(habit.since) : -Infinity, start ?? -Infinity);
     const missedIn = (week: number, upto: number): boolean => {
       for (let day = Math.max(week, born); day < Math.min(week + 7, upto); day++) if ((perDay[day] ?? 0) < habit.floor) return true;
       return false;
@@ -336,7 +336,7 @@ export function deriveGame(input: GameInput) {
     breaks: { skipsToday: skipsOn[today] ?? 0, skipCost, lost: Math.round(lost), sad: (skipsOn[today] ?? 0) > 0 },
     overdue: overdueAges.length, cloudiness: cloudiness(overdueAges.length), blight: blight(neglectAges), agedDrop: weekDrop,
     visitor: reef.bleached ? null : (visitor ?? 'common'), visitorWeek: dateOfDayNumber(thisWeek),
-    season: { ...season, biome: reef.biome, opens: waiting ? dateOfDayNumber(gardenStart) : null },
+    season: { ...season, biome: reef.biome, opens: start != null && today < start ? dateOfDayNumber(start) : null },
     start: start != null ? dateOfDayNumber(start) : null,
     plots, history, gardenStats,
   };
