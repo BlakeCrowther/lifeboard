@@ -874,7 +874,7 @@ html.hab-lock,html.hab-lock body{overflow:hidden}
 .gt .ptp i.on{background:var(--accent)}.gt.met .ptp i.on,.gt .ptp i.bonus{background:var(--good)}
 .gt .ptp i.fl:not(.on)+i:not(.fl),.gt .ptp i.fl.on+i:not(.fl){margin-left:4px}
 .gt .ptp i.bonus{flex:0 0 7px;height:7px;border-radius:50%}
-.gt.low .ptp i.fl:not(.on){box-shadow:inset 0 0 0 1.5px var(--bad)}
+.gt.low .ptp i.fl:not(.on){box-shadow:inset 0 0 0 1.5px var(--warn)}
 .gstep{display:flex;align-items:center;justify-content:space-between;margin-top:auto;background:var(--sunk);border-radius:999px;padding:3px}
 .gstep button{position:relative;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;transition:transform .12s}
 .gstep button:active{transform:scale(.9)}
@@ -891,7 +891,18 @@ html.hab-lock,html.hab-lock body{overflow:hidden}
 .gtp svg{transition:transform .25s}.gtp:active svg{transform:scale(.94)}
 .gtm{display:flex;flex-direction:column;gap:5px;min-width:0}
 .gts{font-size:12px;color:var(--muted);line-height:1.3}.gts.good{color:var(--good)}.gts.warn{color:var(--bad)}
-.gt.low .ptn{color:var(--bad)}
+.gt.low .ptn{color:var(--warn)}
+/* at risk: amber ring + chip while the floor is open in the warning window; red ring, wash and dot on the last chance */
+.gt{position:relative;transition:box-shadow .25s,background .25s}
+:root{--warn:#c47d00}:root[data-theme="dark"]{--warn:#ffb84d}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--warn:#ffb84d}}
+.gt.low,.gt.last{box-shadow:0 0 0 1.5px var(--warn),0 1px 3px var(--line2)}
+.gt.low .gts,.gt.last .gts{align-self:flex-start;font-weight:700;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.gt.last{box-shadow:0 0 0 2px var(--bad),0 1px 3px var(--line2);background:color-mix(in srgb,var(--bad) 5%,var(--surface))}
+.gt.last .gts{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.gt.last .ptn,.gt.last .ptp i.fl:not(.on){color:var(--bad)}.gt.last .ptp i.fl:not(.on){box-shadow:inset 0 0 0 1.5px var(--bad)}
+.gt.last::after{content:"";position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--bad);animation:lastcall 2s ease-in-out infinite}
+@keyframes lastcall{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--bad) 25%,transparent)}}
+@media (prefers-reduced-motion:reduce){.gt.last::after{animation:none}}
 .aico{width:34px;height:34px;border-radius:11px;background:var(--t);color:var(--a);display:grid;place-items:center;flex:none}
 .wcnote{margin:6px 0 0;font-size:13px;color:var(--muted)}
 /* Grow → Garden: records toggle, rings grid, suggestions */

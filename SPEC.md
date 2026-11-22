@@ -70,6 +70,8 @@ The random rolls are seeded from the habit key, so every reload agrees. There ar
 
 Each habit tile shows its week at a glance (`habitPips` in `src/packages/ui/today/habit-cards.ts`). Daily and weekly habits look different on purpose. In the garden, daily plots come first under a small Daily heading, then weekly plots under Weekly (headings only when both kinds exist).
 
+**At risk** (`habitRisk` in `src/packages/ui/habit-risk.ts`): a tile whose floor is still open gets an amber ring and its status as an amber chip once it enters the warning window (weekly: needs N more with N+2 or fewer days left; daily: today's floor open). On the last chance (weekly: the week's last day; daily: from 6pm) the ring turns red, the tile gets a faint red wash and a pulsing dot, and the chip says how many are left today. Plants on show (bloom, withered) and seeds waiting for the garden to open are never flagged.
+
 - **Daily: water drops**, one per day of the week, day letters under them. A drop fills 0 to floor = bottom half, floor to target = top half (floor 1, target 3: 50%, 75%, 100%). A dotted line marks the floor (halfway) until the drop is full. Floor hit: bolder blue outline. A past day under floor: red outline. Above target: a rainbow behind the drop. Today sits on a soft accent card. Future days are faint outlines.
 - **Weekly: honeycomb**, one cell per session up to the target. Filled cells are honey; floor slots keep a dashed outline (darker once filled), so a met floor stays visible. Each session over target adds a deep-honey cell with a drip and a bee. Cells sit in a staggered zigzag (a strip of comb) and shrink to fit the tile as the target grows. Garden tiles are at least 140px wide so seven drops stay readable.
 

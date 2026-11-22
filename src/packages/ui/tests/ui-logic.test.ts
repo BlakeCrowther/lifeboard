@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DAILY_LAST_CALL_HOUR, habitRisk } from '../habit-risk.ts';
 import { buildBoardModel, type BoardReader } from '../board-model.ts';
 import { guessAisle } from '../list-kinds.ts';
 import { parseQuickAdd, ruleOfRepeat } from '../quick-add.ts';
@@ -100,5 +101,21 @@ describe('parseQuickAdd', () => {
   it('rolls a past month-day into next year and turns yearly into 12 months', () => {
     expect(parseQuickAdd('renew passport mar 3', TODAY).date).toBe('2027-03-03');
     expect(ruleOfRepeat(parseQuickAdd('taxes yearly', TODAY).repeat)).toEqual({ kind: 'interval', every: 1, unit: 'year', basis: 'completion' });
+  });
+});
+
+describe('habitRisk (at-risk habit tiles)', () => {
+  const weekly = { floor: 3 }, daily = { daily: true, floor: 1 };
+  it('warns a weekly habit inside the window and flags the last day', () => {
+    expect(habitRisk(weekly, { week: 1, today: 0 }, 5, 600)).toEqual({ low: false, last: false });
+    expect(habitRisk(weekly, { week: 1, today: 0 }, 4, 600)).toEqual({ low: true, last: false });
+    expect(habitRisk(weekly, { week: 2, today: 0 }, 1, 600)).toEqual({ low: true, last: true });
+    expect(habitRisk(weekly, { week: 3, today: 0 }, 1, 600)).toEqual({ low: false, last: false });
+  });
+  it('flags a daily habit as last chance only from the evening cutoff', () => {
+    expect(habitRisk(daily, { week: 0, today: 0 }, 3, DAILY_LAST_CALL_HOUR * 60 - 1)).toEqual({ low: true, last: false });
+    expect(habitRisk(daily, { week: 0, today: 0 }, 3, DAILY_LAST_CALL_HOUR * 60)).toEqual({ low: true, last: true });
+    expect(habitRisk(daily, { week: 0, today: 1 }, 3, 23 * 60)).toEqual({ low: false, last: false });
+    expect(habitRisk(daily, { week: 0, today: 0, missed: true }, 3, 23 * 60)).toEqual({ low: false, last: false });
   });
 });
