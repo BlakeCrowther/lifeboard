@@ -1,4 +1,4 @@
-/* lesson-make grader. Rows are checked with the board's own schema.js (LBS.validate), then the skill's authoring rules, then a rubric.
+/* lesson-make grader. Rows are checked with the board's own validator (src/packages/db/schema.ts `validate`), then the skill's authoring rules, then a rubric.
    The live board (ArtifactData) is replaced by one file: out/rows.json = { sources: {<slug>: doc}, lessons: {<slug>-<nn>: doc} }. */
 import { join } from 'node:path';
 import { ok, readJson, schemaValidator, writeJson } from '../lib.ts';
@@ -10,7 +10,7 @@ const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const grade: SkillEval = {
   task: (c) => [
     'Do it for me (skip the interview). Make lessons from the source below.',
-    `Today is ${c.today}; use created_at ${c.created_at}. There is no live board in this sandbox: skip steps 0 and 1 and, instead of ArtifactData writes in step 6, write ONE file out/rows.json = {"sources": {"<slug>": <doc>}, "lessons": {"<slug>-<nn>": <doc>}} with docs shaped exactly as step 6 says. Check every doc against schema.js with node before finishing.`,
+    `Today is ${c.today}; use created_at ${c.created_at}. There is no live board in this sandbox: skip steps 0 and 1 and, instead of ArtifactData writes in step 6, write ONE file out/rows.json = {"sources": {"<slug>": <doc>}, "lessons": {"<slug>-<nn>": <doc>}} with docs shaped exactly as step 6 says. Check every doc with validate() from src/packages/db/schema.ts (node) before finishing.`,
     c.hint ? `Note from the user: ${c.hint}` : '',
     `Source (type ${c.type}, title "${c.title}"):`, c.source,
   ].filter(Boolean).join('\n'),

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bucketTasks, firstCommittedDay, isCommittedOn, missedTaskStatus, ringPercent, ringTally, taskAge, taskState } from '../index.ts';
+import { iconForTitle } from '../icons.ts';
 
 const TODAY = '2026-11-21';
 
@@ -85,5 +86,14 @@ describe('bucketTasks', () => {
     expect(buckets.week.map((task) => task.id)).toEqual(['week']);
     expect(buckets.later.map((task) => task.id)).toEqual(['later']);
     expect(buckets.none.map((task) => task.id)).toEqual(['undated']);
+  });
+});
+
+describe('task icon from its title', () => {
+  it("takes pet names from the profile, so no owner's pet is named in code", () => {
+    const pets = [{ name: 'Waffles', icon: 'cat' }];
+    expect(iconForTitle('Brush Waffles', pets)).toBe('cat');
+    expect(iconForTitle('Walk the dog', pets)).toBe('dog');
+    expect(iconForTitle('Brush Biscuit')).toBe('dog');
   });
 });

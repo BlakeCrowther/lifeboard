@@ -23,7 +23,7 @@ defaults read com.lifeboard.break 2>/dev/null || echo "(all defaults)"
 | skipDelaySeconds | -float | 15 | Skip stays disabled this long |
 | url | string | "" | page shown; empty = bundled placeholder. Lifeboard = the user's own live lifeboard artifact (see below) |
 
-Finding the url: never hardcode one in this repo. Run Artifact `list` and pick the user's live lifeboard (usually the pinned one titled "lifeboard"); confirm with the user. Before choosing, check it is not a mock/test build: read its `index.html` and reject it if it loads `mock.js`/`mockdata.js` (those have no live db, so skips would not be saved).
+Finding the url: never hardcode one in this repo. Run Artifact `list` and pick the user's live lifeboard (usually the pinned one titled "lifeboard"); confirm with the user. Before choosing, check it is not a mock/test build: read its `index.html` and reject it if it loads `dist/fake-db.js`/`mockdata.js` (those have no live db, so skips would not be saved).
 
 Work and break lengths can also be changed from the 🐟 menu without this skill.
 

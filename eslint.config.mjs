@@ -12,8 +12,9 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-explicit-any': 'error' },
   },
   {
-    // Domain packages are pure (layering: .dependency-cruiser.cjs); this covers the DOM, which isn't an import.
-    files: ['src/packages/{dates,recurrence,tasks,habits,game}/**/*.ts'],
+    // Domain packages are pure, and db reaches the artifact db only through its DbAdapter (layering:
+    // .dependency-cruiser.cjs); this covers the DOM and window, which aren't imports.
+    files: ['src/packages/{dates,recurrence,tasks,habits,game,db}/**/*.ts'],
     rules: {
       'no-restricted-globals': ['error', 'window', 'document', 'navigator', 'location', 'localStorage', 'sessionStorage', 'fetch', 'requestAnimationFrame'],
     },

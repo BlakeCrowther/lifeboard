@@ -9,7 +9,7 @@ Only skills whose output a script can grade have evals:
 | `creature-brief` | creature spec JSON | `models/shared/tools/check_spec.py` |
 | `plant-brief` | plant spec JSON | `models/shared/tools/check_spec.py` |
 | `biome-brief` | a new `biomes.json` entry | `models/shared/tools/check_biome.py` |
-| `lesson-make` | `sources` + `lessons` rows | `schema.js` (`LBS.validate`) |
+| `lesson-make` | `sources` + `lessons` rows | `src/packages/db/schema.ts` (`validate`) |
 
 Not here: the model skills whose output is a 3D model. Their judge-panel goldens (`models/<kind>/qa_calibration.json` plus `calibration/*/contact.png`) already act as that eval set; see `models/README.md`.
 
@@ -26,7 +26,7 @@ Flags: `--model sonnet` (the skill run), `--judge-model sonnet` (the rubric), `-
 
 A live run does this per case: copy the frozen world (`evals/fixtures/world`, synthetic biomes, roster and specs) plus the repo's current contracts, archetypes and graders into a temp dir; start `claude -p` there with the skill's text and the case inputs (sonnet, only file tools and the graders, project settings only); read what the skill wrote; run `grade.ts`. Nothing touches the real repo or any board.
 
-Runner choice: `claude plugin eval` targets plugins, takes `case.yaml` plus markdown graders (LLM) and publishes a report to claude.ai by default, so it cannot call `check_spec.py` or `schema.js` and does not fit repo skills. This runner is about 200 lines and uses the same `claude` CLI.
+Runner choice: `claude plugin eval` targets plugins, takes `case.yaml` plus markdown graders (LLM) and publishes a report to claude.ai by default, so it cannot call `check_spec.py` or the db `validate` and does not fit repo skills. This runner is about 200 lines and uses the same `claude` CLI.
 
 ## Layout
 

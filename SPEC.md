@@ -233,7 +233,7 @@ One Claude routine runs once a week on the day you pick at setup (default Sunday
 
 Everything sits in the lifeboard artifact db; no hippocampus dependency. Claude can query it with `ArtifactData`.
 
-**Built collections** (game-only ones are optional: `store.js` never listens to them):
+**Built collections** (game-only ones are optional: the db store never listens to them):
 
 | Collection | Holds |
 | --- | --- |

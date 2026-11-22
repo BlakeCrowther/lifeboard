@@ -33,14 +33,14 @@ You need a Claude account with Artifacts and Claude Code (desktop app or CLI). L
 
 ## Working on it
 
-`index.html` loads the built domain bundle then plain scripts (`dist/app.js` → `schema.js` → `store.js` → `app.js`, plus `garden.js`, `habitat.js`); run `pnpm build` (or `pnpm dev`) first. Domain logic lives in `src/packages/` (dates, recurrence, tasks, habits, game).
+`index.html` loads the built domain bundle then plain scripts (`dist/app.js` → `app.js`, plus `garden.js`, `habitat.js`); run `pnpm build` (or `pnpm dev`) first. Domain logic and the data layer live in `src/packages/` (dates, recurrence, tasks, habits, game, db).
 
 ```bash
 pnpm bootstrap   # install dev tools (Playwright for the UI check)
 pnpm verify      # syntax, game rules vs SPEC.md, balance sim, UI smoke test
 ```
 
-Local preview: `python3 -m http.server 8765` from the repo root. Outside claude.ai there is no database, so make a gitignored `test.html` that loads `mock.js` with made-up data first (see the `lifeboard-setup` skill, "Local preview").
+Local preview: `python3 -m http.server 8765` from the repo root. Outside claude.ai there is no database, so make a gitignored `test.html` that loads `dist/fake-db.js` with made-up data first (see the `lifeboard-setup` skill, "Local preview").
 
 | Read this | For |
 |---|---|

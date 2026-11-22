@@ -4,13 +4,12 @@ Personal life dashboard, published as a claude.ai Artifact with the `db` capabil
 
 - `src/`: TypeScript. `src/main.ts` is the bundle entry; `src/packages/<name>/` are deep modules, see [src/packages/README.md](./src/packages/README.md) before adding or importing one. Unit tests (Vitest) sit in each package's `tests/`; e2e in `tests/e2e/`. `.dependency-cruiser.cjs` enforces boundaries (`pnpm lint:boundaries`).
 - Commands: `pnpm bootstrap`, `dev` (serve + watch build; `PORT` env, default 8765), `build`, `typecheck`, `lint`, `test`, `verify`, `test:ui`.
-- `index.html`: page + styles. Loads `dist/app.js` (built from `src/main.ts` by `pnpm build`), `schema.js`, `store.js`, `app.js` in that order.
-- `src/packages/`: strict TypeScript domain packages, pure, no DOM: `dates` (day boundary in the browser's timezone, or `checks/profile.tz`), `recurrence`, `tasks`, `habits`, `game`. Map: `src/packages/README.md`. `src/legacy-globals.ts` hands them to the classic scripts as `window.LB` / `window.LBG` until the ui step.
-- `schema.js`: db collection shapes; `validate(col, doc)`.
-- `store.js`: artifact-db data layer (live listeners, optimistic writes).
+- `index.html`: page + styles. Loads `dist/app.js` (built from `src/main.ts` by `pnpm build`), then `app.js`.
+- `src/packages/`: strict TypeScript domain packages, pure, no DOM: `dates` (day boundary in the browser's timezone, or `checks/profile.tz`), `recurrence`, `tasks`, `habits`, `game`; plus `db` (zod schemas for every collection, `validate`, the store with live listeners, optimistic writes and undo, and an in-memory fake). Map: `src/packages/README.md`. `src/legacy-globals.ts` hands them to the classic scripts as `window.LB` / `window.LBG` / `window.LBS` (schemas) / `window.LBDB` (store) until the ui step.
+- Code names data after its db collection (`buyListItems` for `buy_list_items`, `habitSessions` for `habit_sessions`); UI labels may differ (GLOSSARY.md).
 - `app.js`: views and actions.
 - `package.json`: pnpm only (never npm/yarn). `pnpm verify` runs `tools/verify.sh`.
-- `mock.js` + `mockdata.js`: local `window.claude.use('db')` stub for testing. `mockdata.js` holds a real-data snapshot and is gitignored.
+- `dist/fake-db.js` (from `src/fake-db-page.ts`) + `mockdata.js`: local `window.claude.use('db')` stand-in for preview and UI smoke, seeded from `window.MOCK`. `mockdata.js` holds a real-data snapshot and is gitignored. Never publish either.
 
 Game spec: `SPEC.md` is the source of truth for game mechanics (garden, habitat, lessons, rewards). Read it before touching `src/packages/game/` (rules in `lib/rules.ts`, `deriveGame` in `lib/derive-game.ts`), rewards or anything that changes what earns what. Any mechanic change updates `SPEC.md` (rule text and the section's **Status**) in the same commit, and `pnpm spec-check` (`tools/spec-check.ts`) must pass (it checks every `RULES` number in `src/packages/game/lib/rules.ts` against the spec, both ways). No mechanic may exist only in the UI or only in the spec unmarked; UI look and wording are free to differ. The old "Lifeboard Game Spec" doc is frozen; don't edit it.
 

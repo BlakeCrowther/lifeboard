@@ -5,7 +5,7 @@ description: Turn a book, video, post, article, talk, podcast, course or note in
 
 # Make lessons
 
-Rules live in `SPEC.md` → Lessons (read it first). Data shapes: `schema.js` (`sources`, `lessons`). Deck logic: `src/packages/game/lib/lessons.ts` (`buildDeck`, `answerLesson`, `rungOf`).
+Rules live in `SPEC.md` → Lessons (read it first). Data shapes: `src/packages/db/lib/schemas.ts` (`sources`, `lessons`). Deck logic: `src/packages/game/lib/lessons.ts` (`buildDeck`, `answerLesson`, `rungOf`).
 
 ## 0. Target board
 The user's live lifeboard artifact (never a mock/test build; see break-setup for how to pick it). Never hardcode its URL in this repo.
@@ -41,7 +41,7 @@ ArtifactData `batch` on the live board:
 - `sources/<slug>`: `{ title, type, author?, url?, size, salience, ladder, intervals?, summary (2–3 sentences), status: "active", created_at: <ms> }`. `type` ∈ book, video, post, article, talk, podcast, course, note.
 - `lessons/<slug>-<nn>`: `{ source_id: "<slug>", level: 0, due: "<today YYYY-MM-DD>", state: "active", rungs: [...], order: <n>, created_at: <ms> }`.
 
-Every doc must pass `LBS.validate` (check with `node -e` against `schema.js` before writing). The board skips invalid docs silently.
+Every doc must pass `validate` (check before writing: `node --input-type=module -e "const { validate } = await import('./src/packages/db/schema.ts'); console.log(validate('lessons', DOC))"` prints `null` when it's fine). The board skips invalid docs silently.
 
 ## 7. Report
 Source added, lesson count, ladder, and when they start showing (new lessons fill each feeding after due reviews). Lessons appear only with the Ecosystem on.

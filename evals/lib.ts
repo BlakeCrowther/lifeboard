@@ -1,9 +1,9 @@
 /* Shared helpers for the skill evals (README.md). Node runs this .ts directly; no build, no deps. */
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import vm from 'node:vm';
+import { validate } from '../src/packages/db/schema.ts';
 
 export const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const EVALS = join(REPO, 'evals');
@@ -66,11 +66,13 @@ export function prepareWorkdir(wd: string, c: Case) {
   for (const rel of [
     'models/STYLE.md', 'models/README.md', 'models/creature/CONTRACT.md', 'models/plant/CONTRACT.md',
     'models/creature/archetypes', 'models/plant/archetypes', 'models/creature/specs/examples',
-    'models/shared/tools/check_spec.py', 'models/shared/tools/check_biome.py', 'SPEC.md', 'schema.js',
+    'models/shared/tools/check_spec.py', 'models/shared/tools/check_biome.py', 'SPEC.md', 'src/packages/db',
   ]) {
     const from = join(REPO, rel);
     if (existsSync(from)) cpSync(from, join(wd, rel), { recursive: true });
   }
+  /* src/packages/db imports zod; the skill checks its rows with it in the sandbox */
+  if (!existsSync(join(wd, 'node_modules'))) symlinkSync(join(REPO, 'node_modules'), join(wd, 'node_modules'));
 }
 
 export function py(wd: string, script: string, args: string[]) {
@@ -78,10 +80,9 @@ export function py(wd: string, script: string, args: string[]) {
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') };
 }
 
-export function schemaValidator(wd: string): (col: string, doc: unknown) => string | null {
-  const ctx: any = {};
-  vm.runInNewContext(readFileSync(join(wd, 'schema.js'), 'utf8'), ctx);
-  return ctx.LBS.validate;
+/** The board's own row validator (src/packages/db): null when the doc is fine, else the first problem. */
+export function schemaValidator(_wd: string): (col: string, doc: unknown) => string | null {
+  return validate;
 }
 
 export type RunInfo = { text: string; costUsd: number; ms: number; turns: number; tokens: number; error?: string };
