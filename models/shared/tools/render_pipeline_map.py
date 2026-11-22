@@ -29,7 +29,7 @@ PIPELINE_FILES = [
     "models/shared/tools/ledger.py",
     "models/shared/tools/judge_verdict.py",
     "models/shared/tools/check_spec.py",
-    "models/shared/tools/capture_ecosystem.mjs",
+    "models/shared/tools/capture_ecosystem.ts",
     "models/shared/tools/optimize.sh",
     "models/shared/blender/qa_structural.py",
     "models/shared/blender/qa_render.py",

@@ -22,7 +22,7 @@ Input `models/<kind>/specs/<id>.json`. Output `models/out/<id>/<id>_model.blend`
 4. **UVs**: Smart UV Project (angle ~66°, margin 0.02); tubes/tentacles get a seam on the underside first.
 5. **Material**: Principled BSDF from spec palette; pattern via object-space coordinates + noise wobble (see `models/creature/archetypes/streamlined_swimmer.py` bands); roughness/coat from `spec.material` (clamped to STYLE; passed to the bake); creatures: eyes via `lib.eye(name, body_height, at)` (never hand-made spheres); a visible mouth: real geometry via `lib.mouth(spec, at, direction, head_size)` as part `mouth` (facing `spec.mouth`: front +X / underside −Z, clear of tentacles/appendages; optional `lib.accent_line` lip). Required for every archetype (shape-check).
 6. **Bake**: Cycles, bake DIFFUSE color only (no direct/indirect) to one 1024² (2048² exotic) image, margin 8 px; optionally roughness to a 512². Replace node trees with one Image Texture → Principled material named `<id>`.
-7. Save `<id>_model.blend`. No look-dev render here: the look is judged from `verify.sh`'s contact sheet and, for scenery, `capture_ecosystem.mjs` (the Ecosystem's real lighting).
+7. Save `<id>_model.blend`. No look-dev render here: the look is judged from `verify.sh`'s contact sheet and, for scenery, `capture_ecosystem.ts` (the Ecosystem's real lighting).
 
 ## Self-check before handing to animate
 Mesh tri count within budget, no NaN, dimensions ±15% of spec, looks like the reference on the contact sheet (scenery: `qa/ecosystem/wide.png`). If the silhouette is wrong, go back to stage 1 instead of patching.

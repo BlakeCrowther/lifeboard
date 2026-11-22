@@ -36,7 +36,7 @@ def motion_check() -> None:
     want = (spec.get("motion") or {}).get("sway")
     if not want or want.get("mode") == "shader":
         check("motion-check", "no baked clips (static, or swayed by the Ecosystem shader)", not acts, f"{sorted(acts)}")
-        if want:  # the motion itself is measured on the Ecosystem capture (capture_ecosystem.mjs sway-check)
+        if want:  # the motion itself is measured on the Ecosystem capture (capture_ecosystem.ts sway-check)
             o = next(m for m in bpy.data.objects if m.type == "MESH")
             at = o.data.attributes
             w = at.get("_SWAY_W") or at.get("_sway_w")

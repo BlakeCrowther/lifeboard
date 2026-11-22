@@ -89,6 +89,10 @@ if [[ $MODE != --check ]]; then
   install_imagemagick
   install_node
   if have pnpm; then (cd "$REPO" && pnpm bootstrap); else log "pnpm not found; skipped pnpm bootstrap (needed for pnpm verify)"; fi
+  # repo hook: dev-home's public-check hook runs pre-commit.local after its own check; with no hook, it is pre-commit
+  hooks="$(git -C "$REPO" rev-parse --path-format=absolute --git-path hooks)"; mkdir -p "$hooks"
+  ln -sf "$REPO/tools/hooks/pre-commit" "$hooks/pre-commit.local"
+  [[ -e "$hooks/pre-commit" ]] || ln -s "$REPO/tools/hooks/pre-commit" "$hooks/pre-commit"
 fi
 
 # ---- checks (also the weekly run's preflight: any FAIL means no visitor this week) ----

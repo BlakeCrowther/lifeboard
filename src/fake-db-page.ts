@@ -1,5 +1,5 @@
 // Local preview and UI smoke only, bundled to dist/fake-db.js: stands in for claude.ai's `window.claude`
-// with an in-memory db seeded from `window.MOCK` (tools/ui-smoke/fixture.js, or a gitignored mockdata.js).
+// with an in-memory db seeded from `window.MOCK` (tests/e2e/fixture.ts, or a gitignored mockdata.js).
 // Load it before dist/app.js. Never publish it.
 import { createFakeDb, type FakeData, type FakeDb } from './packages/db/fake.ts';
 

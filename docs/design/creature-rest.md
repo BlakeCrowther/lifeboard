@@ -75,7 +75,7 @@ No site of the right kind in this biome → the creature keeps roaming; a rest i
 
 **Other states win:** food within reach → a perched (non-sessile) creature leaves to eat; hiding (no lessons) → it leaves for its shelter. A sessile creature never leaves; it plays `sulk` while sad or hiding, `perch` otherwise. A perched non-sessile creature keeps `perch` while sad (the `sulk` clip is authored for the roaming body).
 
-**Test hooks** (QA, like `?phase=`): `?rest=<on>_<pose>` (e.g. `rock_cling`) overrides the visitor's rest, `?perch=1` starts it perched. Both work on `capture.html?visitor=<id>`. `models/shared/tools/watch_creatures.mjs <id> --expect approach,settle,perched,leave` runs the page in headless Chrome (a hidden preview pane throttles frames), logs every state change and fails if a state never comes.
+**Test hooks** (QA, like `?phase=`): `?rest=<on>_<pose>` (e.g. `rock_cling`) overrides the visitor's rest, `?perch=1` starts it perched. Both work on `capture.html?visitor=<id>`. `models/shared/tools/watch_creatures.ts <id> --expect approach,settle,perched,leave` runs the page in headless Chrome (a hidden preview pane throttles frames), logs every state change and fails if a state never comes.
 
 ### 5. Pipeline
 
@@ -98,4 +98,4 @@ Plants. Crawling over walls as locomotion (only the resting pose). Physics or gr
 
 ## Testing
 
-`check_spec.py` on the pipefish and on bad-rest fixtures; `pnpm spec-check`; `pnpm typecheck`; `capture.html?visitor=gulf_pipefish&perch=1` screenshots for `lie`, plus `&rest=rock_cling` and `&scene=canopy&rest=branch_hang` to exercise the other two poses; `watch_creatures.mjs` for the timed cycle and `--at 5:'Ecosystem.feed(4)'` for the food interrupt.
+`check_spec.py` on the pipefish and on bad-rest fixtures; `pnpm spec-check`; `pnpm typecheck`; `capture.html?visitor=gulf_pipefish&perch=1` screenshots for `lie`, plus `&rest=rock_cling` and `&scene=canopy&rest=branch_hang` to exercise the other two poses; `watch_creatures.ts` for the timed cycle and `--at 5:'Ecosystem.feed(4)'` for the food interrupt.

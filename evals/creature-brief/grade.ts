@@ -2,23 +2,34 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { ok, py, readJson, writeJson } from '../lib.ts';
-import type { Case, Check, SkillEval } from '../lib.ts';
+import type { BiomesFile, Case, Check, RosterFile, RosterModel, SkillEval } from '../lib.ts';
+
+interface CreatureCase extends Case { biome: number; rarity: string }
+interface CreatureSpec {
+  id: string; name?: string; biome?: number; rarity?: string; archetype?: string; based_on?: string; lore?: string; reference?: string;
+  rest?: object; notes?: { path?: string; traits?: string[]; rest?: string };
+  palette?: { main?: string[]; accent?: string }; ecosystem?: { shelter?: string }; budget?: { tris?: number };
+}
 
 const TRIS_CAP: Record<string, number> = { common: 8000, rare: 9000, exotic: 16000 };
 const specsDir = (wd: string) => join(wd, 'models/creature/specs');
-const rosterOf = (wd: string) => readJson(join(wd, 'models/roster.json')).models as any[];
-const biomesOf = (wd: string) => readJson(join(wd, 'models/biomes.json')).biomes as any[];
+const rosterOf = (wd: string): RosterModel[] => (readJson(join(wd, 'models/roster.json')) as RosterFile).models;
+const biomesOf = (wd: string) => (readJson(join(wd, 'models/biomes.json')) as BiomesFile).biomes;
 
-const grade: SkillEval = {
-  task: (c) => `Brief the next visitor. Biome id ${c.biome}, rarity ${c.rarity}. Write models/creature/specs/<id>.json and make check_spec.py pass.`,
+const grade: SkillEval<CreatureCase, CreatureSpec> = {
+  task: (c) => `Brief the next visitor. Biome id ${String(c.biome)}, rarity ${c.rarity}. Write models/creature/specs/<id>.json and make check_spec.py pass.`,
 
-  place: (wd, _c, output) => writeJson(join(specsDir(wd), `${output.id}.json`), output),
+  place(wd, _c, output) {
+    writeJson(join(specsDir(wd), `${output.id}.json`), output);
+  },
 
   collect(wd) {
     const known = new Set(rosterOf(wd).map((m) => m.id + '.json').concat(['pronghorn.json', 'gulf_pipefish.json']));
     const fresh = readdirSync(specsDir(wd)).filter((f) => f.endsWith('.json') && !known.has(f));
-    if (fresh.length !== 1) throw new Error(`expected exactly one new spec in models/creature/specs, found ${fresh.length}`);
-    return readJson(join(specsDir(wd), fresh[0]));
+    if (fresh.length !== 1) throw new Error(`expected exactly one new spec in models/creature/specs, found ${String(fresh.length)}`);
+    const only = fresh[0];
+    if (only === undefined) throw new Error('no new spec');
+    return readJson(join(specsDir(wd), only)) as CreatureSpec;
   },
 
   checks(wd, c, s): Check[] {
@@ -28,37 +39,37 @@ const grade: SkillEval = {
     out.push(ok('spec-check', sc.status === 0, sc.out.replace(/\s+/g, ' ').slice(0, 300)));
     const roster = rosterOf(wd);
     const biomes = biomesOf(wd);
-    out.push(ok('biome-matches-case', s.biome === c.biome, `biome ${s.biome}, case says ${c.biome}`));
-    out.push(ok('rarity-matches-case', s.rarity === c.rarity, `rarity ${s.rarity}, case says ${c.rarity}`));
-    out.push(ok('new-species', !roster.some((m) => m.id === s.id) && !roster.some((m) => String(m.name || '').toLowerCase() === String(s.name || '').toLowerCase()), `${s.id} already in roster`));
+    out.push(ok('biome-matches-case', s.biome === c.biome, `biome ${String(s.biome)}, case says ${String(c.biome)}`));
+    out.push(ok('rarity-matches-case', s.rarity === c.rarity, `rarity ${String(s.rarity)}, case says ${c.rarity}`));
+    out.push(ok('new-species', !roster.some((m) => m.id === s.id) && !roster.some((m) => (m.name ?? '').toLowerCase() === (s.name ?? '').toLowerCase()), `${s.id} already in roster`));
     const last = [...roster].reverse().find((m) => m.kind === 'creature');
-    const lastArch = last ? readJson(join(wd, 'models', last.spec)).archetype : null;
-    out.push(ok('archetype-not-repeated', !lastArch || s.archetype !== lastArch, `same archetype as ${last?.id}: ${lastArch}`));
+    const lastArch = last ? (readJson(join(wd, 'models', last.spec)) as CreatureSpec).archetype : null;
+    out.push(ok('archetype-not-repeated', !lastArch || s.archetype !== lastArch, `same archetype as ${String(last?.id)}: ${String(lastArch)}`));
     const archDir = join(wd, 'models/creature/archetypes');
-    const archs = new Set(readdirSync(archDir).map((f) => f.replace(/\.py$/, '')));
-    out.push(ok('generator-lineage', archs.has(s.archetype) || archs.has(s.based_on), `archetype ${s.archetype} is new but based_on ${s.based_on} is not an archetype in the library`));
-    const path_ = String(s.notes?.path ?? '');
+    const archs = new Set<string | undefined>(readdirSync(archDir).map((f) => f.replace(/\.py$/, '')));
+    out.push(ok('generator-lineage', archs.has(s.archetype) || archs.has(s.based_on), `archetype ${String(s.archetype)} is new but based_on ${String(s.based_on)} is not an archetype in the library`));
+    const path_ = s.notes?.path ?? '';
     out.push(ok('notes.path-records-choice', path_.length >= 60 && /novel|safe/i.test(path_), 'notes.path must name novel/safe and the struck candidates'));
     out.push(ok('notes.traits-2-4', Array.isArray(s.notes?.traits) && s.notes.traits.length >= 2 && s.notes.traits.length <= 4, 'notes.traits needs 2-4 entries'));
-    out.push(ok('rest-decided', (s.rest && typeof s.rest === 'object') || String(s.notes?.rest ?? '').length > 5, 'give rest {} or notes.rest saying it never rests'));
-    out.push(ok('lore-60', typeof s.lore === 'string' && s.lore.length > 0 && s.lore.length <= 60, `lore length ${String(s.lore ?? '').length}`));
-    out.push(ok('reference-binomial', /^[A-Z][a-z]+ [a-z]+/.test(String(s.reference ?? '')), 'reference must start with a binomial name'));
+    out.push(ok('rest-decided', (s.rest && typeof s.rest === 'object') || (s.notes?.rest ?? '').length > 5, 'give rest {} or notes.rest saying it never rests'));
+    out.push(ok('lore-60', typeof s.lore === 'string' && s.lore.length > 0 && s.lore.length <= 60, `lore length ${String(s.lore?.length ?? 0)}`));
+    out.push(ok('reference-binomial', /^[A-Z][a-z]+ [a-z]+/.test(s.reference ?? ''), 'reference must start with a binomial name'));
     out.push(ok('palette-2-4-mains-accent', (s.palette?.main?.length ?? 0) >= 2 && (s.palette?.main?.length ?? 0) <= 4 && !!s.palette?.accent, 'palette needs 2-4 mains plus accent'));
     out.push(ok('ecosystem.shelter', !!s.ecosystem?.shelter, 'ecosystem.shelter missing'));
-    out.push(ok('budget-tier', (s.budget?.tris ?? 1e9) <= (TRIS_CAP[s.rarity] ?? 0), `tris ${s.budget?.tris} over ${s.rarity} cap ${TRIS_CAP[s.rarity]}`));
-    const prose = [s.name, s.reference, s.lore, JSON.stringify(s.notes ?? {})].join(' ').toLowerCase();
-    const foreign = biomes.filter((b) => b.id !== s.biome).flatMap((b) => (b.look?.owns ?? []) as string[]).filter((m) => prose.includes(m.toLowerCase()));
+    out.push(ok('budget-tier', (s.budget?.tris ?? 1e9) <= (TRIS_CAP[s.rarity ?? ''] ?? 0), `tris ${String(s.budget?.tris)} over ${String(s.rarity)} cap ${String(TRIS_CAP[s.rarity ?? ''])}`));
+    const prose = [s.name ?? '', s.reference ?? '', s.lore ?? '', JSON.stringify(s.notes ?? {})].join(' ').toLowerCase();
+    const foreign = biomes.filter((b) => b.id !== s.biome).flatMap((b) => b.look?.owns ?? []).filter((m) => prose.includes(m.toLowerCase()));
     out.push(ok('no-other-biome-motif', foreign.length === 0, `uses motif owned by another biome: ${foreign.join(', ')}`));
     return out;
   },
 
-  rubric(wd, c, s) {
+  rubric(wd, c) {
     const biome = biomesOf(wd).find((b) => b.id === c.biome);
-    const others = rosterOf(wd).filter((m) => m.kind === 'creature').map((m) => readJson(join(wd, 'models', m.spec)));
+    const others = rosterOf(wd).filter((m) => m.kind === 'creature').map((m) => readJson(join(wd, 'models', m.spec)) as CreatureSpec);
     return {
       context: [
-        `Brief: next Ecosystem visitor, biome ${c.biome}, rarity ${c.rarity}.`,
-        `Biome: ${JSON.stringify({ name: biome.name, medium: biome.medium, examples: biome.examples, look: biome.look })}`,
+        `Brief: next Ecosystem visitor, biome ${String(c.biome)}, rarity ${c.rarity}.`,
+        `Biome: ${JSON.stringify({ name: biome?.name, medium: biome?.medium, examples: biome?.examples, look: biome?.look })}`,
         `Existing roster creatures: ${JSON.stringify(others.map((o) => ({ id: o.id, biome: o.biome, archetype: o.archetype, reference: o.reference, palette: o.palette?.main })))}`,
       ].join('\n'),
       criteria: [

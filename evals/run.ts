@@ -5,13 +5,13 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { EVALS, SKILLS, loadCases, prepareWorkdir, readJson, runRubric, runSkill } from './lib.ts';
-import type { Case, Check, SkillEval } from './lib.ts';
+import type { Check, SkillEval } from './lib.ts';
 
 const argv = process.argv.slice(2);
 const flag = (n: string) => argv.includes(`--${n}`);
-const opt = (n: string, d: string) => (argv.includes(`--${n}`) ? argv[argv.indexOf(`--${n}`) + 1] : d);
+const opt = (n: string, d: string) => (argv.includes(`--${n}`) ? (argv[argv.indexOf(`--${n}`) + 1] ?? d) : d);
 const selfTest = flag('self-test');
-const positional = argv.filter((a, i) => !a.startsWith('--') && !['--case', '--model', '--judge-model', '--max-usd'].includes(argv[i - 1]));
+const positional = argv.filter((a, i) => !a.startsWith('--') && !['--case', '--model', '--judge-model', '--max-usd'].some((f) => f === argv[i - 1]));
 const target = positional[0] ?? (selfTest ? 'all' : '');
 const skills = target === 'all' ? SKILLS : SKILLS.filter((s) => s === target);
 if (!skills.length) {
@@ -19,11 +19,11 @@ if (!skills.length) {
   process.exit(2);
 }
 
-const load = async (skill: string): Promise<SkillEval> => (await import(`./${skill}/grade.ts`)).default;
+const load = async (skill: string): Promise<SkillEval> => ((await import(`./${skill}/grade.ts`)) as { default: SkillEval }).default;
 const tmp = () => mkdtempSync(join(tmpdir(), 'lifeboard-eval-'));
 const table = (rows: string[][]) => {
-  const w = rows[0].map((_, i) => Math.max(...rows.map((r) => r[i].length)));
-  for (const r of rows) console.log(r.map((c, i) => c.padEnd(w[i])).join('  ').trimEnd());
+  const w = (rows[0] ?? []).map((_, i) => Math.max(...rows.map((r) => r[i]?.length ?? 0)));
+  for (const r of rows) console.log(r.map((c, i) => c.padEnd(w[i] ?? 0)).join('  ').trimEnd());
 };
 const failing = (cs: Check[]) => cs.filter((c) => !c.ok);
 
@@ -34,8 +34,9 @@ async function selfTestSkill(skill: string): Promise<{ rows: string[][]; bad: nu
   const rows: string[][] = [];
   let bad = 0;
   for (const f of readdirSync(dir).filter((x) => x.endsWith('.json')).sort()) {
-    const fx = readJson(join(dir, f)) as { case: string; expect_fail?: string[]; output: any };
-    const c = cases.get(fx.case) as Case;
+    const fx = readJson(join(dir, f)) as { case: string; expect_fail?: string[]; output: unknown };
+    const c = cases.get(fx.case);
+    if (!c) throw new Error(`${skill}/${f}: no case named ${fx.case}`);
     const wd = tmp();
     try {
       prepareWorkdir(wd, c);
@@ -49,8 +50,8 @@ async function selfTestSkill(skill: string): Promise<{ rows: string[][]; bad: nu
       if (verdict !== 'ok') bad++;
       const rb = g.rubric(wd, c, fx.output);
       if (!rb.criteria.length) { bad++; rows.push([skill, f, 'BAD: empty rubric']); continue; }
-      rows.push([skill, f, want.length ? 'must fail' : 'must pass', `${checks.length - failed.length}/${checks.length} pass`, want.length ? `caught: ${want.filter((x) => failed.includes(x)).join(',')}` : '', verdict]);
-      if (verdict !== 'ok') for (const x of failing(checks)) console.log(`  ${f}: ${x.id}: ${x.detail}`);
+      rows.push([skill, f, want.length ? 'must fail' : 'must pass', `${String(checks.length - failed.length)}/${String(checks.length)} pass`, want.length ? `caught: ${want.filter((x) => failed.includes(x)).join(',')}` : '', verdict]);
+      if (verdict !== 'ok') for (const x of failing(checks)) console.log(`  ${f}: ${x.id}: ${x.detail ?? ''}`);
     } finally { rmSync(wd, { recursive: true, force: true }); }
   }
   if (!rows.some((r) => r[2] === 'must pass') || !rows.some((r) => r[2] === 'must fail')) { bad++; rows.push([skill, '-', 'BAD: need at least one good and one bad fixture']); }
@@ -68,8 +69,8 @@ async function liveSkill(skill: string, outDir: string) {
     prepareWorkdir(wd, c);
     const run = runSkill(skill, c, g.task(c), wd, model, Number(opt('max-usd', '3')));
     cost += run.costUsd; ms += run.ms;
-    let checks: Check[] = [];
-    let output: any = null;
+    let checks: Check[];
+    let output: unknown = null;
     let note = run.error ?? '';
     try {
       output = g.collect(wd, c);
@@ -79,12 +80,12 @@ async function liveSkill(skill: string, outDir: string) {
         checks = checks.concat(rb.checks);
         cost += rb.info.costUsd; ms += rb.info.ms;
       }
-    } catch (e) { note = note || String((e as Error).message); checks = [{ id: 'produced-output', ok: false, kind: 'script', detail: note }]; }
+    } catch (e) { note = note || (e as Error).message; checks = [{ id: 'produced-output', ok: false, kind: 'script', detail: note }]; }
     const f = failing(checks);
     if (f.length) failedCases++;
     const script = checks.filter((x) => x.kind === 'script'), rub = checks.filter((x) => x.kind === 'rubric');
-    rows.push([skill, c.name, f.length ? 'FAIL' : 'PASS', `${script.filter((x) => x.ok).length}/${script.length}`, rub.length ? `${rub.filter((x) => x.ok).length}/${rub.length}` : '-', `$${run.costUsd.toFixed(2)}`, `${Math.round(run.ms / 1000)}s`, `${run.turns}`, `${Math.round(run.tokens / 1000)}k`]);
-    for (const x of f) console.log(`  ${skill}/${c.name}: FAIL ${x.kind} ${x.id}: ${x.detail}`);
+    rows.push([skill, c.name, f.length ? 'FAIL' : 'PASS', `${String(script.filter((x) => x.ok).length)}/${String(script.length)}`, rub.length ? `${String(rub.filter((x) => x.ok).length)}/${String(rub.length)}` : '-', `$${run.costUsd.toFixed(2)}`, `${String(Math.round(run.ms / 1000))}s`, String(run.turns), `${String(Math.round(run.tokens / 1000))}k`]);
+    for (const x of f) console.log(`  ${skill}/${c.name}: FAIL ${x.kind} ${x.id}: ${x.detail ?? ''}`);
     writeFileSync(join(outDir, `${skill}--${c.name}.json`), JSON.stringify({ case: c, run: { ...run, text: run.text.slice(0, 4000) }, checks, output }, null, 1));
     if (flag('keep')) console.log(`  kept sandbox: ${wd}`); else rmSync(wd, { recursive: true, force: true });
   }
@@ -96,7 +97,7 @@ if (selfTest) {
   const rows: string[][] = [['skill', 'fixture', 'expect', 'checks', 'caught', 'verdict']];
   for (const s of skills) { const r = await selfTestSkill(s); rows.push(...r.rows); bad += r.bad; }
   table(rows);
-  console.log(bad ? `\nself-test FAILED (${bad})` : '\nself-test ok: graders pass the good fixtures and catch every bad one');
+  console.log(bad ? `\nself-test FAILED (${String(bad)})` : '\nself-test ok: graders pass the good fixtures and catch every bad one');
   process.exit(bad ? 1 : 0);
 }
 
@@ -107,5 +108,5 @@ const rows: string[][] = [['skill', 'case', 'result', 'script', 'rubric', 'cost'
 let cost = 0, ms = 0, failed = 0;
 for (const s of skills) { const r = await liveSkill(s, outDir); rows.push(...r.rows); cost += r.cost; ms += r.ms; failed += r.failedCases; }
 table(rows);
-console.log(`\n${failed ? `${failed} case(s) FAILED` : 'all cases passed'}; total $${cost.toFixed(2)}, ${Math.round(ms / 1000)}s. Details: ${outDir}`);
+console.log(`\n${failed ? `${String(failed)} case(s) FAILED` : 'all cases passed'}; total $${cost.toFixed(2)}, ${String(Math.round(ms / 1000))}s. Details: ${outDir}`);
 process.exit(failed ? 1 : 0);

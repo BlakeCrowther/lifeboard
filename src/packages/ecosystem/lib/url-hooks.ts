@@ -29,7 +29,7 @@ export interface SceneHooks {
   forcedWeather: string | null;
   /** ?month=<1-12> */
   forcedMonth: number | null;
-  /** QA capture (models/shared/tools/capture_ecosystem.mjs): ?inspect=<scenery id> places one copy of that prop in front of the camera */
+  /** QA capture (models/shared/tools/capture_ecosystem.ts): ?inspect=<scenery id> places one copy of that prop in front of the camera */
   inspectId: string | null;
   /** ?inspect_src=<path to its -glb.js> (query only) */
   inspectSrc: string | null;

@@ -39,13 +39,13 @@ Why clownfish and not a spec from `models/creature/specs/`: the `sheepshead` spe
 | 7 | ImageMagick | works with a shim | Ubuntu ships v6 (`convert`, `montage`), but scripts call `magick`. the `magick` wrapper in `./setup.sh` needed a fix: it only forwarded `magick montage ...`, not `magick in.png -op out.png`. |
 | 8 | gltf-transform via npx | works | `@gltf-transform/cli@4` 4.5.1, node 22. |
 | 9 | `pnpm verify` | works | 5/5 PASS after the fixes below. About 4 s. |
-| 10 | Headless Chromium + WebGL | works | SwiftShader WebGL 2. `capture_ecosystem.mjs` rendered a real Ecosystem frame in 87 s (while another job ran). Needs `--no-sandbox` as root. |
+| 10 | Headless Chromium + WebGL | works | SwiftShader WebGL 2. `capture_ecosystem.ts` rendered a real Ecosystem frame in 87 s (while another job ran). Needs `--no-sandbox` as root. |
 | 11 | Network: blender.org, jsdelivr | blocked by default | Default environment blocks both. Allowed in the `lifeboard` environment. npm and PyPI are reachable by default. |
 | 12 | Network: cdn.playwright.dev | blocked by default | Playwright's pinned Chromium download fails. Allowed in the `lifeboard` environment; `setup.sh` then installs the pinned build (126 MB) and `pnpm verify` needs no env var. |
 | 13 | Artifact tool | works | Listed artifacts. Publishing not exercised. |
 | 14 | Artifact db (`ArtifactData`) | unknown | Tool is present. Deliberately not called (spike must not touch the live db). |
 | 15 | Judge panel (3 sonnet subagents) | works | Run on the cloud-built clownfish (the golden). Judges read the cloud-rendered PNGs and the ledger recorded all three replies. Medians 5/3/4/3/3/3, mean 3.50 vs the golden's recorded 3.33 (bar 3.03), `mouth_correct` 3 of 3: PASS. About 15 s per judge in parallel, about 90k tokens each. |
-| 18 | page-test (Ecosystem page, clownfish) | works except fps | Now a shared tool, `models/shared/tools/page-test.mjs`, run by `verify.sh` for creatures. Headless Chromium on `capture.html?visitor=<id>`; the candidate is injected through an in-memory roster and `window.LB_CREATURES` (no roster edit). Clownfish: no console errors at 960x720, 375x667 and 160x120; nose-first 272/280 samples; `idle` plays; feed goes seek, eat, back to idle; stays 0.44 m above the sand. Takes 118 s. A corrupt glb fails with exit 1. **Not checked:** the 40 fps gate (reported "not measured" below 20 fps; software GL gives 1.5 fps at 960x720) and pass-through of other creatures and scenery. |
+| 18 | page-test (Ecosystem page, clownfish) | works except fps | Now a shared tool, `models/shared/tools/page-test.ts`, run by `verify.sh` for creatures. Headless Chromium on `capture.html?visitor=<id>`; the candidate is injected through an in-memory roster and `window.LB_CREATURES` (no roster edit). Clownfish: no console errors at 960x720, 375x667 and 160x120; nose-first 272/280 samples; `idle` plays; feed goes seek, eat, back to idle; stays 0.44 m above the sand. Takes 118 s. A corrupt glb fails with exit 1. **Not checked:** the 40 fps gate (reported "not measured" below 20 fps; software GL gives 1.5 fps at 960x720) and pass-through of other creatures and scenery. |
 | 16 | Plant pipeline | unknown | Same Blender path; not run. |
 | 17 | Scheduled cloud run | unknown | Scheduled-task tools exist (`create_trigger`); no run was scheduled. |
 
@@ -58,8 +58,8 @@ Why clownfish and not a spec from `models/creature/specs/`: the `sheepshead` spe
 | `verify.sh` printed a contact sheet path and passed without writing it | no check on the file | bug found by this spike | `verify.sh` now fails if `contact.png` is empty |
 | `pnpm verify` UI smoke: `ERR_TUNNEL_CONNECTION_FAILED` (fonts, three.js) | `cdn.jsdelivr.net` blocked | cloud network | allow host |
 | UI smoke: 404 with no URL | headless Chromium requests `/favicon.ico`; the smoke server returned 404 | harness gap | smoke server answers 204 |
-| `chromium.launch()` fails | playwright 1.65.1 wants Chromium rev 1255; the VM preinstalls 1243 | cloud difference | allow `cdn.playwright.dev` and install the pinned build; `CHROMIUM_PATH` (read by `tools/ui-smoke/run.js`) stays as a fallback |
-| `capture_ecosystem.mjs`: "chrome did not start" | Chrome refuses to run as root without `--no-sandbox` | Linux difference | flag added when uid is 0 (also `watch_creatures.mjs`) |
+| `chromium.launch()` fails | playwright 1.65.1 wants Chromium rev 1255; the VM preinstalls 1243 | cloud difference | allow `cdn.playwright.dev` and install the pinned build; `CHROMIUM_PATH` (read by `tests/e2e/ui-smoke.ts`) stays as a fallback |
+| `capture_ecosystem.ts`: "chrome did not start" | Chrome refuses to run as root without `--no-sandbox` | Linux difference | flag added when uid is 0 (also `watch_creatures.ts`) |
 | `sheepshead` spec fails spec-check | idle loop duplicates `gulf_pipefish` | repo issue | not changed; out of scope |
 
 ## Timings and resources
@@ -75,7 +75,7 @@ Measured with `tools/cloud/measure.py` (wall clock; peak memory is the largest c
 | Build clownfish (blockout, model, bake, rig, animate, export) | 52 s | 2.2 GB |
 | `verify.sh` (4 gates plus 44 QA renders and contact sheet), run twice | 525 s and 546 s | 1.8 GB |
 | `verify.sh` with page-test included | 711 s | 1.7 GB |
-| `capture_ecosystem.mjs` (scenery, run beside another job) | 87 s | 0.2 GB |
+| `capture_ecosystem.ts` (scenery, run beside another job) | 87 s | 0.2 GB |
 | page-test (3 viewport runs, 150 s watch) | 211 s | 0.1 GB |
 | Spec-check failure alone (Blender startup) | 27 s | 0.26 GB |
 
@@ -106,5 +106,5 @@ Almost all the time is software-rendered Eevee: `verify.sh` is 10 minutes of the
 ## Files
 
 - `./setup.sh` (repo root, from main): cross-platform installer and check. This spike's changes to it: the `magick` shim fix. The first draft of a separate `tools/cloud/setup.sh` was dropped in favour of it.
-- `models/shared/tools/page-test.mjs`: creature page-test, called by `verify.sh` (also see `model-verify`).
+- `models/shared/tools/page-test.ts`: creature page-test, called by `verify.sh` (also see `model-verify`).
 - `tools/cloud/measure.py`: wall clock and peak memory wrapper (no GNU `time` on the VM).

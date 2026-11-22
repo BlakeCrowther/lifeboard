@@ -2,7 +2,7 @@ import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'models/**', 'evals/**', '**/*.js', '**/*.cjs', '**/*.mjs'] },
+  { ignores: ['dist/**', 'node_modules/**', 'models/**', '!models/shared/tools/*.ts', 'evals/out/**', '**/*.js', '**/*.cjs', '**/*.mjs'] },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,
   {

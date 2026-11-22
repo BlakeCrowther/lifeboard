@@ -53,7 +53,7 @@ How the real animal rests, reasoned per species like scenery's `sit` (design: `d
 - ✓ `motion.perch {frames, cycles, technique}` required when `pose` is `hang` or `locomotion` is `fly` (their idle can't rest); otherwise the runtime rests on `idle` at half speed.
 - Optional empty `grip` where the body holds on (a bat's feet); fallback: the body's rear tip for `hang`, its belly for `cling`/`lie`.
 - No `rest` = never rests. Specs aren't published with the board, so `model-ship` copies `rest` and `locomotion` into the roster entry; the Ecosystem package (src/packages/ecosystem) reads `entry.rest`, then `spec.rest`.
-- Runtime: roams, then flies to a perch site (rock face by ray hit + normal, open sand, builder or scenery grip points), settles, rests a bout, pushes off. No site of the right kind in the biome → keeps roaming. Food and hiding call it off its perch; a sessile one never leaves (plays `sulk` there when sad). QA: `capture.html?visitor=<id>&perch=1` (starts perched), `&rest=<on>_<pose>` (override, e.g. `rock_cling`); `node models/shared/tools/watch_creatures.mjs <id> --expect approach,settle,perched,leave` (timed cycle in headless Chrome).
+- Runtime: roams, then flies to a perch site (rock face by ray hit + normal, open sand, builder or scenery grip points), settles, rests a bout, pushes off. No site of the right kind in the biome → keeps roaming. Food and hiding call it off its perch; a sessile one never leaves (plays `sulk` there when sad). QA: `capture.html?visitor=<id>&perch=1` (starts perched), `&rest=<on>_<pose>` (override, e.g. `rock_cling`); `node models/shared/tools/watch_creatures.ts <id> --expect approach,settle,perched,leave` (timed cycle in headless Chrome).
 
 ## Budgets
 | | common | rare | exotic |

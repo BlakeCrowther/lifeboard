@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Repo pre-commit: TypeScript only, and it typechecks. ./setup.sh installs it as .git/hooks/pre-commit.local, which
+# dev-home's public-check hook runs after its own check (and as pre-commit when no hook is installed).
+cd "$(git rev-parse --show-toplevel)" || exit 1
+pnpm -s check:no-js || exit 1
+[ -d node_modules/typescript ] || { echo "pre-commit: skip typecheck (run pnpm bootstrap)"; exit 0; }
+pnpm -s typecheck || { echo "pre-commit: typecheck failed (pnpm typecheck)"; exit 1; }

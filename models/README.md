@@ -19,7 +19,7 @@ models/
   README.md  STYLE.md (shared style lock)  biomes.json  roster.json (every shipped model, with kind)
   assets/    shipped <id>.glb + <id>-glb.js            out/  local work dir (gitignored): builds, QA, runs/, quarantine
   shared/blender/  lib.py  build.py  qa_structural.py (shared gates)  qa_render.py
-  shared/tools/    verify.sh  check_spec.py  optimize.sh  ledger.py  judge_verdict.py  check_judge_rule.py  capture_ecosystem.mjs  watch_creatures.mjs (creature behaviour over time, headless)  preflight.sh
+  shared/tools/    verify.sh  check_spec.py  optimize.sh  ledger.py  judge_verdict.py  check_judge_rule.py  capture_ecosystem.ts  watch_creatures.ts (creature behaviour over time, headless)  preflight.sh
   creature/  CONTRACT.md  archetypes/  specs/  qa.py (creature gates)  qa_calibration.json (golden + judge-panel pass_rule)  calibration/ (golden sheet)
   plant/     CONTRACT.md  archetypes/stem_bloom.py  specs/mermaids_cup.json  qa.py (plant gates)  qa_calibration.json  calibration/
   scenery/   CONTRACT.md  archetypes/{clump,solid,tangle}.py  specs/  qa.py (scenery gates)  qa_calibration.json  calibration/
@@ -43,8 +43,8 @@ Six gates a model must pass to ship (names appear in `report.json`, `qa/*.json`,
 - **shape-check** (formerly G2): mesh, rig, size, rest pose.
 - **motion-check** (formerly G3): animation measured by code (loops, speed, amplitude, pops).
 - **export-check** (formerly G4): glb valid and small, measured on the optimized file.
-- **judge-panel** (formerly G5): fresh AI judges score the renders against the golden; `shared/tools/judge_verdict.py` applies the kind's `pass_rule` (`<kind>/qa_calibration.json`, the only place its numbers live; `shared/tools/check_judge_rule.py` fails on copies elsewhere). Scenery judges look first at the prop in the real Ecosystem (`shared/tools/capture_ecosystem.mjs` drives the standalone `capture.html` at the repo root, which runs the Ecosystem package (src/packages/ecosystem) alone: wide, 4 angles, sway frames), so they judge the lighting the player sees; Blender's QA lighting is only for structure and scale.
-- **page-test** (formerly G6): runs in the real Ecosystem page (`shared/tools/page-test.mjs`, called by `verify.sh` for creatures; headless Chromium, no roster edit).
+- **judge-panel** (formerly G5): fresh AI judges score the renders against the golden; `shared/tools/judge_verdict.py` applies the kind's `pass_rule` (`<kind>/qa_calibration.json`, the only place its numbers live; `shared/tools/check_judge_rule.py` fails on copies elsewhere). Scenery judges look first at the prop in the real Ecosystem (`shared/tools/capture_ecosystem.ts` drives the standalone `capture.html` at the repo root, which runs the Ecosystem package (src/packages/ecosystem) alone: wide, 4 angles, sway frames), so they judge the lighting the player sees; Blender's QA lighting is only for structure and scale.
+- **page-test** (formerly G6): runs in the real Ecosystem page (`shared/tools/page-test.ts`, called by `verify.sh` for creatures; headless Chromium, no roster edit).
 
 Shape-check and motion-check share one output file, `qa/shape-motion-check.json`.
 

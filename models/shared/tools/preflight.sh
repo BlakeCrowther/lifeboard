@@ -12,7 +12,7 @@ BLENDER=${BLENDER:-blender}
 "$ROOT/shared/tools/verify.sh" "$ID" "$ROOT/out/$ID/preview/$ID.glb" "$SPEC" | grep -E "FAIL|automated gates"
 # swaying scenery: the motion is measured in the real Ecosystem (shader sway can't be seen in Blender)
 if python3 -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(0 if d.get('kind')=='scenery' and (d.get('motion') or {}).get('sway') else 1)" "$SPEC"; then
-  node "$ROOT/shared/tools/capture_ecosystem.mjs" "$ID" --glb "$ROOT/out/$ID/preview/$ID.glb" --spec "$SPEC" | grep -E "sway-check|FAIL"
+  node "$ROOT/shared/tools/capture_ecosystem.ts" "$ID" --glb "$ROOT/out/$ID/preview/$ID.glb" --spec "$SPEC" | grep -E "sway-check|FAIL"
 fi
 grep -q '"pass": false' "$ROOT/out/$ID/preview/qa/"*.json "$ROOT/out/$ID/preview/qa/ecosystem/"*.json 2>/dev/null && { echo "PREFLIGHT FAIL: fix before a counted build"; exit 1; }
 echo "PREFLIGHT PASS: run the counted build (build.py --run)"; exit 0

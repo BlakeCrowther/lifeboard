@@ -53,10 +53,10 @@ json.dump({"checks":c,"pass":all(x["pass"] for x in c)},open(out,"w"),indent=1)
 sys.exit(0 if all(x["pass"] for x in c) else 1)
 EOF
 KIND=$(python3 -c "import json;print(json.load(open('$SPEC')).get('kind','creature'))")
-if [[ $KIND == creature ]]; then   # plants are checked in the garden plots and scenery by capture_ecosystem.mjs (model-verify)
+if [[ $KIND == creature ]]; then   # plants are checked in the garden plots and scenery by capture_ecosystem.ts (model-verify)
   echo "== page-test (real Ecosystem page, headless browser)"
   PT_GLB=$OPT; [[ -f $PT_GLB ]] || PT_GLB=$GLB
-  node "$ROOT/shared/tools/page-test.mjs" "$ID" "$PT_GLB" "$SPEC" "$OUT" || { rc=1; [[ -s "$OUT/page-test.json" ]] || echo "  FAIL page-test did not run (browser missing? run pnpm bootstrap)"; }
+  node "$ROOT/shared/tools/page-test.ts" "$ID" "$PT_GLB" "$SPEC" "$OUT" || { rc=1; [[ -s "$OUT/page-test.json" ]] || echo "  FAIL page-test did not run (browser missing? run pnpm bootstrap)"; }
 fi
 echo "== judge-panel renders"
 CLIPS=$(python3 -c "import json;s=json.load(open('$SPEC'));k=s.get('kind','creature');print({'plant':'sway_4,tend','scenery':'sway' if (s.get('motion') or {}).get('sway') else ''}.get(k,'idle,feed,sulk'))")
