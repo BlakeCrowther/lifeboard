@@ -45,3 +45,10 @@ One meaning per term, used the same way in code, docs and UI. Game rules and num
 
 - **Weekly check**: the scheduled run (`weekly-visitor`, which also runs `season-seeds`) that makes the week's visitor and the plants plots need, then publishes.
 - **Skill**: an agent instruction set in `.claude/skills/`, named for its job (`lifeboard-setup`, `lesson-make`, …).
+
+## Code structure
+
+- **Package**: a folder under `src/packages/` whose root files are its public entry points; subfolders (`lib/`) are private. See [ADR 0001](docs/adr/0001-modernize-typescript-deep-modules.md).
+- **Entry point**: a root file of a package; the only thing other code may import.
+- **Seam**: the public interface a test exercises.
+- **Eval**: a fixed input plus a script grader that scores a skill's output. Lives in `evals/<skill>/`, outside `pnpm verify`.
