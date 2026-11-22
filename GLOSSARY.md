@@ -25,7 +25,7 @@ One meaning per term, used the same way in code, docs and UI. Game rules and num
 - **Life points**: what a day's ring earns; they move the current biome through its phases.
 - **Biome**: one stage of the Ecosystem (e.g. a seagrass lagoon), listed in `models/biomes.json`. Each has **phases**; finishing the last saves a **diorama** to the Collection.
 - **Visitor**: a creature that arrives in the Ecosystem: one a week, plus rare and exotic ones for full-ring weeks and for finishing old tasks. **Rarity**: common, rare, exotic.
-- **Murk**: haze from overdue tasks. **Blight**: biome-specific growth from tasks 7+ days old. **Bleaching**: the scene greys out after two weeks of low rings. All three reverse.
+- **Murk**: haze from overdue tasks. **Blight**: biome-specific growth from tasks neglected `tide.blightAfter`+ days. **Bleaching**: the scene greys out after a long run of low rings (`bleach.*`). All three reverse. Thresholds: SPEC.md, "Murk and blight".
 
 ## Garden
 
