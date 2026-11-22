@@ -1,0 +1,57 @@
+{
+ "case": "article-spaced-review",
+ "expect_fail": [
+  "lesson-count-in-range",
+  "recall-answerable",
+  "tap-prompt-240",
+  "recall-shape"
+ ],
+ "output": {
+  "sources": {
+   "spaced-review": {
+    "title": "Why short, spaced reviews beat cramming",
+    "type": "article",
+    "size": 1,
+    "salience": 2,
+    "ladder": [
+     "tap",
+     "recall",
+     "apply"
+    ],
+    "summary": "Cramming feels productive but fades fast. Short reviews spaced over days and a month make memories last. Testing yourself and applying ideas help most.",
+    "status": "active",
+    "created_at": 1763683200000
+   }
+  },
+  "lessons": {
+   "spaced-review-01": {
+    "source_id": "spaced-review",
+    "level": 0,
+    "due": "2026-11-21",
+    "state": "active",
+    "rungs": [
+     {
+      "format": "tap",
+      "prompt": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+     },
+     {
+      "format": "recall",
+      "prompt": "Cramming is bad",
+      "answer": "fresh",
+      "choices": [
+       "x",
+       "y",
+       "z"
+      ]
+     },
+     {
+      "format": "apply",
+      "prompt": "Where have you mistaken easy for learned this week?"
+     }
+    ],
+    "order": 1,
+    "created_at": 1763683200000
+   }
+  }
+ }
+}

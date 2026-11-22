@@ -1,0 +1,101 @@
+{
+ "version": 2,
+ "models": [
+  {
+   "id": "gulf_pipefish",
+   "kind": "creature",
+   "spec": "creature/specs/gulf_pipefish.json",
+   "glb": "assets/gulf_pipefish.glb",
+   "js": "assets/gulf_pipefish-glb.js",
+   "biome": 0,
+   "rarity": "common",
+   "locomotion": "swim",
+   "rest": {
+    "on": "sand",
+    "pose": "lie",
+    "share": 0.3,
+    "bout_s": [
+     12,
+     28
+    ]
+   },
+   "golden": false,
+   "added": "2026-11-18"
+  },
+  {
+   "id": "eelgrass_tuft",
+   "kind": "scenery",
+   "name": "Eelgrass tuft",
+   "spec": "scenery/specs/eelgrass_tuft.json",
+   "glb": "assets/eelgrass_tuft.glb",
+   "js": "assets/eelgrass_tuft-glb.js",
+   "biome": 0,
+   "rarity": "common",
+   "pass_through": true,
+   "golden": true,
+   "added": "2026-11-19"
+  },
+  {
+   "id": "turtle_grass_blades",
+   "kind": "scenery",
+   "name": "Turtle grass",
+   "spec": "scenery/specs/turtle_grass_blades.json",
+   "glb": "assets/turtle_grass_blades.glb",
+   "js": "assets/turtle_grass_blades-glb.js",
+   "biome": 0,
+   "rarity": "common",
+   "pass_through": true,
+   "golden": false,
+   "added": "2026-11-19"
+  },
+  {
+   "id": "sand_dollar",
+   "kind": "scenery",
+   "name": "Sand dollar",
+   "spec": "scenery/specs/sand_dollar.json",
+   "glb": "assets/sand_dollar.glb",
+   "js": "assets/sand_dollar-glb.js",
+   "biome": 0,
+   "rarity": "common",
+   "pass_through": false,
+   "golden": false,
+   "added": "2026-11-19"
+  },
+  {
+   "id": "drift_algae_mat",
+   "kind": "scenery",
+   "name": "Drift algae mat",
+   "spec": "scenery/specs/drift_algae_mat.json",
+   "glb": "assets/drift_algae_mat.glb",
+   "js": "assets/drift_algae_mat-glb.js",
+   "biome": 0,
+   "rarity": "common",
+   "pass_through": true,
+   "golden": false,
+   "added": "2026-11-20"
+  },
+  {
+   "id": "pronghorn",
+   "kind": "creature",
+   "spec": "creature/specs/pronghorn.json",
+   "glb": "assets/pronghorn.glb",
+   "js": "assets/pronghorn-glb.js",
+   "biome": 1,
+   "rarity": "common",
+   "locomotion": "walk",
+   "golden": false,
+   "added": "2026-11-19"
+  },
+  {
+   "id": "mermaids_cup",
+   "kind": "plant",
+   "spec": "plant/specs/mermaids_cup.json",
+   "glb": "assets/mermaids_cup.glb",
+   "js": "assets/mermaids_cup-glb.js",
+   "biome": 0,
+   "rarity": "common",
+   "golden": false,
+   "added": "2026-11-19"
+  }
+ ]
+}

@@ -1,0 +1,25 @@
+{
+  "kind": "creature",
+  "id": "gulf_pipefish",
+  "name": "Gulf Pipefish",
+  "lore": "Passes for a blade of grass. Sips shrimp through a straw.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "slender_tube",
+  "locomotion": "swim",
+  "reference": "Syngnathus scovelli: pencil-thin grass-green body ringed with dark armour plates, long tube snout, sand-tan belly, tiny fluttering dorsal fin and fan tail",
+  "notes": {"path": "novel (slender_tube): candidates bucktooth parrotfish (struck: swimmer, failed beak), sheepshead (struck: swimmer, failed), dugong (struck: swimmer-adjacent torpedo), queen conch (struck: asymmetric spiral shell breaks bilateral contract), lined seahorse (struck: upright body breaks X-long axis) -> Gulf pipefish, a living seagrass blade"},
+  "size": {"length_m": 0.18, "height_ratio": 0.11, "width_ratio": 0.8},
+  "palette": {"main": ["#5a9a48", "#dcbc6e", "#2f6b52"], "accent": "#ff9f43", "lip": "#2f6b52"},
+  "pattern": {"rings": 20, "ring_w": 0.3, "eye_stripe": true},
+  "parts": {"dorsal": {"u0": 0.4, "u1": 0.56, "height": 1.2}, "tail_fan": 0.05, "pectoral": 0.035},
+  "eye": {"ratio": 0.12},
+  "motion": {
+    "idle": {"frames": 96, "cycles": 2, "amp_deg": 9, "chain_lag_frames": 4, "personality": "slow grass-blade sway, leaning with the current, dorsal fin buzzing like a tiny propeller"},
+    "feed": {"frames": 56, "technique": "eases back and tucks its snout to aim, then flicks the head up and darts forward, two quick sips through the snout, little head bobs, slow settle", "reach_ratio": 0.22},
+    "sulk": {"frames": 120, "cycles": 1, "energy": 0.3, "droop_deg": 16, "frown": 0.9, "technique": "a wilted blade: snout droops, body sags into a limp bow, dorsal fin barely ticks, pectorals clamped, sinks low, mouth corners down"}
+  },
+  "habitat": {"depth": "low", "anchor": "kelp", "shelter": "kelp", "schooling": false},
+  "rest": {"on": "sand", "pose": "lie", "share": 0.3, "bout_s": [12, 28], "why": "Gulf pipefish rest motionless on the bottom among seagrass bases, lying along the blades between slow hunting drifts."},
+  "budget": {"tris": 8000, "texture": 1024}
+}

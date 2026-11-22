@@ -1,0 +1,18 @@
+{
+ "name": "article-spaced-review",
+ "skill": "lesson-make",
+ "type": "article",
+ "title": "Why short, spaced reviews beat cramming",
+ "today": "2026-11-21",
+ "created_at": 1763683200000,
+ "ladder": [
+  "tap",
+  "recall",
+  "apply"
+ ],
+ "countRange": [
+  4,
+  8
+ ],
+ "source": "Cramming feels productive because the material is still fresh and easy to recall. That ease is misleading: a memory built in one long session fades within days.\n\nSpacing works because forgetting is part of learning. When you revisit an idea just as it starts to slip, the effort of pulling it back out makes the memory stronger and longer lasting.\n\nA simple schedule: review after one day, then three days, then a week, then a month. Each review can be very short, only a few minutes.\n\nTesting yourself beats rereading. Closing the book and trying to recall the idea is harder than reading it again, and that difficulty is what helps.\n\nFinally, link each idea to something you will actually do. Ideas you apply this week are the ones you keep."
+}

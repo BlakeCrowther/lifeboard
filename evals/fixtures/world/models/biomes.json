@@ -1,0 +1,214 @@
+{
+ "note": "Habitats a visitor can be briefed for. `id` matches game.js reef.biome (biomes advance in order; after the last, cycle). Add freely; the pipeline reads this, nothing is hardcoded. `pass_through`: scenery kinds creatures may swim/fly through in this biome (default none: everything registered is solid). Kinds: rock, coral, anemone, shrub, plus any new scenery's kind (a scenery prop's kind is its roster id). `scenery` (new biomes): [{id (roster model of kind scenery), count, spread cluster|scatter|edge|back, scale [min,max], phase 0-4 or phases [first,last] (copies spread across them), landmark (the last copy lands as its phase completes), pass_through}]. habitat.js places these props instead of the scene builder's own corals/tiers, keeping the phase progression: phase 0 = sparse ground cover, later phases bigger/rarer pieces. `frame`: {ground hex, water [shallow hex, deep hex], dens (fog multiplier), light (sun/caustics multiplier)} overrides the base frame. `scene`: base frame (ground, rocks, ground cover, light shafts, motes) and, for biomes without `scenery`, the scenery set habitat.js builds (reef, kelp, tidepool, mangrove, deep, meadow, canopy, jungle; default by medium). Optional when `scenery` + `frame` are given. `look`: the biome's identity (see `identity_rules`); briefs, habitat.js and the shelf diorama all read it. `neglect` (every biome with `scenery`): how this biome shows neglected tasks. {blight: roster id of kind scenery (the prop that spreads as tasks age; its own model, not one of the biome's `scenery` pieces), form (a word or two: overgrowth, mold, sand drift, ash fall, cobwebs, silt mat, rust, anything that fits the place), grows_on rocks|ground (where copies land: on the frame's rocks, or scattered over the ground), count 1-60 (copies at full blight, default 30), scale [min,max], murk (hex: what overdue tasks foul the water/air with), murk_name (a word for it: silt, dust haze, spore fog)}. habitat.js shows round(blight \u00d7 count) copies, growing as blight rises, and tints toward `murk` as overdue tasks pile up.",
+ "biomes": [
+  {
+   "id": 0,
+   "name": "Seagrass lagoon",
+   "medium": "water",
+   "light": "bright, dappled shallows",
+   "locomotion": [
+    "swim",
+    "drift",
+    "crawl",
+    "rooted"
+   ],
+   "examples": [
+    "bucktooth parrotfish",
+    "pipefish",
+    "queen conch",
+    "green sea turtle",
+    "dugong"
+   ],
+   "scenery": [
+    {
+     "id": "sand_dollar",
+     "count": 6,
+     "spread": "scatter",
+     "scale": [
+      1.5,
+      2.0
+     ],
+     "phase": 0
+    },
+    {
+     "id": "eelgrass_tuft",
+     "count": 5,
+     "spread": "cluster",
+     "scale": [
+      0.8,
+      1.05
+     ],
+     "phase": 0,
+     "pass_through": true
+    },
+    {
+     "id": "turtle_grass_blades",
+     "count": 12,
+     "spread": "scatter",
+     "scale": [
+      0.9,
+      1.25
+     ],
+     "phases": [
+      1,
+      3
+     ],
+     "pass_through": true
+    },
+    {
+     "id": "eelgrass_tuft",
+     "count": 14,
+     "spread": "edge",
+     "scale": [
+      1.0,
+      1.35
+     ],
+     "phases": [
+      2,
+      4
+     ],
+     "pass_through": true
+    },
+    {
+     "id": "eelgrass_tuft",
+     "count": 8,
+     "spread": "back",
+     "scale": [
+      1.5,
+      1.9
+     ],
+     "phases": [
+      3,
+      4
+     ],
+     "landmark": true,
+     "pass_through": true
+    }
+   ],
+   "frame": {
+    "ground": "#d8c48a",
+    "water": [
+     "#6fd6c0",
+     "#1d6b78"
+    ],
+    "dens": 0.8,
+    "light": 1.1
+   },
+   "look": {
+    "shape": "swaying grass blades: dense low tufts of long, thin, leaning blades",
+    "palette": [
+     "#6fd6c0",
+     "#1d6b78",
+     "#d8c48a",
+     "#ff9f43"
+    ],
+    "ground": "pale shell-flecked sand between seagrass beds",
+    "owns": [
+     "eelgrass tuft",
+     "turtle grass blade",
+     "conch shell",
+     "sand dollar"
+    ],
+    "creatures": "slender, grass-green and sand-tan grazers with soft mottling that hides in the blades; small warm-orange accents",
+    "plants": "ribbon-thin seagrass blades in greens and olive, epiphyte-speckled tips",
+    "motion": "slow grazing drift that leans with the blades, short pauses"
+   },
+   "neglect": {
+    "blight": "drift_algae_mat",
+    "form": "drift algae mats",
+    "grows_on": "ground",
+    "count": 30,
+    "scale": [
+     0.8,
+     1.4
+    ],
+    "murk": "#c4b08a",
+    "murk_name": "silt"
+   }
+  },
+  {
+   "id": 1,
+   "name": "Sagebrush steppe",
+   "medium": "land",
+   "light": "huge dry sky, hard noon sun",
+   "locomotion": [
+    "walk",
+    "hop",
+    "fly",
+    "burrow"
+   ],
+   "examples": [
+    "pronghorn",
+    "greater sage-grouse",
+    "black-tailed jackrabbit",
+    "burrowing owl",
+    "coyote"
+   ],
+   "scene": "meadow",
+   "look": {
+    "shape": "wide flat horizon lines broken by low silvery cushions",
+    "palette": [
+     "#cfe3ee",
+     "#c9b48a",
+     "#a59a6a",
+     "#e07a3f"
+    ],
+    "ground": "pale dusty soil and gravel",
+    "owns": [
+     "sagebrush cushion",
+     "prairie dog mound",
+     "tumbleweed"
+    ],
+    "creatures": "lean, long-legged or ground-hugging, dust-tan and grey with one rust accent",
+    "plants": "silver-grey aromatic shrubs, bunchgrass, small yellow rabbitbrush blooms",
+    "motion": "alert pauses, then sudden bursts of speed"
+   }
+  },
+  {
+   "id": 2,
+   "name": "Alpine scree",
+   "medium": "land",
+   "light": "thin, cold, very bright",
+   "locomotion": [
+    "walk",
+    "hop",
+    "climb",
+    "fly"
+   ],
+   "examples": [
+    "mountain goat",
+    "American pika",
+    "hoary marmot",
+    "white-tailed ptarmigan",
+    "snow finch"
+   ],
+   "scene": "meadow",
+   "look": {
+    "shape": "jagged angular rock slabs and tumbled talus",
+    "palette": [
+     "#b9d4e8",
+     "#4a5a72",
+     "#8a8f98",
+     "#e8f1f7"
+    ],
+    "ground": "broken grey stone with snow patches",
+    "owns": [
+     "talus slope",
+     "cushion saxifrage",
+     "cairn stones"
+    ],
+    "creatures": "compact, thick-coated, slate and snow-white with one pale accent",
+    "plants": "tight cushion plants hugging rock, tiny pink and white flowers",
+    "motion": "careful placed steps, pauses on ledges"
+   }
+  }
+ ],
+ "identity_rules": [
+  "Each biome owns one SHAPE LANGUAGE (e.g. branching, vertical ribbons, rounded clusters, arching roots, hanging, horizontal limbs). Its scenery and its creatures echo that shape; no other biome uses it as its main shape.",
+  "Each biome owns a HUE FAMILY (`look.palette`: sky/water, depth/horizon, ground, accent). Pick creature and plant colors from or next to it; avoid the main hues of the neighboring biomes.",
+  "`look.owns` lists motifs only this biome may use (scenery, creatures, plants). Never use a motif another biome owns.",
+  "Swap test: if this design would look at home in another biome with only a recolor, redesign it. Change at least two of: body plan, silhouette, pattern type, hue family, size class, motion.",
+  "Silhouette test: filled solid black at card size, the design should still say which biome it is from.",
+  "Motion signature (`look.motion`) sets the idle feel: match it (a deep creature drifts and pulses, a meadow one flits)."
+ ]
+}

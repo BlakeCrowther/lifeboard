@@ -1,0 +1,16 @@
+{
+ "kind": "creature",
+ "id": "pronghorn",
+ "name": "Pronghorn",
+ "biome": 1,
+ "rarity": "common",
+ "archetype": "long_legged_runner",
+ "locomotion": "walk",
+ "reference": "Antilocapra americana: tan body, white rump and belly bands, black pronged horns, long slim legs",
+ "motion": {
+  "idle": {
+   "frames": 72,
+   "cycles": 2
+  }
+ }
+}

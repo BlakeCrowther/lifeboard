@@ -1,0 +1,84 @@
+{
+ "case": "alpine-exotic",
+ "expect_fail": [
+  "no-other-biome-motif"
+ ],
+ "output": {
+  "kind": "creature",
+  "id": "dust_hare",
+  "name": "Tumbleweed Hare",
+  "lore": "A helmet that outlived the dinosaurs. Bulldozes the sand.",
+  "biome": 2,
+  "rarity": "exotic",
+  "archetype": "horseshoe_crab",
+  "based_on": "streamlined_swimmer",
+  "locomotion": "hop",
+  "reference": "Lepus californicus: lean jackrabbit that rolls like a tumbleweed across the scree",
+  "notes": {
+   "path": "novel (horseshoe_crab): candidates horseshoe crab, queen conch (struck: spiral shell breaks bilateral contract), manatee (struck: swimmer-adjacent), blue crab (struck: crab archetype elsewhere), cownose ray (struck: soft_glider covers) -> horseshoe crab, a seagrass-bed bulldozer",
+   "traits": [
+    "domed helmet carapace",
+    "long tail spine",
+    "hinged abdomen plate"
+   ],
+   "rest": "buries in sand edge, lies flat between foraging walks"
+  },
+  "size": {
+   "length_m": 0.3,
+   "height_ratio": 0.3,
+   "width_ratio": 0.85
+  },
+  "palette": {
+   "main": [
+    "#8a7a4a",
+    "#c8a96a",
+    "#5e6b3a"
+   ],
+   "accent": "#ff9f43",
+   "lip": "#5e6b3a"
+  },
+  "eye": {
+   "ratio": 0.1
+  },
+  "motion": {
+   "idle": {
+    "frames": 84,
+    "cycles": 2,
+    "amp_deg": 6,
+    "chain_lag_frames": 4,
+    "personality": "slow plodding scoot, legs paddling beneath the shell"
+   },
+   "feed": {
+    "frames": 60,
+    "technique": "tilts the helmet down, legs sweep worms toward the mouth underneath, chews, settles"
+   },
+   "sulk": {
+    "frames": 96,
+    "cycles": 1,
+    "energy": 0.25,
+    "droop_deg": 10,
+    "technique": "shell sits low, legs tucked, tail spine drooping on the sand"
+   }
+  },
+  "habitat": {
+   "depth": "low",
+   "anchor": "sand",
+   "shelter": "rock",
+   "schooling": false
+  },
+  "rest": {
+   "on": "sand",
+   "pose": "lie",
+   "share": 0.4,
+   "bout_s": [
+    12,
+    28
+   ],
+   "why": "Horseshoe crabs lie half-buried on sandy flats between foraging walks."
+  },
+  "budget": {
+   "tris": 16000,
+   "texture": 1024
+  }
+ }
+}

@@ -1,0 +1,50 @@
+{
+ "case": "quotes-starting",
+ "expect_fail": [
+  "schema-valid",
+  "ladder-matches-source-kind",
+  "intervals-match",
+  "lesson-ids-slug-nn",
+  "lessons-start-fresh",
+  "lesson-count-in-range",
+  "summary-2-3-sentences"
+ ],
+ "output": {
+  "sources": {
+   "starting": {
+    "title": "Four notes on starting",
+    "type": "note",
+    "size": 1,
+    "salience": 2,
+    "ladder": [
+     "tap",
+     "recall",
+     "apply"
+    ],
+    "summary": "Quotes.",
+    "status": "active",
+    "created_at": 1763683200000
+   }
+  },
+  "lessons": {
+   "start1": {
+    "source_id": "starting",
+    "level": 2,
+    "due": "2026-12-01",
+    "state": "active",
+    "order": 1,
+    "created_at": 1763683200000,
+    "rungs": [
+     {
+      "format": "tap",
+      "prompt": "Start before you feel ready."
+     },
+     {
+      "format": "recall",
+      "prompt": "Readiness arrives after the ___"
+     }
+    ]
+   }
+  }
+ }
+}

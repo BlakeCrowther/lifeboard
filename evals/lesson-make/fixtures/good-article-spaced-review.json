@@ -1,0 +1,153 @@
+{
+ "case": "article-spaced-review",
+ "output": {
+  "sources": {
+   "spaced-review": {
+    "title": "Why short, spaced reviews beat cramming",
+    "type": "article",
+    "size": 1,
+    "salience": 2,
+    "ladder": [
+     "tap",
+     "recall",
+     "apply"
+    ],
+    "summary": "Cramming feels productive but fades fast. Short reviews spaced over days and a month make memories last. Testing yourself and applying ideas help most.",
+    "status": "active",
+    "created_at": 1763683200000
+   }
+  },
+  "lessons": {
+   "spaced-review-01": {
+    "source_id": "spaced-review",
+    "level": 0,
+    "due": "2026-11-21",
+    "state": "active",
+    "rungs": [
+     {
+      "format": "tap",
+      "prompt": "Cramming feels productive because the material is fresh, but that ease is misleading."
+     },
+     {
+      "format": "recall",
+      "prompt": "Cramming feels productive because the material is still ___.",
+      "answer": "fresh",
+      "choices": [
+       "fresh",
+       "boring",
+       "short"
+      ]
+     },
+     {
+      "format": "apply",
+      "prompt": "Where have you mistaken easy for learned this week?"
+     }
+    ],
+    "order": 1,
+    "created_at": 1763683200000
+   },
+   "spaced-review-02": {
+    "source_id": "spaced-review",
+    "level": 0,
+    "due": "2026-11-21",
+    "state": "active",
+    "rungs": [
+     {
+      "format": "tap",
+      "prompt": "Forgetting is part of learning: revisiting an idea as it slips makes it stick."
+     },
+     {
+      "format": "recall",
+      "prompt": "Reviewing an idea just as it starts to slip makes the memory ___.",
+      "answer": "stronger",
+      "choices": [
+       "stronger",
+       "weaker",
+       "shorter"
+      ]
+     },
+     {
+      "format": "apply",
+      "prompt": "Which idea could you revisit today before it slips?"
+     }
+    ],
+    "order": 2,
+    "created_at": 1763683200000
+   },
+   "spaced-review-03": {
+    "source_id": "spaced-review",
+    "level": 0,
+    "due": "2026-11-21",
+    "state": "active",
+    "rungs": [
+     {
+      "format": "tap",
+      "prompt": "Review after a day, three days, a week, then a month."
+     },
+     {
+      "format": "recall",
+      "prompt": "Review after one day, three days, a week, then a ___.",
+      "answer": "month",
+      "choices": [
+       "month",
+       "year",
+       "minute"
+      ]
+     },
+     {
+      "format": "apply",
+      "prompt": "When will you schedule your first review?"
+     }
+    ],
+    "order": 3,
+    "created_at": 1763683200000
+   },
+   "spaced-review-04": {
+    "source_id": "spaced-review",
+    "level": 0,
+    "due": "2026-11-21",
+    "state": "active",
+    "rungs": [
+     {
+      "format": "tap",
+      "prompt": "Testing yourself beats rereading."
+     },
+     {
+      "format": "recall",
+      "prompt": "Trying to ___ an idea from memory beats rereading it.",
+      "answer": "recall"
+     },
+     {
+      "format": "apply",
+      "prompt": "What could you quiz yourself on instead of rereading?"
+     }
+    ],
+    "order": 4,
+    "created_at": 1763683200000
+   },
+   "spaced-review-05": {
+    "source_id": "spaced-review",
+    "level": 0,
+    "due": "2026-11-21",
+    "state": "active",
+    "rungs": [
+     {
+      "format": "tap",
+      "prompt": "Ideas you apply this week are the ones you keep."
+     },
+     {
+      "format": "recall",
+      "prompt": "Ideas you ___ this week are the ones you keep.",
+      "answer": "apply"
+     },
+     {
+      "format": "apply",
+      "prompt": "What will you do with one idea before Friday?"
+     }
+    ],
+    "order": 5,
+    "created_at": 1763683200000
+   }
+  }
+ }
+}

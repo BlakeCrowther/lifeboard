@@ -1,0 +1,107 @@
+{
+ "case": "scree-next",
+ "expect_fail": [
+  "existing-biomes-untouched",
+  "check_biome",
+  "medium-varies",
+  "examples-4-6"
+ ],
+ "output": {
+  "entry": {
+   "id": 2,
+   "name": "Sagebrush steppe",
+   "medium": "land",
+   "light": "hard white sun, long gold evenings",
+   "locomotion": [
+    "walk",
+    "hop",
+    "fly",
+    "burrow"
+   ],
+   "examples": [
+    "a",
+    "b"
+   ],
+   "scenery": [
+    {
+     "id": "oasis_reed",
+     "count": 6,
+     "spread": "cluster",
+     "scale": [
+      0.8,
+      1.2
+     ],
+     "phase": 0
+    },
+    {
+     "id": "tamarisk_shrub",
+     "count": 8,
+     "spread": "scatter",
+     "scale": [
+      0.9,
+      1.3
+     ],
+     "phases": [
+      1,
+      3
+     ]
+    },
+    {
+     "id": "dune_boulder",
+     "count": 3,
+     "spread": "back",
+     "scale": [
+      1.4,
+      2.2
+     ],
+     "phases": [
+      2,
+      4
+     ],
+     "landmark": true
+    }
+   ],
+   "frame": {
+    "ground": "#e6c88f",
+    "water": [
+     "#7fd1c9",
+     "#2c7d86"
+    ],
+    "dens": 0.6,
+    "light": 1.2
+   },
+   "look": {
+    "shape": "long smooth wind-carved dunes: flowing S-curves and soft crests",
+    "palette": [
+     "#f3e1b0",
+     "#c97b3a",
+     "#e6c88f",
+     "#2fb5a6"
+    ],
+    "ground": "rippled pale sand",
+    "owns": [
+     "dune crest",
+     "talus slope",
+     "x"
+    ],
+    "creatures": "lean, pale sand and cream coats with one turquoise-free warm accent; big ears, long legs, tucked heat-shedding shapes",
+    "plants": "tough grey-green tamarisk and pale reeds ringing a small bright pool",
+    "motion": "dawn-and-dusk trot, long still pauses in shade"
+   },
+   "neglect": {
+    "blight": "windblown_sand_drift",
+    "form": "sand drifting over the spring and its reeds",
+    "grows_on": "ground",
+    "count": 30,
+    "scale": [
+     0.8,
+     1.4
+    ],
+    "murk": "#d9b97a",
+    "murk_name": "dust haze"
+   }
+  },
+  "count": 4,
+  "priorChanged": true
+ }
+}

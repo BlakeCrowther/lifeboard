@@ -1,0 +1,22 @@
+{
+ "name": "quotes-starting",
+ "skill": "lesson-make",
+ "type": "note",
+ "title": "Four notes on starting",
+ "today": "2026-11-21",
+ "created_at": 1763683200000,
+ "ladder": [
+  "tap"
+ ],
+ "intervals": [
+  7,
+  30,
+  90
+ ],
+ "countRange": [
+  3,
+  8
+ ],
+ "hint": "These are quotes to keep in view, not facts to test: use the quote-card ladder and its long review intervals.",
+ "source": "Start before you feel ready; readiness arrives after the first step.\nA small thing done today beats a perfect thing planned for next month.\nMake the first step so small it is hard to refuse.\nStopping while it still feels easy makes tomorrow's start easier."
+}

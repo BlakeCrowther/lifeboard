@@ -1,0 +1,11 @@
+{
+ "name": "steppe-rare-run",
+ "skill": "plant-brief",
+ "biome": 1,
+ "rarity": "rare",
+ "habit": "Run",
+ "season": "fall",
+ "plot": "plot_run",
+ "gen": 2,
+ "worldBiomes": 2
+}

@@ -1,0 +1,11 @@
+{
+ "name": "lagoon-common-read",
+ "skill": "plant-brief",
+ "biome": 0,
+ "rarity": "common",
+ "habit": "Read",
+ "season": "winter",
+ "plot": "plot_read",
+ "gen": 1,
+ "worldBiomes": 1
+}

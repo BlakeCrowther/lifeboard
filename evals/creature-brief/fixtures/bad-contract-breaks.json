@@ -1,0 +1,80 @@
+{
+ "case": "lagoon-common",
+ "expect_fail": [
+  "spec-check",
+  "budget-tier",
+  "lore-60",
+  "reference-binomial",
+  "notes.path-records-choice",
+  "notes.traits-2-4",
+  "palette-2-4-mains-accent"
+ ],
+ "output": {
+  "kind": "creature",
+  "id": "horseshoe_crab",
+  "name": "Atlantic Horseshoe Crab",
+  "lore": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "horseshoe_crab",
+  "based_on": "streamlined_swimmer",
+  "locomotion": "crawl",
+  "reference": "a green crab-like thing",
+  "notes": {},
+  "size": {
+   "length_m": 0.3,
+   "height_ratio": 0.3,
+   "width_ratio": 0.85
+  },
+  "palette": {
+   "main": [
+    "#222222"
+   ],
+   "accent": "#ff9f43",
+   "lip": "#5e6b3a"
+  },
+  "eye": {
+   "ratio": 0.1
+  },
+  "motion": {
+   "idle": {
+    "frames": 10,
+    "cycles": 2,
+    "amp_deg": 6,
+    "chain_lag_frames": 4,
+    "personality": "slow plodding scoot, legs paddling beneath the shell"
+   },
+   "feed": {
+    "frames": 60,
+    "technique": "tilts the helmet down, legs sweep worms toward the mouth underneath, chews, settles"
+   },
+   "sulk": {
+    "frames": 96,
+    "cycles": 1,
+    "energy": 0.25,
+    "droop_deg": 10,
+    "technique": "shell sits low, legs tucked, tail spine drooping on the sand"
+   }
+  },
+  "habitat": {
+   "depth": "low",
+   "anchor": "sand",
+   "shelter": "rock",
+   "schooling": false
+  },
+  "rest": {
+   "on": "sand",
+   "pose": "lie",
+   "share": 0.4,
+   "bout_s": [
+    12,
+    28
+   ],
+   "why": "Horseshoe crabs lie half-buried on sandy flats between foraging walks."
+  },
+  "budget": {
+   "tris": 20000,
+   "texture": 1024
+  }
+ }
+}
