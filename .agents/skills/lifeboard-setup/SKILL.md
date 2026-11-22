@@ -66,7 +66,7 @@ Ask once (AskUserQuestion): which model skill subagents default to. Options: "So
 ## Your labels (checks/profile)
 Owner-specific labels and ids live in the board, never the repo. Ask (all optional): their first name (the Today greeting and prompts; without it the greeting is plain "Good morning."), the timezone (default: the one this machine reports, e.g. `America/Los_Angeles`; the board's day boundary, otherwise the viewer's browser zone), the place name for the conditions card, and pet names with kind (dog/cat). Write `ArtifactData` update `checks/profile` = `{value: {name, tz, place, pets: [{name, kind}]}, updated_at: <ms>}` (keep fields already there, e.g. `duet_trigger`, the owner's own scheduled agent's trigger id, which shows "Send to Duet" on tasks). Without a place the card says "Local conditions"; without pets the pet filter is hidden.
 
-A brand-new board seeds a few starter tasks on first open that teach how points work (`seedStarter` in `app.js`); nothing to do here.
+A brand-new board seeds a few starter tasks on first open that teach how points work (`seedStarterTasks` in `src/packages/ui/shared/commitments.ts`); nothing to do here.
 
 ## Weekly scheduled task (the weekly check)
 `.claude/scheduled/weekly-visitor.md` holds the prompt and the cron shape (`0 <hour> * * <day>`). The weekly check makes the visitor and the garden plants that bloomed or died that week need (SPEC.md Weekly job).

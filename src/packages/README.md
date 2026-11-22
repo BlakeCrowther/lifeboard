@@ -35,7 +35,8 @@ dates  <-  recurrence  <-  tasks, habits  <-  game
 | `habits` | `index.ts` | session counts, floor-met weeks, streaks | dates, recurrence |
 | `game` | `index.ts` (RULES, garden plots, habitat growth, visitors, lessons), `derive.ts` (`deriveGame`) | game mechanics (SPEC.md) | all of the above |
 | `db` | `schema.ts` (zod schema per collection, inferred types, `validate`), `index.ts` (`createStore`, `DbAdapter`), `fake.ts` (`createFakeDb`, in-memory adapter for tests and `dist/fake-db.js`) | collection shapes, the store | nothing (reaches the artifact db only through a `DbAdapter`) |
+| `ui` | `boot.ts` (`bootBoard`), `board-model.ts` (`buildBoardModel`), `quick-add.ts`, `repeat-presets.ts`, `list-kinds.ts` | the board's views and actions (DOM), one folder per tab | every domain package and `db`; only `src/main.ts` imports it |
 
-`db` is independent of those and they never import it; collection types come only from its zod schemas (`z.infer`); `ui`/`ecosystem`/`garden` may import domain packages; no domain package imports `ui`, `db` or the DOM. Add a rule when a new package lands.
+`db` is independent of those and they never import it; collection types come only from its zod schemas (`z.infer`); `ui` sits on top (any package, imported only by `src/main.ts`); `ecosystem`/`garden` may import domain packages; no domain package imports `ui`, `db` or the DOM. Add a rule when a new package lands.
 
 Check: `pnpm lint:boundaries` (also part of `pnpm lint` and `pnpm verify`).

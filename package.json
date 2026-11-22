@@ -2,7 +2,7 @@
   "name": "lifeboard",
   "private": true,
   "license": "MIT",
-  "description": "Personal life dashboard. TypeScript in src/ bundled by esbuild to dist/; legacy root JS still loads as plain scripts after dist/app.js. Scripts wrap the checks in tools/.",
+  "description": "Personal life dashboard. TypeScript in src/ bundled by esbuild to dist/; garden.js and habitat.js are the last classic scripts. Scripts wrap the checks in tools/.",
   "scripts": {
     "bootstrap": "corepack enable && pnpm install && pnpm exec playwright install chromium",
     "dev": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/dev.ts",

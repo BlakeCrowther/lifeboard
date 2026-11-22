@@ -68,7 +68,7 @@ The random rolls are seeded from the habit key, so every reload agrees. There ar
 
 ### Habit pips
 
-Each habit tile shows its week at a glance (`habitPips` in app.js). Daily and weekly habits look different on purpose. In the garden, daily plots come first under a small Daily heading, then weekly plots under Weekly (headings only when both kinds exist).
+Each habit tile shows its week at a glance (`habitPips` in `src/packages/ui/today/habit-cards.ts`). Daily and weekly habits look different on purpose. In the garden, daily plots come first under a small Daily heading, then weekly plots under Weekly (headings only when both kinds exist).
 
 - **Daily: water drops**, one per day of the week, day letters under them. A drop fills 0 to floor = bottom half, floor to target = top half (floor 1, target 3: 50%, 75%, 100%). A dotted line marks the floor (halfway) until the drop is full. Floor hit: bolder blue outline. A past day under floor: red outline. Above target: a rainbow behind the drop. Today sits on a soft accent card. Future days are faint outlines.
 - **Weekly: honeycomb**, one cell per session up to the target. Filled cells are honey; floor slots keep a dashed outline (darker once filled), so a met floor stays visible. Each session over target adds a deep-honey cell with a drip and a bee. Cells sit in a staggered zigzag (a strip of comb) and shrink to fit the tile as the target grows. Garden tiles are at least 140px wide so seven drops stay readable.

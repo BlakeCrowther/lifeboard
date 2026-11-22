@@ -1,6 +1,6 @@
 /* lifeboard game: Garden card (DOM, SVG) and Collection UI. Loaded only when the Ecosystem or Garden is on.
    The game-state derivation lives in the game package (src/packages/game/derive.ts) and reaches this classic script
-   through window.LBG (src/legacy-globals.ts); LBGarden.deriveGame re-exports it for app.js and habitat.js.
+   through window.LBG (src/classic-script-bridge.ts); LBGarden.deriveGame re-exports it for the ui package and habitat.js.
    Game state shape: see deriveGame there. */
 (function (G) {
   const API = { deriveGame: (input) => G.LBG.deriveGame(input), calSeason: G.LBG.calSeason, SPECIES: G.LBG.SPECIES };
@@ -291,7 +291,7 @@
     return { sub, tag };
   }
   const EVL = { phase: 'Ecosystem reached a new phase', biome: 'Ecosystem biome finished: a diorama joined the shelf', bleach: 'Ecosystem bleached: too few full days', recover: 'Ecosystem recovered' };
-  /* Grow → Garden pieces; app.js lays them out next to its own habit and ring records */
+  /* Grow → Garden pieces; the ui package's Grow view lays them out next to its own habit and ring records */
 
   /* Grow → Collection: dioramas (tap to inspect) + pressed plants. The habitat in progress leads the dioramas. */
   let roster = null;

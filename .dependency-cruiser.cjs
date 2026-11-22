@@ -78,7 +78,7 @@ module.exports = {
     // Layering controls WHICH packages may depend on which:
     //   dates <- recurrence <- tasks/habits <- game
     //   db is independent of those.
-    //   ui/ecosystem/garden may import domain packages.
+    //   ui sits on top: it may import every domain package and db; only src/main.ts imports ui.
     //   No domain package imports ui, db or the DOM (DOM globals: eslint.config.mjs).
     {
       name: "domain-not-on-ui-or-db",
@@ -86,6 +86,13 @@ module.exports = {
       severity: "error",
       from: { path: `^${R}/(dates|recurrence|tasks|habits|game)/` },
       to: { path: `^${R}/(ui|ecosystem|garden|db)/` },
+    },
+    {
+      name: "ui-is-the-top-layer",
+      comment: "ui may import any domain package and db; only the page entry (src/main.ts) imports ui.",
+      severity: "error",
+      from: { pathNot: [`^${R}/ui/`, "^src/main\\.ts$"] },
+      to: { path: `^${R}/ui/` },
     },
     {
       name: "db-independent-of-domain",

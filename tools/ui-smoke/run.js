@@ -1,5 +1,5 @@
 /* UI smoke check: serves the repo, opens index.html in headless Chromium with dist/fake-db.js + a synthetic
-   fixture standing in for the artifact db, clicks every tab, and fails on any page error,
+   fixture standing in for the artifact db, clicks every tab, runs one db-writing action per tab, and fails on any page error,
    console error or failed local request. Then checks owner data stays in the board: the greeting
    uses checks/profile.name, an existing board gets no starter tasks, and an empty board gets them.
    Exit 0 pass, 1 fail. */
@@ -49,6 +49,36 @@ setTimeout(() => { console.error('ui-smoke: FAIL, timed out after 120s'); proces
       if (!(await page.locator('#main > *').count())) errors.push(`tab "${label}" rendered nothing`);
     }
     console.log(`ui-smoke: ${n} tabs clicked`);
+
+    /* one action per tab, each checked in the fake db: proves the view's click handlers still reach the store.
+       Dispatched, not pointer clicks: the sticky header shifts on scroll, so Playwright's actionability wait can spin. */
+    const click = async (sel) => { await page.locator(sel).first().dispatchEvent('click', undefined, { timeout: 5000 }).catch((e) => { throw new Error(`${sel}: ${e.message.split('\n')[0]}`); }); await page.waitForTimeout(600); };
+    const mock = (fn) => page.evaluate(fn);
+    const tabActions = [
+      ['today: complete a task', async () => { await click('[data-act="tab"][data-val="today"]');
+        /* the ring's task list can start folded (phone width, or folded earlier) */
+        if (!(await page.locator('[data-act="toggle"][aria-pressed="false"]').count())) await click('[data-act="ring-tasks"]');
+        await click('[data-act="toggle"][aria-pressed="false"]'); },
+        () => mock(() => Object.values(window.MOCK.tasks).filter((t) => t.status === 'done').length > 1)],
+      ['plan: quick-add a task', async () => { await click('[data-act="tab"][data-val="plan"]'); await click('#fab'); await page.fill('#sheet [name=quick]', 'buy stamps tomorrow'); await click('#sheetSubmit'); },
+        () => mock(() => Object.values(window.MOCK.tasks).some((t) => t.title === 'Buy stamps' && !!t.due_date))],
+      ['lists: add a grocery', async () => { await click('[data-act="tab"][data-val="lists"]'); await page.fill('#qaG', 'limes'); await page.press('#qaG', 'Enter'); await page.waitForTimeout(250); },
+        () => mock(() => Object.values(window.MOCK.groceries).some((g) => g.name === 'Limes' || g.name === 'limes'))],
+      ['life: tick a checklist step', async () => { await click('[data-act="tab"][data-val="life"]'); await click('[data-act="check"]'); },
+        () => mock(() => Object.keys(window.MOCK.checks).length > 1)],
+      ['grow: finish a goal', async () => { await click('[data-act="tab"][data-val="grow"]'); await click('[data-act="grow"][data-val="goals"]'); await click('[data-act="goal-done"]'); },
+        () => mock(() => window.MOCK.goals.o1.status === 'completed')],
+    ];
+    for (const [name, act, landed] of tabActions) {
+      try {
+        await act();
+        /* writes land after the row's exit animation; poll instead of guessing a delay */
+        let ok = false;
+        for (let t = 0; t < 25 && !ok; t++) { ok = await landed(); if (!ok) await page.waitForTimeout(200); }
+        if (!ok) errors.push(`${name}: no db write`);
+      } catch (e) { errors.push(`${name}: ${e.message}`); }
+    }
+    console.log(`ui-smoke: ${tabActions.length} tab actions run`);
 
     const backdated = await page.evaluate(() => (window.MOCK.tasks.t3.committed_days || [])[0]);
     if (backdated === '2020-01-01') errors.push('a task given a past due date was committed before it existed (fakes age for old-task visitors)');

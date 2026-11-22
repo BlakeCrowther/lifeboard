@@ -61,3 +61,17 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 - **Entry point**: a root file of a package; the only thing other code may import.
 - **Seam**: the public interface a test exercises.
 - **Eval**: a fixed input (a **case**) fed to one skill in a throwaway sandbox, then graded by script checks plus a short LLM rubric (`evals/README.md`). Costs tokens, so it is not in `pnpm verify`. The judge-panel goldens grade 3D models; evals grade skills whose output is data.
+
+## Code terms (ui package)
+
+- **Board model** (`model`, built by `buildBoardModel`): everything the views read, rebuilt from the store's docs on every change. Its row types (`BoardTask`, `BoardHabit`, …) derive from the db docs.
+- **View state** (`viewState`): what the page shows now: tab, selected day, open sheet, sub-views. Not saved to the db.
+- **Board prefs** / **device prefs**: UI choices saved per board (folds, sorts, game on/off) or per browser (theme).
+- **Redraw registry** (`shared/redraw.ts`): `render` / `scheduleRender` without importing the render loop, so views and actions avoid import cycles.
+- **Quick add** (`parseQuickAdd`): the sheet's one-line task box; reads a date, time and repeat out of plain text.
+- **Repeat preset** (`REPEAT_PRESETS`, `ruleForPreset`): an entry in the sheet's Repeats menu and the recurrence rule it starts from.
+- **Grocery aisle** (`GroceryAisle`, `guessAisle`): the section a grocery is filed under; guessed from its name.
+- **List kind** (`ListKind`, `listKindsFor`): one list on the Lists tab (built-in, or one per extra `list_key`).
+- **Run write** (`runWrite`): every db write from the UI; shows the toast with Undo and reports failures.
+- **Lesson run** (`lessonRun`): the open lesson deck and the current card.
+- **Classic-script bridge** (`src/classic-script-bridge.ts`): the globals garden.js and habitat.js still read until step 3b turns them into packages.

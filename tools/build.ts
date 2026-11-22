@@ -11,6 +11,8 @@ const options: BuildOptions = {
   // iife, not esm: the page loads it as a classic script so its globals exist before the legacy scripts after it run.
   format: 'iife',
   target: 'es2023',
+  // The whole board (views included) is in this one file; the sourcemap keeps stack traces readable.
+  minify: true,
   sourcemap: true,
   // three stays on the page's import map.
   external: ['three', 'three/addons/*'],

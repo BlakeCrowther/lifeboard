@@ -1,13 +1,13 @@
 # lifeboard
 
-Personal life dashboard, published as a claude.ai Artifact with the `db` capability. Strict TypeScript in `src/` is bundled by esbuild to `dist/app.js` (gitignored); the root `*.js` files below are legacy plain scripts being migrated. Newcomer overview: `README.md`; terms: `GLOSSARY.md`.
+Personal life dashboard, published as a claude.ai Artifact with the `db` capability. Strict TypeScript in `src/` is bundled by esbuild to `dist/app.js` (gitignored); `garden.js` and `habitat.js` are the last classic scripts, migrating in step 3b. Newcomer overview: `README.md`; terms: `GLOSSARY.md`.
 
 - `src/`: TypeScript. `src/main.ts` is the bundle entry; `src/packages/<name>/` are deep modules, see [src/packages/README.md](./src/packages/README.md) before adding or importing one. Unit tests (Vitest) sit in each package's `tests/`; e2e in `tests/e2e/`. `.dependency-cruiser.cjs` enforces boundaries (`pnpm lint:boundaries`).
 - Commands: `pnpm bootstrap`, `dev` (serve + watch build; `PORT` env, default 8765), `build`, `typecheck`, `lint`, `test`, `verify`, `test:ui`.
-- `index.html`: page + styles. Loads `dist/app.js` (built from `src/main.ts` by `pnpm build`), then `app.js`.
-- `src/packages/`: strict TypeScript domain packages, pure, no DOM: `dates` (day boundary in the browser's timezone, or `checks/profile.tz`), `recurrence`, `tasks`, `habits`, `game`; plus `db` (zod schemas for every collection, `validate`, the store with live listeners, optimistic writes and undo, and an in-memory fake). Map: `src/packages/README.md`. `src/legacy-globals.ts` hands them to the classic scripts as `window.LB` / `window.LBG` / `window.LBS` (schemas) / `window.LBDB` (store) until the ui step.
+- `index.html`: page + styles. Loads `dist/app.js` (built from `src/main.ts` by `pnpm build`); `garden.js` and `habitat.js` load on demand when the game is on.
+- `src/packages/`: strict TypeScript domain packages, pure, no DOM: `dates` (day boundary in the browser's timezone, or `checks/profile.tz`), `recurrence`, `tasks`, `habits`, `game`; plus `db` (zod schemas for every collection, `validate`, the store with live listeners, optimistic writes and undo, and an in-memory fake). Map: `src/packages/README.md`. `src/classic-script-bridge.ts` hands garden.js the few names it still reads (`window.LBG`) until step 3b.
 - Code names data after its db collection (`buyListItems` for `buy_list_items`, `habitSessions` for `habit_sessions`); UI labels may differ (GLOSSARY.md).
-- `app.js`: views and actions.
+- `src/packages/ui/`: the board's views and actions (DOM). Root entry points: `boot.ts` (`bootBoard`, called by `src/main.ts`) and the pure `board-model.ts`, `quick-add.ts`, `repeat-presets.ts`, `list-kinds.ts`. One folder per tab (`today/`, `plan/`, `lists/`, `life/`, `grow/`) plus `sheet/` (add/edit sheet, chat), `actions/`, `app/` (render loop, events, navigation, drag), `game/` (game hooks, lessons) and `shared/`. ui may import any package; only `src/main.ts` imports ui.
 - `package.json`: pnpm only (never npm/yarn). `pnpm verify` runs `tools/verify.sh`.
 - `dist/fake-db.js` (from `src/fake-db-page.ts`) + `mockdata.js`: local `window.claude.use('db')` stand-in for preview and UI smoke, seeded from `window.MOCK`. `mockdata.js` holds a real-data snapshot and is gitignored. Never publish either.
 
