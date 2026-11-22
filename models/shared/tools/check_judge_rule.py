@@ -11,7 +11,7 @@ TOOLS = Path(__file__).resolve().parent
 REPO = TOOLS.parents[2]
 KINDS = ("creature", "plant", "scenery")
 DOCS = ["models/README.md", "docs/design/model-pipeline.md", "models/pipeline.html", "models/STYLE.md", "AGENTS.md", *(f"models/{k}/CONTRACT.md" for k in KINDS)]
-DOC_GLOBS = [".claude/skills/**/SKILL.md", ".claude/scheduled/*.md"]
+DOC_GLOBS = [".agents/skills/**/SKILL.md", ".claude/scheduled/*.md"]
 
 NUMBER = r"\d+(?:\.\d+)?(?![\d.])(?!\s*(?:%|fps|frames?\b|kb\b|mb\b|px\b|cm\b|mm\b|deg\b|°|ms\b|s\b|×|x\b))"
 STRAY = re.compile("|".join([

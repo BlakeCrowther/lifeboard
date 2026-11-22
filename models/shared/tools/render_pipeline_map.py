@@ -24,7 +24,7 @@ PIPELINE_FILES = [
     "models/shared/tools/check_spec.py", "models/shared/tools/capture_habitat.mjs", "models/shared/tools/optimize.sh",
     "models/shared/blender/qa_structural.py", "models/shared/blender/qa_render.py", "models/shared/blender/build.py",
     *(f"models/{k}/{f}" for k in KINDS for f in ("qa.py", "qa_calibration.json", "CONTRACT.md")),
-    *(f".claude/skills/{s}/SKILL.md" for s in ("model-build", "model-verify", "model-ship", "creature-brief",
+    *(f".agents/skills/{s}/SKILL.md" for s in ("model-build", "model-verify", "model-ship", "creature-brief",
       "creature-animate", "plant-brief", "plant-grow", "weekly-visitor", "season-seeds", "scenery-make")),
 ]
 

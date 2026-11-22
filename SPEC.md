@@ -133,7 +133,7 @@ Aged-task drops are capped: `visitor.overdueDropsPerWeek = 1` a week and `visito
 
 ## Lessons
 
-**Status:** Partly built. Built: formats, ladder, daily deck, spaced repetition (per-source intervals), card actions, the Lessons card above the ecosystem (the deck is answered inside it, so the scene stays in view), feeding/hiding, the lesson-making skill (`.claude/skills/lesson-make`). Planned: perfect lesson week, finish rewards, Collection trophy, book species, weekly rewrite of flagged lessons, pollinators.
+**Status:** Partly built. Built: formats, ladder, daily deck, spaced repetition (per-source intervals), card actions, the Lessons card above the ecosystem (the deck is answered inside it, so the scene stays in view), feeding/hiding, the lesson-making skill (`.agents/skills/lesson-make`). Planned: perfect lesson week, finish rewards, Collection trophy, book species, weekly rewrite of flagged lessons, pollinators.
 
 Short daily lessons from books, videos, posts, courses and notes, resurfacing on a spaced schedule; doing them brings the scenes to life.
 

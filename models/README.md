@@ -27,7 +27,7 @@ models/
 
 Every spec has `kind` (`creature` default | `plant`). Shared code dispatches on it: `build.py` loads `models/<kind>/archetypes/<archetype>.py`; `qa_structural.py` runs the shared gates (tris, materials, texture, NaN, armature, weights, eye meta, rest-pose bbox) and then `models/<kind>/qa.py` (creature: body-plan axes/symmetry, mouth, idle/feed/reach; plant: soil origin, stage nodes, sway/tend); `check_spec.py` and `verify.sh` likewise.
 
-Skills (`.claude/skills/`), shared steps reused by every kind, kind steps isolated:
+Skills (`.agents/skills/`), shared steps reused by every kind, kind steps isolated:
 ```
 shared:   lifeboard-setup · model-build · model-verify · model-ship
 creature: weekly-visitor (orchestrator) → creature-brief → model-build → creature-animate → model-verify → model-ship

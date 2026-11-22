@@ -44,7 +44,7 @@ One meaning per term, used the same way in code, docs and UI. Game rules and num
 ## Agents and jobs
 
 - **Weekly check**: the scheduled run (`weekly-visitor`, which also runs `season-seeds`) that makes the week's visitor and the plants plots need, then publishes.
-- **Skill**: an agent instruction set in `.claude/skills/`, named for its job (`lifeboard-setup`, `lesson-make`, …).
+- **Skill**: an agent instruction set in `.agents/skills/`, named for its job (`lifeboard-setup`, `lesson-make`, …).
 
 ## Code structure
 
