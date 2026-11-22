@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate models/biomes.json (all biomes, or one id). Exit 0 = PASS, 1 = FAIL. Warnings never fail.
 Usage: python3 models/shared/tools/check_biome.py [biome_id]
-Checks: ids 0..n-1 in order, required fields, medium, palette hex, scene is one habitat.js can build (LOOKS keys; optional
+Checks: ids 0..n-1 in order, required fields, medium, palette hex, scene is one the Ecosystem can build (LOOKS keys in src/packages/ecosystem/lib/frames.ts; optional
 when `scenery` + `frame` are given), each `scenery` item is a roster model of kind scenery (or not built yet: warns) with a valid spread/scale/phase
 and every phase 0..4 gets at least one piece, `frame` colours are hex,
 `owns` motifs unique across biomes, unique names, `neglect` (required with `scenery`: blight prop, form, grows_on, murk); warns when the main hue sits too close to a neighbour's.
@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 BIOMES = ROOT / "models" / "biomes.json"
 ARCHIVE = ROOT / "models" / "biomes.archive.json"
-HABITAT = ROOT / "habitat.js"
+LOOKS_SRC = ROOT / "src" / "packages" / "ecosystem" / "lib" / "frames.ts"
 ROSTER = ROOT / "models" / "roster.json"
 SPREADS = {"cluster", "scatter", "edge", "back"}
 HEX = re.compile(r"#[0-9a-fA-F]{6}")
@@ -28,7 +28,7 @@ LOOK_KEYS = ["shape", "palette", "ground", "owns", "creatures", "plants", "motio
 
 
 def scenes() -> set[str]:
-    m = re.search(r"const LOOKS = \{(.*?)\};", HABITAT.read_text(), re.S)
+    m = re.search(r"export const LOOKS\b[^=]*= \{(.*?)\};", LOOKS_SRC.read_text(), re.S)
     return set(re.findall(r"(\w+): \{", m.group(1))) if m else set()
 
 
@@ -72,7 +72,7 @@ def main() -> int:
         if len(b.get("examples", [])) < 3:
             err.append(f"{p}: give at least 3 example species")
         if b.get("scene") and b["scene"] not in known:
-            err.append(f"{p}: scene '{b['scene']}' has no builder in habitat.js (have: {sorted(known)})")
+            err.append(f"{p}: scene '{b['scene']}' has no builder in the Ecosystem's LOOKS (have: {sorted(known)})")
         if sc is not None:
             ros = {m["id"]: m for m in json.loads(ROSTER.read_text()).get("models", [])} if ROSTER.exists() else {}
             phases = set()
@@ -93,7 +93,7 @@ def main() -> int:
                     err.append(f"{p}: scenery '{i}' count 1-40")
                 ph = it.get("phases") or [it.get("phase"), it.get("phase")]
                 if ph[0] is None or not (0 <= ph[0] <= ph[1] <= 4):
-                    err.append(f"{p}: scenery '{i}' needs phase 0-4 or phases [first,last] (habitat grows by phase)")
+                    err.append(f"{p}: scenery '{i}' needs phase 0-4 or phases [first,last] (it grows by phase)")
                 else:
                     phases |= set(range(ph[0], min(ph[1], ph[0] + it.get("count", 1) - 1) + 1))
             miss = sorted(set(range(5)) - phases)
@@ -114,7 +114,7 @@ def main() -> int:
                 )
             if bl and bl not in ros:
                 warn.append(
-                    f"{p}: neglect.blight '{bl}' not built yet; habitat falls back to generic tufts (scenery-make builds it)"
+                    f"{p}: neglect.blight '{bl}' not built yet; the Ecosystem falls back to generic tufts (scenery-make builds it)"
                 )
             elif bl and ros[bl].get("kind") != "scenery":
                 err.append(f"{p}: neglect.blight '{bl}' is a roster model of kind {ros[bl].get('kind')!r}, not scenery")

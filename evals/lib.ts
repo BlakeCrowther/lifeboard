@@ -67,6 +67,7 @@ export function prepareWorkdir(wd: string, c: Case) {
     'models/STYLE.md', 'models/README.md', 'models/creature/CONTRACT.md', 'models/plant/CONTRACT.md',
     'models/creature/archetypes', 'models/plant/archetypes', 'models/creature/specs/examples',
     'models/shared/tools/check_spec.py', 'models/shared/tools/check_biome.py', 'SPEC.md', 'src/packages/db',
+    'src/packages/ecosystem/lib/frames.ts',
   ]) {
     const from = join(REPO, rel);
     if (existsSync(from)) cpSync(from, join(wd, rel), { recursive: true });

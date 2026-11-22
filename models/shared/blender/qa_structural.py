@@ -74,7 +74,7 @@ nan = any(not all(math.isfinite(c) for c in v.co) for o in meshes for v in o.dat
 check("shape-check", "no NaN/inf vertices", not nan)
 if spec.get("kind") == "scenery":  # static props have no rig; swaying ones exactly one
     sw = (spec.get("motion") or {}).get("sway") or {}
-    want = 1 if sw and sw.get("mode") != "shader" else 0  # shader sway: moved by the habitat, no rig
+    want = 1 if sw and sw.get("mode") != "shader" else 0  # shader sway: moved by the Ecosystem, no rig
     check("shape-check", f"{want} armature (sway {'yes' if want else 'no'})", len(arms) == want, f"{len(arms)}")
 else:
     check("shape-check", "one armature", len(arms) == 1, f"{len(arms)}")

@@ -44,7 +44,7 @@ const grade: SkillEval = {
     out.push(ok('lore-60', typeof s.lore === 'string' && s.lore.length > 0 && s.lore.length <= 60, `lore length ${String(s.lore ?? '').length}`));
     out.push(ok('reference-binomial', /^[A-Z][a-z]+ [a-z]+/.test(String(s.reference ?? '')), 'reference must start with a binomial name'));
     out.push(ok('palette-2-4-mains-accent', (s.palette?.main?.length ?? 0) >= 2 && (s.palette?.main?.length ?? 0) <= 4 && !!s.palette?.accent, 'palette needs 2-4 mains plus accent'));
-    out.push(ok('habitat.shelter', !!s.habitat?.shelter, 'habitat.shelter missing'));
+    out.push(ok('ecosystem.shelter', !!s.ecosystem?.shelter, 'ecosystem.shelter missing'));
     out.push(ok('budget-tier', (s.budget?.tris ?? 1e9) <= (TRIS_CAP[s.rarity] ?? 0), `tris ${s.budget?.tris} over ${s.rarity} cap ${TRIS_CAP[s.rarity]}`));
     const prose = [s.name, s.reference, s.lore, JSON.stringify(s.notes ?? {})].join(' ').toLowerCase();
     const foreign = biomes.filter((b) => b.id !== s.biome).flatMap((b) => (b.look?.owns ?? []) as string[]).filter((m) => prose.includes(m.toLowerCase()));
@@ -57,7 +57,7 @@ const grade: SkillEval = {
     const others = rosterOf(wd).filter((m) => m.kind === 'creature').map((m) => readJson(join(wd, 'models', m.spec)));
     return {
       context: [
-        `Brief: next habitat visitor, biome ${c.biome}, rarity ${c.rarity}.`,
+        `Brief: next Ecosystem visitor, biome ${c.biome}, rarity ${c.rarity}.`,
         `Biome: ${JSON.stringify({ name: biome.name, medium: biome.medium, examples: biome.examples, look: biome.look })}`,
         `Existing roster creatures: ${JSON.stringify(others.map((o) => ({ id: o.id, biome: o.biome, archetype: o.archetype, reference: o.reference, palette: o.palette?.main })))}`,
       ].join('\n'),

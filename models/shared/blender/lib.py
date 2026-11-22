@@ -837,14 +837,14 @@ SIT_MODES = ("upright", "follow", "drape")
 
 def placement_extras(o: Obj, spec: Spec) -> None:
     """How the runtime should seat and move this prop, carried in the glb itself (node extras -> three.js userData),
-    so the habitat and the QA capture read the same thing. lb_sit: upright | follow | drape (scenery `sit.mode`)."""
+    so the Ecosystem and the QA capture read the same thing. lb_sit: upright | follow | drape (scenery `sit.mode`)."""
     sit = (spec.get("sit") or {}).get("mode")
     if sit:
         o["lb_sit"] = sit
 
 
 def shader_sway(o: Obj, spec: Spec, weight_fn: Callable[[Spec, Vector], tuple[float, float]] | None = None) -> None:
-    """Sway done by the habitat's vertex shader instead of bones: no armature, no animation data in the file.
+    """Sway done by the Ecosystem's vertex shader instead of bones: no armature, no animation data in the file.
     Writes two per-vertex float attributes, exported as glTF _SWAY_W / _SWAY_P (three.js: _sway_w / _sway_p):
       _SWAY_W 0..1  how far this point may move (0 = rooted, 1 = free tip)
       _SWAY_P 0..1  how far behind the base its wave runs (lag)

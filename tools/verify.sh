@@ -19,6 +19,7 @@ if [ -d node_modules/typescript ]; then
   run "unit tests (vitest)" pnpm -s exec vitest run
 else skip "typecheck, lint, build, vitest" "run pnpm bootstrap"; fi
 run "eval graders (self-test)" node evals/run.ts --self-test
+run "biomes.json valid (check_biome.py)" python3 models/shared/tools/check_biome.py
 run "model pipeline map current" python3 models/shared/tools/render_pipeline_map.py --check
 if [ -d node_modules/playwright ]; then run "UI smoke (headless Chromium)" node tools/ui-smoke/run.js; else skip "UI smoke" "run pnpm bootstrap"; fi
 if command -v uv >/dev/null; then run "doc frontmatter" tools/check-doc-frontmatter; else skip "doc frontmatter" "uv not installed"; fi

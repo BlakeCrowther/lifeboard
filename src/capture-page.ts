@@ -1,5 +1,5 @@
 /* capture.html's entry: the Ecosystem alone, filling the window, with a synthetic game state (no board, no db).
-   window.Ecosystem is the handle the model pipeline's headless tools drive (models/shared/tools/capture_habitat.mjs,
+   window.Ecosystem is the handle the model pipeline's headless tools drive (models/shared/tools/capture_ecosystem.mjs,
    watch_creatures.mjs: inspect.pose, debug, feed). Query: every ecosystem URL hook plus ?neglect=<0..1>. */
 import { createEcosystem, type Ecosystem } from './packages/ecosystem/index.ts';
 

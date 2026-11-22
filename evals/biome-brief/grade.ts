@@ -8,7 +8,7 @@ const LOOKS = ['reef', 'kelp', 'tidepool', 'mangrove', 'deep', 'meadow', 'canopy
 
 /* output = { entry, count, priorChanged }: the new biome, how many biomes the file now holds, and whether an old one was rewritten. */
 const grade: SkillEval = {
-  task: (c) => `The habitat has moved on: biomes.json has biomes 0..${c.worldBiomes - 1} and no entry for id ${c.worldBiomes}. Brief exactly that one id (${c.worldBiomes}) and append it to models/biomes.json. Scenery pieces are not built in this sandbox; the check will only warn about them.`,
+  task: (c) => `The Ecosystem has moved on: biomes.json has biomes 0..${c.worldBiomes - 1} and no entry for id ${c.worldBiomes}. Brief exactly that one id (${c.worldBiomes}) and append it to models/biomes.json. Scenery pieces are not built in this sandbox; the check will only warn about them.`,
 
   place(wd, _c, output) {
     const f = readJson(biomesPath(wd));
@@ -61,10 +61,10 @@ const grade: SkillEval = {
         `Archived biomes (past games; a replay of one is a fail): ${JSON.stringify(archive.map((a) => ({ name: a.name, medium: a.medium, shape: a.look?.shape, palette: a.look?.palette, owns: a.look?.owns })))}`,
       ].join('\n'),
       criteria: [
-        { id: 'real-habitat-not-an-archive-replay', question: 'It is a real-world habitat that is not a replay of any archived biome (two or more of: habitat, shape language, palette family, owned motifs match one = replay).' },
+        { id: 'real-environment-not-an-archive-replay', question: 'It is a real-world environment that is not a replay of any archived biome (two or more of: environment, shape language, palette family, owned motifs match one = replay).' },
         { id: 'passes-swap-test', question: 'Against the previous two biomes it would not pass as either after a recolor: its shape language, palette hue family and owned motifs are distinct.' },
         { id: 'examples-real-and-iconic', question: 'examples are real species with strong silhouettes, include one rare-worthy and one exotic-worthy icon, and suit the medium and locomotion.' },
-        { id: 'look-coherent', question: 'look.shape names one shape language; creatures/plants/motion lines all echo it and the biome light; palette suits the habitat.' },
+        { id: 'look-coherent', question: 'look.shape names one shape language; creatures/plants/motion lines all echo it and the biome light; palette suits the environment.' },
         { id: 'neglect-true-to-place', question: 'If neglect is present, its form is how neglect really shows in this place (not generic overgrowth) and murk fits the medium. Pass if neglect is absent.' },
       ],
     };

@@ -203,7 +203,7 @@ def record_judge(run_id: str, creature_id: str, agent_id: str, reply: dict[str, 
     return True, f"judge {len(st['judges'])} recorded: {agent_id} -> {creature_id}"
 
 
-ROUTED = "placement"  # judge fixes about how habitat.js places copies (spacing, variety, sinking): the runtime's, not the model's
+ROUTED = "placement"  # judge fixes about how the Ecosystem package (src/packages/ecosystem) places copies (spacing, variety, sinking): the runtime's, not the model's
 
 
 def _graded(st: dict[str, Any], cid: str | None = None) -> dict[Any, list[dict[str, Any]]]:
@@ -284,7 +284,7 @@ def notes(run_id: str, cid: str | None = None) -> tuple[bool, str]:
         if not rows:
             continue
         tag = (
-            " (routed to habitat.js, not the model; plan ignores)"
+            " (routed to the Ecosystem package (src/packages/ecosystem), not the model; plan ignores)"
             if c == ROUTED
             else f" (median now {med[c]:g})"
             if c in med

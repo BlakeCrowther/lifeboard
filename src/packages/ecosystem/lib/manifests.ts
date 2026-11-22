@@ -181,7 +181,7 @@ export function readBiomes(raw: unknown): Biome[] {
 
 export function readSpec(raw: unknown): CreatureSpec {
   if (!isRecord(raw)) return {};
-  const shelterField = raw['habitat']; /* the spec's key name (creature contract) */
+  const shelterField = raw['ecosystem']; /* the spec's key name (creature contract) */
   const shelter = isRecord(shelterField) ? (text(shelterField['shelter']) || text(shelterField['anchor'])) : undefined;
   return defined<CreatureSpec>({ name: text(raw['name']), locomotion: text(raw['locomotion']), shelter, rest: readRest(raw['rest']) });
 }

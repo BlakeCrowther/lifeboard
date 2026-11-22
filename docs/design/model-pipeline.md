@@ -34,7 +34,7 @@ Fresh sonnet judges (6 per subject; a panel is any way to draw 3 of the 6, so 20
 
 ## Done
 
-Quick wins 1-8 of the epic, merged in [PR lifeboard#42: one judge rule, measured card-size checks, living pipeline map](https://github.com/BlakeCrowther/lifeboard/pull/42): one pass-rule source (`<kind>/qa_calibration.json` `pass_rule`) applied only by `judge_verdict.py`, `mouth_correct` dropped, tapered fins, card-size sulk check, card-size row first on the contact sheet, housekeeping, tracked calibration sheets. Earlier, [PR lifeboard#32: judge scenery in the real habitat, keep judge notes across rounds](https://github.com/BlakeCrowther/lifeboard/pull/32) added notes across rounds, plan gating and habitat captures for scenery.
+Quick wins 1-8 of the epic, merged in [PR lifeboard#42: one judge rule, measured card-size checks, living pipeline map](https://github.com/BlakeCrowther/lifeboard/pull/42): one pass-rule source (`<kind>/qa_calibration.json` `pass_rule`) applied only by `judge_verdict.py`, `mouth_correct` dropped, tapered fins, card-size sulk check, card-size row first on the contact sheet, housekeeping, tracked calibration sheets. Earlier, [PR lifeboard#32: judge scenery in the real Ecosystem, keep judge notes across rounds](https://github.com/BlakeCrowther/lifeboard/pull/32) added notes across rounds, plan gating and Ecosystem captures for scenery.
 
 ## Open
 
@@ -43,7 +43,7 @@ Quick wins 1-8 of the epic, merged in [PR lifeboard#42: one judge rule, measured
 | Item | Change | Verified by |
 |---|---|---|
 | Cap judges per build | Ledger refuses a usable judge beyond `pass_rule.judges`; `notes` header names the judges that decided | Self-test refuses a 4th usable judge; replay the drift run |
-| Prop placement variety | Per-copy lean, height stretch, tint jitter, same-kind spacing, keep-clear between prop kinds in `habitat.js` (copy the ground cover's approach); all 12 scenery judges called copies stamped | Re-capture eelgrass and drift mat; fresh judges' placement notes drop |
+| Prop placement variety | Per-copy lean, height stretch, tint jitter, same-kind spacing, keep-clear between prop kinds in the Ecosystem package (`src/packages/ecosystem`) (copy the ground cover's approach); all 12 scenery judges called copies stamped | Re-capture eelgrass and drift mat; fresh judges' placement notes drop |
 | Card-size footprint gate | Short side at least 8 px at card size; failure routes to a spec display scale, not a rebuild (pipefish is about 5 px) | Pipefish fails, clownfish passes |
 | Re-judge goldens | At least 6 judges, per-judge scores stored; eelgrass anchor rewritten (6 of 6 fresh judges give artifacts 3, recorded 4) | `check_judge_rule.py`; anchor matches fresh panels |
 | Pipefish snout-tip blobs | Named by 6 of 6; trace before it ships again | Onion-skin frames clean |

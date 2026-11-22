@@ -87,7 +87,7 @@ def _run(spec, rng, start, yaw, length, n, wander=None):
         p = pts[-1] + Vector((math.cos(a), math.sin(a), 0)) * (length / n)
         hz = _heap_z(spec, p.x, p.y)
         off = 1 - min(1.0, hz / (0.3 * _HH(spec)))  # 1 once past the mound
-        # past the mound the stem rides higher and its end curls up: the habitat sets props on uneven sand, sunk ~2 mm,
+        # past the mound the stem rides higher and its end curls up: the Ecosystem sets props on uneven sand, sunk ~2 mm,
         # and a stem lying flat there gets buried mid-way, leaving its tip as a floating fragment
         p.z = hz + r0 * (1.3 + 1.4 * loops * math.sin(math.pi * t) * (1 - t) + off * (1.2 * t + 1.6 * t**4))
         pts.append(p)

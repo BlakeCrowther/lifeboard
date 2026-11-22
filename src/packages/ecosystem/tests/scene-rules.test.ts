@@ -55,7 +55,7 @@ describe('manifests', () => {
     expect(sceneKeyOf({ id: 1, name: 'Meadow', medium: 'land' }, 'kelp')).toBe('kelp');
   });
   it('reads the shelter from the spec', () => {
-    expect(readSpec({ name: 'Crab', habitat: { anchor: 'kelp' } })).toEqual({ name: 'Crab', shelter: 'kelp' });
+    expect(readSpec({ name: 'Crab', ecosystem: { anchor: 'kelp' } })).toEqual({ name: 'Crab', shelter: 'kelp' });
   });
 });
 

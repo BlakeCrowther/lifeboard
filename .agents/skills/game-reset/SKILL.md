@@ -1,6 +1,6 @@
 ---
 name: game-reset
-description: Restart the game (garden, ecosystem, visitors) from zero on the user's live lifeboard, after a backup. Optionally archives every designed biome and creature so Claude designs each new one (biome-brief) as the habitat reaches it. Never touches tasks, habits, sessions, lessons or other board data. Use when the user wants to restart, reset or start the game over.
+description: Restart the game (garden, ecosystem, visitors) from zero on the user's live lifeboard, after a backup. Optionally archives every designed biome and creature so Claude designs each new one (biome-brief) as the Ecosystem reaches it. Never touches tasks, habits, sessions, lessons or other board data. Use when the user wants to restart, reset or start the game over.
 ---
 
 # Game reset
@@ -15,7 +15,7 @@ The user's live lifeboard artifact (never a mock/test build; see break-setup for
 ## 2. Ask (one message)
 - **Visitors met:** clear `visitors_met` (default yes; the shelf starts empty).
 - **Shelf notes:** clear `keepsakes` titles/notes (default yes: they name dioramas and plants that no longer exist).
-- **Biomes:** keep the shipped list and its creatures and plants (default; no Blender needed), or **fresh**: archive every biome and every roster model (creatures and plants: plants belong to a biome by index, so they go with it), so the fill pass (step 4b) designs biome 0 (`biome-brief`) and builds its first creature, then later runs design each biome as the habitat reaches it. Fresh needs Blender: without it the new biomes get no visitors. Until that run the habitat shows a plain "Uncharted" water scene. Plots show the 2D SVG species until `season-seeds` makes each plot's plant (the weekly task runs it for `garden.needs`).
+- **Biomes:** keep the shipped list and its creatures and plants (default; no Blender needed), or **fresh**: archive every biome and every roster model (creatures and plants: plants belong to a biome by index, so they go with it), so the fill pass (step 4b) designs biome 0 (`biome-brief`) and builds its first creature, then later runs design each biome as the Ecosystem reaches it. Fresh needs Blender: without it the new biomes get no visitors. Until that run the Ecosystem shows a plain "Uncharted" water scene. Plots show the 2D SVG species until `season-seeds` makes each plot's plant (the weekly task runs it for `garden.needs`).
 - **Break skips / lesson days** in `logs`: keep (default). Skips before the new start don't cost growth anyway; lesson days keep hiding accurate.
 
 ## 3. Back up

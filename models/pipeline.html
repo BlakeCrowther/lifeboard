@@ -124,7 +124,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
 <body>
 <main>
   <h1>Model pipeline</h1>
-  <p class="lede">How a 3D model goes from an idea to the habitat, and what it must pass at each gate. Pick a kind; click any stage to jump to its details.</p>
+  <p class="lede">How a 3D model goes from an idea to the Ecosystem, and what it must pass at each gate. Pick a kind; click any stage to jump to its details.</p>
   <p class="meta">Last reviewed: 2026-11-21 (paths after the ecosystem-package move) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
 
   <div class="bar">
@@ -355,7 +355,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
      "tris <= 3000 (scenery)"
     ],
     "motion-check": [
-     "no baked clips (static, or swayed by the habitat shader)",
+     "no baked clips (static, or swayed by the Ecosystem shader)",
      "shader sway: per-vertex _SWAY_W/_SWAY_P present",
      "shader sway: some parts free (max weight >= 0.5)",
      "shader sway: anchored (base points in the inner quarter: mean weight <= 0.3)",
@@ -389,7 +389,7 @@ if (!D.kinds[kind]) kind = "creature";
 // What each judge criterion asks. Hand-written; the list of criteria per kind comes from the data block.
 const CRITERIA = {
   species_read: "Would you name the species from the renders alone?",
-  reads_as: "Does the prop read as what it is (eelgrass, kelp, shell) in the habitat?",
+  reads_as: "Does the prop read as what it is (eelgrass, kelp, shell) in the Ecosystem?",
   anatomy: "Right parts, proportions and placement for the reference animal or plant.",
   style_match: "Fits the world's look (STYLE.md, the golden): palette, softness, detail level.",
   artifacts: "Mesh flaws: holes, spikes, floating or intersecting parts, smears, z-fighting.",
@@ -408,7 +408,7 @@ const STAGES = {
   build:  { g: "make", t: "Build", s: "Blender, headless", owner: "model-build",
             what: "Archetype generator builds the mesh: blockout, model, cleanup, UVs, material, bake (<code>build.py --run</code>). Refuses to rebuild without a plan once judged (exit 6).",
             fail: "shape-check and mesh-artifact fixes come back here." },
-  animate:{ g: "make", t: "Animate", s: "rig + loops", owner: { creature: "creature-animate", plant: "plant-grow", scenery: "(none: habitat shader sways it)" },
+  animate:{ g: "make", t: "Animate", s: "rig + loops", owner: { creature: "creature-animate", plant: "plant-grow", scenery: "(none: Ecosystem shader sways it)" },
             what: { creature: "Armature, weights, idle loop, feed with jaw bite, sulk, optional perch; mouth node; glTF export.",
                     plant: "Five growth stages, per-stage sway loops, tend reaction.",
                     scenery: "No baked clips: build writes per-vertex sway weights and the ecosystem package sways them in a shader." },
@@ -424,12 +424,12 @@ const STAGES = {
   judge:  { g: "judge", t: "judge-panel", s: "AI judges score renders; a script decides", owner: "model-verify + judge_verdict.py", gate: "judge",
             what: { creature: "Fresh judges see the contact sheet (card-size row first), turntable and motion strips, plus the golden's sheet as anchor.",
                     plant: "Fresh judges see the contact sheet (growth strip) and sway/tend motion panels, plus the golden's sheet.",
-                    scenery: "Fresh judges see the prop in the real habitat first (wide, turn, sway frames from capture_habitat.mjs), then the contact sheet, plus the golden's habitat image." },
+                    scenery: "Fresh judges see the prop in the real Ecosystem first (wide, turn, sway frames from capture_ecosystem.mjs), then the contact sheet, plus the golden's Ecosystem image." },
             fail: "fail → fix notes by criterion → <code>ledger.py plan</code> → build/animate; pass → polish rounds" },
-  page:   { g: "run", t: "page-test", s: { creature: "automatic in verify.sh", plant: "runs in the garden plot", scenery: "habitat capture + sway-check" }, owner: "model-verify",
-            what: { creature: "page-test.mjs injects the candidate (in-memory roster, no repo edit) into the habitat page: no console errors at desktop and 375 px, visible and nose-first, idle and feed play, stays above the sand, fps above the limit (reads \"not measured\" below 20 fps on software GL). Passing through other creatures and scenery is still a manual look.",
+  page:   { g: "run", t: "page-test", s: { creature: "automatic in verify.sh", plant: "runs in the garden plot", scenery: "Ecosystem capture + sway-check" }, owner: "model-verify",
+            what: { creature: "page-test.mjs injects the candidate (in-memory roster, no repo edit) into the Ecosystem page: no console errors at desktop and 375 px, visible and nose-first, idle and feed play, stays above the sand, fps above the limit (reads \"not measured\" below 20 fps on software GL). Passing through other creatures and scenery is still a manual look.",
                     plant: "Candidate in its garden plot: stages and sway play, tend reacts, no console errors.",
-                    scenery: "Capture in the habitat (capture.html): placed among neighbours; sway-check measures the shader motion." },
+                    scenery: "Capture in the Ecosystem (capture.html): placed among neighbours; sway-check measures the shader motion." },
             fail: "→ animate, or runtime (src/packages/ecosystem) for steering and placement" },
   ship:   { g: "ship", t: "Ship", s: "roster + publish", owner: "model-ship",
             what: "Refuses without a passing report.json. Optimizes, wraps as base64 JS, adds to roster.json, commits, publishes the board.", fail: "" },
@@ -588,7 +588,7 @@ function renderTables() {
     ["Applies the rule", "models/shared/tools/judge_verdict.py (self-test: test_judge_verdict.py)"],
     ["Fails if a doc restates a rule number", "models/shared/tools/check_judge_rule.py"],
     ["Code checks", "models/shared/tools/verify.sh → qa_structural.py + models/&lt;kind&gt;/qa.py"],
-    ["Judge images", "models/shared/blender/qa_render.py (contact sheet), capture_habitat.mjs (scenery in habitat)"],
+    ["Judge images", "models/shared/blender/qa_render.py (contact sheet), capture_ecosystem.mjs (scenery in Ecosystem)"],
     ["Golden sheets (judge anchors)", "models/&lt;kind&gt;/calibration/&lt;golden&gt;/"],
     ["Run budget, judge replies, plans", "models/shared/tools/ledger.py → models/out/runs/ (gitignored)"],
     ["Step-by-step instructions", ".agents/skills/model-verify, model-build, model-ship, weekly-visitor, season-seeds, scenery-make"],

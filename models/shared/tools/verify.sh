@@ -7,9 +7,9 @@
 #   shipped asset. Default glb: models/out/<id>/<id>.glb. Spec search: arg 3, <kind>/specs/<id>.json,
 #   <kind>/specs/examples/<id>.json, <glb dir>/spec.json, out/dryrun/<id>/spec.json.
 #   contact.png rows, top to bottom: card-size view (creature and scenery only: the model at the pixel size the user sees
-#   on the habitat card, 1x beside the same pixels enlarged, idle then sulk; scale from shared/card_view.json), turntable,
+#   on the Ecosystem card, 1x beside the same pixels enlarged, idle then sulk; scale from shared/card_view.json), turntable,
 #   growth stages (plant), one strip per clip, motion onion-skins, side-by-side with each golden. Plants have no card-size
-#   row: garden.js draws them normalised per plot, not at the habitat's metres-to-pixels scale.
+#   row: the garden package draws them normalised per plot, not at the Ecosystem's metres-to-pixels scale.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd -P)"   # models/
 ID=${1:-}; [[ -n $ID ]] || { echo "usage: verify.sh <id> [path/to/<id>.glb] [path/to/spec.json]"; exit 2; }
@@ -53,15 +53,15 @@ json.dump({"checks":c,"pass":all(x["pass"] for x in c)},open(out,"w"),indent=1)
 sys.exit(0 if all(x["pass"] for x in c) else 1)
 EOF
 KIND=$(python3 -c "import json;print(json.load(open('$SPEC')).get('kind','creature'))")
-if [[ $KIND == creature ]]; then   # plants are checked in the garden plots and scenery by capture_habitat.mjs (model-verify)
-  echo "== page-test (real habitat page, headless browser)"
+if [[ $KIND == creature ]]; then   # plants are checked in the garden plots and scenery by capture_ecosystem.mjs (model-verify)
+  echo "== page-test (real Ecosystem page, headless browser)"
   PT_GLB=$OPT; [[ -f $PT_GLB ]] || PT_GLB=$GLB
   node "$ROOT/shared/tools/page-test.mjs" "$ID" "$PT_GLB" "$SPEC" "$OUT" || { rc=1; [[ -s "$OUT/page-test.json" ]] || echo "  FAIL page-test did not run (browser missing? run pnpm bootstrap)"; }
 fi
 echo "== judge-panel renders"
 CLIPS=$(python3 -c "import json;s=json.load(open('$SPEC'));k=s.get('kind','creature');print({'plant':'sway_4,tend','scenery':'sway' if (s.get('motion') or {}).get('sway') else ''}.get(k,'idle,feed,sulk'))")
 PITCH=$(python3 -c "import json;print(30 if json.load(open('$SPEC')).get('kind')=='scenery' else 8)")   # scenery: see the top face (sand dollar petals)
-# card-size view inputs: "<px per metre> <extra display scale> <note>"; empty for plants (no habitat-card size).
+# card-size view inputs: "<px per metre> <extra display scale> <note>"; empty for plants (no Ecosystem-card size).
 # Scenery is drawn at biomes.json's per-placement scale on top of px_per_m; show the smallest placement (the worst case).
 CARD=$(python3 - "$ROOT" "$SPEC" <<'EOF'
 import json, sys

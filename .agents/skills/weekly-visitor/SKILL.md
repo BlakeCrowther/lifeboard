@@ -1,6 +1,6 @@
 ---
 name: weekly-visitor
-description: Kind: creature (orchestrator). Runs the weekly autonomous habitat visitor: reads the game state, starts the run ledger, then creature-brief -> shared model-build -> creature-animate -> shared model-verify -> shared model-ship with retries and fallbacks, and reports. The weekly scheduled task calls this. Never ships an unverified creature.
+description: Kind: creature (orchestrator). Runs the weekly autonomous Ecosystem visitor: reads the game state, starts the run ledger, then creature-brief -> shared model-build -> creature-animate -> shared model-verify -> shared model-ship with retries and fallbacks, and reports. The weekly scheduled task calls this. Never ships an unverified creature.
 ---
 
 # Weekly visitor
@@ -16,15 +16,15 @@ Runs unattended. Do not ask the user anything; decide, log, and report.
 `python3 models/shared/tools/ledger.py start <run_id> --rounds 4 --minutes 30` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).
 
 ## 1. Should a visitor come?
-Read the game state from the lifeboard artifact db (see AGENTS.md / `src/packages/game/`). The board writes the habitat's status to `checks/game_status` whenever it changes: `value = { biome, phase, phases, bleached, dioramas, visitor, visitorWeek }` (ArtifactData `get`). If it's missing, try the old name `checks/labs_reef` (boards before Nov 19 2026); if both are missing (the game was never opened), use biome 0 and common.
+Read the game state from the lifeboard artifact db (see AGENTS.md / `src/packages/game/`). The board writes the Ecosystem's status to `checks/game_status` whenever it changes: `value = { biome, phase, phases, bleached, dioramas, visitor, visitorWeek }` (ArtifactData `get`). If it's missing, try the old name `checks/labs_reef` (boards before Nov 19 2026); if both are missing (the game was never opened), use biome 0 and common.
 - current `biome`;
 - this week's visitor result (`value.visitor`: `rare`, `common`, or null when bleached);
 - overdue drops (`overdueReward` → `rare` or `exotic`, capped per week and per biome).
 
-The most rare earned this week wins. If the game says no visitor (for example the habitat is bleached), skip and report why.
+The most rare earned this week wins. If the game says no visitor (for example the Ecosystem is bleached), skip and report why.
 
 ## 1b. New biome?
-If `models/biomes.json` has no entry for `biome`, or `phase == phases - 1` (final phase) and there is no entry for `biome + 1`: run **biome-brief** for that id first (it validates with `check_biome.py`). It doesn't count toward the build budget. If it fails twice, report it and brief this week's creature for the current biome as usual. A biome brief needs no visitor: run it even when the habitat is bleached.
+If `models/biomes.json` has no entry for `biome`, or `phase == phases - 1` (final phase) and there is no entry for `biome + 1`: run **biome-brief** for that id first (it validates with `check_biome.py`). It doesn't count toward the build budget. If it fails twice, report it and brief this week's creature for the current biome as usual. A biome brief needs no visitor: run it even when the Ecosystem is bleached.
 
 ## 1b2. Biome scenery
 Right after 1b (and every week): if the current biome (or the one biome-brief just made) lists `scenery` ids or a `neglect.blight` id with no roster entry of kind `scenery`, run **scenery-make** for them. Own ledger per piece; it doesn't spend the visitor's budget. A biome with no `scenery` uses its `scene` builder and needs nothing.
@@ -69,7 +69,7 @@ Tests the whole pipeline on a simulated week without touching anything live.
 - Get events with `pnpm -s sim 1 28 --visitors=steady:1000`. Pass one event, e.g. `{"week":11,"biome":2,"rarity":"rare"}`, in place of step 1.
 - Run steps 2–3 fully: real Blender, real gates, retries and fallbacks.
 - **Skip ship.** No roster edit, no commit, no publish. All dry-run work goes in `models/out/dryrun/<id>/` (spec as `spec.json`, build outdir = that folder: `build.py out/dryrun/<id>/spec.json out/dryrun/<id>`), not `creature/specs/` or `out/<id>/`, unless a human promotes it. Verify with `verify.sh <id> out/dryrun/<id>/<id>.glb`. Dry-run quarantine: `out/dryrun/quarantine/<id>/`.
-- page-test runs if the habitat page has the `?visitor=` hook; otherwise mark it `"skipped: no runtime hook"` (the dry run still counts as PASS on the first five gates).
+- page-test runs if the Ecosystem page has the `?visitor=` hook; otherwise mark it `"skipped: no runtime hook"` (the dry run still counts as PASS on the first five gates).
 - Report like a normal run, plus timings per step and every fix note, so the pipeline itself can be improved.
 
 ## Budget

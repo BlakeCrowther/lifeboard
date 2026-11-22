@@ -184,7 +184,7 @@ Later candidate: **Scenario** (a short situation; pick which idea applies). Drop
 
 **Scene effects (decoration only):**
 
-- Water biomes: lesson = fish food. Fish swim over, eat, glow and school. No lessons for `lessons.hideAfter = 3` days: creatures play their `sulk` loop and tuck in behind their shelter (`spec.habitat.shelter`, else `anchor`, else the nearest rock), never die; food (a lesson) brings them out. `LBGame.lessonDone` logs `logs` kind `lesson` and drops food; hiding stays off until the first lesson is logged.
+- Water biomes: lesson = fish food. Fish swim over, eat, glow and school. No lessons for `lessons.hideAfter = 3` days: creatures play their `sulk` loop and tuck in behind their shelter (`spec.ecosystem.shelter`, else `anchor`, else the nearest rock), never die; food (a lesson) brings them out. `LBGame.lessonDone` logs `logs` kind `lesson` and drops food; hiding stays off until the first lesson is logged.
 - Skipped breaks (break overlay, `break/`): each skip costs `breaks.skipCost = 5` growth (never below the current phase; per-board override in `checks/break_rules`), and creatures play their `sulk` loop for the rest of that day.
 - Garden and land biomes: lesson = pollinators. Bees, butterflies, a hummingbird; flowers sway.
 - Variety: a pool of ~8 animations per scene, picked at random, plus biome- and season-specific ones. Repeats are fine.

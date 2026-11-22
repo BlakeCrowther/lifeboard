@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* Capture a scenery candidate inside the real Ecosystem (the scene on the standalone capture.html: the board's lighting,
    murk, grade and neighbours, without the board), for the judge-panel.
-   Usage: node models/shared/tools/capture_habitat.mjs <id> [--glb <path>] [--spec <path>] [--hour 12] [--frames 12] [--neglect 0..1]
+   Usage: node models/shared/tools/capture_ecosystem.mjs <id> [--glb <path>] [--spec <path>] [--hour 12] [--frames 12] [--neglect 0..1]
    --neglect defaults to 0.5 when <id> is a biome's neglect.blight (blight props are seen in murk), else 0.
-   Defaults: glb models/out/<id>/<id>.glb, spec models/<kind>/specs/<id>.json. Output <glb dir>/qa/habitat/:
+   Defaults: glb models/out/<id>/<id>.glb, spec models/<kind>/specs/<id>.json. Output <glb dir>/qa/ecosystem/:
      wide.png      the normal game camera, prop on the sand in front (the size players see it at)
      turn.png      4 labelled angles round the prop, mid-sway
      sway.png      <frames> labelled frames across one sway loop, one angle, in order
@@ -26,7 +26,7 @@ const W = 960, Hh = 720;
 
 const argv = process.argv.slice(2), id = argv[0];
 const opt = (k, d) => { const i = argv.indexOf(k); return i > 0 ? argv[i + 1] : d; };
-if (!id || id.startsWith('-')) { console.error('usage: capture_habitat.mjs <id> [--glb p] [--spec p] [--hour 12] [--frames 12]'); process.exit(2); }
+if (!id || id.startsWith('-')) { console.error('usage: capture_ecosystem.mjs <id> [--glb p] [--spec p] [--hour 12] [--frames 12]'); process.exit(2); }
 const glb = path.resolve(opt('--glb', path.join(MODELS, 'out', id, id + '.glb')));
 const spec = opt('--spec', ['scenery', 'creature', 'plant'].map((k) => path.join(MODELS, k, 'specs', id + '.json')).find((p) => fs.existsSync(p)));
 const hour = opt('--hour', '12'), frames = +opt('--frames', 12);
@@ -38,7 +38,7 @@ if (!glb.startsWith(REPO + path.sep)) { console.error('glb must be inside the re
 const S = JSON.parse(fs.readFileSync(spec, 'utf8'));
 if ((S.kind || 'creature') !== 'scenery') { console.error('only scenery is placed by ?inspect= today'); process.exit(2); }
 
-const out = path.join(path.dirname(glb), 'qa', 'habitat'); fs.mkdirSync(out, { recursive: true });
+const out = path.join(path.dirname(glb), 'qa', 'ecosystem'); fs.mkdirSync(out, { recursive: true });
 const wrap = path.join(out, `${id}-glb.js`);
 fs.writeFileSync(wrap, `window.LB_SCENERY=window.LB_SCENERY||{};window.LB_SCENERY[${JSON.stringify(id)}]="${fs.readFileSync(glb).toString('base64')}";\n`);
 
@@ -102,14 +102,14 @@ const montage = (files, labels, cols, file, tile = '480x360') => new Promise((re
 await montage(turn, ['front', 'right', 'back', 'left'], 2, path.join(out, 'turn.png')).catch((e) => fail(e.message));
 await montage(sway, sway.map((_, i) => `frame ${i + 1} of ${frames}`), 4, path.join(out, 'sway.png'), '320x240').catch((e) => fail(e.message));
 /* sway-check: how much the picture changes across the loop (only the candidate moves while posing). Mean absolute
-   pixel difference vs frame 1, 0..1 of full range, worst frame. Measured in the real habitat, so it covers shader sway too. */
+   pixel difference vs frame 1, 0..1 of full range, worst frame. Measured in the real Ecosystem, so it covers shader sway too. */
 const sw = (S.motion || {}).sway;
 if (sw) {
   const mae = (a, b) => new Promise((res) => { const p = spawn('compare', ['-metric', 'MAE', a, b, 'null:']); let e = ''; p.stderr.on('data', (d) => (e += d));
     p.on('exit', () => { const m = e.match(/\(([\d.e-]+)\)/); res(m ? +m[1] : 0); }); });
   const diffs = []; for (let i = 1; i < sway.length; i++) diffs.push(await mae(sway[0], sway[i]));
   const peak = Math.max(...diffs), MIN = 0.008; /* golden eelgrass_tuft ~0.016, a still prop ~0 */
-  fs.writeFileSync(path.join(out, 'sway-check.json'), JSON.stringify([{ gate: 'motion-check', check: `sway visible in the habitat (peak frame change >= ${MIN})`, pass: peak >= MIN,
+  fs.writeFileSync(path.join(out, 'sway-check.json'), JSON.stringify([{ gate: 'motion-check', check: `sway visible in the Ecosystem (peak frame change >= ${MIN})`, pass: peak >= MIN,
     detail: `peak ${peak.toFixed(4)}, per frame ${diffs.map((d) => d.toFixed(4)).join(' ')}` }], null, 1));
   console.log(`sway-check: peak frame change ${peak.toFixed(4)} (${peak >= MIN ? 'PASS' : 'FAIL'}, min ${MIN})`);
 }

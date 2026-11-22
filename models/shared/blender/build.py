@@ -122,7 +122,7 @@ if stage == "model":
     sys.exit(0)
 
 lib.placement_extras(mesh, spec)
-if ((spec.get("motion") or {}).get("sway") or {}).get("mode") == "shader":  # habitat shader sways it: no bones, no clip
+if ((spec.get("motion") or {}).get("sway") or {}).get("mode") == "shader":  # shader sway: no bones, no clip
     lib.shader_sway(mesh, spec, getattr(arch, "sway_weights", None))
     arm = None
 else:

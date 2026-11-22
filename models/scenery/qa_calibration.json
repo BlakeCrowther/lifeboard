@@ -1,7 +1,7 @@
 {
  "golden": "eelgrass_tuft",
  "contact": "scenery/calibration/eelgrass_tuft/contact.png",
- "habitat_wide": "scenery/calibration/eelgrass_tuft/habitat_wide.png",
+ "ecosystem_wide": "scenery/calibration/eelgrass_tuft/ecosystem_wide.png",
  "date": "2026-11-20",
  "judge_model": "sonnet",
  "golden_medians": {
@@ -22,5 +22,5 @@
   "judges": 3,
   "note": "Rule (judge_verdict.py): per criterion the median of the judges' scores; pass when every median >= floor and, unless bar is null, the mean of the medians >= bar. bar is null: judged absolute, every median >= floor (golden_medians mean 3.75). A static prop scores sway_readable null; it is left out."
  },
- "status": "Re-judged 2026-11-20 after the shader-sway rebuild (run scenery-eelgrass_tuft-2026-11-20, build 2), sonnet median-of-3 on the habitat capture: mean 3.75; bar stays absolute (every median >= floor). Judges anchor on habitat_wide first (the habitat's own lighting), contact for structure and scale."
+ "status": "Re-judged 2026-11-20 after the shader-sway rebuild (run scenery-eelgrass_tuft-2026-11-20, build 2), sonnet median-of-3 on the Ecosystem capture: mean 3.75; bar stays absolute (every median >= floor). Judges anchor on ecosystem_wide first (the Ecosystem's own lighting), contact for structure and scale."
 }

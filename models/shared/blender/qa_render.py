@@ -6,7 +6,7 @@ Writes: turn_0..7.png (turntable), idle_0..5.png, feed_0..5.png,
   panel_new.png + panel_<golden>.png (each alone, side view, SAME ortho scale = true relative size),
   panel_mag_<golden>.png + panels.json when the new creature is < 50% of that golden's length (magnified to its length),
   card_size_<pose>.png + card_size.json (only with --card-px-per-m): side view at the pixel size the user sees on the
-  habitat card, 1 m of model = px_per_m x card-scale px, no fit-to-silhouette. Poses: the first clip's frame 0 (or "rest"
+  Ecosystem card, 1 m of model = px_per_m x card-scale px, no fit-to-silhouette. Poses: the first clip's frame 0 (or "rest"
   for a static model) and, when the clips include sulk, sulk frame 0, all on one canvas and centre. card_size.json
   records canvas_px, model_px (first pose's silhouette), px_per_m and the pose labels.
 Turntable/strip/onion views are framed to the model's silhouette extents in that view (+15% margin), deterministic.
@@ -34,7 +34,7 @@ if "--pitch" in argv:
     i = argv.index("--pitch")
     PITCH = float(argv[i + 1])
     del argv[i : i + 2]
-CARD_PPM = None  # --card-px-per-m: render the card-size view; kinds not drawn on the habitat card omit it
+CARD_PPM = None  # --card-px-per-m: render the card-size view; kinds not drawn on the Ecosystem card omit it
 if "--card-px-per-m" in argv:
     i = argv.index("--card-px-per-m")
     CARD_PPM = float(argv[i + 1])
@@ -199,7 +199,7 @@ def play(objs, name):
 
 
 CARD_PAD_PX = 4  # background left around the model so edge pixels are not cropped by the canvas
-CARD_PITCH = 8  # the habitat camera looks slightly down on its subjects, so a flat prop shows a sliver of its top face
+CARD_PITCH = 8  # the scene camera looks slightly down on its subjects, so a flat prop shows a sliver of its top face
 
 
 def card_size_views(objs, cam, C, L):

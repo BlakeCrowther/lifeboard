@@ -1,10 +1,10 @@
 ---
 type: Design Doc
 title: Creature resting poses
-description: Habitat creatures rest the way their real animal does (cling to a rock face, lie on the sand, hang from a branch) and switch between resting and roaming.
+description: Ecosystem creatures rest the way their real animal does (cling to a rock face, lie on the sand, hang from a branch) and switch between resting and roaming.
 status: stable
 design_status: implemented
-tags: [habitat, models, creature]
+tags: [Ecosystem, models, creature]
 verified: {by: "human:BlakeCrowther", at: 2026-11-20T00:00:00Z}
 ---
 
@@ -22,7 +22,7 @@ Terms: **rest** = the spec field below. **Perch site** = one spot a creature can
 | Surface finding | `rockHit` (ray down onto a rock, hit point + face normal), `groundNormal`, `conform` | `keepClear` pushes bodies out of every collider |
 | Clips | shader sway | `idle`, `feed`, `sulk` (baked, armature) |
 
-Specs are not published with the artifact (only `roster.json`, `biomes.json` and `assets/*-glb.js` are), so the runtime's `spec.*` reads (e.g. `habitat.shelter`) get nothing on the live board. Anything the runtime needs from the spec must be in the roster entry or the glb.
+Specs are not published with the artifact (only `roster.json`, `biomes.json` and `assets/*-glb.js` are), so the runtime's `spec.*` reads (e.g. `ecosystem.shelter`) get nothing on the live board. Anything the runtime needs from the spec must be in the roster entry or the glb.
 
 ## Design
 
@@ -54,7 +54,7 @@ Valid pairs: `lie` → `sand`; `cling` → `rock`, `branch`, `prop`; `hang` → 
 
 `model-ship` copies `rest` (and `locomotion`) from the spec into the creature's roster entry. The runtime reads `entry.rest || spec.rest`. Giving an already-shipped creature a rest is a spec + roster edit, no rebuild (unless it needs a `perch` clip).
 
-### 4. Runtime (`habitat.js`)
+### 4. Runtime (`src/packages/ecosystem`)
 
 **Perch sites**, found when the world is built and claimed one creature per site:
 
@@ -88,7 +88,7 @@ First use: `gulf_pipefish` gets `{on: sand, pose: lie, share: 0.3}` (pipefish se
 
 ## Not in scope
 
-Plants. Crawling over walls as locomotion (only the resting pose). Physics or grip IK. Several creatures sharing one site. Fixing the other live-only spec reads (`habitat.shelter`), listed as a follow-up.
+Plants. Crawling over walls as locomotion (only the resting pose). Physics or grip IK. Several creatures sharing one site. Fixing the other live-only spec reads (`ecosystem.shelter`), listed as a follow-up.
 
 ## Risks
 
@@ -98,4 +98,4 @@ Plants. Crawling over walls as locomotion (only the resting pose). Physics or gr
 
 ## Testing
 
-`check_spec.py` on the pipefish and on bad-rest fixtures; `node tools/spec-check.js`; `node --check habitat.js`; `capture.html?visitor=gulf_pipefish&perch=1` screenshots for `lie`, plus `&rest=rock_cling` and `&scene=canopy&rest=branch_hang` to exercise the other two poses; `watch_creatures.mjs` for the timed cycle and `--at 5:'Habitat.feed(4)'` for the food interrupt.
+`check_spec.py` on the pipefish and on bad-rest fixtures; `pnpm spec-check`; `pnpm typecheck`; `capture.html?visitor=gulf_pipefish&perch=1` screenshots for `lie`, plus `&rest=rock_cling` and `&scene=canopy&rest=branch_hang` to exercise the other two poses; `watch_creatures.mjs` for the timed cycle and `--at 5:'Ecosystem.feed(4)'` for the food interrupt.

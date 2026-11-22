@@ -37,7 +37,7 @@ export interface InspectPoseInput {
   pitch?: number;
 }
 
-/** QA capture controls (models/shared/tools/capture_habitat.mjs) */
+/** QA capture controls (models/shared/tools/capture_ecosystem.mjs) */
 export interface EcosystemInspect {
   readonly ready: boolean;
   readonly dur: number;

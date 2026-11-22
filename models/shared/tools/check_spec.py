@@ -185,7 +185,7 @@ def _scenery(s: dict[str, Any], fails: list[str]) -> dict[str, Any]:
     sw = (s.get("motion") or {}).get("sway")
     if (
         sw and sw.get("mode") == "shader"
-    ):  # habitat vertex shader: amp is a fraction of the prop's size, period in seconds
+    ):  # Ecosystem vertex shader: amp is a fraction of the prop's size, period in seconds
         if not 0.01 <= sw.get("amp", 0) <= 0.15:
             fails.append("motion.sway.amp 0.01-0.15 (fraction of size)")
         if not 3 <= sw.get("period_s", 0) <= 12:
