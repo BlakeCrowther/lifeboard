@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 APP=out/LifeboardBreak.app
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-swiftc -O -swift-version 5 -o "$APP/Contents/MacOS/LifeboardBreak" LifeboardBreak.swift
+swiftc -O -swift-version 5 -o "$APP/Contents/MacOS/LifeboardBreak" LifeboardBreak.swift Pacing.swift
 cp placeholder.html "$APP/Contents/Resources/"
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>

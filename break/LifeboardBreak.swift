@@ -46,6 +46,8 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
     var skipButton: NSButton?
     var postponeButton: NSButton?
     var keyMonitor: Any?
+    var lastTick = Date()
+    var awaySince: Date?  // set while asleep/locked; no break may start until the Mac is back
 
     /* menu-bar clownfish: a template image (follows light/dark menu bar). Stripes and eye are holes (even-odd). */
     static let clownfish: NSImage? = {
@@ -73,10 +75,24 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
         buildMenu()
         resetWorkTimer()
         let ws = NSWorkspace.shared.notificationCenter
-        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification] {
+        for name in [NSWorkspace.willSleepNotification, NSWorkspace.screensDidSleepNotification,
+                     NSWorkspace.sessionDidResignActiveNotification] {
             ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { if self?.breakEnds == nil { self?.resetWorkTimer() } }
+                MainActor.assumeIsolated { self?.leave() }
             }
+        }
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification,
+                     NSWorkspace.sessionDidBecomeActiveNotification] {
+            ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.returned() }
+            }
+        }
+        let dn = DistributedNotificationCenter.default()
+        dn.addObserver(forName: .init("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.leave() }
+        }
+        dn.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.returned() }
         }
         tick = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.onTick() }
@@ -91,8 +107,32 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
         postponesLeft = Settings.maxPostpones
     }
 
+    /// Mac went away (sleep, lock, fast user switch). Overlapping signals keep the earliest time.
+    func leave() { if awaySince == nil { awaySince = Date() } }
+
+    /// Mac is back, or the tick loop noticed it was suspended: decide what the away time means.
+    func returned(from: Date? = nil) {
+        let now = Date()
+        guard let since = awaySince ?? from else { return }
+        awaySince = nil
+        lastTick = now
+        let away = now.timeIntervalSince(since)
+        switch Pacing.afterAway(away: away, breakLength: Settings.brk, onBreak: breakEnds != nil) {
+        case .resetWork: resetWorkTimer()
+        case .endBreak: endBreak(reason: "away")
+        case .resume(let shift):
+            nextBreak = nextBreak.addingTimeInterval(shift)
+            breakEnds = breakEnds?.addingTimeInterval(shift)
+        }
+        log("away\t\(Int(away))s")
+    }
+
     func onTick() {
         let now = Date()
+        // A gap far over 1s means the process was suspended (sleep) without a notification first.
+        if now.timeIntervalSince(lastTick) > Pacing.suspendGap { returned(from: awaySince ?? lastTick) }
+        lastTick = now
+        if awaySince != nil { return }  // asleep or locked: never start a break
         if let end = breakEnds {
             let left = end.timeIntervalSince(now)
             if left <= 0 { endBreak(reason: "done"); return }
@@ -362,9 +402,14 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKUIDe
     }
 }
 
-MainActor.assumeIsolated {
-    let app = NSApplication.shared
-    let delegate = App()
-    app.delegate = delegate
-    app.run()
+@main
+struct Main {
+    static func main() {
+        MainActor.assumeIsolated {
+            let app = NSApplication.shared
+            let delegate = App()
+            app.delegate = delegate
+            app.run()
+        }
+    }
 }
