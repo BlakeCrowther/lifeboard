@@ -1,7 +1,9 @@
 # lifeboard
 
-Personal life dashboard, published as a claude.ai Artifact with the `db` capability. No build step. Newcomer overview: `README.md`; terms: `GLOSSARY.md`.
+Personal life dashboard, published as a claude.ai Artifact with the `db` capability. Strict TypeScript in `src/` is bundled by esbuild to `dist/app.js` (gitignored); the root `*.js` files below are legacy plain scripts being migrated. Newcomer overview: `README.md`; terms: `GLOSSARY.md`.
 
+- `src/`: TypeScript. `src/main.ts` is the bundle entry; `src/packages/<name>/` are deep modules, see [src/packages/README.md](./src/packages/README.md) before adding or importing one. Unit tests (Vitest) sit in each package's `tests/`; e2e in `tests/e2e/`. `.dependency-cruiser.cjs` enforces boundaries (`pnpm lint:boundaries`).
+- Commands: `pnpm bootstrap`, `dev` (serve + watch build; `PORT` env, default 8765), `build`, `typecheck`, `lint`, `test`, `verify`, `test:ui`.
 - `index.html`: page + styles. Loads `logic.js`, `schema.js`, `store.js`, `app.js` in that order.
 - `logic.js`: pure date/task/habit/recurrence logic (day boundary in the browser's timezone, or `checks/profile.tz`). No DOM.
 - `schema.js`: db collection shapes; `validate(col, doc)`.
@@ -27,7 +29,7 @@ Cloners: skip this section. Your board is yours; publish it to your own artifact
 
 Live vs repo: the owner's published lifeboard artifact is the live copy; this repo is the template others clone. They drift when the live artifact is edited directly. Rule: before changing either, `read` the live artifact's files and diff them against `main`; port any live-only changes into the repo first (they win unless a game change replaces them), then make the change here, run `pnpm verify`, and publish from the repo. Never edit the live artifact without landing the same change in the repo. Others who clone own their copy from that point; only the owner keeps the two in sync.
 
-Publish: Artifact tool with `index.html` and its scripts as `files`, to the existing lifeboard artifact URL. Data lives in the artifact db, not this repo. **Publishing is pre-approved** (owner, 2026-11-19): finished work and the weekly run publish without asking, once checks pass and the live diff (above) shows no live-only changes. If live has changes the repo lacks, port them first; if they conflict, stop and report instead of overwriting. Strip the artifact service's wrapper lines from any page pulled from live.
+Publish: run `pnpm build` first (dist/ is gitignored and must be fresh), then Artifact tool with `index.html`, its scripts and `dist/` as `files`, to the existing lifeboard artifact URL. Data lives in the artifact db, not this repo. **Publishing is pre-approved** (owner, 2026-11-19): finished work and the weekly run publish without asking, once checks pass and the live diff (above) shows no live-only changes. If live has changes the repo lacks, port them first; if they conflict, stop and report instead of overwriting. Strip the artifact service's wrapper lines from any page pulled from live.
 
 ## Subagent models (cost, while testing)
 Every subagent a skill spawns uses `model: "sonnet"`, judge-panel judges included (each kind's `qa_calibration.json` `judge_model`, goldens re-judged on sonnet 2026-11-19). Exception: novel-archetype generator writing may use the session model after a sonnet attempt fails shape-check/judge-panel. Switching the judge model means re-judging each golden median-of-3 and rewriting its bar. Weekly runs follow this unattended. `lifeboard-setup` asks a fresh clone which default to use.

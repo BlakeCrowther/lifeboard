@@ -13,6 +13,13 @@ run "syntax (node --check)" bash -c 'for f in *.js tools/*.js sim/*.js; do node 
 run "game rules vs SPEC.md" node tools/spec-check.js
 run "garden derivation checks" node tools/garden-check.js
 run "sim runs (balance report)" node sim/run.js 20 8
+if [ -d node_modules/typescript ]; then
+  run "typecheck (tsc)" pnpm -s typecheck
+  run "lint (eslint + boundaries)" pnpm -s lint
+  run "build (esbuild)" pnpm -s build
+  run "unit tests (vitest)" pnpm -s exec vitest run
+else skip "typecheck, lint, build, vitest" "run pnpm bootstrap"; fi
+run "eval graders (self-test)" node evals/run.ts --self-test
 run "model pipeline map current" python3 models/shared/tools/render_pipeline_map.py --check
 if [ -d node_modules/playwright ]; then run "UI smoke (headless Chromium)" node tools/ui-smoke/run.js; else skip "UI smoke" "run pnpm bootstrap"; fi
 if command -v uv >/dev/null; then run "doc frontmatter" tools/check-doc-frontmatter; else skip "doc frontmatter" "uv not installed"; fi

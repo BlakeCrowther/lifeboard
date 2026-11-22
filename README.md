@@ -33,7 +33,7 @@ You need a Claude account with Artifacts and Claude Code (desktop app or CLI). L
 
 ## Working on it
 
-No build step: `index.html` loads plain scripts (`logic.js` → `schema.js` → `store.js` → `app.js`, plus `game.js`, `garden.js`, `habitat.js`).
+Legacy code needs no build: `index.html` loads plain scripts (`logic.js` → `schema.js` → `store.js` → `app.js`, plus `game.js`, `garden.js`, `habitat.js`).
 
 ```bash
 pnpm bootstrap   # install dev tools (Playwright for the UI check)

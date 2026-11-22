@@ -2,15 +2,29 @@
   "name": "lifeboard",
   "private": true,
   "license": "MIT",
-  "description": "No dependencies, no build. Scripts wrap the checks in tools/.",
+  "description": "Personal life dashboard. TypeScript in src/ bundled by esbuild to dist/; legacy root JS still loads as plain scripts. Scripts wrap the checks in tools/.",
   "scripts": {
     "bootstrap": "corepack enable && pnpm install && pnpm exec playwright install chromium",
-    "test": "node tools/spec-check.js && node sim/run.js 20 8 > /dev/null",
+    "dev": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/dev.ts",
+    "build": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/build.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . && pnpm lint:boundaries",
+    "lint:boundaries": "depcruise src",
+    "test": "vitest run && node tools/spec-check.js && node sim/run.js 20 8 > /dev/null",
     "verify": "tools/verify.sh",
     "test:ui": "node tools/ui-smoke/run.js"
   },
   "packageManager": "pnpm@12.21.0",
   "devDependencies": {
-    "playwright": "^1.65.1"
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.6",
+    "dependency-cruiser": "18.8.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.15.0",
+    "playwright": "^1.65.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0",
+    "vitest": "5.1.1",
+    "zod": "4.6.7"
   }
 }

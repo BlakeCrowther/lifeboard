@@ -5,4 +5,5 @@ test.html
 models/out/
 models/**/__pycache__/
 node_modules/
+dist/
 evals/out/
