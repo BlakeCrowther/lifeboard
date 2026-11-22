@@ -9,8 +9,13 @@ Usage:
   python3 models/shared/tools/render_pipeline_map.py --check   # exit 1 if the data block is stale, or if pipeline
                                                                # files differ from origin/main while the page does not
 """
-import json, re, subprocess, sys
+
+import json
+import re
+import subprocess
+import sys
 from pathlib import Path
+from typing import Any
 
 MODELS = Path(__file__).resolve().parents[2]
 REPO = MODELS.parent
@@ -20,88 +25,149 @@ BLOCK = re.compile(r'(<script id="pipeline-data" type="application/json">)(.*?)(
 
 # Files whose change can change what the map shows. Touching one means the page's diagram and callouts need a look.
 PIPELINE_FILES = [
-    "models/shared/tools/verify.sh", "models/shared/tools/ledger.py", "models/shared/tools/judge_verdict.py",
-    "models/shared/tools/check_spec.py", "models/shared/tools/capture_habitat.mjs", "models/shared/tools/optimize.sh",
-    "models/shared/blender/qa_structural.py", "models/shared/blender/qa_render.py", "models/shared/blender/build.py",
+    "models/shared/tools/verify.sh",
+    "models/shared/tools/ledger.py",
+    "models/shared/tools/judge_verdict.py",
+    "models/shared/tools/check_spec.py",
+    "models/shared/tools/capture_habitat.mjs",
+    "models/shared/tools/optimize.sh",
+    "models/shared/blender/qa_structural.py",
+    "models/shared/blender/qa_render.py",
+    "models/shared/blender/build.py",
     *(f"models/{k}/{f}" for k in KINDS for f in ("qa.py", "qa_calibration.json", "CONTRACT.md")),
-    *(f".agents/skills/{s}/SKILL.md" for s in ("model-build", "model-verify", "model-ship", "creature-brief",
-      "creature-animate", "plant-brief", "plant-grow", "weekly-visitor", "season-seeds", "scenery-make")),
+    *(
+        f".agents/skills/{s}/SKILL.md"
+        for s in (
+            "model-build",
+            "model-verify",
+            "model-ship",
+            "creature-brief",
+            "creature-animate",
+            "plant-brief",
+            "plant-grow",
+            "weekly-visitor",
+            "season-seeds",
+            "scenery-make",
+        )
+    ),
 ]
 
 CHECK = re.compile(r'check\(\s*"(shape-check|motion-check)",\s*(f?)"([^"]+)"')
 CONST = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*([0-9.]+)\s*(?:#.*)?$", re.M)
-FIELDS = {"i": "n", "MESH_MAX": "kind limit", "e['name']": "L/R", "lo": "min", "hi": "max", "st": "stage name",
-          "want": "0 or 1", "'yes' if want else 'no'": "yes/no"}  # loop and lookup fields in check names
+FIELDS = {
+    "i": "n",
+    "MESH_MAX": "kind limit",
+    "e['name']": "L/R",
+    "lo": "min",
+    "hi": "max",
+    "st": "stage name",
+    "want": "0 or 1",
+    "'yes' if want else 'no'": "yes/no",
+}  # loop and lookup fields in check names
 
 
-def readable(text, is_f, src):
+def readable(text: str, is_f: bool, src: str) -> str:
     """f-string check names -> plain text: module constants resolved, loop/lookup fields named."""
-    if not is_f: return text
+    if not is_f:
+        return text
     consts = dict(CONST.findall(src))
-    def field(m):
+
+    def field(m: re.Match[str]) -> str:
         expr, _, fmt = m.group(1).partition(":")
         if expr in consts:
-            v = float(consts[expr]); return f"{v:{fmt}}" if fmt else consts[expr]
-        if "[rar]" in expr: return "rarity limit"
+            v = float(consts[expr])
+            return f"{v:{fmt}}" if fmt else consts[expr]
+        if "[rar]" in expr:
+            return "rarity limit"
         return FIELDS.get(expr, "…")
+
     return re.sub(r"\{([^{}]+)\}", field, text)
 
 
-def checks(path):
-    src = path.read_text(); out = {"shape-check": [], "motion-check": []}
+def checks(path: Path) -> dict[str, list[str]]:
+    src = path.read_text()
+    out = {"shape-check": [], "motion-check": []}
     for gate, f, name in CHECK.findall(src):
         name = readable(name, bool(f), src)
-        if name not in out[gate]: out[gate].append(name)
+        if name not in out[gate]:
+            out[gate].append(name)
     return out
 
 
-def budget():
+def budget() -> dict[str, int]:
     src = (MODELS / "shared/tools/ledger.py").read_text()
-    start = re.search(r"def start\(run_id, rounds=(\d+), minutes=(\d+)\)", src)
-    polish = re.search(r"def plan\([^)]*polish_max=(\d+)\)", src)
+    start = re.search(r"def start\(run_id: str, rounds: int = (\d+), minutes: int = (\d+)\b", src)
+    polish = re.search(r"def plan\([^)]*polish_max: int = (\d+)\b", src)
+    if start is None or polish is None:
+        raise SystemExit("ledger.py: cannot read start/plan defaults (signature changed?)")
     return {"judge_rounds": int(start[1]), "minutes": int(start[2]), "polish_rounds": int(polish[1])}
 
 
-def data():
+def data() -> dict[str, Any]:
     shared = checks(MODELS / "shared/blender/qa_structural.py")
     kinds = {}
     for k in KINDS:
         cal = json.loads((MODELS / k / "qa_calibration.json").read_text())
         rule = {x: cal["pass_rule"][x] for x in ("criteria", "floor", "bar", "judges")}
-        kinds[k] = {"pass_rule": rule, "judge_model": cal.get("judge_model"), "golden": cal.get("golden"),
-                    "golden_medians": cal.get("golden_medians"), "checks": checks(MODELS / k / "qa.py")}
-    return {"source": "generated by models/shared/tools/render_pipeline_map.py; do not edit by hand",
-            "shared_checks": shared, "kinds": kinds, "budget": budget(),
-            "export_checks": ["gltf validator (optimized glb): no errors", "file size within budget (per kind / rarity)"]}
+        kinds[k] = {
+            "pass_rule": rule,
+            "judge_model": cal.get("judge_model"),
+            "golden": cal.get("golden"),
+            "golden_medians": cal.get("golden_medians"),
+            "checks": checks(MODELS / k / "qa.py"),
+        }
+    return {
+        "source": "generated by models/shared/tools/render_pipeline_map.py; do not edit by hand",
+        "shared_checks": shared,
+        "kinds": kinds,
+        "budget": budget(),
+        "export_checks": ["gltf validator (optimized glb): no errors", "file size within budget (per kind / rarity)"],
+    }
 
 
-def render():
+def render() -> str:
     return "\n" + json.dumps(data(), indent=1, ensure_ascii=False) + "\n"
 
 
-def changed_vs_main():
+def changed_vs_main() -> tuple[list[str], bool] | None:
     """Pipeline files and page changed on this branch (commits + working tree) vs its merge-base with origin/main."""
     try:
-        base = subprocess.run(["git", "merge-base", "HEAD", "origin/main"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
-        names = subprocess.run(["git", "diff", "--name-only", base], cwd=REPO, capture_output=True, text=True, check=True).stdout.split()
-        names += subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=REPO, capture_output=True, text=True, check=True).stdout.split()
+        base = subprocess.run(
+            ["git", "merge-base", "HEAD", "origin/main"], cwd=REPO, capture_output=True, text=True, check=True
+        ).stdout.strip()
+        names = subprocess.run(
+            ["git", "diff", "--name-only", base], cwd=REPO, capture_output=True, text=True, check=True
+        ).stdout.split()
+        names += subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard"], cwd=REPO, capture_output=True, text=True, check=True
+        ).stdout.split()
     except (subprocess.CalledProcessError, FileNotFoundError):
         return None
     return [n for n in names if n in PIPELINE_FILES], "models/pipeline.html" in names
 
 
-def main(argv):
-    page = PAGE.read_text(); m = BLOCK.search(page)
-    if not m: print(f"{PAGE.relative_to(REPO)}: no pipeline-data block"); return 1
+def main(argv: list[str]) -> int:
+    page = PAGE.read_text()
+    m = BLOCK.search(page)
+    if not m:
+        print(f"{PAGE.relative_to(REPO)}: no pipeline-data block")
+        return 1
     fresh = render()
     if "--check" not in argv:
-        PAGE.write_text(page[:m.start(2)] + fresh + page[m.end(2):]); print(f"wrote {PAGE.relative_to(REPO)} data block"); return 0
+        PAGE.write_text(page[: m.start(2)] + fresh + page[m.end(2) :])
+        print(f"wrote {PAGE.relative_to(REPO)} data block")
+        return 0
     problems = []
     if m.group(2) != fresh:
-        problems.append("data block is stale: run python3 models/shared/tools/render_pipeline_map.py, then check the diagram and callouts still match")
+        problems.append(
+            "data block is stale: run python3 models/shared/tools/render_pipeline_map.py, then check the diagram and callouts still match"
+        )
     diff = changed_vs_main()
     if diff and diff[0] and not diff[1]:
-        problems.append("pipeline files changed but models/pipeline.html did not: update its diagram/callouts (or its 'Last reviewed' line if nothing visible changed): " + ", ".join(diff[0]))
+        problems.append(
+            "pipeline files changed but models/pipeline.html did not: update its diagram/callouts (or its 'Last reviewed' line if nothing visible changed): "
+            + ", ".join(diff[0])
+        )
     print("\n".join(problems) or "pipeline map: current")
     return 1 if problems else 0
 

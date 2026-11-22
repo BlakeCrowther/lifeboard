@@ -7,7 +7,11 @@ and every phase 0..4 gets at least one piece, `frame` colours are hex,
 `owns` motifs unique across biomes, unique names, `neglect` (required with `scenery`: blight prop, form, grows_on, murk); warns when the main hue sits too close to a neighbour's.
 Archive (biomes.archive.json, past games): reusing an archived name fails; an archived owned motif warns (biome-brief's
 archive review decides, and must say why in its report)."""
-import colorsys, json, re, sys
+
+import colorsys
+import json
+import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -23,17 +27,17 @@ GROWS_ON = {"rocks", "ground"}
 LOOK_KEYS = ["shape", "palette", "ground", "owns", "creatures", "plants", "motion"]
 
 
-def scenes():
+def scenes() -> set[str]:
     m = re.search(r"const LOOKS = \{(.*?)\};", HABITAT.read_text(), re.S)
     return set(re.findall(r"(\w+): \{", m.group(1))) if m else set()
 
 
-def hue(hexc):
-    r, g, b = (int(hexc[i:i + 2], 16) / 255 for i in (1, 3, 5))
+def hue(hexc: str) -> float:
+    r, g, b = (int(hexc[i : i + 2], 16) / 255 for i in (1, 3, 5))
     return colorsys.rgb_to_hls(r, g, b)[0] * 360
 
 
-def main():
+def main() -> int:
     only = int(sys.argv[1]) if len(sys.argv) > 1 else None
     data = json.loads(BIOMES.read_text())
     bs, err, warn, known = data.get("biomes", []), [], [], scenes()
@@ -54,7 +58,9 @@ def main():
             continue
         p = f"biome {bid} ({b.get('name')})"
         sc = b.get("scenery")
-        need = ["name", "medium", "light", "locomotion", "examples", "look"] + ([] if sc and b.get("frame") else ["scene"])
+        need = ["name", "medium", "light", "locomotion", "examples", "look"] + (
+            [] if sc and b.get("frame") else ["scene"]
+        )
         for k in need:
             if not b.get(k):
                 err.append(f"{p}: missing {k}")
@@ -73,7 +79,9 @@ def main():
             for it in sc:
                 i = it.get("id")
                 if i not in ros:
-                    warn.append(f"{p}: scenery '{i}' not built yet; set incomplete, the placer skips it (scenery-make retries)")
+                    warn.append(
+                        f"{p}: scenery '{i}' not built yet; set incomplete, the placer skips it (scenery-make retries)"
+                    )
                 elif ros[i].get("kind") != "scenery":
                     err.append(f"{p}: scenery '{i}' is a roster model of kind {ros[i].get('kind')!r}, not scenery")
                 if it.get("spread", "scatter") not in SPREADS:
@@ -101,9 +109,13 @@ def main():
                 if not ng.get(k):
                     err.append(f"{p}: neglect.{k} missing")
             if bl and bl in {it.get("id") for it in (sc or [])}:
-                err.append(f"{p}: neglect.blight '{bl}' is one of the biome's scenery pieces; blight needs its own prop")
+                err.append(
+                    f"{p}: neglect.blight '{bl}' is one of the biome's scenery pieces; blight needs its own prop"
+                )
             if bl and bl not in ros:
-                warn.append(f"{p}: neglect.blight '{bl}' not built yet; habitat falls back to generic tufts (scenery-make builds it)")
+                warn.append(
+                    f"{p}: neglect.blight '{bl}' not built yet; habitat falls back to generic tufts (scenery-make builds it)"
+                )
             elif bl and ros[bl].get("kind") != "scenery":
                 err.append(f"{p}: neglect.blight '{bl}' is a roster model of kind {ros[bl].get('kind')!r}, not scenery")
             if ng.get("grows_on") and ng["grows_on"] not in GROWS_ON:
@@ -136,7 +148,9 @@ def main():
             err.append(f"{p}: name was used by an archived biome; pick a new one")
         for m in look.get("owns", []):
             if m.strip().lower() in arch_owns:
-                warn.append(f"{p}: motif '{m}' was owned by archived biome '{arch_owns[m.strip().lower()]}' (keep only with a reason)")
+                warn.append(
+                    f"{p}: motif '{m}' was owned by archived biome '{arch_owns[m.strip().lower()]}' (keep only with a reason)"
+                )
         if len(names.get(str(b.get("name", "")).lower(), [])) > 1:
             err.append(f"{p}: name already used")
         if len(pal) == 4 and all(re.fullmatch(r"#[0-9a-fA-F]{6}", c or "") for c in pal):
@@ -146,7 +160,9 @@ def main():
                     if q and re.fullmatch(r"#[0-9a-fA-F]{6}", q[0] or ""):
                         d = abs(hue(pal[0]) - hue(q[0])) % 360
                         if min(d, 360 - d) < 15:
-                            warn.append(f"{p}: main hue within 15° of neighbour biome {n}; consider a different hue family")
+                            warn.append(
+                                f"{p}: main hue within 15° of neighbour biome {n}; consider a different hue family"
+                            )
     for w in warn:
         print("WARN", w)
     for e in err:

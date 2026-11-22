@@ -1,0 +1,84 @@
+# Tooling config for the model pipeline Python (models/**/*.py) only.
+# At the repo root so `uv run` from anywhere in the repo finds it. No package is built.
+[project]
+name = "lifeboard-models"
+version = "0.0.0"
+description = "Dev tooling for the lifeboard model pipeline (lint and types)"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "ruff>=0.8",
+  "pyright>=1.1.390",
+  "fake-bpy-module>=20250101",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+include = ["models/**/*.py"]
+extend-exclude = ["models/out"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ANN"]
+# E501: ruff format owns code width; docstring/comment prose lines are long on purpose.
+# E731/B905/B007: terse lambdas, zip() over intentionally truncated pairs and tuple-unpacking loops are the house
+# style in the geometry code; rewriting them risks behavior changes in Blender-side scripts for no gain.
+ignore = ["ANN401", "E501", "E731", "B905", "B007"]
+
+[tool.ruff.lint.per-file-ignores]
+# Blender-side scripts: bpy-heavy, short-lived; keep real lint (E,F,I,UP,B) but not annotation demands.
+"models/shared/blender/**" = ["ANN"]
+"models/*/archetypes/**" = ["ANN"]
+"models/*/qa.py" = ["ANN", "F821"]
+# sys.path.insert(...) before a sibling import is how these scripts find each other (run as scripts, not packages).
+"models/shared/**" = ["E402"]
+"models/shared/blender/qa_structural.py" = ["F821"]  # shape_check/motion_check come from the exec'd kind qa.py
+
+[tool.pyright]
+include = ["models"]
+# qa.py files are fragments exec'd into qa_structural.py's namespace (spec, check, dim, ... are injected), so they
+# cannot resolve names on their own; they are still linted and formatted by ruff.
+exclude = ["models/out", "**/__pycache__", "models/*/qa.py"]
+pythonVersion = "3.11"
+# Blender-side scripts (bpy): basic.
+typeCheckingMode = "basic"
+
+# Pure CLI tools: stricter. Not full "strict": that flags every json.load() dict as Unknown (hundreds of
+# reportUnknown*Type), which needs a typed-JSON layer, not annotations. Signatures must be fully annotated.
+[[tool.pyright.executionEnvironments]]
+root = "models/shared/tools"
+extraPaths = ["models/shared/tools"]
+reportMissingParameterType = "error"
+reportUnknownParameterType = "error"
+reportMissingTypeArgument = "error"
+reportMissingTypeStubs = "error"
+reportUnusedImport = "error"
+reportUnusedVariable = "error"
+reportPrivateUsage = "error"
+reportOptionalMemberAccess = "error"
+reportOptionalSubscript = "error"
+reportAttributeAccessIssue = "error"
+reportArgumentType = "error"
+reportIndexIssue = "error"
+
+# Blender side (bpy, mathutils, bmesh via fake-bpy-module stubs). Kept at basic, and the rules that bpy's dynamic API
+# trips constantly are off: bpy.context.object and friends are Optional in the stubs, and RNA properties are set
+# by name. Still on: undefined names, bad imports, wrong call arity, possibly-unbound.
+[[tool.pyright.executionEnvironments]]
+root = "."
+extraPaths = ["models/shared/blender", "models/shared/tools"]
+reportMissingModuleSource = "none"
+reportOptionalMemberAccess = "none"
+reportOptionalSubscript = "none"
+reportOptionalOperand = "none"
+reportAttributeAccessIssue = "none"
+reportArgumentType = "none"
+reportIndexIssue = "none"
+reportOperatorIssue = "none"
+reportReturnType = "none"
+reportCallIssue = "none"

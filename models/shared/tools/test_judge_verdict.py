@@ -1,18 +1,24 @@
 """Self-check for judge_verdict.py on synthetic judgements. Run: python3 models/shared/tools/test_judge_verdict.py"""
-import os, sys
+
+import os
+import sys
+from typing import Any
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import judge_verdict as jv
 
 RULE = {"criteria": ["shape", "motion"], "floor": 2, "bar": 3.0, "judges": 3}
 
 
-def panel(*scores, **extra):
+def panel(*scores: tuple[int, int | None], **extra: Any) -> list[tuple[str, dict[str, Any]]]:
     return [(f"judge{i}", dict(shape=s, motion=m, notes=[], fix=[], **extra)) for i, (s, m) in enumerate(scores)]
 
 
-def refuses(rule, judgements):
-    try: jv.verdict(rule, judgements)
-    except jv.NoVerdict: return True
+def refuses(rule: dict[str, Any], judgements: list[tuple[str, dict[str, Any]]]) -> bool:
+    try:
+        jv.verdict(rule, judgements)
+    except jv.NoVerdict:
+        return True
     return False
 
 
@@ -34,21 +40,32 @@ assert v["pass"] and v["ignored_keys"] == ["retired_criterion"], "keys outside t
 v = jv.verdict(dict(RULE, bar=None, floor=3), panel((3, None), (4, None), (3, None)))
 assert v["pass"] and v["not_applicable"] == ["motion"], "a criterion most judges score null is left out"
 
-fixes = [[{"criterion": "shape", "fix": "taller dorsal"}], [{"criterion": "motion", "fix": "slower tail"}], ["fork the tail"]]
+fixes = [
+    [{"criterion": "shape", "fix": "taller dorsal"}],
+    [{"criterion": "motion", "fix": "slower tail"}],
+    ["fork the tail"],
+]
 j = [(f"judge{i}", dict(shape=4, motion=2, fix=f)) for i, f in enumerate(fixes)]
-assert list(jv.verdict(RULE, j)["fixes"]) == ["motion", "shape", "general"], "fixes are keyed by criterion, lowest median first"
+assert list(jv.verdict(RULE, j)["fixes"]) == ["motion", "shape", "general"], (
+    "fixes are keyed by criterion, lowest median first"
+)
 
 # The ledger's notes/plan/best must reach the same verdict (its own floor-only copy of the rule drifted before: all 3s
 # passed there while under the creature bar).
-import json, tempfile, ledger
+import tempfile
+
+import ledger
+
 ledger.RUNS = tempfile.mkdtemp()
 rule = jv.load_rule("creature")
 ok_reply = {c: 4 for c in rule["criteria"]}
 all_threes = {c: 3 for c in rule["criteria"]}
 for name, reply in (("pass", ok_reply), ("threes", all_threes)):
-    run = f"selfcheck-{name}"; ledger.start(run)
+    run = f"selfcheck-{name}"
+    ledger.start(run)
     ledger.record_build(run, "clownfish")
-    for a in range(rule["judges"]): ledger.record_judge(run, "clownfish", f"{name}{a}", reply=reply)
+    for a in range(rule["judges"]):
+        ledger.record_judge(run, "clownfish", f"{name}{a}", reply=reply)
     want = jv.verdict(rule, [(f"{name}{a}", reply) for a in range(rule["judges"])])["pass"]
     assert ledger.best(run, "clownfish")[0] == want, f"ledger best disagrees with judge_verdict on {name}"
     v = jv.from_ledger(rule, run, "clownfish")
