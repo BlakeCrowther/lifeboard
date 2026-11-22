@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Capture a scenery candidate inside the real habitat (habitat.js on the standalone capture.html: the board's lighting,
+/* Capture a scenery candidate inside the real Ecosystem (the scene on the standalone capture.html: the board's lighting,
    murk, grade and neighbours, without the board), for the judge-panel.
    Usage: node models/shared/tools/capture_habitat.mjs <id> [--glb <path>] [--spec <path>] [--hour 12] [--frames 12] [--neglect 0..1]
    --neglect defaults to 0.5 when <id> is a biome's neglect.blight (blight props are seen in murk), else 0.
@@ -9,7 +9,7 @@
      sway.png      <frames> labelled frames across one sway loop, one angle, in order
    Needs Google Chrome (headless, WebGL), python3 (static server), ImageMagick `montage`, network (three.js from jsdelivr).
    Synthetic game state, no board data. Exit 0 ok, 2 usage, 3 page/capture failure. */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -18,6 +18,8 @@ import { fileURLToPath } from 'node:url';
 
 const MODELS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const REPO = path.dirname(MODELS);
+/* capture.html runs dist/capture.js: build it so the page matches src/ */
+if (spawnSync('node', ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', 'tools/build.ts'], { cwd: REPO, stdio: 'ignore' }).status !== 0) { console.error('build failed: run pnpm build'); process.exit(1); }
 const playwrightChromium = () => { try { const f = createRequire(path.join(REPO, 'package.json'))('playwright').chromium.executablePath(); return fs.existsSync(f) ? f : null; } catch { return null; } };
 const CHROME = process.env.CHROME || playwrightChromium() || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const W = 960, Hh = 720;
@@ -80,17 +82,17 @@ const q = new URLSearchParams({ inspect: id, inspect_src: '/' + path.relative(RE
 await cdp('Page.navigate', { url: `http://127.0.0.1:${port}/capture.html?${q}` });
 
 const until = async (expr, what, ms = 60000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { try { if (await js(expr)) return; } catch { /* page still loading */ } await sleep(250); } fail(`timed out waiting for ${what}${errors.length ? '; page errors: ' + errors.slice(0, 3).join(' | ') : ''}`); };
-await until(`!!(window.Habitat && Habitat.inspect && Habitat.inspect.ready)`, 'the inspected prop (is three.js reachable?)');
+await until(`!!(window.Ecosystem && Ecosystem.inspect && Ecosystem.inspect.ready)`, 'the inspected prop (is three.js reachable?)');
 await sleep(1500); /* shader compile + env bake */
 const settle = () => js(`new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => r(true), 120))))`);
 const shot = async (file) => { const { data } = await cdp('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(file, Buffer.from(data, 'base64')); return file; };
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lb-frames-'));
-await js(`Habitat.inspect.pose(null)`); await sleep(800); await settle(); await shot(path.join(out, 'wide.png'));
+await js(`Ecosystem.inspect.pose(null)`); await sleep(800); await settle(); await shot(path.join(out, 'wide.png'));
 const turn = [];
-for (let i = 0; i < 4; i++) { await js(`Habitat.inspect.pose({yaw:${(i * Math.PI / 2 + 0.5).toFixed(3)},frac:0.5})`); await settle(); turn.push(await shot(path.join(tmp, `turn_${i}.png`))); }
+for (let i = 0; i < 4; i++) { await js(`Ecosystem.inspect.pose({yaw:${(i * Math.PI / 2 + 0.5).toFixed(3)},frac:0.5})`); await settle(); turn.push(await shot(path.join(tmp, `turn_${i}.png`))); }
 const sway = [];
-for (let i = 0; i < frames; i++) { await js(`Habitat.inspect.pose({yaw:0.5,frac:${(i / frames).toFixed(4)}})`); await settle(); sway.push(await shot(path.join(tmp, `sway_${String(i).padStart(2, '0')}.png`))); }
+for (let i = 0; i < frames; i++) { await js(`Ecosystem.inspect.pose({yaw:0.5,frac:${(i / frames).toFixed(4)}})`); await settle(); sway.push(await shot(path.join(tmp, `sway_${String(i).padStart(2, '0')}.png`))); }
 
 const montage = (files, labels, cols, file, tile = '480x360') => new Promise((res, rej) => {
   const args = []; files.forEach((f, i) => args.push('-label', labels[i], f));

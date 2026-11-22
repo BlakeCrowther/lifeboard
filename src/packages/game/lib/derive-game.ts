@@ -139,7 +139,7 @@ export interface PressedPlant {
 
 const RARITY_RANK: Record<Rarity, number> = { common: 0, rare: 1, exotic: 2 };
 
-// The returned shape is read by garden.js, habitat.js and the ui package as plain data; its field names are that contract.
+// The returned shape is read by the garden, ecosystem and ui packages as plain data; its field names are that contract.
 export function deriveGame(input: GameInput) {
   const weekStart = Number.isInteger(input.weekStart) && (input.weekStart ?? -1) >= 0 && (input.weekStart ?? 7) <= 6 ? (input.weekStart as number) : 1;
   const weekStartDay = (day: number): number => day - ((new Date(day * MS_PER_DAY).getUTCDay() - weekStart + 7) % 7);

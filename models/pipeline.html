@@ -125,7 +125,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
 <main>
   <h1>Model pipeline</h1>
   <p class="lede">How a 3D model goes from an idea to the habitat, and what it must pass at each gate. Pick a kind; click any stage to jump to its details.</p>
-  <p class="meta">Last reviewed: 2026-11-21 (paths after the domain-package move) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
+  <p class="meta">Last reviewed: 2026-11-21 (paths after the ecosystem-package move) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
 
   <div class="bar">
     <div class="seg" role="group" aria-label="Model kind" id="kinds"></div>
@@ -160,7 +160,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
     <div class="callout"><h4>Why medians?</h4>With an odd panel, the median is the middle judge. One judge who loves or hates the model can't move a criterion by themselves; two can.</div>
     <div class="callout"><h4>Floor vs bar</h4><b>Floor</b>: no single criterion may be worse than this. <b>Bar</b>: the average of the medians must reach this. A kind with no bar is judged on the floor alone.</div>
     <div class="callout"><h4>The golden anchor</h4>Judges also see the kind's <b>golden</b> (a reference model) with its scores, and grade relative to it: "equal quality = equal score". The bar was set from the golden's own scores.</div>
-    <div class="callout"><h4>Fix notes</h4>Every judge also lists fixes, each tagged with the criterion it raises. The next build must take on a lowest-median criterion (<code>ledger.py plan</code>). Fixes tagged <b>placement</b> go to <code>habitat.js</code>, not the model.</div>
+    <div class="callout"><h4>Fix notes</h4>Every judge also lists fixes, each tagged with the criterion it raises. The next build must take on a lowest-median criterion (<code>ledger.py plan</code>). Fixes tagged <b>placement</b> go to <code>src/packages/ecosystem</code>, not the model.</div>
   </div>
 
   <h3 style="margin-top:20px">Known weak spots (open)</h3>
@@ -411,7 +411,7 @@ const STAGES = {
   animate:{ g: "make", t: "Animate", s: "rig + loops", owner: { creature: "creature-animate", plant: "plant-grow", scenery: "(none: habitat shader sways it)" },
             what: { creature: "Armature, weights, idle loop, feed with jaw bite, sulk, optional perch; mouth node; glTF export.",
                     plant: "Five growth stages, per-stage sway loops, tend reaction.",
-                    scenery: "No baked clips: build writes per-vertex sway weights and habitat.js sways them in a shader." },
+                    scenery: "No baked clips: build writes per-vertex sway weights and the ecosystem package sways them in a shader." },
             fail: "motion-check failures come back here." },
   spec:   { g: "code", t: "spec-check", s: "design file valid", owner: "check_spec.py", gate: null,
             what: "Spec is complete and in range: required fields, sizes, rarity budgets, motion fields.", fail: "→ brief" },
@@ -430,7 +430,7 @@ const STAGES = {
             what: { creature: "page-test.mjs injects the candidate (in-memory roster, no repo edit) into the habitat page: no console errors at desktop and 375 px, visible and nose-first, idle and feed play, stays above the sand, fps above the limit (reads \"not measured\" below 20 fps on software GL). Passing through other creatures and scenery is still a manual look.",
                     plant: "Candidate in its garden plot: stages and sway play, tend reacts, no console errors.",
                     scenery: "Capture in the habitat (capture.html): placed among neighbours; sway-check measures the shader motion." },
-            fail: "→ animate, or runtime (habitat.js) for steering and placement" },
+            fail: "→ animate, or runtime (src/packages/ecosystem) for steering and placement" },
   ship:   { g: "ship", t: "Ship", s: "roster + publish", owner: "model-ship",
             what: "Refuses without a passing report.json. Optimizes, wraps as base64 JS, adds to roster.json, commits, publishes the board.", fail: "" },
 };

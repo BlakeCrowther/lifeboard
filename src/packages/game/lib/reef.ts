@@ -1,5 +1,5 @@
-/* Habitat growth from the daily ring: Growth points, adaptive phases, biomes, bleaching, visitors, murk and blight.
-   Days are plain integers. SPEC.md "Habitat". */
+/* Ecosystem growth from the daily ring: Growth points, adaptive phases, biomes, bleaching, visitors, murk and blight.
+   Days are plain integers. SPEC.md (the Ecosystem growth section). */
 import { RULES, type Rarity } from './rules.ts';
 
 export interface DayTide {

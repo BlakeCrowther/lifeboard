@@ -1,7 +1,7 @@
 /* refreshBoard: rebuild the model and profile from the store, after applying board prefs, the week start and the
    profile's time zone. Runs on every db change and live calendar update. */
 import { setTimeZone, timeZone, todayDate } from '../../dates/clock.ts';
-import { loadGameScripts } from '../game/game.ts';
+import { loadGameModulesOnce } from '../game/game.ts';
 import { buildBoardModel, readProfile } from '../board-model.ts';
 import { liveCalendar } from './calendar-feed.ts';
 import { clock } from './clock.ts';
@@ -9,7 +9,7 @@ import { applyBoardPrefs, gameOn } from './prefs.ts';
 import { model, modelRevision, profile, store } from './state.ts';
 
 export function refreshBoard(): void {
-  if (applyBoardPrefs() && gameOn()) setTimeout(() => { void loadGameScripts(); }, 0);
+  if (applyBoardPrefs() && gameOn()) setTimeout(() => { void loadGameModulesOnce(); }, 0);
   const weekStartDoc = store.get('checks', 'week_start'), weekStart = weekStartDoc ? Number(weekStartDoc.value) : NaN;
   clock.weekStart = Number.isInteger(weekStart) && weekStart >= 0 && weekStart <= 6 ? weekStart : 1;
   const read = readProfile(store.get('checks', 'profile')?.value);

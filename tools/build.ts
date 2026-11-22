@@ -1,31 +1,37 @@
-// Bundles src/main.ts into dist/app.js (the page) and src/fake-db-page.ts into dist/fake-db.js (local preview
-// and UI smoke only). `--watch` rebuilds on change.
+// Bundles the page: src/main.ts -> dist/app.js and src/capture-page.ts -> dist/capture.js (capture.html), ES modules
+// that share chunks in dist/chunks/ (the garden and ecosystem packages, loaded on demand). src/fake-db-page.ts ->
+// dist/fake-db.js is a classic script (local preview and UI smoke inject it before the page). `--watch` rebuilds on change.
 // Run directly: node tools/build.ts (Node 24+ strips types).
 import { statSync } from 'node:fs';
 import { build, context, type BuildOptions } from 'esbuild';
 
-const options: BuildOptions = {
-  entryPoints: { app: 'src/main.ts', 'fake-db': 'src/fake-db-page.ts' },
+const shared: BuildOptions = {
   outdir: 'dist',
   bundle: true,
-  // iife, not esm: the page loads it as a classic script so its globals exist before the legacy scripts after it run.
-  format: 'iife',
   target: 'es2023',
-  // The whole board (views included) is in this one file; the sourcemap keeps stack traces readable.
   minify: true,
+  // the sourcemap keeps stack traces readable
   sourcemap: true,
   // three stays on the page's import map.
   external: ['three', 'three/addons/*'],
   logLevel: 'info',
 };
+const pages: BuildOptions = {
+  ...shared,
+  entryPoints: { app: 'src/main.ts', capture: 'src/capture-page.ts' },
+  format: 'esm',
+  splitting: true,
+  // no hash: publishing lists every dist file by name
+  chunkNames: 'chunks/[name]',
+};
+const fakeDb: BuildOptions = { ...shared, entryPoints: { 'fake-db': 'src/fake-db-page.ts' }, format: 'iife' };
 
 if (process.argv.includes('--watch')) {
-  const ctx = await context(options);
-  await ctx.watch();
+  for (const options of [pages, fakeDb]) await (await context(options)).watch();
 } else {
-  await build(options);
-  // The whole page ships as one artifact: a library that drags in its locales or a second copy of itself shows up
-  // here first. Raise the budget on purpose, never to get past it.
+  await Promise.all([build(pages), build(fakeDb)]);
+  // The board's first load: a library that drags in its locales or a second copy of itself shows up here first.
+  // The game chunks load later, only with the game on, and are not counted. Raise the budget on purpose, never to get past it.
   const BUDGET_BYTES = 300_000;
   const size = statSync('dist/app.js').size;
   if (size > BUDGET_BYTES) {

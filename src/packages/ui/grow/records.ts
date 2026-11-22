@@ -3,7 +3,7 @@
    are approximate). */
 import { addDays, datePartsOf, type DateString } from '../../dates/index.ts';
 import type { GameState } from '../../game/derive.ts';
-import { gardenScript } from '../game/classic-scripts.ts';
+import { loadedGarden } from '../game/game-modules.ts';
 import type { BoardHabit } from '../board-model.ts';
 import { clock, habitWeekOf, lastDayOfHabitWeek, monthShortName } from '../shared/clock.ts';
 import { escapeHtml } from '../shared/format.ts';
@@ -34,7 +34,7 @@ export function growBand(g: GameState | null): string {
   const rows = ringHistory(12), cur = rows[rows.length - 1], past = rows.slice(0, -1), firstWeek = rows[0]?.m ?? clock.today;
   const avg = (f: (r: RingHistoryWeek) => number): string => (past.reduce((n, r) => n + f(r), 0) / past.length).toFixed(1);
   const dueTasks = model.tasks.filter((t) => { const e = effectiveDateOf(t); return e && e >= firstWeek && e <= clock.today; }), met = dueTasks.filter((t) => t.done).length;
-  const garden = g ? gardenScript() : undefined;
+  const garden = g ? loadedGarden() : undefined;
   const tiles: { n: string | number; l: string; s: string }[] = [
     { n: `${String(habitsDone)}<small>/${String(habitsTotal)}</small>`, l: 'Habit sessions', s: `${String(safe)} of ${String(hs.length)} streaks safe` },
     { n: cur?.closed ?? 0, l: 'Rings closed', s: `this week · avg ${avg((r) => r.closed)}` },
@@ -76,8 +76,8 @@ export function recordsCard(): string {
   return `<section class="sec"><div class="sec-h"><h3 class="sec-t">Records <span class="ct">12 weeks</span></h3>${seg}</div><div class="card tgc">${mode === 'habits' ? habitRecords() : ringRecords()}</div></section>`;
 }
 export function gameLogbook(g: GameState): string {
-  const garden = gardenScript();
+  const garden = loadedGarden();
   if (!garden) return '';
   const items = garden.logbookItems(g), first = items[0];
-  return fold('logbook', 'Logbook', { openByDefault: false, count: items.length, summary: first ? `${garden.fmt(first.d)} · ${escapeHtml(first.t)}` : '', body: `<div class="card pad">${garden.logbookHTML(items.slice(0, 40))}</div>` });
+  return fold('logbook', 'Logbook', { openByDefault: false, count: items.length, summary: first ? `${garden.formatShortDate(first.d)} · ${escapeHtml(first.t)}` : '', body: `<div class="card pad">${garden.logbookHTML(items.slice(0, 40))}</div>` });
 }

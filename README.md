@@ -33,7 +33,7 @@ You need a Claude account with Artifacts and Claude Code (desktop app or CLI). L
 
 ## Working on it
 
-`index.html` loads one built bundle, `dist/app.js` (from `src/main.ts`); the game's `garden.js` and `habitat.js` load on demand. Run `pnpm build` (or `pnpm dev`) first. Everything else lives in `src/packages/`: domain logic (dates, recurrence, tasks, habits, game), the data layer (db) and the views (ui, one folder per tab).
+`index.html` loads one built bundle, `dist/app.js` (from `src/main.ts`); the game's `garden` and `ecosystem` packages load on demand as separate chunks (`dist/chunks/`). Run `pnpm build` (or `pnpm dev`) first. Everything else lives in `src/packages/`: domain logic (dates, recurrence, tasks, habits, game), the data layer (db) and the views (ui, one folder per tab).
 
 ```bash
 pnpm bootstrap   # install dev tools (Playwright for the UI check)

@@ -1,5 +1,5 @@
 /* The Grow tab: Habits (stats band, records, logbook), Goals (a line per quarter), and with the game on, Collection. */
-import { gardenScript } from '../game/classic-scripts.ts';
+import { loadedGarden } from '../game/game-modules.ts';
 import { currentGame, gameRun, listenKeepsakes } from '../game/game.ts';
 import { GROW_VIEWS } from '../shared/areas.ts';
 import { GOAL_CATEGORY_ICONS, type Goal } from '../board-model.ts';
@@ -19,7 +19,7 @@ function habitsBody(): string {
   return growBand(g) + recordsCard() + (g ? gameLogbook(g) : '');
 }
 function collectionBody(): string {
-  const g = gameOn() ? currentGame() : null, garden = gardenScript();
+  const g = gameOn() ? currentGame() : null, garden = loadedGarden();
   if (g) void listenKeepsakes();
   return g && garden ? garden.collectionHTML(g, gameRun.keepsakes, viewState.editingKeepsake, viewState.inspectedKeepsake, viewState.animateInspect, viewState.collectionView) : '<div class="card pad" style="margin-top:14px"><p class="empty">Loading the collection…</p></div>';
 }

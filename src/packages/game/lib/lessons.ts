@@ -1,4 +1,4 @@
-/* Lessons: spaced review decks fed to the habitat's creatures. Days are plain integers. SPEC.md "Lessons". */
+/* Lessons: spaced review decks fed to the Ecosystem's creatures. Days are plain integers. SPEC.md "Lessons". */
 import { RULES, type LessonRules } from './rules.ts';
 
 export interface Lesson {

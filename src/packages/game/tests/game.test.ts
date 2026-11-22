@@ -52,7 +52,7 @@ describe('garden seeds (SPEC.md "When a plant finishes")', () => {
   });
 });
 
-describe('habitat growth', () => {
+describe('ecosystem growth', () => {
   it('earns ring % x 10 plus 5 for a full ring', () => {
     expect(ringPercent({ done: 3, committed: 4 })).toBe(0.75);
     expect(dayTide(4, 3)).toEqual({ pct: 0.75, full: false, pts: 7.5 });

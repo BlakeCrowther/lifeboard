@@ -1,6 +1,6 @@
 # Lifeboard Game Spec
 
-The source of truth for lifeboard's game: habits grow a **garden**, the daily task ring grows the **ecosystem** (called the habitat in code, `habitat.js`; renamed so it doesn't read like "habit"), and **lessons** bring both to life. Claude reads this before building any of it.
+The source of truth for lifeboard's game: habits grow a **garden**, the daily task ring grows the **ecosystem** (`src/packages/ecosystem`), and **lessons** bring both to life. Claude reads this before building any of it.
 
 Moved here from the "Lifeboard Game Spec" doc on Nov 18, 2026; that doc is frozen and points here.
 
@@ -257,7 +257,7 @@ Everything sits in the lifeboard artifact db; no hippocampus dependency. Claude 
 
 Seeds, plantings, the herbarium, the ecosystem and dioramas were planned as stored collections; they're derived from history instead (see Core rules) and only need storing if derivation stops being enough.
 
-**Code:** this repo. Rules and derivation: `src/packages/game/`. Collection UI: `garden.js`. Scene: `habitat.js`. Balance simulation: `tools/sim.ts` (`pnpm sim`).
+**Code:** this repo. Rules and derivation: `src/packages/game/`. Garden card and Collection UI: `src/packages/garden/`. Scene: `src/packages/ecosystem/`. Balance simulation: `tools/sim.ts` (`pnpm sim`).
 
 ## Simulation
 

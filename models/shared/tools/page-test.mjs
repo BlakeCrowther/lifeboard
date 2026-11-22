@@ -1,13 +1,14 @@
 #!/usr/bin/env node
-/* page-test: runs a creature in the real habitat page (capture.html) and checks it behaves.
+/* page-test: runs a creature in the real Ecosystem page (capture.html, which runs dist/capture.js) and checks it behaves.
    Usage: node models/shared/tools/page-test.mjs <id> <glb> <spec.json> <outdir> [--secs 90]
    The candidate needs no roster edit: the roster request is answered with an in-memory roster that includes it, and the
    glb is set on window.LB_CREATURES before the page loads. Writes <outdir>/page-test.json ({gate, pass, checks}) and
    <outdir>/runtime_{desktop,mobile,behavior}*.png. Exit 0 pass, 1 fail, 2 usage, 3 playwright/browser missing.
    Checks: no console/page errors (960x720 and 375x667); creature present at a sane size; idle plays; moves nose-first;
-   feed (Habitat.feed) reaches eat and returns to idle; stays above the ground. The 40 fps gate is reported as not measured
+   feed (Ecosystem.feed) reaches eat and returns to idle; stays above the ground. The 40 fps gate is reported as not measured
    when the browser renders below 20 fps (software GL on cloud VMs). Not checked: passing through other creatures or scenery.
    Browser: playwright's Chromium, or CHROMIUM_PATH. Sim time per frame is capped, so a slow renderer needs --secs. */
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -23,6 +24,9 @@ if (!id || !glb || !specPath || !outArg) { console.error('usage: page-test.mjs <
 const out = path.resolve(outArg); fs.mkdirSync(out, { recursive: true });
 let chromium;
 try { ({ chromium } = createRequire(path.join(REPO, 'package.json'))('playwright')); } catch { console.error('page-test: playwright not installed (pnpm install)'); process.exit(3); }
+
+/* capture.html runs dist/capture.js: build it so the page matches src/ */
+if (spawnSync('node', ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', 'tools/build.ts'], { cwd: REPO, stdio: 'ignore' }).status !== 0) { console.error('build failed: run pnpm build'); process.exit(1); }
 
 const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'));
 const entry = { id, kind: 'creature', spec: path.relative(MODELS, path.resolve(specPath)), glb: '', js: '', biome: spec.biome ?? 0,
@@ -53,10 +57,10 @@ async function open(w, h, errs) {
   await p.route('**/models/roster.json*', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify(roster) }));
   await p.addInitScript(([i, d]) => { window.LB_CREATURES = window.LB_CREATURES || {}; window.LB_CREATURES[i] = d; }, [id, b64]);
   await p.goto(`${base}/capture.html?visitor=${encodeURIComponent(id)}`);
-  await p.waitForFunction(() => window.Habitat && Habitat.debug() && Habitat.debug().creatures.length, null, { timeout: 60000 });
+  await p.waitForFunction(() => window.Ecosystem && Ecosystem.debug() && Ecosystem.debug().creatures.length, null, { timeout: 60000 });
   return p;
 }
-const snap = (p) => p.evaluate(() => Habitat.debug().creatures.map((c) => ({ state: c.state, loop: c.loop, feeding: c.feeding, pos: c.pos, box: c.box, ground: c.ground, quat: c.quat })));
+const snap = (p) => p.evaluate(() => Ecosystem.debug().creatures.map((c) => ({ state: c.state, loop: c.loop, feeding: c.feeding, pos: c.pos, box: c.box, ground: c.ground, quat: c.quat })));
 const rafFps = (p) => p.evaluate(() => new Promise((res) => { let n = 0; const t = performance.now(); const f = () => { n++; performance.now() - t < 2000 ? requestAnimationFrame(f) : res(n / 2); }; requestAnimationFrame(f); }));
 
 let fps = null;
@@ -78,7 +82,7 @@ try {
   const t0 = Date.now(), feedAt = Math.min(25, secs / 3);
   while (Date.now() - t0 < secs * 1000) {
     const now = (Date.now() - t0) / 1000;
-    if (!fed && now > feedAt) { fed = true; await p.evaluate(() => Habitat.feed(4)); }
+    if (!fed && now > feedAt) { fed = true; await p.evaluate(() => Ecosystem.feed(4)); }
     const cs = await snap(p), c = cs[0];
     for (const x of cs) { st.states.add(x.state); if (x.loop) st.loops.add(x.loop); if (x.feeding) st.feed = true; st.minClear = Math.min(st.minClear, x.box[0][1] - x.ground); }
     if (st.feed && !cs.some((x) => x.feeding) && !cs.some((x) => x.state === 'seek' || x.state === 'eat')) st.back = true;

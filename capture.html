@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>habitat capture</title>
-<!-- The habitat alone, filling the window, for QA capture (models/shared/tools/capture_habitat.mjs) and judging.
-     Lives at the repo root so habitat.js finds models/roster.json and models/biomes.json exactly as the board does.
-     No board, no db: the game state is synthetic. Query: every habitat.js test hook (?inspect=, ?visitor=, ?biome=, ?phase=,
+<title>ecosystem capture</title>
+<!-- The Ecosystem alone, filling the window, for QA capture (models/shared/tools/capture_habitat.mjs) and judging.
+     Lives at the repo root so the scene finds models/roster.json and models/biomes.json exactly as the board does.
+     Needs `pnpm build` (dist/capture.js, src/capture-page.ts). No board, no db: the game state is synthetic. Query: every ecosystem test hook (?inspect=, ?visitor=, ?biome=, ?phase=,
      ?hour=, ?weather=, ?month=) plus ?neglect=<0..1> (overdue blight + murk). -->
 <style>
 html,body{margin:0;height:100%;background:#0b3a5c;overflow:hidden}
@@ -19,17 +19,6 @@ html,body{margin:0;height:100%;background:#0b3a5c;overflow:hidden}
 <body>
 <div id="slot"></div>
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
-<script src="habitat.js"></script>
-<script>
-(function () {
-  const q = new URLSearchParams(location.search), n = Math.max(0, Math.min(1, +(q.get('neglect') || 0)));
-  Habitat.mount(document.getElementById('slot'));
-  Habitat.setState({
-    reef: { biome: +(q.get('biome') || 0), phase: 4, phases: 5, bleached: false, pts: 100, prev: 0, next: null },
-    cloudiness: n * 0.8, blight: n, overdue: Math.round(n * 10),
-    todayTide: null, breaks: null, lessons: null,
-  });
-})();
-</script>
+<script type="module" src="dist/capture.js"></script>
 </body>
 </html>

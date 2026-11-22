@@ -17,4 +17,4 @@ When: every week, after the visitor (`weekly-visitor` step 1c), or by hand.
 4. Report: plants shipped (plot, habit, gen, rarity, accessory), gates, ledger status, anything quarantined. model-ship publishes the live board (pre-approved; AGENTS.md Publish).
 5. Retro (AGENTS.md "Improve as you go"): one line per problem this run hit, and the fix to this skill, plant-brief, a gate or a tool, made in the same commit.
 
-page-test runtime for plants: `test.html#eco` (lifeboard-setup), a plot of the new species renders all five stages (`LBGarden.plotSVG({species:'<id>', stageName, ...}, 150)`), no console errors.
+page-test runtime for plants: `test.html#eco` (lifeboard-setup), a plot of the new species renders all five stages in the Garden card (garden package `plotSVG`), no console errors.

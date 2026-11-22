@@ -1,7 +1,6 @@
 /* Game: Ecosystem & Garden (each on by default, own switch, synced via checks/ui_prefs). Off: nothing here loads or
    runs (no three.js, no game derivation). The game state is derived from db history (game package deriveGame). */
 import { dateOfInstant } from '../../dates/clock.ts';
-import type { GameState } from '../../game/derive.ts';
 import { validate, type CollectionDoc } from '../../db/schema.ts';
 import { useDb } from '../shared/artifact-runtime.ts';
 import { clock } from '../shared/clock.ts';
@@ -10,11 +9,12 @@ import { ecosystemOn, gameOn } from '../shared/prefs.ts';
 import { render, scheduleRender } from '../shared/redraw.ts';
 import { model, modelRevision, store, viewState } from '../shared/state.ts';
 import { toast } from '../shared/toast.ts';
-import { gardenScript, habitatScript } from './classic-scripts.ts';
+import { deriveGame, type GameState } from '../../game/derive.ts';
+import { loadGameModules, loadedEcosystem, loadedGarden } from './game-modules.ts';
 
 export const gameRun = {
   loading: null as Promise<void> | null,
-  /** garden.js and habitat.js have loaded */
+  /** the garden and ecosystem packages have loaded */
   ready: false,
   game: null as GameState | null,
   /** the model revision and plant pool version the game was derived from */
@@ -29,7 +29,7 @@ export const gameRun = {
   keepsakes: {} as Record<string, CollectionDoc<'keepsakes'>>,
 };
 
-/** True when a URL is a visitor test link or #eco (habitat.js reads the same hooks). */
+/** True when a URL is a visitor test link or #eco (the ecosystem reads the same hooks). */
 export function isGameLink(href: string): boolean {
   try {
     const u = new URL(href), h = u.hash.slice(1);
@@ -37,16 +37,9 @@ export function isGameLink(href: string): boolean {
   } catch { return false; }
 }
 
-export function loadGameScripts(): Promise<void> {
+export function loadGameModulesOnce(): Promise<void> {
   if (gameRun.loading) return gameRun.loading;
-  const one = (src: string): Promise<void> => new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = () => { resolve(); };
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
-  gameRun.loading = Promise.all([one('garden.js'), one('habitat.js')])
+  gameRun.loading = loadGameModules(location.href, render)
     .then(() => { gameRun.ready = true; scheduleRender(); })
     .catch((e: unknown) => { console.warn('[game] load failed', e); gameRun.loading = null; });
   return gameRun.loading;
@@ -54,7 +47,7 @@ export function loadGameScripts(): Promise<void> {
 
 /** The game state for today, recomputed when the model or the plant pool changes; null until it can be derived. */
 export function currentGame(): GameState | null {
-  const garden = gardenScript();
+  const garden = loadedGarden();
   if (!gameRun.ready || !garden || store.state.status !== 'ready') return null;
   const startDoc = store.get('game_state', 'game');
   if (startDoc?.started) gameRun.start = startDoc.started;
@@ -70,7 +63,7 @@ export function currentGame(): GameState | null {
   const breakRules = store.get('checks', 'break_rules')?.value as { skipCost?: unknown } | null | undefined;
   const skipCost = breakRules && breakRules.skipCost != null ? Number(breakRules.skipCost) : undefined;
   try {
-    gameRun.game = garden.deriveGame({ today: clock.today, tasks, habits, sessions, start: gameRun.start, breakSkips, ...(skipCost === undefined ? {} : { skipCost }), lessonDates, plantPool: pool, weekStart: clock.weekStart });
+    gameRun.game = deriveGame({ today: clock.today, tasks, habits, sessions, start: gameRun.start, breakSkips, ...(skipCost === undefined ? {} : { skipCost }), lessonDates, plantPool: pool, weekStart: clock.weekStart });
   } catch (e) { console.warn('[game] derive', e); gameRun.game = null; }
   gameRun.derivedFrom = { revision: modelRevision.count, poolVersion };
   return gameRun.game;
@@ -123,13 +116,13 @@ export async function saveKeepsake(id: string, kind: string, title: string, note
 /** After each render: mount the Ecosystem card, hand it the state, record visitors and the status for Claude's weekly run. */
 export function afterRenderGame(): void {
   if (!gameOn() || !gameRun.ready) return;
-  const habitat = habitatScript();
-  if (!ecosystemOn() || !habitat) { const g0 = currentGame(); if (g0) writeGameStatus(g0); return; }
+  const ecosystem = loadedEcosystem();
+  if (!ecosystemOn() || !ecosystem) { const g0 = currentGame(); if (g0) writeGameStatus(g0); return; }
   const slot = document.querySelector('.eco-slot');
-  if (slot) habitat.mount(slot);
+  if (slot) ecosystem.mount(slot);
   const g = currentGame();
-  if (habitat.setWeather) habitat.setWeather(model.conditions?.weather ? { condition: model.conditions.weather['condition'], at: model.conditions.fetchedAt } : null);
-  if (g) { habitat.setState(g); void recordVisitor(g); writeGameStatus(g); }
+  ecosystem.setWeather(model.conditions?.weather ? { condition: model.conditions.weather['condition'], at: model.conditions.fetchedAt } : null);
+  if (g) { ecosystem.setState(g); void recordVisitor(g); writeGameStatus(g); }
 }
 
 /* checks/game_status: the ecosystem's biome/phase for Claude's weekly run (weekly-visitor reads it to know when a
@@ -151,8 +144,8 @@ function writeGameStatus(g: GameState): void {
 
 /** Drops food in the Ecosystem (a task done, a lesson answered). */
 export function feedEcosystem(): void {
-  const habitat = habitatScript();
-  if (ecosystemOn() && habitat) habitat.feed(6);
+  const ecosystem = loadedEcosystem();
+  if (ecosystemOn() && ecosystem) ecosystem.feed(6);
 }
 /** A lesson card was answered: drops food, and logs logs kind 'lesson' once a day (days without one make the creatures hide). */
 export function lessonAnswered(): void {
@@ -164,7 +157,7 @@ export function lessonAnswered(): void {
    Talks to the db directly so the collection stays out of the store's always-on listeners. */
 async function recordVisitor(g: GameState): Promise<void> {
   if (!g.visitor || gameRun.metSeenWeek === g.visitorWeek) return;
-  const who = habitatScript()?.visitor;
+  const who = loadedEcosystem()?.visitor;
   if (!who) return;
   gameRun.metSeenWeek = g.visitorWeek;
   try {

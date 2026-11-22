@@ -78,7 +78,8 @@ module.exports = {
     // Layering controls WHICH packages may depend on which:
     //   dates <- recurrence <- tasks/habits <- game
     //   db is independent of those.
-    //   ui sits on top: it may import every domain package and db; only src/main.ts imports ui.
+    //   ecosystem, garden: render game state; may import domain packages, not ui or db.
+//   ui sits on top: it may import every domain package, ecosystem, garden and db; only src/main.ts imports ui.
     //   No domain package imports ui, db or the DOM (DOM globals: eslint.config.mjs).
     {
       name: "domain-not-on-ui-or-db",
@@ -86,6 +87,13 @@ module.exports = {
       severity: "error",
       from: { path: `^${R}/(dates|recurrence|tasks|habits|game)/` },
       to: { path: `^${R}/(ui|ecosystem|garden|db)/` },
+    },
+    {
+      name: "scene-packages-below-ui-and-db",
+      comment: "ecosystem and garden render game state: they may import domain packages, never ui or db (ui imports them).",
+      severity: "error",
+      from: { path: `^${R}/(ecosystem|garden)/` },
+      to: { path: `^${R}/(ui|db)/` },
     },
     {
       name: "ui-is-the-top-layer",

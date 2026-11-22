@@ -3,7 +3,7 @@
    Fill: 0..floor fills the bottom half, floor..target the top half. */
 import type { HabitStats } from '../../habits/index.ts';
 import { currentGame } from '../game/game.ts';
-import { gardenScript } from '../game/classic-scripts.ts';
+import { loadedGarden } from '../game/game-modules.ts';
 import type { BoardHabit } from '../board-model.ts';
 import { clock, firstDayOfHabitWeek, habitWeekOf, lastDayOfHabitWeek } from '../shared/clock.ts';
 import { escapeHtml, plural } from '../shared/format.ts';
@@ -89,19 +89,19 @@ export function habitRings(hs: HabitTile[], done: number, total: number, daysLef
 /** Garden: the habits card as a garden. One plot per habit; tap the plant (or +) to log, − to undo.
     '' until the game state is ready (Today falls back to the rings card). */
 export function gardenHabits(hs: HabitTile[], done: number, total: number, daysLeft: number): string {
-  const garden = gardenScript();
+  const garden = loadedGarden();
   if (!gardenOn() || !hs.length || !garden) return '';
   const g = currentGame();
   if (!g) return '';
   const plotByKey = new Map(g.plots.map((p) => [p.key, p])), pulse = viewState.habitPulse;
-  const label = (name: string): string => (garden.LABEL[name] ?? '').toLowerCase();
+  const label = (name: string): string => (garden.LOOK_LABELS[name] ?? '').toLowerCase();
   const firstDay = firstDayOfHabitWeek(), lastDay = lastDayOfHabitWeek();
   const tile = ({ h, st, met, low }: HabitTile): string => {
     let anim = '';
     if (pulse && !pulse.used && pulse.id === h.id && pulse.week === st.week) { pulse.used = true; anim = pulse.d > 0 ? ' add' : ' sub'; }
     const pl = plotByKey.get(h.key);
     if (!pl) return '';
-    const vis = garden.visual(pl);
+    const vis = garden.plotLook(pl);
     const hot = anim && pulse ? (pulse.d > 0 ? st.week - 1 : st.week) : -1, p = habitPips(h, st, hot);
     const nextRarity = pl.showing === 'bloom' && pl.upcoming ? pl.upcoming.rarity : 'common';
     const status = pl.waiting ? `Seed · goes in ${firstDay}`
@@ -124,7 +124,7 @@ export function gardenHabits(hs: HabitTile[], done: number, total: number, daysL
   const lowN = hs.filter((x) => x.low).length;
   const msg = g.season.opens ? 'Sessions this week still count for streaks.' : hs.every((x) => x.met) ? 'Perfect week. Every plant is drinking its fill.' : hs.every((x) => x.st.week >= x.h.floor) ? `Every plant grows on ${firstDay}. The rest is bonus.`
     : lowN ? `${plural(lowN, 'plant')} need${lowN === 1 ? 's' : ''} water in the next ${plural(daysLeft, 'day')}.` : `Tap a plant to log a session. Meet the floor and it grows a stage on ${firstDay}.`;
-  const season = g.season.opens ? `Garden opens Mon ${garden.fmt(g.season.opens)}` : g.season.label;
+  const season = g.season.opens ? `Garden opens Mon ${garden.formatShortDate(g.season.opens)}` : g.season.label;
   return `<section class="sec z-now habitsec">${sectionHeader('Habits', goLink('History', 'grow/habits'), 2, `${String(done)}/${String(total)}`)}
-    <div class="card gcard"><p class="gwh"><span>${escapeHtml(season)}</span>${g.season.opens ? '' : `<span class="muted">ends ${garden.fmt(g.season.ends)}</span>`}</p>${tiles}</div><p class="wmsg">${escapeHtml(lastWeekLine() + msg)}</p></section>`;
+    <div class="card gcard"><p class="gwh"><span>${escapeHtml(season)}</span>${g.season.opens ? '' : `<span class="muted">ends ${garden.formatShortDate(g.season.ends)}</span>`}</p>${tiles}</div><p class="wmsg">${escapeHtml(lastWeekLine() + msg)}</p></section>`;
 }

@@ -3,8 +3,7 @@ import { textOf } from './shared/format.ts';
 import { listenForEvents } from './app/events.ts';
 import { readHash } from './app/navigation.ts';
 import { registerRenderer } from './app/render.ts';
-import { publishGameCallbacks } from './game/classic-scripts.ts';
-import { feedEcosystem, gameRun, isGameLink, lessonAnswered, loadGameScripts } from './game/game.ts';
+import { isGameLink, loadGameModulesOnce } from './game/game.ts';
 import { startCalendar } from './shared/calendar-watch.ts';
 import { clock } from './shared/clock.ts';
 import { recordCommitments, seedStarterTasks, spawnMissingSuccessors } from './shared/commitments.ts';
@@ -35,11 +34,10 @@ function listenForBreakEnds(): void {
 export function bootBoard(): void {
   registerRenderer();
   listenForEvents();
-  publishGameCallbacks({ feed: feedEcosystem, lessonDone: lessonAnswered, game: () => gameRun.game, render }, location.href);
   try { const theme = localStorage.getItem('lb-theme'); if (theme === 'dark' || theme === 'light') document.documentElement.dataset['theme'] = theme; } catch { /* ignore */ }
   ecosystemLink.forced = isGameLink(location.href);
   readHash();
-  if (gameOn()) void loadGameScripts();
+  if (gameOn()) void loadGameModulesOnce();
   store.start(() => {
     refreshBoard();
     if (store.state.status === 'ready') { seedStarterTasks(); spawnMissingSuccessors(); recordCommitments(); }

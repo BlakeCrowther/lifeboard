@@ -5,7 +5,7 @@ import type { LessonAction } from '../../game/index.ts';
 import { BUY_LIST_TAGS } from '../../tasks/icons.ts';
 import { logEvent, logHabit, startBreakTimer, unlogHabit } from '../actions/habit-actions.ts';
 import { adjustSuggestion, carryAll, copyText, moveTask, sendToDuet, snooze, toggleTask } from '../actions/task-actions.ts';
-import { loadGameScripts, saveKeepsake } from '../game/game.ts';
+import { loadGameModulesOnce, saveKeepsake } from '../game/game.ts';
 import { answerCurrentLesson, checkLessonAnswer, closeLessons, lessonRun, nextLesson, openLessons, pickLessonChoice } from '../game/lessons.ts';
 import { guessAisle } from '../list-kinds.ts';
 import { isBuyListTag, isValidException } from '../board-model.ts';
@@ -54,8 +54,8 @@ function onClick(e: MouseEvent): void {
     case 'claudecopy': { const t = task(); if (t) void copyText(taskPrompt(t, false)).then((ok) => { toast(ok ? 'Task prompt copied. Paste it into a new chat (⌘N).' : 'Couldn’t copy the prompt here.'); }); break; }
     case 'menu': setPopover(!popoverOpen() || !popoverOpenedBy(b), b); break;
     case 'set-theme': setTheme(val); saveBoardPrefs({ theme: val }); render(); break;
-    case 'set-eco': devicePrefs.eco = val === 'on'; ecosystemLink.forced = false; saveDevicePrefs(); saveBoardPrefs({ eco: devicePrefs.eco }); if (gameOn()) void loadGameScripts(); render(); break;
-    case 'set-garden': devicePrefs.garden = val === 'on'; saveDevicePrefs(); saveBoardPrefs({ garden: devicePrefs.garden }); if (gameOn()) void loadGameScripts(); render(); break;
+    case 'set-eco': devicePrefs.eco = val === 'on'; ecosystemLink.forced = false; saveDevicePrefs(); saveBoardPrefs({ eco: devicePrefs.eco }); if (gameOn()) void loadGameModulesOnce(); render(); break;
+    case 'set-garden': devicePrefs.garden = val === 'on'; saveDevicePrefs(); saveBoardPrefs({ garden: devicePrefs.garden }); if (gameOn()) void loadGameModulesOnce(); render(); break;
     case 'fold': setFoldOpen(b.dataset['key'] ?? '', b.getAttribute('aria-expanded') !== 'true'); render(); break;
     case 'fab': if (store.state.status === 'ready') openSheet(fabConfig().sheet); break;
     case 'new-habit': openSheet({ kind: 'habit' }); break;

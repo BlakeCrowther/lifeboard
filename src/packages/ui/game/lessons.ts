@@ -1,6 +1,6 @@
 /* Lessons (SPEC.md Lessons): sources + lessons are written by the lesson-make skill; the deck writes each lesson's
    level/due/state and one lesson_answers doc per action. Listened to only with the Ecosystem on, straight from the db
-   (kept out of the store). Today shows a Lessons card above the habitat while lessons are due; answering happens inside
+   (kept out of the store). Today shows a Lessons card above the Ecosystem while lessons are due; answering happens inside
    the card so the scene (creatures feeding) stays in view. */
 import { textOf } from '../shared/format.ts';
 import { dateOfInstant, timeZone } from '../../dates/clock.ts';
@@ -88,7 +88,7 @@ export function lessonCard(): string {
   if (lessonRun.loaded !== 3) return '';
   const open = !!lessonRun.deck, n = lessonRun.deck ? lessonRun.deck.length - lessonRun.position : todaysDeck().length;
   if (!open && !n) return '';
-  const status = `<span class="les-hs">${open ? 'Feeding the habitat below' : `${plural(n, 'card')} ready · each one feeds the habitat`}</span>`;
+  const status = `<span class="les-hs">${open ? 'Feeding the ecosystem below' : `${plural(n, 'card')} ready · each one feeds the ecosystem`}</span>`;
   const head = open
     ? `<div class="les-h">${icon('book', 18)}<h3 class="les-t">Lessons</h3>${status}<button class="km-x les-x" data-act="les-close" aria-label="Close lessons"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>`
     : `<button class="les-h les-row" data-act="les-open" aria-label="Start lessons: ${plural(n, 'card')} ready">${icon('book', 18)}<span class="les-t">Lessons</span><span class="ct num">${String(n)}</span>${status}<span class="les-go" aria-hidden="true">Start${icon('chevR', 16)}</span></button>`;

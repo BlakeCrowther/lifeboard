@@ -26,9 +26,9 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 - **Age**: days since a task was first committed. Pushing it later never resets it.
 - **Overdue / Slipped / Moved / Done late**: what a missed task became (SPEC.md, Ring %).
 
-## Ecosystem (habitat in code)
+## Ecosystem
 
-- **Ecosystem**: the scene the ring grows. Called the habitat in code (`habitat.js`) so it doesn't read like "habit".
+- **Ecosystem**: the scene the ring grows (`src/packages/ecosystem`). One name in code, files, docs and UI; not "habitat" (it reads like "habit").
 - **Life points**: what a day's ring earns; they move the current biome through its phases.
 - **Biome**: one stage of the Ecosystem (e.g. a seagrass lagoon), listed in `models/biomes.json`. Each has **phases**; finishing the last saves a **diorama** to the Collection.
 - **Visitor** (met ones in `visitors_met`): a creature that arrives in the Ecosystem: one a week, plus rare and exotic ones for full-ring weeks and for finishing old tasks. **Rarity**: common, rare, exotic.
@@ -74,4 +74,3 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 - **List kind** (`ListKind`, `listKindsFor`): one list on the Lists tab (built-in, or one per extra `list_key`).
 - **Run write** (`runWrite`): every db write from the UI; shows the toast with Undo and reports failures.
 - **Lesson run** (`lessonRun`): the open lesson deck and the current card.
-- **Classic-script bridge** (`src/classic-script-bridge.ts`): the globals garden.js and habitat.js still read until step 3b turns them into packages.

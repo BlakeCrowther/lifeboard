@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-/* Watch a creature's behaviour over time in the real habitat (capture.html in headless Chrome, which runs frames at full speed;
+/* Watch a creature's behaviour over time in the real Ecosystem (capture.html in headless Chrome, which runs frames at full speed;
    a hidden preview pane throttles them), e.g. the rest cycle (models/creature/CONTRACT.md "Resting").
-   Usage: node models/shared/tools/watch_creatures.mjs <id> [--secs 110] [--query 'rest=rock_cling&perch=1'] [--at 5:'Habitat.feed(4)']
+   Usage: node models/shared/tools/watch_creatures.mjs <id> [--secs 110] [--query 'rest=rock_cling&perch=1'] [--at 5:'Ecosystem.feed(4)']
             [--expect approach,settle,perched,leave] [--out <dir>]
    Prints the state log (one line per change across all copies) and the fastest turn seen (deg/s); saves one screenshot
    per state in --expect to --out (default models/out/<id>/qa/watch/). Exit 0 ok, 1 page error or an --expect state never
    reached, 2 usage. Needs Google Chrome and python3 (static server); three.js loads from jsdelivr. Synthetic game state. */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -14,6 +14,8 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const MODELS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..'), REPO = path.dirname(MODELS);
+/* capture.html runs dist/capture.js: build it so the page matches src/ */
+if (spawnSync('node', ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', 'tools/build.ts'], { cwd: REPO, stdio: 'ignore' }).status !== 0) { console.error('build failed: run pnpm build'); process.exit(1); }
 const playwrightChromium = () => { try { const f = createRequire(path.join(REPO, 'package.json'))('playwright').chromium.executablePath(); return fs.existsSync(f) ? f : null; } catch { return null; } };
 const CHROME = process.env.CHROME || playwrightChromium() || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const argv = process.argv.slice(2), id = argv[0], opt = (k, d) => { const i = argv.indexOf(k); return i > 0 ? argv[i + 1] : d; };
@@ -41,14 +43,14 @@ const js = async (e) => (await cdp('Runtime.evaluate', { expression: e, returnBy
 await cdp('Runtime.enable'); await cdp('Page.enable');
 await cdp('Emulation.setDeviceMetricsOverride', { width: 960, height: 720, deviceScaleFactor: 1, mobile: false });
 await cdp('Page.navigate', { url: `http://127.0.0.1:${port}/capture.html?visitor=${encodeURIComponent(id)}${query ? '&' + query : ''}` });
-for (let i = 0; i < 160; i++) { await sleep(250); if (await js('!!(window.Habitat && Habitat.debug() && Habitat.debug().creatures.length)')) break; }
-if (!(await js('!!(window.Habitat && Habitat.debug() && Habitat.debug().creatures.length)'))) fail(`no creature ${id} in the scene${errors.length ? '; ' + errors[0] : ''}`);
+for (let i = 0; i < 160; i++) { await sleep(250); if (await js('!!(window.Ecosystem && Ecosystem.debug() && Ecosystem.debug().creatures.length)')) break; }
+if (!(await js('!!(window.Ecosystem && Ecosystem.debug() && Ecosystem.debug().creatures.length)'))) fail(`no creature ${id} in the scene${errors.length ? '; ' + errors[0] : ''}`);
 
 const t0 = Date.now(), seen = new Set(), log = []; let prev = null, last = null, maxTurn = 0, fired = !atExpr;
 while (Date.now() - t0 < secs * 1000) {
   const now = (Date.now() - t0) / 1000;
   if (!fired && now >= atS) { fired = true; await js(atExpr); log.push(`${now.toFixed(1)}s  ran ${atExpr}`); }
-  const cs = (await js('Habitat.debug().creatures')) || [], st = cs.map((c) => c.state).join(','), c = cs[0];
+  const cs = (await js('Ecosystem.debug().creatures')) || [], st = cs.map((c) => c.state).join(','), c = cs[0];
   if (st !== prev) { log.push(`${now.toFixed(1)}s  ${st}`); prev = st; }
   if (last && c) { const d = Math.abs(c.quat.reduce((s, v, i) => s + v * last.q[i], 0)); maxTurn = Math.max(maxTurn, ((2 * Math.acos(Math.min(1, d)) * 180) / Math.PI) / ((Date.now() - last.t) / 1000)); }
   last = c && { q: c.quat, t: Date.now() };
