@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:82b445eaf80db9ed7413b1a440a0da4d96337bf696bb781615b00866ed34083e",
+  "claims": [
+    {
+      "id": "claim_03c1365423eb48d1999b3dd1ea157960",
+      "statement": "Lifeboard bundles strict TypeScript in src/ with esbuild into dist/ and keeps user data in the artifact db rather than the repo.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L1-L5",
+          "version": "repo-lines-v1:sha256:4989398a2ac5f391839a4adb97c62b78eb7470c1210f9e8bb8dfad097ffe50da:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTk0ZGIwNzc2YTZmNWE1MmY4YzFjMTk4ZDAwZTdjMTQ3Y2ZiNDI3ZjhkMWYwY2E1MjA1NjYwNzlkOWZiNDQ4MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDE3NmUzODI2N2MxYzczMjU1MGVlMzcyYzJiOTZjZDdjZGEzMGJiZDQ1ZjE4ZGY4MzBhMDJiZGE3MzZhZjMxYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWU0ODVjN2E1MGI0MmU5MGJjNGYxZTU2NjMzZWVmZDhmMmY3ZjAwNjU5OGI2YmU0OTFjYzY2NDlmNGU5M2QwNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_37819429a8794500b6354acb92a4219c",
+      "statement": "Any game mechanic change must update SPEC.md and RULES together or pnpm spec-check fails.",
+      "evidence": [
+        {
+          "resource": "repo://tools/spec-check.ts#L1-L42",
+          "version": "repo-lines-v1:sha256:ca9229801bc52d216f38cf2d3d4fda8b4a58134bf3af5fc42f712829650ae12d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmYmE4YTMyZDk2ZmU5MTQzNTA5ZTIyODhhZGNlNmMyYjA0MWY1NGRiNzM0ZTkyZGI3OTQxMzIwOTBiOGU1YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlOWZlMTNiZjU5YmE0Mjc3MzViZjQ2NzI4MTA3Njg5M2UxY2NiN2U1YjdjNDM2NWVjZjEyNzJjYjQ3YmE5YWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T15:04:47.972Z"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:37d6487288a58218e4687b2d3e959c41d982b6fbd2b1e13c4d2507cc53345431",
+  "claims": [
+    {
+      "id": "claim_9369cbe6f205484cb1d8c536dd45c745",
+      "statement": "A model ships only after code gates (spec, shape, motion, export), a judge-panel and, for creatures, a page-test all pass; failed attempts are quarantined.",
+      "evidence": [
+        {
+          "resource": "repo://models/README.md#L1-L5",
+          "version": "repo-lines-v1:sha256:750e4bdaea7f37bf692c8584405bcba81b4f0cbff8575904e3bc958a5a891a7d:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTI4YTk5ZWE5MzdjY2NiNzhiYmY2ZWEyM2FmMmRlNDhiYWQ5ZmFlZDE1YTNlZmE1MzRlN2MyYjk1ZGU2NmRiZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmRjYzg4YzRmZTgxNTk0YjRkYjMxMTRmMjVjZGFlMTc5MmRhZGZkNGUxZmFlMjZmYWQxZWIwYTk5MDkwNmY0NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODQzYjFkZDQ2NmQ5ZTk0MjhkMTFhNmYwM2FiNTQzMTU2NWRkZGFjZmE3NDIxZWIxYzVkNzM0YzE5MGE4ZWUyMSJ9"
+        },
+        {
+          "resource": "repo://models/README.md#L38-L52",
+          "version": "repo-lines-v1:sha256:6d3aee4b92b3b529a5b5882d62451037fd3744c2274f69fee42517bb6677036a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkOTJiYzllY2MzYmI4ZDU3MzIxZjIxOGJmNDNiOTI2YTg3ODFjZjllYmY4MzlhOGZiNDI0YjkyYmMzZDM2ZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmZDcxMDUzNTU3YzUwY2ExZmEyNWVmNGM5OGI2MDk3ODFkNWM2Y2VmZTJmZDQwNzgyODZmZDAyN2VmY2U4NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiMjhlMDQ1NjM2NWQzZDZjMzk0NTZhYTkzZGQ5MGI4ZGM2YTA1OTFlZGI0OWFjYjg0MmFjMzdiNTczOGE5M2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI4MDM3ZjdmYzk4M2MyOGQxZDg3MjhhZDIzMmViNTM4MzlkYzE4NzdjNjc5ZTIwODNhYzA4NjU5NzE2YjM1MTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_877a22692bf74674a6a5b29f9b9a454e",
+      "statement": "The judge pass rule for each kind lives only in its qa_calibration.json pass_rule and is applied only by judge_verdict.py; check_judge_rule.py fails if docs restate rule numbers.",
+      "evidence": [
+        {
+          "resource": "repo://models/README.md#L50-L52",
+          "version": "repo-lines-v1:sha256:cdc798cac9301a2b35d80a01c5e51c1b822b57f7a3917979abd7b99d57c21d1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmZkNzEwNTM1NTdjNTBjYTFmYTI1ZWY0Yzk4YjYwOTc4MWQ1YzZjZWZlMmZkNDA3ODI4NmZkMDI3ZWZjZTg2YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMTgwMDBlMTIwNjZkN2U4YmY4NTIzNGY4Mjg4OTFhM2U0MjBmMDFjZjI2ZWQ0OTk0OGFiMjAwNTBkMjAwOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjgwMzdmN2ZjOTgzYzI4ZDFkODcyOGFkMjMyZWI1MzgzOWRjMTg3N2M2NzllMjA4M2FjMDg2NTk3MTZiMzUxOSJ9"
+        },
+        {
+          "resource": "repo://models/README.md#L58-L60",
+          "version": "repo-lines-v1:sha256:f4e5c9e2322b6f6431c3cacad7589431273a1c03ad290079e01ae0ab0d96ca16:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmVjYjg4ZDI0YTE5YzJmMTJlMWMyYzFlNWQ5NzBiYjA4MDk0ZjRkMTgwOGNiN2MzN2Y3Y2FhMTMzMDI1Y2M1NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjE2NzI2NTEwZTVhYzhkMzMzYzJlZjkzNGM4N2QzMjcxYTEzMDAzY2Y0ZDk1MTllNWY5MWU0MTYxZTQ3YTAwNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2YwNzQ0NjdiZWQ4YTYzMjA1MmVjMDYwNWQ4ZmEzNDg5M2RkYTUzNWU2NWUxMmVhNWQxZjg1OGVhYWVkZTkwYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWRjN2JhZTY2MzFiZTkxZTdiYjFhYjA4NGVkODBkYWIwZThmZDhlNzNhYjhlOGVkYWI2MDJjZGMwYWE4NzkxNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9a8e58f745a14fa39b9a503c326c2492",
+      "statement": "build.py dispatches on the spec's kind to load models/<kind>/archetypes/<archetype>.py, and the shared structural QA is followed by the kind's own qa.py.",
+      "evidence": [
+        {
+          "resource": "repo://models/README.md#L28-L34",
+          "version": "repo-lines-v1:sha256:849c643e9c8f7b77315c9b1f814f72514df32bb8d5b99c95f90a4ddab71e86bf:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDA4YjBkY2ZkYjllY2IyNmE3MTNmZTQyM2Y0ZGE5N2I3M2UyMjU3MmE1YjMwM2FkNzcxMmMwYzYzYzM2YWM2NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTdiMTdmZDY2ZDc3MTc4ZTcwZDQzYWMzOGRmNzZhOTJlYzVhZGIxNTJmZjFkMWE4ZDljN2MwYjEzMmNiNTA5YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGE5OTM2NmQ3ZmIxYmRjMGQ3ZTg5YTBiMjRmNTU5OGQyZDhhNmI3ZTNhMmFlZTU5ZGI1MjA5OWQ5ZGRjMWY2OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWIyOGUwNDU2MzY1ZDNkNmMzOTQ1NmFhOTNkZDkwYjhkYzZhMDU5MWVkYjQ5YWNiODQyYWMzN2I1NzM4YTkzZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_709672b03ce54ffc966e78060399490a",
+      "statement": "The publish set used by live-diff includes models/roster.json, models/biomes.json and every roster model's JS and spec file.",
+      "evidence": [
+        {
+          "resource": "repo://tools/live-diff.ts#L16-L23",
+          "version": "repo-lines-v1:sha256:4c024a9d8eb95cf5550d329764d1a701375aa3c52438c855e0a5fd53ef9c6b33:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDdlZGQyODliNTVkYmM2ZDI2NjNkYjk2M2U4ZGJjOGQ2NjY0YmM5ZDlkNGI3MmY0NWFmYmEzOWQyMDg2ZGY1NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGM3MDQwMjc2YzdlNTgyNTNkYjBmM2RjYThmM2EwMTM1NmJkNWY5MTc2NGRmMWM5OWRlMjQ5OWQ0ZTJhNWFjYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjViZjdmNDQxMjY5Yjk2ZWUxYTEzNjEyNTJjODA5Y2RhNjk1NmM0OWYzZTU2ZmM4Y2JlMDk5ZjFkMjc1MmVhOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2f16077fba4046d7b47a90d498d35080",
+      "statement": "pnpm verify fails if the pipeline map's data block is stale, and pipeline changes must update models/pipeline.html in the same commit.",
+      "evidence": [
+        {
+          "resource": "repo://models/README.md#L54-L56",
+          "version": "repo-lines-v1:sha256:c5737f11e8e5449ed0be3200c226f87edfe5627ef3c197890f7aaa1d25733d0a:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGQ3YmNmNzIyYmYyYzRjNDg4ZWQ3MWRlZWZjZmNjZjhjMmEzOWI1MzY0ZjQ5MzI5Y2Y5OTkzODljNDg3YWRjOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjdkM2VhOTZlNTlkOWU3MzlkZjg1ODM2ZGFmNTRkMjY4ZWZlNGRhMjM4ZDZmMWNhOTk2MGI4YTliOGNkNzQwYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGIwMzE3ZDA3MDE3N2E0ZjZmZmU0ZGE1OGNjNDA2ZmVmOWZkODM2Y2RhYThlOWJhNWFkM2YxZmJlNDM4ZTE0ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTdjMDNkNTBhMjNjMDdkZTQzYjM3N2U1MDA1YjQ2OWEwZDEwOTIzNDJiMjJjNDhhNTY0ODcyYTUyMWYyZDJhMCJ9"
+        },
+        {
+          "resource": "repo://tools/verify.sh#L30-L31",
+          "version": "repo-lines-v1:sha256:028b9307b8512db912af0878fa74e85f991576e9278443f183238d07508b6617:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWM0NjZlNzY1NTQzMjllZjBlZjJlYjQ3YWZjMWI4NzY3MGY2MWM1YmI2YmQzODkyOTQyYWI0Zjc1YjY1YzE4NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTJlZDBiZDQ5ZWM1MzM3ZDlmZWYyYWM0OGUzZWI1ZDk5M2M0ZWRkNDlhZmYwYmFhZTMzOWY3ZWUzZDljYjZmNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDlhOTM3YzE4NzI4ODIxZDZkNmE1OWZmMTY0YTlkNWMwMDE3NDVhMWY4ZjZkMmQ0ZmE5OWQ5ODU2Y2ZhNjQ2YSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T15:04:47.972Z"
+  }
+}

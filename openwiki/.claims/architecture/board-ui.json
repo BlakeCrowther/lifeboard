@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a449c5f5584fd68ac26ce42b87fdb345927ab2979c253150f4fd3e32680d79d7",
+  "claims": [
+    {
+      "id": "claim_333b2d1408ac449b9bd039788ac0275e",
+      "statement": "Scheduled redraws are deferred while the user is typing in an input or dragging, so db changes arriving from other devices do not wipe edits; a later catchUp draws them.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/app/render.ts#L145-L159",
+          "version": "repo-lines-v1:sha256:8570d2100b7181287a0cc2aa3d801448be959a186bf4710321b0fdba10ba152d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhZGNlYTk2ZDExZWJlZmU3ZWM3ZjM5MDlhM2JkM2NmMTcyMzNmZjIyZjE3YTFhZGIyNDNlZTQyZTI2NDIxZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMwYjRhZGUxMmExMjY0MjA0NjFlOGIyMDA2NDM1NDE5ZDlhZTliMDIzMjZkYjJjMWQwYjYxODk2ZmFmMDI3ZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/packages/ui/shared/redraw.ts#L18-L26",
+          "version": "repo-lines-v1:sha256:d56ebd9ac27ffa8568c05734a2a81090a5153eae51257d03e86fa56e2038a564:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzU4NWYwNzZmYjdmZDI3MzVkMjRmYTUzODlkZTdmN2UyNzgxYzM5M2Y4NTUxYjE1MDQxMjRkNWZlYTZjNzVmMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjdiODNmOGMwMWYwYjU1ODIzY2M4N2UzNzg2OTI5MTgxZGZiMTM0MTdiY2RjMDdlMjdlN2E1YTRiMDA4MmNhZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDE2ZWRlNGFkZGNlOTA2ZWIwOTQ0NTk5MzliZDY5MjI4YjE5Y2JiNDk3ZGU2ODQzMzZjZTNmZTg0MGU4NmVlYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDllZDM0NTZhMmU4NWFhMGUxNzNhNGU5ZTQ3MzgwNTEwZjFjZmU5ZTdmMDg1ZTA3OWU4ZGUzZGU2YmZhN2I0OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ea8a37829c8a43488ea997ff67d83808",
+      "statement": "Until the store status is ready, the board shows a status card (loading, slow, nodb, error) instead of data.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/app/render.ts#L72-L78",
+          "version": "repo-lines-v1:sha256:ba9fc0c333fad7f9541ecf918b3ef71b4b060947bac911a9788eeb4d3a5422ba:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDMyOTk2MTQ0OTI0NzIwNjMzOTBjOTc1MmViMjY4ZDEyOWNjNzI0ZWQ0ZGFkZWE3ODhmOTg5NjIzNWI1ZTdlOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWJkYzBhNzRhZTkzNjVlNDM3NmUxNmVhNTQzNDYzNzk4OWQ3NDU5YTg5MDkxYmU4YmU0YzY5YWY2YmJhMmRiMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjFhYjRjZjc0YzIwNzY3ZWQ4ZDA2Y2Q5ZGVjZGM4OGEwM2Q4YmU0ZWRkNWRkMWVkMGM5Y2FlNGFmOGYxNjQzZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_64342b8da9da4629a2cbae5f446a0aa3",
+      "statement": "Game state is derived only when the garden chunk is loaded and the store is ready, cached until the model revision, plant pool version or day changes, and a derive error yields null.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/game/game.ts#L45-L70",
+          "version": "repo-lines-v1:sha256:edfab9ab56f45a0dba04490572779fb97c6f14f458e554aba51b29c27749acf9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjMGQ0OWFhMmExZTk1N2MzYThlOGQ3NTc3NTdhNWMwZjI1ZTQwM2EwMGMwYTU2ZmZjNTlhMjMxZTIyZDM2Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1NmM1MjEwMDAxYjA1M2JmZDUwYTU0NWE4ZjEyZjg1OWQ0NTkxN2U4M2ZiNDgyNGNhZmVjZDBkOTQ4NjY1YTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2NDcyNTZiMzE2MTRhYzc2YWVjM2JiOGUxOWM4NDNkODlmNTVlNDI0NzExZTllNjViZGVhNGVjYWFkMjI5MmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b92be11492149c5b46ab4bf54847904",
+      "statement": "bootBoard starts the store and, once ready, seeds starter tasks, spawns missing recurring successors and records commitments before scheduling a render.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/boot.ts#L33-L49",
+          "version": "repo-lines-v1:sha256:08870053dc8173f4c4b08137851736a9f815025026bb94ca5df34bdadcd80cd8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU2YjQxZTE4M2YxYTBmYzk1OGIxZGFmMDUxY2QxY2I4NzExZDY3NTg0NTQxZmI0NTU4MGJlY2Q2OTI4MmEwZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T15:04:47.972Z"
+  }
+}

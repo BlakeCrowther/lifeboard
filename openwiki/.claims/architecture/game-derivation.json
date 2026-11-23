@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:3029c8400342c81b73e582874292e427f7e1926be42cfc0fa9c8a0b9ec61ab2c",
+  "claims": [
+    {
+      "id": "claim_7e67956880a04779a9fb9d943e1b9afa",
+      "statement": "Game state is derived by pure code from db history on each load and is never stored; the same deriveGame is shared by the page and node tools.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/game/lib/derive-game.ts#L1-L13",
+          "version": "repo-lines-v1:sha256:0bc5bc4d4ef4cf62a06501fec41a2d4cabec69de115ea8c5e07ed6ac81998569:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5MzMyZDQ5ODdjNGNkNzM1MzQwNmU1ZWYxYmMwZWQ2YmIyMzQ0YjQ2OWU3ZDAyMzVkOGUwN2ZlYTViOWZmMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4OTQ3ZTFlZDU2MDZmYWExMjcyMjMyZWNjMDk0NGE3MjM3ZjJjZjA5ZjU5YmMyN2JkMzZjOTE0YTlmMWIwYWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmNTBlYTA0YTFiMjY0NzU2MWEyOWViN2NiYmIzNjY5MzJkNmUzZGE3MWQ5MDEyMjQ5YzRkOTAyOTI3ZWIzNGYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_374dfc807c624311830043ae26ae6174",
+      "statement": "A skipped break costs RULES.breaks.skipCost reef points on its day but never drops below the current phase floor.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/game/lib/derive-game.ts#L167-L192",
+          "version": "repo-lines-v1:sha256:ac9349b03528ed09ca89cf4156a7ee8d6572a15c3db5cfcb82b5bb7d0065b7a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyYzNkZTg2MWNjNTk5MzIzNDI2NDE5NTA5MjU3NWVlNjE2MzIzODExZTM3ZjdmMWJjMjUzMmJlZDYxNGU5MTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0NTJmMzFmYTc2N2M2NzJiMDg4M2M1NTk0M2ExMDVjNTk5MzA0YTY1NDBmYTBlZmYyMTBhY2IyNDRmNTU5NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlYTgxNmI1OGFjNzM4YWE3NGVlMzEzMGI3YTk5NjA0MzllMTk0NzI5YzFjY2EyYzhiNGI2NTc2MWIzNjhkYWMifQ"
+        },
+        {
+          "resource": "repo://src/packages/game/lib/rules.ts#L28-L28",
+          "version": "repo-lines-v1:sha256:8f6006dc22d5fd41b09f2cec67095ade01230fa098344d20238600b06cea4c0b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGY2MDA2ZGMyMmQ1ZmQ0MWIwOWYyY2VjNjcwOTVhZGUwMTIzMGZhMDk4MzQ0ZDIwMjM4NjAwYjA2Y2VhNGMwYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGY2MDA2ZGMyMmQ1ZmQ0MWIwOWYyY2VjNjcwOTVhZGUwMTIzMGZhMDk4MzQ0ZDIwMjM4NjAwYjA2Y2VhNGMwYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDAyZTU3MmEyNDg1YzE3OTI3MDJiMjcyMGNlYjkzODBkOThiMTdiYTk0M2RiMzliYjgyYjgyZjU2Yzg2NTQ5MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzI0OTAxNzhhMWYzOWU2NjRmMjRhYzVmNTdiZjBmZTNjNmZhNjBjOWRiZWVlNGIwOWRlN2ZkNzEyNGYzMjgyZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d02c39980fc64752b717e2acc1f0d5a4",
+      "statement": "A garden seed at stage 0 takes no loss until its first floor week; once sprouted, a week below floor kills the plant (unless the wilt rule delays it), and a dead plant leaves compost so the next seed starts sprouted.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/game/lib/garden-plots.ts#L46-L62",
+          "version": "repo-lines-v1:sha256:92848c2f899208d968267d32f59b6c748640be25d36f806a6653a25f4f1898a2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3MTQyYzBjNTM3NTBhZmE5YzI2OTA0M2E4MjFiOTg2NTY4ZThlZWI4ODg4YTRhZjNiZjgzNDI0ZDJhY2YyNDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3MTczZjg1YmE2NDU3MjQwZDYwMWQwYWJmMDkwOTM2MzE1YjBiYTZiZTk0MWQzZjMzMWI5YWQ3MTE1NjE3ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFlYjBmMDU0YTA5M2RmMDgxMjZiODQxZTkxM2I4NTRlM2Y5ZDAwZTUzYmY4OGFlNmFkYjBmOTQzM2EyNzcxNTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3NjczZjZmY2UyM2FiMjM2YzczMDU1MTc2OGZjMzNkYzhhNWEzMTMwMjZhYzE5Mzk3ZmEyNzVmNGExNGYwMmIifQ"
+        },
+        {
+          "resource": "repo://src/packages/game/lib/garden-plots.ts#L66-L80",
+          "version": "repo-lines-v1:sha256:09e2857936bb19daa25f64eb3f252d47b61bdc25ed1176c9a2f81732f34df8e8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1OTM2YmIxN2YwZjcxYWQ0NGE5ODFjYmFmNDQ0OGE4YjljMmFkMmZjYzU3YzlmOTMzZDBkZjJmYTY0MmM5ZWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3NjczZjZmY2UyM2FiMjM2YzczMDU1MTc2OGZjMzNkYzhhNWEzMTMwMjZhYzE5Mzk3ZmEyNzVmNGExNGYwMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3MGMyZTM1ZGQwY2ZlYTUyNWU1OGY0ZTk0NGVjOWNhMTBmMzI0ODEwNjM4ZGI4Yzc3ZjNhYTA5NjRhZmNhMzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2a26dcebc6b84c24aae6b0d0400749dd",
+      "statement": "spec-check fails when a SPEC.md `section.key = value` differs from RULES, names a key RULES lacks, or a RULES leaf is absent from SPEC.md.",
+      "evidence": [
+        {
+          "resource": "repo://tools/spec-check.ts#L1-L42",
+          "version": "repo-lines-v1:sha256:ca9229801bc52d216f38cf2d3d4fda8b4a58134bf3af5fc42f712829650ae12d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmYmE4YTMyZDk2ZmU5MTQzNTA5ZTIyODhhZGNlNmMyYjA0MWY1NGRiNzM0ZTkyZGI3OTQxMzIwOTBiOGU1YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlOWZlMTNiZjU5YmE0Mjc3MzViZjQ2NzI4MTA3Njg5M2UxY2NiN2U1YjdjNDM2NWVjZjEyNzJjYjQ3YmE5YWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_36cd9d8b09f141879932d3a75f7d1140",
+      "statement": "History before the game start day is ignored: earlier completions are dropped and earlier open tasks are clamped to the start date.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/game/lib/derive-game.ts#L150-L154",
+          "version": "repo-lines-v1:sha256:72a71dfffe9a9c49412acfcd257199825571efc620333933743047ff5ef0511a:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdmY2U4NGJiYWFkNzhhODg0OWFkM2JjMmJlYTdjMWI5NGE4ODIxYjk5YjRlYWNmNGVhMmQ4ZmE5MzViYmVkNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2U4MDQ2YzM1ZmU1NmRkNDFkMWFlN2I1MjMyODE1YjVjNjQyOGViNmQzNjFkMzc4MTMxMzk3ZTFmYzYzNzdlMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjg1ODc2YmZlOWUwNDBiNTE0OWIxOTM5MTBmOTAzYWUxODMyMzQ1MDhmYjQ4ODE1M2MxMDQ1NzdhM2JhZmRmZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODFjOTM0ZDBhYTI1YzE2MjMzYzJlNDk2ZDk1MDA5MzEzYWVkOTAzYWM5NjA4MDJkMGJiOTE4OWU2ZTM5MjU0MCJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T15:04:47.972Z"
+  }
+}

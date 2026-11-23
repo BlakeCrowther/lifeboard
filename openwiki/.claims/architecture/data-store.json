@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d4acbddcc69a959caf82ec6efcb4310db2dcd5a8561739b784321920d05b4b0a",
+  "claims": [
+    {
+      "id": "claim_3db7790311c14eeb8d0eb1792f0d5aed",
+      "statement": "Invalid docs are skipped (counted, not repaired) when snapshots load, and writes are validated before touching local state, rejecting with InvalidDocError.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L131-L135",
+          "version": "repo-lines-v1:sha256:82c969a1739bb41036940702fb9403e81a2f047133a33ee5906f57a7d32ab240:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWZkNjRlZGM1MWNiN2ZlZGI4OGNhZDFhOTBjOGExNmY3YmQ3NjRjMGI1NWE5NjE5Mzc0YzQ4MDY5MDBjYmM2OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2VjNDc0MzA1MWZkNzVlNjFhOTY4NzlkZTdjZDk5OTFmM2FkZDMzZGJlOTgyMzYzYTVhODkzNGZmMjQxNjQ0YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDUxNDcwMzdmODVmMDEyNjc5OGYyZDkyNTg3M2RkOWVlNzI5Zjk1Zjc3YTViMDE0OWYwZDlkMWVlZGMzODY1NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGQzOTQzNzgyMTcyNjViNGI2Y2M5ZDliM2IwNDg4YTgyODMyNjM0MTNkNzM0MGI2NGNiZDI1NDYzNzJiZjkxMyJ9"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L56-L70",
+          "version": "repo-lines-v1:sha256:ec109edbb329114ad353776771863b0d27e398959fca1198c8ee24ececd4328e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3YWMxYTcxNzE2NDYzOTlhZmRhMzNmYzJmYzUzZTU5MjQwMDcxYWI1MWQwODZkOTMxZjIyOTYwMjc5ZjdkNjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhMDEzNWI1NGZiMjQ4YzJhN2I3NzFkMDNlOGQ2M2ZlZWIxMzNhNzBiMGExNzYyY2ViODY1Mjg2OTY4YWExM2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEwNmM1Y2JmNjI4ZTIxODliYmEwNmQ1MjBkNDliMGY2ZTdmNGQ1YzM0YjJjYjM2ZjMzMWQzMzEyNGZjNzEyMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdhYjIwYTRlY2IwNjJjNjhkOWE0NDlkMjhmM2RkY2E1NGEwZjE1MjQyOWI1NWUyMTc3ZmMyNzljMWY3YjNiZDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9f45fc0bf3b34c9396653fac7a307d6b",
+      "statement": "Writes are optimistic with rollback on db rejection, serialized per document by a promise chain, and in-flight optimistic bodies survive incoming snapshots.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L100-L125",
+          "version": "repo-lines-v1:sha256:f576208f205d790bc7d4243d366f6caa6ddefef37dbf74a03de476ad3f79f0ae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyOGFkMmIxMGJiOGVlNzUzZGI1YTVhYWYwZTM3Mjc4MzdiMzVlNzVlN2U1YzRjMDk4YzZiMDA2MTFlMWI2MjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3ZTE3YWIwYWUxN2RlNDZjNmYxOTAxY2ZjNDI2ZDM4Yzk1MjQ1MTA4ZGIyYjM2ZmY0NmZiMjU5ZDNmZmZkODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNmVjMWFkMTk5NjA0MThkYzRmOTFjZTU3NDVhNjJjNjIwZjEwOTM1ZGQ1NDQwN2JjOWRlZTI4OGI0ZGY5YzEifQ"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L70-L77",
+          "version": "repo-lines-v1:sha256:1f040044257f657d20065c0867524c8e0af4f13e295569b2151f99270d5edb80:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWEwMTM1YjU0ZmIyNDhjMmE3Yjc3MWQwM2U4ZDYzZmVlYjEzM2E3MGIwYTE3NjJjZWI4NjUyODY5NjhhYTEzYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTViOTM4Yzc3YmRjOGQzMDU0NTZiNjBlZDRlZWI5MGNkYzdmMTEyZjU0NTExNzVkZTJiOGYyZTM2Zjc0ODg0MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzJkNTUwOGQxNzM4NTQ1MDM4MGEyZTZhMmI5MzcwOWY1MzhlYWQ1YmEzNGIyN2UyNDkyZWMxMWIyYjNiYmM3ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzZhZWRiODQwNzI1MmVkMDUxN2MwMGI1NjBiYTEzYjQwNzEwNjhjODE2YTg4MTY2YzEwOTE4OTQ2MzkwZjA0OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_39dae11fa7cd4d14bdf7ed6131544c4d",
+      "statement": "patch writes the whole doc with set when a changed value is a plain object, because the db's update merges nested objects and would leave stale recurrence_rule keys.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L152-L170",
+          "version": "repo-lines-v1:sha256:68961faa02c87352de8d1fe540655c417071265158aaab30e0c71641714ebdc1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNjM2OWI2YmFlM2ZmMzNlOGUyNTYxYTQ0MmM2OTQ0ZjZmNjEzYzE1OTMyNWQzMjFhZTBiN2ZkMDg5ZTg3YjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MjNhZGJjNzc5NjliMmU1ODc1Y2M2NWU5NzA2ZDA0ZmY4OWI1MmVjOTgyMDdlMjYyM2YwODFmZGZiNDg5YzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwYmRmMzdjN2ZmZDVjZWQwNTNjNzI4NWU1MWMyNDljZTI0ZGY1NGE3OTdlNWQ3ZjQ5Y2MzNDAyOWU2ZjMzMDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxMDU3YTJiNjcwNGNhYjY4Mjc5NWZmYjc0ZGExYmQ5OGVjODIwYzM3NDk3OTY2MDM1YjE4YjQwNDQzYWZiNjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_120a9306ea8744c6813f0988a6097d60",
+      "statement": "Store status becomes ready only after every store collection has delivered a snapshot; nodb when no adapter is available, slow after a timeout, error on listener failure.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L47-L83",
+          "version": "repo-lines-v1:sha256:abda361347e3eddcfcbc4572144e711c7c1961033d4a162e312aa3bca1891003:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc2YjNhZmFjZjA5ZmUyODM1M2Q3YzllNDBjMzczMDAxZWMyY2VhM2ExNWQ1OTAxY2JhNDU1ZDRiYWU2ZWZkNDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNjJmNjBkODU5MGE1NzljZjQ2ZjhkNjczNzhjNGM1NzJiOTYyY2VjY2RiOTBjN2E1ZjdiNDJiOTYwNzgyYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2MjFhYTU0MzIzMThiYjk3OWU4MWVjMDA0NzUyYjhjYTQ4OGE3NTc1OTdmMDNlOTE5MzFlYzk2NTBjYWMwYWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNiMzk5MDBlM2YyZTNmOGYzYjhhOTg0MGMzMjRiZWMyNGNiYmY1NWFkZGQ0NmJjZmY1MTljOGU5OTMwNzRkYmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3afdd92dcadc4f54a6d6d04c23093ec4",
+      "statement": "Optional game and lesson collections are not listened to by the store; only STORE_COLLECTIONS are.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/schemas.ts#L123-L128",
+          "version": "repo-lines-v1:sha256:f994b37722a4050e8a89d4b912ea2346b86c4d556339eea5ff63efb25a0af651:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTAwZDMyMDlkZWVhY2Y4ZmEyNjIzNTBjNDRlYzlmMGQxYWVjZDhiMWJiYmNhMzU1NTUxZGVmNTk0ZjNlNWJiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjAyZDJjMGQ2ZGM1ZTc0ZDkyZmExNGI5MWRiZWEyNjQwOTBiZWIzNWZkYjkxODhkOWIzNDExODFkY2U5ZjRjZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWE3NmZiM2UyZTc4YjcwODFjNzMxYzNhMzI0MGQwYmIxYTI3NjQ4MjUwNzAwNTJiMDg0NTUyZTVhMjRkZWVjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_84c8cc82de6e4c8885b006f0b245cbbb",
+      "statement": "Undo restores each recorded doc to its prior body (or deletes it if it did not exist), newest first.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L136-L141",
+          "version": "repo-lines-v1:sha256:c853556c8d8793e2ebd705daa29f952a1a1e98f85fbd91c7fdeece4d492c07ac:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzdjZWRkNTk4MGViMzI5Yjk0YzA4NjIyYWYyMjE3YTgzYTQ5MjExYzAyOTY4MjA3NDQ0YWU4OWYyYmE3MWIyYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzFkMTViODYzNmU2Zjk5OTE1MGUzOTIzYjk4NzE5MmZiMGE4ZjA3YzRjMTAxZWU5NmFmODcxZTU2YWVmYjczYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmU0ZTc0ZjUwNDQ3YjE2MmQyMTRhNWE2ZmQ0NTY4MGZlZjc2YjkyMGJkZDRiNTRjZWQxMDFlM2E5MDE3NzZlOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGRhM2IyOWEzOWViYmM2Y2Q4MGFkNjk2YWUyOGRjNWUxNjFiMTVjN2IyOThkMTRiOGYxZDE4Y2JiNjE2NjJiYSJ9"
+        },
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L176-L179",
+          "version": "repo-lines-v1:sha256:6ff2b43c50f6d1b7dfdc7226bd865cb483350c22c60e3442634501e991d200a6:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzVlYTc3NDg2MDZhMDRlY2M0NDY4ZDc0NzhkOTc5ZjQ2NTA2NjhjZDkxNzUxZWM4NGFiMzNhYzU4Mzc5M2ZjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDc1M2U1YTdiOTA1MDQ1ZGNjN2UyNTI5YTI0YzBmZTIxZGZkYjBhOGY2NjYxMDJhYTViZGNhM2Q3OTc5YTg0OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTE5ZDgwODAxODAzN2NlYjE3OTFhZTNjNjM3MTQ3OWQ1OTdkZWE1YzJhMmE1NzA0ODE5YjBiOTU3ODUzZGE3NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTk1YjE1MTg1NTI2YjE1YTljY2VjOWU0OTNmYWQxNDM0YjRiMzA5Y2NmMWZmZjViYTI4ZWE5ZDk2M2UzMTM0MiJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T15:04:47.972Z"
+  }
+}

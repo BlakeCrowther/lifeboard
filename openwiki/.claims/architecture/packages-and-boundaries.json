@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:79d93535dadf1d821c07fc634fabda2e1ea43af3885fe3c5cafbc1c986322943",
+  "claims": [
+    {
+      "id": "claim_39753589f3504956861c9662ba43e0cf",
+      "statement": "dependency-cruiser enforces that code outside a package imports only its root entry-point files, never a subfolder, and that cross-package imports go through entry points only.",
+      "evidence": [
+        {
+          "resource": "repo://.dependency-cruiser.cjs#L25-L50",
+          "version": "repo-lines-v1:sha256:b245538be83a2a91d3f676855c26f4158242f995f26fb160c38746b569feecc3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmMDViMWI0MDgyYmIzZDcxYmI2Njk2ZmNmMWFhNGMzMGE4ZmYwNDEwMTU3MTJmMDQyYjM3M2FiMjRjOTM1NTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYWEzNGEzMjFmNGEzODc0ZmZmOTU1NDBmNmEzYWUyODM4ZjYxM2RhNmFiZTM3YWExY2YzMWQ1ZDJiM2YyOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZhYzJhOWEzMjRiZDRmZGJlOWNlYzQ5MGRmMzg1N2M2YTQyNDRkODg2MmYwZTBiNDJiYmM1Y2NlOWQzMGNlNDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_836291c64ad84340b997d718a462e37c",
+      "statement": "Tests may import only entry points and their own tests/ fixtures, and a tests/ folder is importable only from tests.",
+      "evidence": [
+        {
+          "resource": "repo://.dependency-cruiser.cjs#L51-L66",
+          "version": "repo-lines-v1:sha256:b6cc510e9eac725e000cb4290f8a3c7487cbecf2c84b6293ba1981d4132e54ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiZjUxYWJkYTM2NzBlNGQ0ZGY2OGEzZTc2YTFiOTQwYTFkZDk1NDJjNzM2MWVjZjMzZjdjMGViOTQwYmE4MWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1Zjc5OGE5YzJmYmUzMzcxNGYxNTBhM2E0OWU3MGJkNDk0ZTVhYWQ0MGVmM2I4NWVjMTAxYWE2M2I1NGM5YTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjllZGVlNjgzNDM5NGZmZTI1YjkzZDk1N2IwMGU4NzRiYWUyMTU0N2IwNDdmZjEwMmM0YzFiMDY4ZTRhODBmZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkwMTg0ZTYwODkxOWZmZjhiZjdmOGI1MjlmMDE4NzZkYTJkZjUxOWQ0MzYxNWUwOWY5M2MxNzUyYTM4NWM0OGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b8585b515f4946a5abedfe32a6fca9c5",
+      "statement": "Domain packages may not import ui, ecosystem, garden or db; ecosystem and garden may not import ui or db; only ui and src/main.ts import ui; db may not import domain packages.",
+      "evidence": [
+        {
+          "resource": "repo://.dependency-cruiser.cjs#L76-L112",
+          "version": "repo-lines-v1:sha256:048f8390437a71982e605a54b2379711477ca8aebba3ba35b7a2e23806c3cf91:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzZDQyZjQ0YTJmMGZmZjMwYzk5ZWQyZjJlNDdmMjZlYzg1NjIzMjM4YjhiMGI0NjE3NmI0OTYzNjhlNzEyMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMjE0ZDNmMGI3YjE0OWJjZDNiZDg1ZDcxYzE4NDM4ODlkY2MwZWMwMzAwYzkzMTMzNjdiYjIzNjlkZjcwYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhMjRkZDY5MzI5NTZmNDAxMzkwNDZhMjkxMDQ2NGI0MTY3ODE2ZjJlNWU5NTFjNDJiZWZlMzBjMjczMjQyZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkwYWM1ZDkyNjYyMjZkZDc0ZWRkNjY4NjY4MDJhMmYyZDVhYzUxM2M1M2UyZTgyNDBhOTQyM2JlMjUwYmIzMzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_05cda4c26a654ff4a32961083ebe49ed",
+      "statement": "src/main.ts only calls bootBoard and is the sole importer of the ui package.",
+      "evidence": [
+        {
+          "resource": "repo://src/main.ts#L1-L4",
+          "version": "repo-lines-v1:sha256:29b5bf889c92e52219c60b1a51f94e5904da72e91925db756ad530ebd7d19ef8:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmNiZTVmNmYyNTZiOWI0ZGJjYjExNzI1MDYwMTFkZWVjNGY3YTljNDQ5YzNiMGY4MTI1M2MwNWM1ZmM0ODY5ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGU5ZjRlNThlNjQ2YTE2MjI3YTFkOTdiOWZhZjM4Mzg0MDRiYTYyYzE3ODNkYjUzZmNiZTJjNGJhNWY4MWUyYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T15:04:47.972Z"
+  }
+}

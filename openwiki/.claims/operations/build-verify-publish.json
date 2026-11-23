@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:bb2bfdcf468251dbc9cf7c43fe87eefa66b603beee82433a3eb82dcb66804ca2",
+  "claims": [
+    {
+      "id": "claim_a97ef1cff14b4a13ad51d8ceec8d9239",
+      "statement": "The build bundles app and capture as split ES modules with unhashed chunk names, keeps three external, and fails if dist/app.js exceeds a 300,000 byte budget.",
+      "evidence": [
+        {
+          "resource": "repo://tools/build.ts#L10-L41",
+          "version": "repo-lines-v1:sha256:5a62a4a373d907490d3caa0b077e69cc22454025198f0d84974c76b7240c1474:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxZmQzZDk3Zjk3NTY5ZjBjMmRiMmQ4NDg3YWZhOTEyMGUzNjBmMmMxZmVjMmUyYWY5Zjc1MzIyM2IwM2VlMGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5MTFhNTA0MGNmMjc4NTNiYjFhODFlZWQyNGY3ODA0MTk1ZmY1NWZhMjExMGE0YTU0YjU4MmFhNjI2OGEwMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_738975d379c14615ae8aa633e686d173",
+      "statement": "pnpm dev runs the esbuild watcher and a Python static server on PORT (default 8765) bound to 127.0.0.1.",
+      "evidence": [
+        {
+          "resource": "repo://tools/dev.ts#L1-L20",
+          "version": "repo-lines-v1:sha256:79625cc5bbe27569c3bd8db800175aaf92a648921fb91e1d1c4b6ccbc12e1a1d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZTYxMjJjYjVjYTQ2NGFmZTZiYzg0Zjk5ZTk5YWQyZWRmODEzYmFkNGY4MTM5N2I2YmJmNzMxYmZlNjIxYjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cc6b9e0054484c18a313e27bf35cf0eb",
+      "statement": "pnpm verify runs every check without stopping at the first failure, prints a PASS/FAIL/SKIP table, skips checks whose tool is missing, and exits 1 if any failed.",
+      "evidence": [
+        {
+          "resource": "repo://tools/verify.sh#L1-L10",
+          "version": "repo-lines-v1:sha256:fc5e666c90e3c1c92dd8936eee924ba25f43d430f6a952bf10a769ef4ae41610:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiODUzZTZmOWUyNzUzNTY2ZTY1ZThiNTQ0NzU4NmMxYTY2OGFmNGVkZGM0YjQ3OTBkYmI5MmFiNWRkODQ5MDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5ZDM3ZGE4MjY0Yzk5MmFjYTZmNmJhNzcxM2Q1MDljNTZiNzViNTY5YjRlYWFmOGQwZjg5ZWY1OTQ4YzNmZGYifQ"
+        },
+        {
+          "resource": "repo://tools/verify.sh#L29-L32",
+          "version": "repo-lines-v1:sha256:afce37d95cfbedf726dd2cdef5be5ba8b848e4199ee943808b83613e93bc0c24:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmI3YjQwMDgzODQ4MDllY2FjNmFmOGExZTM2MjRiMTdjMjIyYzllYjAzNDI4YmJlZmEwYWE1OWFiZmNkZWJmNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDlhOTM3YzE4NzI4ODIxZDZkNmE1OWZmMTY0YTlkNWMwMDE3NDVhMWY4ZjZkMmQ0ZmE5OWQ5ODU2Y2ZhNjQ2YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTZjZmFlZTAyYmM5MjgzMjc3MGNkYTA3MWMyNDNiMDhlOTVkY2Y2NjdlMTUwOWIwOGI4ODBlZDQ1ZGU4NDljNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b98db8b347654dcba316c7ce209ae876",
+      "statement": "live-diff builds the publish set from index.html, dist/app.js, dist/chunks, the roster, biomes and roster model files, and exits 1 when a published file differs from or is missing on live; extra live-only files are reported but do not fail.",
+      "evidence": [
+        {
+          "resource": "repo://tools/live-diff.ts#L1-L56",
+          "version": "repo-lines-v1:sha256:e9b0e7b9440a76c3bd1dd014388b6905edbb6a0815a20dec82a7e873dd0dae2c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxMmE3MjA0MmExZTE0NGJjMDlmYzAwYmQ1NWMyYWEyNDVmOWNhODdlYmU1ZWIzZTJhNzJmZmVmYzBlMjgzYTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMDM5ZjU4OWYyODE3MTZhMzAxMjAyOWIyZjNiOGMyZTY0OWI3MDkyZDZkZjMxOTk4M2Y1MjA4NGQxZmVhZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T15:04:47.972Z"
+  }
+}
