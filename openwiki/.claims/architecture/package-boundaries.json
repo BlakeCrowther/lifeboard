@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:61f84485d6df89a5ab84613191a62075f83e8bfd342531e106fe5b9e596c87cf",
+  "pageVersion": "sha256:dd4061b4a50b6e5accda5c6f7078bef799652d1c1b5a5260ba739dc631e7af9f",
   "claims": [
     {
       "id": "claim_8cce63b458c84b27a3902eadc5d1f4e6",
@@ -74,11 +74,11 @@
     },
     {
       "id": "claim_7cbc629161ac4c70a3bb973fcea702dc",
-      "statement": "ESLint runs the strictTypeChecked preset with no-explicit-any as an error and ignores dist, node_modules, models, evals and plain JS files.",
+      "statement": "ESLint runs the strictTypeChecked preset with no-explicit-any as an error and ignores dist, node_modules, models (except the TypeScript tools in models/shared/tools), evals/out and plain JS files.",
       "evidence": [
         {
-          "resource": "repo://eslint.config.mjs#L1-L17",
-          "version": "repo-lines-v1:sha256:49773e65317a12c859b6ef8c55da261954b61384e9c15782e9c2063d0816066a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlYjgyNzhjMDRjOGQzMTgwYzllOGY1ZTg2NzJiMWE4NTViMGYyOTQ3M2FhMzhiZmVmZmEzY2YxYTdmZWQ4ZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRlYmFlNjdlODIwZTBmN2Y1NzE2YmEyZDMxOWQzNGNiNTQ0MzcxOWQ2MWE0MzAzYWRkZjUyYTZlOTc1OWE4MmIifQ"
+          "resource": "repo://eslint.config.mjs#L1-L18",
+          "version": "repo-lines-v1:sha256:b03b373ee5f0ad60a9008d3e4623754a5f92f0aa6a2a3b59731dddd153b3c862:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlYjgyNzhjMDRjOGQzMTgwYzllOGY1ZTg2NzJiMWE4NTViMGYyOTQ3M2FhMzhiZmVmZmEzY2YxYTdmZWQ4ZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxMTFmMjM5YWM2NWM5ZmVjZDRmNzk3NWQ0ZWUwYzY3N2I1OGE4ZWE2Nzg1MmVhMjVkMjc5MjM5MjUxOGQyZjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViMzQ1ODNiMDQxYzI3MjEyY2Q4MjU5NzQ4YWVkMzYxMDhkOGRmZmIxZDYzODlkZDc5ZWUyZWFkOTIzM2JjZjMifQ"
         }
       ]
     },
@@ -95,6 +95,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T17:23:06.062Z"
+    "at": "2026-11-23T20:10:38.978Z"
   }
 }

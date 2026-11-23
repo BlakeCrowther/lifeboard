@@ -5,19 +5,19 @@ description: What pnpm verify runs and in what order, the GitHub Actions workflo
 tags: [verify, ci, testing, ui-smoke, evals, github-actions]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-23T20:10:38.978Z
 sources:
   - id: openwiki-source-4320a40cc58d6de85374b359
     resource: repo://.github/workflows/verify.yml
   - id: openwiki-source-09e4fd34eaf58fd8da3d4f9c
     resource: repo://evals/README.md
-  - id: openwiki-source-44117b1ae69788a484190f50
-    resource: repo://tools/ui-smoke/run.js
+  - id: openwiki-source-2a24262bea9c8820d12b1821
+    resource: repo://tests/e2e/ui-smoke.ts
   - id: openwiki-source-102efd484e3f82713aef710e
     resource: repo://tools/verify.sh
   - id: openwiki-source-fbadcd8591b65031efaaedce
     resource: repo://vitest.config.ts
-generated: { by: "claude-code", at: "2026-11-22T17:23:06.062Z" }
+generated: { by: "claude-code", at: "2026-11-23T20:10:38.978Z" }
 ---
 
 # Verification and CI
@@ -28,14 +28,17 @@ generated: { by: "claude-code", at: "2026-11-22T17:23:06.062Z" }
 
 | Step | Checks | Notes |
 |---|---|---|
-| syntax | `node --check` on the plain JS files at the root, `tools/` and `tools/ui-smoke/` | |
+| no stray JavaScript | `pnpm check:no-js` | the repo is TypeScript-only; fails on any `.js`, `.mjs` or `.cjs` outside a short allowlist |
 | game rules vs SPEC.md | `pnpm spec-check` | [Game derivation](../game/game-derivation.md) |
 | sim runs | `pnpm sim 20 8` | a short balance run, not a tuning run |
 | typecheck, lint, build, unit tests | `tsc`, ESLint plus dependency-cruiser, esbuild (with the size budget), Vitest | skipped with a hint when `node_modules/typescript` is missing; see [Build and bundle](../architecture/build-and-bundle.md), [Package layering and boundaries](../architecture/package-boundaries.md) |
 | eval graders | `node evals/run.ts --self-test` | graders on committed good and bad fixtures; no Claude calls |
 | model pipeline map | `render_pipeline_map.py --check` | fails if `models/pipeline.html`'s data block is stale ([3D model pipeline](../models/model-pipeline.md)) |
+| biomes | `models/shared/tools/check_biome.py` | `models/biomes.json` is valid |
+| break timer pacing | `break/test.sh` | skipped when `swiftc` is not installed ([Break overlay](../integrations/break-overlay.md)) |
 | UI smoke | headless Chromium | skipped when Playwright is not installed |
 | doc frontmatter | `tools/check-doc-frontmatter` via `uv` | skipped without `uv` |
+| Python lint | `pnpm lint:py` (ruff and pyright over `models/**/*.py`) | skipped without `uv` |
 
 ## CI
 
@@ -43,7 +46,7 @@ generated: { by: "claude-code", at: "2026-11-22T17:23:06.062Z" }
 
 ## UI smoke test
 
-`tools/ui-smoke/run.js` serves the repo root from a throwaway local server, opens `index.html` in headless Chromium with `tools/ui-smoke/fixture.js` (synthetic board data) and `dist/fake-db.js` (the in-memory db, see [Data layer](../architecture/data-layer.md)) injected, clicks every tab, and runs one db-writing action per tab. It fails on any page error, console error or failed local request, then checks that owner data stays in the board: the greeting uses `checks/profile.name`, an existing board gets no starter tasks and an empty board gets them. It needs a fresh `dist/` and has a 120 second timeout so a hang cannot stall verify.
+`tests/e2e/ui-smoke.ts` serves the repo root from a throwaway local server, opens `index.html` in headless Chromium with `tests/e2e/fixture.ts` (synthetic board data) and `dist/fake-db.js` (the in-memory db, see [Data layer](../architecture/data-layer.md)) injected, clicks every tab, and runs one db-writing action per tab. It fails on any page error, console error or failed local request, then checks that owner data stays in the board: the greeting uses `checks/profile.name`, an existing board gets no starter tasks and an empty board gets them. It needs a fresh `dist/` and has a 120 second timeout so a hang cannot stall verify.
 
 ## Doc frontmatter
 
@@ -59,4 +62,4 @@ Vitest runs `src/**/tests/**/*.test.ts` and `tools/**/*.test.ts`. Tests live nex
 
 ## Not in verify
 
-Visual review in the preview, model gates and the judge panel, skill evals, the Swift [break overlay](../integrations/break-overlay.md), and anything needing Blender. State what you could not check when reporting a change as done. Unattended runs ([Publishing and the weekly run](./publish-and-weekly-run.md)) run verify before publishing.
+Visual review in the preview, model gates and the judge panel, skill evals, the Swift [break overlay](../integrations/break-overlay.md) beyond its timer pacing test, and anything needing Blender. State what you could not check when reporting a change as done. Unattended runs ([Publishing and the weekly run](./publish-and-weekly-run.md)) run verify before publishing.

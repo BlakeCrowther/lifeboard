@@ -5,7 +5,7 @@ description: The deep-module layout under src/packages, the entry-point versus l
 tags: [architecture, packages, boundaries, dependency-cruiser, eslint]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-23T20:10:38.978Z
 sources:
   - id: openwiki-source-739d3ff1d3f2cc6c1de83f4b
     resource: repo://.dependency-cruiser.cjs
@@ -13,7 +13,7 @@ sources:
     resource: repo://docs/adr/0001-modernize-typescript-deep-modules.md
   - id: openwiki-source-2fda883e9b76745f69f487f7
     resource: repo://eslint.config.mjs
-generated: { by: "claude-code", at: "2026-11-22T17:23:06.062Z" }
+generated: { by: "claude-code", at: "2026-11-23T20:10:38.978Z" }
 ---
 
 # Package layering and boundaries
@@ -74,7 +74,7 @@ What each package owns is summarized in [Domain logic](./domain-logic.md), [Data
 
 The packages root is a single constant (`PACKAGES_ROOT`) at the top of the config; "internals" are derived from it as anything nested inside a package subfolder.
 
-DOM and global access are not imports, so ESLint covers them: for `dates`, `recurrence`, `tasks`, `habits`, `game` and `db`, `no-restricted-globals` forbids `window`, `document`, `navigator`, `location`, `localStorage`, `sessionStorage`, `fetch` and `requestAnimationFrame`. `db` reaches the artifact db only through its `DbAdapter` seam. ESLint otherwise runs `strictTypeChecked` with `no-explicit-any` as an error, and skips `dist`, `models`, `evals` and all plain JS files.
+DOM and global access are not imports, so ESLint covers them: for `dates`, `recurrence`, `tasks`, `habits`, `game` and `db`, `no-restricted-globals` forbids `window`, `document`, `navigator`, `location`, `localStorage`, `sessionStorage`, `fetch` and `requestAnimationFrame`. `db` reaches the artifact db only through its `DbAdapter` seam. ESLint otherwise runs `strictTypeChecked` with `no-explicit-any` as an error, and skips `dist`, `models` (except the TypeScript tools in `models/shared/tools`), `evals/out` and all plain JS files.
 
 ## Working in the structure
 

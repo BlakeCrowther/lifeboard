@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0630bfed1f66147aaa6fd78c005bf8bbdb59a5cbdc696bc85b04166817805419",
+  "pageVersion": "sha256:cce2ca84778aeeba53721f4b0da1bfb40c5eb86608e867bcd900f571c02605e2",
   "claims": [
     {
       "id": "claim_e9cd166b95a64860a0f7b29c972c14dc",
       "statement": "The owner publishes by building first and sending index.html plus every dist file including chunks to the existing artifact URL; publishing is pre-approved only when checks pass and the live diff shows no live-only changes.",
       "evidence": [
         {
-          "resource": "repo://AGENTS.md#L29-L31",
-          "version": "repo-lines-v1:sha256:17e627f77dc34e9daaa3abf237038ec690ff4c482c12ac48ec109bb1596701d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzhkY2M4NDU2NGNiMDI3YzY3NTE0ZmNjMTQ4NjAxMjNjODNkMzdiYzVkNmYwNjEzNjU1ZjNjZGZhOTU0MTNkOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODgxNjIwMTZmZjcwZmUzOGQxMzQ4YjMzZGRmNzYwYzI2NjdkOWI4ZDNhYmFiYjEzZDFmNTcxNjNkMTRlMzM5MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDA1MDQ0MDY1NDU1OGQwMTNkNWVlNWQyNjI3NzcwZDExZTMzYTlhNzQ2NTQyMjUxZDM1YjMyZmRmMGUyODNmYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjc2NzkyZTE0NjQ0ZGY5NDM4YTJhMGFhNzJmNDgwZTA5ZWQ1YWIxMGNkZWFjNmFjODhjOTg1MTc1Yzc0NzlhOSJ9"
+          "resource": "repo://AGENTS.md#L32-L33",
+          "version": "repo-lines-v1:sha256:78de8318700d4cf5705759e368b35371063f9a444f706aae6578ddf2ebcc8414:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODgxNjIwMTZmZjcwZmUzOGQxMzQ4YjMzZGRmNzYwYzI2NjdkOWI4ZDNhYmFiYjEzZDFmNTcxNjNkMTRlMzM5MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzJhYTRjOTc4N2U1YmQ3Mjc3OGYxNmE3Zjc3OTJlZWQ0NTY0M2VlNWIwYjAwMDAzNTIyNzhlMGY1M2I1ZDVkMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDdmMjNkZDliMWMwZmVkYzMxNGU0N2Y5ZjI4YWZkMzkyYmFjOWYyMTc5ODlkMDVhMjdkMmYwMTExZGQxYmYzMiJ9"
         }
       ]
     },
@@ -51,7 +51,7 @@
           "version": "repo-lines-v1:sha256:23760821632b120d7e10108c7c0d83c57e186f7f2ac68b7bfd08182cd21ee9ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5OWVkZGJiMDY1MTIyZjk1OTkyNGM0MjkzYzIxYjlkZTU3ZjZlOTY5MTkyZWJjNzZhNzY4NWQ1NGQ3YzY0NjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllMGZmZDU3ZGU2ODg2MGZkYzUyODUwNDVjZWM5ZmZkMTNmZjBkYTlmYWZiZTQ0YjBkY2IyODVhODAxZDE3NzkifQ"
         },
         {
-          "resource": "repo://setup.sh#L94-L100",
+          "resource": "repo://setup.sh#L98-L104",
           "version": "repo-lines-v1:sha256:5f488b725285d968194583be5772ff5c709646740ae71ab5a5f4b6ca9bf4ea52:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM5NjE5NmY1NDRjNjM4MWZjNTBhZDBhNzA4ZGQ4NjhjNjY4MGJjMGFhMmRkZDJjMWQ3NzRiZGM3ZDM5ODIyNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdlMzIyYzFjNGYyOWFmNWVhYjJlNjk0MTJiMzkxZTk0YWY3OWFmNDQ5YjAwNzQxMjMxNzEzYTY2NGJhMzgzMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWYxY2VlMzk5MmJjOTQyNGY3NzE3MmY3M2IwZTExODBkNmNhYmNmNmNmNTQ1ZjgwOGNmNjUyMGM4YWFhMjY2OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTg4NmFiYWQ3ODI3YWM0ZTkzMDhlNjUyZDZmNTk5MzIxYmNmMzY2OTIwZGI4OTQ5ZGQ4Nzk5NjJiMzQ5MDI2YiJ9"
         }
       ]
@@ -59,6 +59,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T17:23:06.062Z"
+    "at": "2026-11-23T20:10:38.978Z"
   }
 }

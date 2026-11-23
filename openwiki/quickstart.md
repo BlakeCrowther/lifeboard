@@ -5,13 +5,13 @@ description: Task-routing map for the lifeboard wiki, covering what the project 
 tags: [quickstart, overview, navigation]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-23T20:10:38.978Z
 sources:
   - id: openwiki-source-8037e2358a2c4f9b2c722a11
     resource: repo://AGENTS.md
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
     resource: repo://package.json
-generated: { by: "claude-code", at: "2026-11-22T17:23:06.062Z" }
+generated: { by: "claude-code", at: "2026-11-23T20:10:38.978Z" }
 ---
 
 # Quickstart: where to look
@@ -20,7 +20,7 @@ Lifeboard is a personal life dashboard (tasks, habits, lists, a daily ring) publ
 
 ## Commands
 
-All commands are `pnpm` scripts (never npm or yarn): `bootstrap` (first, in any fresh clone), `dev` (serve plus watch build on `PORT`, default 8765), `build`, `typecheck`, `lint`, `test`, `spec-check`, `sim`, `test:ui`, and `verify`, which must pass before work is called done ([Verification and CI](./operations/verification-and-ci.md)).
+All commands are `pnpm` scripts (never npm or yarn): `bootstrap` (first, in any fresh clone), `dev` (serve plus watch build on `PORT`, default 8765), `build`, `typecheck`, `lint`, `test`, `spec-check`, `sim`, `test:ui`, `live-diff` (drift check against the live artifact), and `verify`, which must pass before work is called done ([Verification and CI](./operations/verification-and-ci.md)).
 
 ## Which page for which task
 

@@ -1,14 +1,18 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b19b87cb0cb6fa0d2740a0612924712e99031541acc84ab4a769cc4878561356",
+  "pageVersion": "sha256:e95a4f025e2ae0b9f2621398dcc0d55dd83ddeeb22bceb0c210d51ad5e8f9122",
   "claims": [
     {
       "id": "claim_211fecd7565943dfae7bba867ea08b9a",
-      "statement": "The break app resets its work timer after wake, after a break, and after idle time at least a break long; when the timer expires it starts a break.",
+      "statement": "No break starts while the Mac is asleep or locked; on return, Pacing.afterAway resets the work timer if the absence was at least a break long, shifts the next break out by the time away if shorter, and ends an overlay break after a long enough absence. Idle time of at least a break also resets the timer.",
       "evidence": [
         {
-          "resource": "repo://break/LifeboardBreak.swift#L84-L125",
-          "version": "repo-lines-v1:sha256:be2d1291ef3ef3ec3774bfe080fe8a3aa51c9f8770e99bc8a180b844ea6bf1a2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhNzA3NDZiZjU3MTM5ZTAzZjlkNGY2NTNhZTI3YTA4NjJlNmIwYzFkMjk0ZDA5YTYzZGNlYzI3OGFmMjI4OWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3NmI3YTk4NDdmOTU5ODVhNzRlNjg2MWU2Y2Q3ODRkYzdmNTdlMDEwZDZkOTk5NWMwZGY1NGIxYTU2M2VmOTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmYWRmMDA1MjgwZjBhYmIzMTIzOGQyZjA4YTM1YTkzM2E4ODc4MjY5OTgzMzRiNjQwNThjZGY0MDE4Yjk0NzQifQ"
+          "resource": "repo://break/LifeboardBreak.swift#L105-L155",
+          "version": "repo-lines-v1:sha256:199863ea326c1bbd5d6cc91e023351cfcac7ffe01ada8a87879dfb8f4135950b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOTEwNjQzNmZlZTM4ZDY4YTIzZmEzNzFiNDM0ZmQ1YTBhMGEzNDNhZTMzNDk3ZDg0NjY5ZmQ1YTAyNzZjZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjYzU1OWYyMWZiMTI1MmVjYWJhNjUwZTAyNmViYzcxZWFhZTk0NjM0NWQ1NmRjNTkzMjA2MDljMmRmOGJiMWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc4ZmI3NWQ0NTM0ODhhNzgxYWMxM2VkZDJkODczZDM5NTI5NTY2MGQxYWIyMzEyNWM3NmM5ODM3YzhjNWZlYzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyNGQ0NTYwZjRiMWQ1NWVkZWU4YTNlYmE2NWFkMTYyNDI3NjM3ZWY1NjcwY2ViNjI2NjIyZWYxZjNjYzA4NTUifQ"
+        },
+        {
+          "resource": "repo://break/Pacing.swift#L1-L20",
+          "version": "repo-lines-v1:sha256:3f77a3c9d921c19681794a559d491ec5415b7490102853f4d8394a29064981c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4NzQ0ZDFmYTgzM2IwZTg2OWJmM2RkZmY2YjNiMWQ0NjMyZmNjOTJkMDcyZWM4ZmZhZjdmYjViYjlhYzdlM2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -27,7 +31,7 @@
       "statement": "Overlay windows are created at screen-saver level on all Spaces, and the escape chord Control-Option-Command-B ends a break with reason escape.",
       "evidence": [
         {
-          "resource": "repo://break/LifeboardBreak.swift#L175-L200",
+          "resource": "repo://break/LifeboardBreak.swift#L215-L240",
           "version": "repo-lines-v1:sha256:d1d818b7489dba651218e010347b2475d88eaa672fab156acf1ffd170c1d0a8e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc0YjFlMDQ1MmNlNzRmMDhjZThkNmE2MWQ2YWU5YjgzM2FkNzBkNDM5Mjk3MzE5OGNjYzI1MTc1ZDZhZTUzZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmNjg2Y2YxMTlkODc1MTFhZTNhYzg3MDgyMjEwMDc5YjMxMzZiZWE3ZTE3ZThlZDBkZWNjMDYxZTM4YzYyODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzZWM0NmNiZjMyNTEyY2Q5MzNmZjViYTNjYzczOTQ3MGZhMjdjNThlNzQ4Y2E4NzJhMjE2ZDA0MjA4Yjk4OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwYjA3ZWU0MDYyNTE3Nzc0N2FmMGIwMDQwYmZkMzI3MjA5NGY5YzY0NTYwZjhhMDI0OTMyZDJmZGMwZjBlY2IifQ"
         }
       ]
@@ -37,11 +41,11 @@
       "statement": "The app injects window.lifeboardBreak with skip, postpone and done, fires lifeboardbreaktick each second, and dispatches lifeboardbreakend with the end reason, delaying web view teardown five seconds so the page can save the event.",
       "evidence": [
         {
-          "resource": "repo://break/LifeboardBreak.swift#L262-L292",
+          "resource": "repo://break/LifeboardBreak.swift#L302-L332",
           "version": "repo-lines-v1:sha256:c39a40d25cb7af18626f1b01812062343928d34e940d2b0df5e08da80ae3156c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4MTdjZDA4ODkyNDI4NDE3ZDlmMWJhYmI3MTQ2MjhjOTc5ZmI1MjE2NjFmMjNiZWQ4NTk4NzRkOTE0Yjg3MjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3NWE3NTJiMTYwZjhmYmY4YWRmZTVjZTZjNDI5OTE5NjFiNGNlNGI5YzZiYThiMmViMDYwZTNkOGRhOWRkYWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyZWEyNmZhZDk3N2I1YTBiNmFiYzQ4MzM5Yzc1OGEwZWY0N2MwNzRjMTZkMjFjNjBiMGNjYzZkNDE1N2ZlYjgifQ"
         },
         {
-          "resource": "repo://break/LifeboardBreak.swift#L333-L360",
+          "resource": "repo://break/LifeboardBreak.swift#L373-L400",
           "version": "repo-lines-v1:sha256:973d65b700d7518532b810abd9bd3d8495342b72bc079d853d939172862a9484:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MWI0NDY2ZDRlZDU3ZGQ0ZDMyMGQ2NGQxZDBhOWFmNjYxYmEzMmU0MTRkYjdjMmUyNjczZDk2MjM0MmFmMzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkNThjNzE2OWUyMGZlNmMyMzJlMTczYTQ3YzVjMDBjODY0YzU5YmFmMDQyYTc4YTVmMDVhMTc4OWEzNTRiNDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxZmVlMWY0MzIzYzgzMDE5MzI2M2E2YjE0Yzc2NmUxMTcwZmM0MDgyYzEyMDE0ZWUyOWMyOTJiYTQ3YzU1NjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkifQ"
         }
       ]
@@ -68,11 +72,11 @@
     },
     {
       "id": "claim_683e5fc84ecf44fcaf425c9b3ca326b2",
-      "statement": "build.sh compiles the single Swift file into an agent app bundle, and install.sh installs it to ~/Applications with a LaunchAgent that starts it at login.",
+      "statement": "build.sh compiles LifeboardBreak.swift and Pacing.swift into an agent app bundle, and install.sh installs it to ~/Applications with a LaunchAgent that starts it at login.",
       "evidence": [
         {
           "resource": "repo://break/build.sh#L1-L28",
-          "version": "repo-lines-v1:sha256:ead2a81ba44babeb27762059267d43bab04f324f222f0e28f6c5be37d1107b8e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4MDc2ZDNkMjhkMjFlMDIwMTJiMjBlYWY3ZGJmNzU0MDlhNjI3NzEzNDQzOTAyNWYyODJlMzY4ZTMzMDVhYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0YTJiZWNmZjhhZmIzNGRiMjYwZGFiYzk2OTE1ZmZlY2ZkZTg0ODkyOTU0MWM2MTkzZGU2ZDE2NGMyMWU4ZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "version": "repo-lines-v1:sha256:3c6c447ffa8f0562c669aa7fe5451d5dd71d21eb28e4a53bd798480416e20c8c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4MDc2ZDNkMjhkMjFlMDIwMTJiMjBlYWY3ZGJmNzU0MDlhNjI3NzEzNDQzOTAyNWYyODJlMzY4ZTMzMDVhYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0YTJiZWNmZjhhZmIzNGRiMjYwZGFiYzk2OTE1ZmZlY2ZkZTg0ODkyOTU0MWM2MTkzZGU2ZDE2NGMyMWU4ZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
           "resource": "repo://break/install.sh#L1-L27",
@@ -83,6 +87,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T17:23:06.062Z"
+    "at": "2026-11-23T20:10:38.978Z"
   }
 }

@@ -5,7 +5,7 @@ description: How strict TypeScript in src/ is bundled by esbuild into dist/, whi
 tags: [build, esbuild, bundle, dev-server]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-23T20:10:38.978Z
 sources:
   - id: openwiki-source-70d20c615440765c1162734d
     resource: repo://capture.html

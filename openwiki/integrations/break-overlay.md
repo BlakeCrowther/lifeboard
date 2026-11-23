@@ -5,7 +5,7 @@ description: The native macOS menu-bar app that covers every screen with the boa
 tags: [break, macos, swift, webview, integration]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-23T20:10:38.978Z
 sources:
   - id: openwiki-source-f930bf0e2ce22b2f40c40f81
     resource: repo://break/build.sh
@@ -13,29 +13,31 @@ sources:
     resource: repo://break/install.sh
   - id: openwiki-source-fb0dd20300551ce132c6fadd
     resource: repo://break/LifeboardBreak.swift
+  - id: openwiki-source-de9446aa33eac9e75b915667
+    resource: repo://break/Pacing.swift
   - id: openwiki-source-e2b54b1cf8eab0d11416762b
     resource: repo://src/packages/ui/boot.ts
   - id: openwiki-source-6cd1f358e4b527ced9a43d84
     resource: repo://src/packages/ui/game/game.ts
-generated: { by: "claude-code", at: "2026-11-22T17:23:06.062Z" }
+generated: { by: "claude-code", at: "2026-11-23T20:10:38.978Z" }
 ---
 
 # Break overlay app
 
-`break/` holds Lifeboard Break, a single-file native macOS menu-bar app (Swift, no Xcode project) that, on a work/break timer, covers all screens with a web view of the board. It is the one part of the repo outside the web page. It talks to the page only through a small JavaScript bridge and one DOM event ([Board UI](../architecture/board-ui.md)). The agent skill `break-setup` installs and configures it.
+`break/` holds Lifeboard Break, a native macOS menu-bar app (two Swift files, no Xcode project) that, on a work/break timer, covers all screens with a web view of the board. It is the one part of the repo outside the web page. It talks to the page only through a small JavaScript bridge and one DOM event ([Board UI](../architecture/board-ui.md)). The agent skill `break-setup` installs and configures it.
 
 ## Build and install
 
 | Script | Does |
 |---|---|
-| `break/build.sh [--run\|--now]` | compiles `LifeboardBreak.swift` with `swiftc`, writes `break/out/LifeboardBreak.app` (agent app: `LSUIElement`, bundle id `com.lifeboard.break`, ad-hoc signed), bundles `placeholder.html`; `--run` opens it, `--now` opens it and starts a break immediately |
+| `break/build.sh [--run\|--now]` | compiles `LifeboardBreak.swift` and `Pacing.swift` with `swiftc`, writes `break/out/LifeboardBreak.app` (agent app: `LSUIElement`, bundle id `com.lifeboard.break`, ad-hoc signed), bundles `placeholder.html`; `--run` opens it, `--now` opens it and starts a break immediately |
 | `break/install.sh [--uninstall]` | builds, copies the app to `~/Applications`, and writes a LaunchAgent so it starts at login; `--uninstall` stops and removes both |
 
 ## Timer and overlay
 
 The app sits in the menu bar showing minutes until the next break. A one-second tick drives everything:
 
-- **Work timer.** `nextBreak` is set `workMinutes` ahead and reset after wake from sleep, after a paused period, and after any break ends. Idle time of at least a break's length (no input events) also resets it, since time away counts as a break.
+- **Work timer.** `nextBreak` is set `workMinutes` ahead and reset after any break ends or a paused period. No break starts while the Mac is asleep or locked. When it returns, the pure `Pacing.afterAway` decides: an absence of at least a break's length resets the work period (it counted as a break), a shorter one pushes the next break out by the time away, and an absence during an overlay ends that break. Idle time of at least a break's length (no input events) also resets the timer.
 - **Break.** When the timer reaches zero the app opens one borderless window per screen at screen-saver level on all Spaces, with the page in a `WKWebView`, a countdown, a Skip button that stays disabled for `skipDelaySeconds`, and a Postpone button. Postponing delays the next break by `postponeMinutes` and is allowed `maxPostpones` times per work period. Menu entries pause the timer and choose work and break lengths. A global escape key chord (⌃⌥⌘B) ends a break.
 - **Page shown.** The overlay loads the `url` setting, normally the lifeboard artifact URL; when it is empty it shows the bundled `placeholder.html`. Popups the page opens are shown in a secondary web view.
 

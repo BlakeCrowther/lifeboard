@@ -5,7 +5,7 @@ description: How the three.js Ecosystem scene and the Garden and Collection view
 tags: [ecosystem, garden, three.js, rendering, lazy-loading, models]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-23T20:10:38.978Z
 sources:
   - id: openwiki-source-a5e85d559310f47547b34206
     resource: repo://src/capture-page.ts
@@ -25,7 +25,7 @@ sources:
     resource: repo://src/packages/garden/lib/rerender.ts
   - id: openwiki-source-a182eb993cab8835e8c33ce6
     resource: repo://src/packages/garden/lib/roster.ts
-generated: { by: "claude-code", at: "2026-11-22T17:23:06.062Z" }
+generated: { by: "claude-code", at: "2026-11-23T20:10:38.978Z" }
 ---
 
 # Ecosystem and Garden rendering
@@ -58,7 +58,7 @@ The scene reads the model pipeline's published JSON, never the pipeline itself: 
 
 ### URL test hooks
 
-`lib/url-hooks.ts` parses the hooks `scene`, `phase`, `weather`, `month`, `inspect`, `inspect_src`, `biome`, `hour`, `rest`, `perch` and `visitor`. The artifact host passes only plain `#name` hashes, so every hook also works as `#name-value` in the hash. These names are a contract with the model pipeline's page-test and capture tools.
+`lib/url-hooks.ts` parses the hooks `scene`, `phase`, `weather`, `month`, `inspect`, `inspect_src`, `biome`, `hour`, `rest`, `perch` and `visitor`. The artifact host passes only plain `#name` hashes, so every hook except `inspect_src` (query only) also works as `#name-value` in the hash. These names are a contract with the model pipeline's page-test and capture tools.
 
 ### Capture page
 
