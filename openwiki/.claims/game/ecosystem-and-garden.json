@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:30a13390fd49278c579a7755ac547f433d89b85fa0d7611a8e651fdafc0288b4",
+  "claims": [
+    {
+      "id": "claim_f7b02b3cfc9f415f9550dae1c1e98d27",
+      "statement": "The Ecosystem loads lazily: an IntersectionObserver with a 200px margin starts the engine (three.js kit and manifests loaded in parallel) the first time the card is visible, pauses when off-screen, and failures leave a short message instead of breaking the board.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ecosystem/lib/ecosystem.ts#L100-L145",
+          "version": "repo-lines-v1:sha256:61a06a73ed81e63800b80480c00b63bb05cf975508ba2f085d90f1226c5c47c6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3NWE2OWY1YmE5ZTk2YzE2NGQ1MzEyYTFjN2VmNDYyNmNjOWU3OGMxMDliNjg2YzAyOGRlOWM1MzdjNmExYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY1ZDU4ODI1NDNhNDAyMzFkY2VhMzQ3YmIxODQ2M2UyMWQ2ODI3ZmExOWU4NDU4MjY2YTlkMDgwZDQ3OGM5NDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1M2E1ZWM0MjI4MjEzZDZlYTc1YmEwODIxOGM4NzBkNzJkYzlkZTMwZjJlM2Y0ODUwYTE1OWM3ZmQ2MTdmNzAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_61f86e9e505b4856a26bc63e5c9b4967",
+      "statement": "Food dropped before the engine exists is held and released after start, capped at 12 particles.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ecosystem/lib/ecosystem.ts#L118-L124",
+          "version": "repo-lines-v1:sha256:3eb6580750582f8f5a50b5fafa5d6bcf55a84a734cc31c2e9940f2f33c3ab3dd:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDFjYWNkMThhMzA2NDEzNjg4NGI2NGJiZmJmZjVjNWExZTI4NjQ4M2VmZDI5OGFjMmIyMWNjNGUyYmJiYTczOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDhkYjc0NjA4MTgyY2I3Y2E0ZDlmYmE0OWEzOTQ5OWE3ZjM5MDdiNGVhMDMzYjE0OTJhZDVjZjBiZWVlZWNlZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjI3NmY4OGFmNTdkODNjZTAzZjY4ZjU3MjcwY2E0MDA1NGRlNmVmNWE1MzRhNDY0NDE0YzgwNTgxYjRkNmM0NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDc0NzIyZGJjZTRkOTQzNjE0ZTA4ZWQ3MmJmOTdkMTBmMTk0MTdjM2RhNjRlOTM5NzU4NWRlNjM1YTQ0NjI3ZiJ9"
+        },
+        {
+          "resource": "repo://src/packages/ecosystem/lib/ecosystem.ts#L178-L183",
+          "version": "repo-lines-v1:sha256:a04b611a002cf8d38e72436fc85b657cdc9ae863c65ab92f9e0dc635d4b47ae1:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYwY2RiOTcyYTdiZmI3ZWQyNDZmOWZmNjcyMzg1ZTU1ZjQ5NjhmYzExMDQzZGM1YjY4NGQ1MWRmYTMxZGJjYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmU5N2RhNmJlZWE4ODEwZTY0Yzk5MTBiZjY2NTZlMzdlNjM4NjY1Mjg5ZjM0OTU4YTQ3Yjc0NThjNTc4ODkyNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzZlMGJiMjViMGNlYTIzYTgxMGQ5YWRkYjdjNWYzMjA3MjU2MDQ5ZGU0ODExMTNlNmQ2NDlkYjI3NjIzOTgzNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjIsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGI0NDYyZDA3MjJmZGZjMDZiYTdiZmU1YzIxMDllOGEzZGVkNjQ3ZTcwY2NhNjgxNTU3MGE5ZTgzMTVkMGQzYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cbb998f3aa8f4804a69b522de56cec44",
+      "statement": "The scene reads models/roster.json and models/biomes.json fetched with cache no-cache from MODEL_BASES, and the manifest readers drop malformed entries.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ecosystem/lib/ecosystem.ts#L14-L55",
+          "version": "repo-lines-v1:sha256:196c827c807d591d4f265b5cafe0d52bdaeb4361e98ad74de327a3da96e4c358:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxZTBjMmE5NmE2ZTc0YzBiYzM5MzM4MzkwMGU1NjM4MmM3ZDEwZjkyMzY1NTc4ODQyYjliNWQxNzA2MmZhMmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzZGVkNDFlYmU2YWY3ODk4ZWFlY2ZlNmY2OWVjZmU3OGQ4OWFkNTk1ZjYyOWZlYjBmMjg4OWU5NTg4NmM1ZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2N2FmMGQ1M2Q1YjAwMDJjZDk1MTkxZmQ2NjdjOTdmODZjMmZmYmQyMWM0ZTE4NzRmNGZjNGE4ZGI5Y2FhYzYifQ"
+        },
+        {
+          "resource": "repo://src/packages/ecosystem/lib/manifests.ts#L1-L30",
+          "version": "repo-lines-v1:sha256:aebd99997d4e9676331c58c65c6c94487cc51d977e6f2bce8ddaf76f308b4b3d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2ZjUyZmIwNzhjOGFhYjhlNTNhZWRlYWU0ODMwNzlkMzAxZjE3NzU2MjNkMDY5ZjgxYWZiNWYzZGY4NTAzOTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmMGI2NDY4ODI1YmM4MmVkMGZhZjU1MGQ5YTc1NTVjMjRlZTJkYjg4NmMzN2YxYmVhMjI1NTY4OTBmNTdkZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlYjc1MDNkYWNkZTgzMGU5ODM2ZWNlMTJlNTliYTIwNGQ5ODlhYTdiMWJjZWVmZWJkNThkN2E0OWVmMjRiOTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f5215d8e95ac40ceb0c8361543ad43c6",
+      "statement": "three.js and its addons are imported dynamically in the kit and stay external, resolved by the page import map.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ecosystem/lib/kit.ts#L1-L50",
+          "version": "repo-lines-v1:sha256:1ec43c5200b0e7cc45d7f118c88d6058359d46c32c42c8e359d2bab390358205:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NjZjMDRlNjA1ZGZmODEzMmY4MTA3ZDhlN2Q1ZDQ2MWNkNjU3NTdhNjIyYzRiNzMyOTBmODdkZmY0ZmYxZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4MGNjN2MzZWYyMGRlYjViZGE2ZGRjYTk0ODUwMzNmYTkyMThjMGRjYzFhYzk1YjEwMWExMWQzMTJmN2E2YjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_788bbc8dbb7e4e11a4bcb054030e8d36",
+      "statement": "Weather only changes the look: readings older than 12 hours count as unknown, and a forced weather hook is always fresh.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ecosystem/lib/weather.ts#L18-L47",
+          "version": "repo-lines-v1:sha256:2645a7a915f1eaaa7b9556fc87d1a27f3d527c21b48ac10b8682b39e706b7928:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1ZDkxNTVmNGQ3ZTljN2M3N2E3YTdlMmIxZmY1OWFhMmJhZWRkZTRkYzBiZGZmMWU4YmRkMjY4OTZjZWZmNTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdiNzZmODQxYWI4NjNiZmRkY2QzZTMxYzdhYTNhM2RhZTMzMjgwMTU0ZGJmNDNiNmJmYTk4MTUxM2ZiNGNjYjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b4b3f6c9cdf441688278d139c4d88dfa",
+      "statement": "Every URL test hook works as a query parameter or as #name-value in the hash because the artifact host passes only plain hashes; the names are a contract with the model pipeline tools.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ecosystem/lib/url-hooks.ts#L1-L62",
+          "version": "repo-lines-v1:sha256:d70e223771b42d07a4c6dca3a274cca3b7f65aa82aa14cb65fe13082e4ae6415:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQyNDY3Mjc0YmY4ZjEyZWRmZWMwNDU3MmFlOGU5ZjU0ZDExYmU5OGM2MDdjZDliNGI0OTZmZTBkNWQwNTgyYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_91b463b3a7204855aac24840dc89de3a",
+      "statement": "The capture page mounts the Ecosystem full-window with a synthetic state and exposes window.Ecosystem for headless pipeline tools, with no board or db.",
+      "evidence": [
+        {
+          "resource": "repo://src/capture-page.ts#L1-L20",
+          "version": "repo-lines-v1:sha256:f60d0c292b122b67e71d73c558f7518c5454ca5d182c52fa442dad9be14e047e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhM2VjNmEyZWRiNjljMWYxOTVmNjA5NTQzYjc3NmU4MDVhMmQxNjc1MDA3ZjBjOGNlYThiOGVlYjU0YTQ4ZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiYWEwM2Y1OGY0N2ZmNzY0YmZjZDdhYTIxZmIxNzFmZWFhYjE0NTVkODlmOTU5ZDE1ZmE5ZDIwNDQ3YTNiZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4YzFlMzEzZGRhODQ0YjZlZWQ1ODcxNGFhMjJjNWNhMGRhNWZiYTE2NTI1YjFiYjJiM2YzY2E0NjY3ZjdiYzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7d1e0acbba284efd890602613f1da90f",
+      "statement": "Garden 3D plots use one shared offscreen WebGL renderer and show the SVG plant until the model is on screen.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/garden/lib/plant-3d.ts#L1-L30",
+          "version": "repo-lines-v1:sha256:6c72e992e690ed1f260b95f2dea0fef85c042287155d6fce3e04c59c6db397b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjMGRhMWJmMWEyZTYwZjlkZjU3NjYwNDJkZTQ1M2ZmODM4MmZjZTMyNzk2YzlkMDJhZWM3YTMwZmY5OWQ5YmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiN2NiYWZmNzliOWM3YWNhOWZlNzcwNWYwNTAzOGQ1MTViNzEwMGQ5MGYzNTE3MDBmNDAyMzkyMmFjMDYzNDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2ZmVmMjliMTkzZDQ2Yjc0YzkzYzAyZWYxMWUyZjYzODUwYWVkZDAzMGI4ZTNkYThmNzJlMTkxMWQ1Y2JkYjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c4a2ca03881743d5a3954262aa1d29d3",
+      "statement": "The garden registers a rerender callback so manifest loading can request a board redraw without importing the render loop.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/garden/lib/rerender.ts#L1-L10",
+          "version": "repo-lines-v1:sha256:6168e2b383ff29af71d112e8230c807896649ca083eb5d6d32863de773a09244:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlYWFiMGMxNjNhYjQyZmQ1MGNmNWViNzIxNGU1ODJiMjZhMjg4YzkxZDBmMTQ4YjMyZmM3NGIzNjdiOTVjNzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/packages/garden/lib/roster.ts#L1-L10",
+          "version": "repo-lines-v1:sha256:14acfab4bd1244547971667df2cd7d9437b0ca320c6b22c1c8a94f707398a567:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxYTE3MzNiYTM2NWU2ZmI4MWYxNmRiNjgzZjljNGFlZDM4MDg2M2JkNjgyMDlkNGVkYzhkOTI3YjU3MjMxM2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0ZWViNGJiODUyMWQwYjA2Y2VlNzU3Y2NiMTdhNjk1NjY3YjI0ZjM1YWMwMTVkNGM1OTE5YzA2ZjM3YzYzMDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkZWM2ZjlmMjhlODJkNmQxN2NkNmJkNGQwYjA5MDQ1ODM3OGJjNzc4MmJlZmQwNjg2M2ZjNzZhMGY1ODU4NjUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}

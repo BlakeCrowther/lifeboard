@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c1b09485565e5463e587883fbb2af975b0488c5e6e082e0046b0955e450528b5",
+  "claims": [
+    {
+      "id": "claim_5b5cbb9aa7214a71923a17489f3c9e3d",
+      "statement": "Game state is derived from db history on every load by a pure function, with the open mapping choices (tide from the Today ring, neutral empty days, visitor selection, finished-weeks-only garden, seeded rolls) documented in the derivation file header.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/game/derive.ts#L1-L2",
+          "version": "repo-lines-v1:sha256:dbf8e5a918f53f89f462754d99b97b11235b36a28009837d53629dcc5a79b415:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTAyMWM4NjI1NDFlZWUwYWQ0ZGZmMzYyYzhkY2UzN2Q1ZDM3OTFmOGIwMjA4M2QzYTI0Y2RkNThhMjFiZWU1MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzVmOTEwY2E3NDZmZGRkMGNlMDZhMTEwNmNjMDkyYjlkMWY1NjAxNjVhNTgyYjVlNjVlOTVhZjYxYTIxM2NhZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://src/packages/game/lib/derive-game.ts#L1-L17",
+          "version": "repo-lines-v1:sha256:c5abf8fc9a79e2729d3557d8751dd0c0eed44531447fb4c3c7f06f6bca603bcd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5MzMyZDQ5ODdjNGNkNzM1MzQwNmU1ZWYxYmMwZWQ2YmIyMzQ0YjQ2OWU3ZDAyMzVkOGUwN2ZlYTViOWZmMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4MWI3YjkwNTlkZmUxOWZkYjgxNTM3MTA4Mzg3ZjhiNGMxNzA5ZWI1MDQxZWExNjAwZTkwZWM1MTFhMzY1MjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwODJmNmFhYmY4MzkwZjM2NWQ3OWIzZWY3MWUzNzg3MDA4YzQ5NTcyMTM3YmVjMDAwNTUyZGM2MzVjYTdmYTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b21e3559bc2450c9bf5ab364eb2a076",
+      "statement": "Every tunable game number lives in the mutable RULES object so the balance sim can override entries.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/game/lib/rules.ts#L1-L32",
+          "version": "repo-lines-v1:sha256:b94c4ad843305c3e67259aeb403778e76e1d5cfd8fabbf5c2d9387c57c41155a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxZTI5YzE4OGE4NjkzMzBiZjU5NmViMGJiYWQ2ZDQ0MTE3NTQwMDBmMTUwM2JiMDI3MGJiYjRkYjczNjEwNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzOTAxYTBmN2RjYjIxZWU0OGZlY2JlZTZhZjc0M2VhYTUwYmMxZGNkYWNkNWU4ZTRmY2ExNmYzNjQ0YWFkZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cd8eebd7671b442694fa627cef0e9425",
+      "statement": "spec-check flattens RULES into section.key leaves and fails when SPEC.md disagrees with a value, names an unknown key, or omits a RULES leaf.",
+      "evidence": [
+        {
+          "resource": "repo://tools/spec-check.ts#L1-L42",
+          "version": "repo-lines-v1:sha256:ca9229801bc52d216f38cf2d3d4fda8b4a58134bf3af5fc42f712829650ae12d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmYmE4YTMyZDk2ZmU5MTQzNTA5ZTIyODhhZGNlNmMyYjA0MWY1NGRiNzM0ZTkyZGI3OTQxMzIwOTBiOGU1YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlOWZlMTNiZjU5YmE0Mjc3MzViZjQ2NzI4MTA3Njg5M2UxY2NiN2U1YjdjNDM2NWVjZjEyNzJjYjQ3YmE5YWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a8ddee8a42f74df3a85467b3c560e097",
+      "statement": "Cloudiness scales with overdue count and blight with the count of tasks past the blight age, both capped at 1.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/game/lib/reef.ts#L111-L114",
+          "version": "repo-lines-v1:sha256:d05cef59e8e0bc500e4b1295a31d97c2aa250739410960c8770bfb60cc86576c:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzQ4MWYzMmExNGI0ODJlNWQ0YzMzNjllOGJlMjBhMmNjYzg1YzAxNzMwMDBkNWE1N2Y3NDMxNmE5YWIxZGJlOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTMxYWQ2ZGJlNDg2YzgwZjgzNzBmMmI2NzFiY2Q1MDQ4NTQxOTQzNjA3NTViZGQyMGZmYmFhMWMxMjg1MjVjZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODNiYTFhZWQ2MGI5YmY1YzRlZjhmMjM4NGMzMzYzOWE3MThlYjYyNGEwNjYyN2Q0MjE3ZDc3NzkxYjVjMzQ3NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7c9af2cd395e4918881aa186af4d1fd3",
+      "statement": "The balance sim runs the game package against seeded personas with CLI overrides applied directly to RULES and an optional visitors dump.",
+      "evidence": [
+        {
+          "resource": "repo://tools/sim.ts#L1-L48",
+          "version": "repo-lines-v1:sha256:8f28c075cda6b1a7c5e45ac82db7d8f6936391ec7c412b59767f9b95abf3af52:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1ZmRiZDNlNDQwYzEyODExYTEwMWVhMDI0YzllNjE2NzE1ZDYyMTJkMjg0ZmUyYzEyODI0OTRmYTcyNWYzZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5NmVhZmQxM2FlMjBlMjM2NGU5MjNjY2JkMGFkNGQ2ODNkZDlhNjNjZjIzZjk5OGJjZGY2ZGZhZTIwZTI3M2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwODNiY2I0ZjE2ZjViMTFlNjMyOWYyNWViNDJlYmQzZDYzYWRlNmE5YzE4NjgzNTcwNzNiNjAxMDYwMmU5YzQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}

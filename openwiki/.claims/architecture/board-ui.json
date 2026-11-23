@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:1d673fcc395c29b84c88456f953adf3263fc99eeee712adcab3f9d4c937f75ec",
+  "claims": [
+    {
+      "id": "claim_41f993a942e245d1af9fc3ed02533a74",
+      "statement": "bootBoard wires the renderer, events, theme and the db store; on each store change it refreshes the board model and, once the store is ready, seeds starter tasks, spawns missing recurring successors and records commitments before scheduling a redraw.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/boot.ts#L34-L48",
+          "version": "repo-lines-v1:sha256:91d5ce413e097c2421c45614256d6db3cc55f4ff12fd68d3f0936c7e242662ad:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlZTBlZDE0Njc0YjA4YmIyNTViZTQwNzI1YjRhOGQ5MjE1MzYyOGVmZmVhYTE2ZjZiMWM5NzJlNGY5MmY1ZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3MWQ0NjZhZTJkODBiOTRmNzMzMWNmY2NmYTZmZDZjOWQzOGJiODFkNzRhMTRiMjM4ZTY0MzYzYzAxMWVkYmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d1d1c427d0d441e692d0cd00b0116f04",
+      "statement": "refreshBoard replaces the exported model object in place from the store's docs (after applying prefs, week start and profile time zone) and increments modelRevision so derived values such as the game state recompute.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/shared/refresh.ts#L11-L27",
+          "version": "repo-lines-v1:sha256:ec95d6941d31866bfcf9d92fa7309cb51c7f54e958362d300104a8d34a8480b9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1ZDZkOGRmNTk2ZTRmYWEzNjEzZjM1ZDBjZWEyZDhkODIxNzIwYWMyMDg1ZWU4MTY0NjlhMzdkYzM5NDU0MWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhMTUyNzFkYWRiNTEwYzVkN2FjNTBhMDNjZWZiMWQyZmU0NzE3MTExZDM0NGFkMDNlZDY2MTg3NzI1NzAyOTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/packages/ui/shared/state.ts#L9-L14",
+          "version": "repo-lines-v1:sha256:2889ac3619eb4c3790eb65fddb938a68a855b48f278b8f7242c3c37f242df63d:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGJiMTA2YjNkZjRkNDYwNDc1NTQ5YjNhMGFjMWI3NmY0YTE3OTkzOTNmZmM3OWIyMzk3MjVhMWQ2ODExNTFjNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDEzN2E1ZjZkZjE0Mjc3ZjAyYzk2YTcyZGNlNjFiOTZkOGJkNDRkODE1NGM4OWZlN2ZhZTQ0M2M5MjQ1Yjg5MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDE4NzM2OTMxNWE4ODA5ZThhZjZhOWRmZGQ0ZTE0MDUyNmEwNWM3MmFmYzQ4ZTY1MmUxNWFkZjdiYzdhMjU2MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTJkMjZkN2JmMzI1NTQ2OWViMGQ1YTM5Y2U5OTc2M2ZiMTQ5YjE4NDk2M2Y4MzA4ZjcwYmUzMTNjZDA4YTk3MyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7ae4419af83940638b0eccd2a721e4ff",
+      "statement": "The page reaches the artifact db only through window.claude.use('db'); outside claude.ai the capability is absent, so the store reports status nodb unless dist/fake-db.js stands in.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/db/lib/store.ts#L49-L58",
+          "version": "repo-lines-v1:sha256:b0ab1804e0b70b4f11830fe964854bcc876b25a06ecbe2c4fb688a5174686b20:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlMDYzMzcyNzljODA3MzUxOTY1YWRlOTYxYjIyMDJiYzViYmJjNjgwZjMwYzRiZjAyMGFiYzEzZTZiMGI5OTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3N2E0ODE0MGFjZmE1MDM0ODMzZTY2NTZkZjc5NmY4NTNjYWY3ZmZlMTRiMTMzZjdjNTE4MGRiZDhlMDE4OTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1MjkxYjE4OWQxYWE2NjAxNGNiNTY5YmFlY2FiZDEyOWJiNzYzMzFlN2M3MGE4Njg4ZmNmODhkMDczMmRiNTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlYzBkZDI4MTQ0NTI4MWM0ZDFhYWZlOGYzYTI2NDQyMjA0MThmYjMwODQ3OWMzMjY0MGJlNGNlN2RmNjllMzMifQ"
+        },
+        {
+          "resource": "repo://src/packages/ui/shared/artifact-runtime.ts#L43-L46",
+          "version": "repo-lines-v1:sha256:cfaf9f0f2851dc09e2b1c5900541019405d735d81da2e10e04e095bc1a6b533d:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmEyZjNmYzhhODY0MDUzZTM4ZmRhZTYwMjJmYjI4NTgzNzgwZTk4NTU4YWE3ZGFiNGUzZmMzYmY2YTBhNzZkOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2VkMGY1OTA0NTJkNjc4MTBkYjY0N2M5NjYzNTlhYWViOTY2MzQ3OGZmZWZhMjE1YTViOTFhYWZmZTI4NTcwNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmI1ODBlOTY0ZjgzYTQ3M2Y0M2Q0NDM4NDYyOTQ5ZDY4YjU2MDBmZGE3ODdmMTYzNzQ1ZDAwZGU4OWNiZjM2YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjIsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjI3MDdiNzdjZGJiYWU4ODFhNzBjOTcyNmI4OWZlNzUwMTNhNWI3MDdiMzlkMTE2YTA1OWM4YmU4ZDhiOGU2NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_72990a6d77e74a159c2fbcf4e7358c38",
+      "statement": "Redraws are requested through a registry so modules do not import the render loop; scheduleRender coalesces on a 16 ms timer and skips drawing while the user is typing or dragging, with catchUp scheduling the skipped draw afterwards.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/shared/redraw.ts#L1-L31",
+          "version": "repo-lines-v1:sha256:c8c846520af920963b080c50ca5db6586168cc9880909fc288a2adb6c122372c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5NmMzYTlhYjVhOTBlN2E0NmE2YjY5Yjc1YTFiYzg2MWM0YTVmZTAyODRiMjAzZWY4NDc0YzA0OWIzY2U4MTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhNGE1MDZmMzhmYmJhMzhmMTY1NDUxMGRkZWZmZWY5ZTNmNDRlOTI1MWU3MmM5YzY3NjFhZTkwNTBiMGY4YzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7bcc3d3d2333473a8c9ef8f6c1e6c37b",
+      "statement": "Each render replaces #main's innerHTML with the current tab's view string, restores focus by data-act key and scroll position, and shows a status view instead of tab content when the store is not ready.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/app/render.ts#L20-L32",
+          "version": "repo-lines-v1:sha256:fa2e50de02aa30f80e237da2f58611c7eec03d4de38ef96c0598c4c229ae6f95:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3NGNiZGU3Mjk5MDZjOGFjY2QxYjJhMTgzM2VkNzBlYzQ3OTg3Mjk4ODFjNWEwOWE4YTFkZGQ5NTE0OTE3NTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1ZThlMWM3MTdlYWJlZDUyODQzMzU5NTA3N2Y0NTQ4YjdlMmZkMjBmYmJhZjgyZjg4Y2NiODkzNTUzMTE2YzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwNjc0ODk0ZDlmMThlNGI4ZjY3YjkxMWEwYWVhZTMwZjI3N2Y0Mzc5ZWEyODU4OTExZmMxYjZkZWZkMTEzZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1MDA4ZjRmNTVjYTlmNGY1ODI2ZTEwZDk5M2RjNGUzOTYxNGRjNzRkMTQ0MTk3N2FjMTA2MTQ5NjczMWVlOGQifQ"
+        },
+        {
+          "resource": "repo://src/packages/ui/app/render.ts#L34-L52",
+          "version": "repo-lines-v1:sha256:452c9a88a5bedfcd2cfeb2e598991b0e268437d06881cd45679933315b9852bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MTkyMjk4OGQ0YzI1OWVjMzQxNTVmZGQ3ZjQ0MTIyOTY4OTA4OTEzNDU0ODQyOWFkMjA2M2FiMjA3MGZmYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmOWE5N2U2NWVhOWZkNTIwNDkxNGFkODZiNjg3OTFkNjg4ODUzZmM3YTA1ODJlOTFiMzhkNmM3MmJmMDVhZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4ZjUzZjFkZWJlOTcxYjNlNjZhNzBkZjAzYTQwM2MyMmUxMjE4ZjhmMzMzNTJlNzRlZjRhMmExODBiNzViZGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2ZWVkYTEzMWIxMTEzNmQxZDUxMDcyYzJmZjE0YWQ5ZjMxYjRmOWY2OGRiYzU1ZmQyODEzODU0Nzc4M2NmMzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_602f449c66fe426ba51ccced7b945dd9",
+      "statement": "buildBoardModel is pure (today, week start and pets are passed in) and counts a habit session only if it was logged during its own week or carries a valid exception; other sessions go to voidHabitSessions.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/board-model.ts#L302-L319",
+          "version": "repo-lines-v1:sha256:d92301ee19acdcb6c986dad6b6b50c56e83717d5ff2c2f577ff3cf14cb261061:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3MzgzZmZkZDVkM2JjMjUxMjY3ZjIwZTRkNDFmNjI5MzRjNmViZDcwOTMxNWY3YmRkNzRmNGEyYzc3ZTY5MDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlYWUxNGM0NTA3MzMzYjcxYjg1YmI5NmFkNjFjZGRmNmU3ZTA0NzRkMmUwZDIyZjQ5MmVhYTJiMDc2OTJlNTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczMTRkYWIyOTUxZWRiZGY1NWI0YzJkMzNhMmM5ODNmNjJkMjI1MDU4MmQ4NTcyODBiM2ExMTUxZDE2MTFkZjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmYjA5NTMzOTQ0YTZmMjUyNzNiYzI2NjhlM2Y0MzkwZTA1MTFiNWYwZTE2ZjZiZmUyZDVkYjRiMjA5MjBhMDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a023d0d5e8484e50b7f5b031a0624d83",
+      "statement": "Every UI write goes through runWrite, which refuses with a toast when no db is connected, passes an UndoRecord, reports failures via showSaveError, and offers Undo that calls store.undo.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/shared/writes.ts#L19-L37",
+          "version": "repo-lines-v1:sha256:29e1bc54cccc28733d4e29713b4c497a02b19344b6221b3e60065df0010dbc32:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3NzA3MTZmNDY1OGRiYWQzMDNhZDMyYjFhMDUyMTVkYjMwNGJjYzk3ODA3YjI4Y2YyYzhiNWVlMGJjNmM2OGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzMDM4ODg2YzYzOWEwOGQxMmVhODU3ZWQzMjJhOTc5MjY1MzVkMWQzNGY2MmFmY2Q2ZDI4NjY4ZjBiNTllMjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2YzU2NTZmMDAzMTA0YmRkODg2ZTkxMGZhYzUxNzNhOWM0NzU2YjI2YmVkMjNlZWU1OTYwZWJjZmFhYzlmMDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6b6d8295ba72461488a973ca1b345c00",
+      "statement": "Completing a recurring task creates its successor once via spawnSuccessor, which sets the next due date from the recurrence rule and marks the parent recurrence_spawned.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/shared/writes.ts#L59-L74",
+          "version": "repo-lines-v1:sha256:2bc1049e7bb4afa63029c0636808586c65d16c50ef9bfbf5a0a87821b5f1e5e3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5YzIxYTRjOTllYWM2OWI4MTcyZTJhYzE5ZGY2MGI3YzY3MWYyMWFkNTM0ZDM0ODVkMTA4ZmRiYmNiMTMwZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2NWYwNDk1NjczODliYzYxOGY0NmFmMDhkYmEzZTU3ZDlhMTVkMjZjZjZmZjYyNGNkZDg4OGJlMjBiYzE5MDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_371be6bc293d44a997ce3c0c5e6ff557",
+      "statement": "One listener per event type dispatches controls by data-act, data-form or sheet field name; Escape closes the popover, then the sheet, then the ring task list, and Tab is trapped inside an open sheet.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/app/events.ts#L1-L3",
+          "version": "repo-lines-v1:sha256:bf208c1685bfa6e34dc61c0b01700c3df6dc5ab6689c51c42fd1e6200a4f4bbc:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzkzZDQwNzVlMzg2N2ViNjc5YzU3Y2I3ZDEwMmU1OWU4NjE3ZmIzNTU3ZjVkYTg3OTllZWFkNmNkOGZjNDRmZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzEwZTY0Yzc4NmI2MTNjOThiMDZmNmNjZjZhNjVmMjNiYjIyM2IxYWRiMGQ3NWJjZmJlYTQ3OTczZWExOTA0MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTc4YmIwYmQ4M2E2NzZmNmMzYzUyNGIwMzQ0NWFiODQ4NTY3NWFiYzc3NjAxYmUxMDU0MjZjNzk1YjYxODdjMSJ9"
+        },
+        {
+          "resource": "repo://src/packages/ui/app/events.ts#L246-L260",
+          "version": "repo-lines-v1:sha256:62d20aaf74d799789d25d0f859e974bf9a3c06319fbc5177f98a440e8b5e9170:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0MGQ2MzIwZTgwMzAzYjE5MWRiOGUxODNiZmJjNmU2MDBkYjU5NTkwNTUyNzIzMzJhY2Q0ODZmNTZkZDk4ZTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiNTgwZTk2NGY4M2E0NzNmNDNkNDQzODQ2Mjk0OWQ2OGI1NjAwZmRhNzg3ZjE2Mzc0NWQwMGRlODljYmYzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZkY2FkYTRhN2Y3OGFjMjJlYmFkZTRlOTZlMWJhNDk5ODg5NDQxNWQwMGU5N2E2ZGJmZTQxNDM5NzY5NmEzMmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_40e34c493ff8417eb0054d14bbecf925",
+      "statement": "The garden and ecosystem packages are dynamically imported only when the game is on, and loadGameModulesOnce memoizes the load but clears the memo on failure so it can retry.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/game/game-modules.ts#L14-L19",
+          "version": "repo-lines-v1:sha256:ccbe133e0f52d0852db62c2c583b334db735120a954e2f0835628baccb717d71:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmExOWM1NGZiMTNjNzEzNzQzNjQyZDI1NTQ4ODQ4OTg2NGYxODQ5ODI4YmQ5MDFjOWRhN2E4Mzk1ZGM4YWE3ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTUyYTE4YjRlZTQ3MzEyYzliN2U3MzE1MzBkM2I1ZjgyNDM3NzNkNzRkZjI0ZDNkMjg4YmE5OThhM2ZkZTgzYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://src/packages/ui/game/game.ts#L40-L46",
+          "version": "repo-lines-v1:sha256:c63364761645171ba9222a67c0fbeaf5dcc41d44a48aba0c176abf92dfc7d8d1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTVmNDEzMDllZjc1MjA2NGIwZTBiOTdhM2U1OTFjYmIxN2RhOTdlM2M1OTQxMjQ3MjE3ZWYyNzcyMjcxYzUwYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGUxMWY0MTRjZDcxNmI0NDlmNDVkNTBlMDhlYzQwNGM1ZDVhYTI1YTBjOTczNmUwOWIwZGY2Y2M5OTZjMTE3ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODNmZWRmMDk2YzRhY2M3NTMyOTZlMmYxZjQ1NDJhZjQ1MGFiMTY3NTM4ZTA0YTQ4YzVhN2Q5NWU5NDVmYjRhMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9351d3f25ab34f148c06b6ec5f4125e1",
+      "statement": "currentGame derives the game state with deriveGame, caching by model revision, plant-pool version and today; it returns null until the game start day (game_state/game) is known and never overwrites an existing start day.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/game/game.ts#L48-L58",
+          "version": "repo-lines-v1:sha256:dbf9b14fff50aa7ec4382d46e77e71b2335b718bdf741ea40ddeea56ebeaa73c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjNzQzNGYwNjY5YTBjYTFlMTVhNGYzNzBkOWE5ZDQ5MWEyMDdmNzI0YWZiNzZkYjA0MjJjMGUyNTc5OWIyMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhNjFjOWE2OGM1MjJiYmZlYmVkZjFkNDk2NTk1NDI0ZmJjMmVjYzgwMGU0OTlhMzkzMzRkYWY1ZjQ1YTNlOGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMDg2YjAzYWQ2NDE2NDBiYzE0NjY1YjcyZDhiYzNkMzE3YTBjMGM4NTBmNThlM2Y3MjQ4ZGZiMmNkZjI1ZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5NDUyNGI2ZDY0ODBmOWE1YzY2ODliZDMzODAyNGM2MmJiYzM2ZDk1MjhlY2Q5NDg0MmE1NWI2ZTUwMTUzYzAifQ"
+        },
+        {
+          "resource": "repo://src/packages/ui/game/game.ts#L72-L83",
+          "version": "repo-lines-v1:sha256:4551f2a6594634cd991d0887182874158e62cefe174c89cd9a022bc1478fa6f0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3YWJlNWNlMGIzNzU2MGIwNmM2NzRiMGE2ZjYwZjBiNmM2OThlYmQ0MjIwNGI0ZGU4NWYyZDdjY2Q2NTIwNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0NzgwODJmM2NkZmViYTM0OWFjZDExZTg5MTk2NjAxNDQwNGQ1YzM0ZjNlYjRlZWFkN2E3MzczYjk4NWY5YjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0YmU4MDNjMzk1OTczNmE4NGJhZTZiYmQwM2Q5MDgyYmY2MDBkZjBmOWUyMjJkMWY3NmRiZmNhNjk2Mjc1ZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d3dd6a6c573241728b371c8a1be535f3",
+      "statement": "After each render the game hook writes checks/game_status (biome, phase, plots needing 3D models) only when its value changes, which is how the weekly agent learns the game's progress.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/game/game.ts#L116-L142",
+          "version": "repo-lines-v1:sha256:1446199d609989959c87c2fb5e07d8e706a7192203dbde6011bbedd69a0724bc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0YTYyMTMyNTE3ODcwYWFmNWU1MDQzNzYyYjFiNWJjZTk5ODdlYTgyMjZhMzllMDc2OGQxZDU1NWViNGI5ZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczZjA4ZWJlM2VlNzQ4NjZlOGEyMjcyYjZjZjYwZWVkYzI2ZTk2ZDYxNzljNmQ2MzEyZjQ3NmFjNWM3YTY0NTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4YTIzNDg3MzdmZDYyNDY2MzRhNGNjZmNhMjc5ZGZlODRhY2Q2NDhkNWUyYjY0YWViYmYyZmIwYjBhMjBkZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3N2QyMDY3MzU0MjdhNGNmMjk5YzU2MmI2NjBlMzMzZDY3MTEzODFlMDI3OGZiNGQzODVkYmIwNmNlYzc5MzcifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}

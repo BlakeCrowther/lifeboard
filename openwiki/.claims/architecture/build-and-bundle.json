@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:110efd19e439cb20322571316046803370a1352f2eb2ae09d979b2ae6afaff74",
+  "claims": [
+    {
+      "id": "claim_90a30e23fd764c0b9bc8c284fb1e7001",
+      "statement": "The build bundles src/main.ts to dist/app.js and src/capture-page.ts to dist/capture.js as code-split ES modules sharing chunks in dist/chunks, while src/fake-db-page.ts becomes the classic-script dist/fake-db.js.",
+      "evidence": [
+        {
+          "resource": "repo://tools/build.ts#L8-L27",
+          "version": "repo-lines-v1:sha256:08f56ed378cf582dbebf48452ca892ae45f4511e8afa873628f4a6ead6e68fb2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkMzFlM2IwMDE1MjE4MDlmNGNiZjA0MzVhZGVkZGM0ZDhmYWRkMzAzNjU1MzI0NmVmNDkxYjZmODBiYmFjNmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0MTQwZmU3ZTE4MGE4ZTczN2MyYzEyMTA5NTQzNzU4YzE4MmVlNTgwOGRiMjFlOWE0YTEyMDU2NTQzMGY4MmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhNjZjYTQ0NWZlNjY1NzYzYjcxNTdmNDZhMzRmNjM5NWI1MTZiMjBhYThjYTlhNTk0YzIyNjBiMTZjOWVhMDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE5M2IwOTM3ZGZkOWE5MWM0Y2E0ZGJhNWU5ZGE3YjU2NTljMTU4NWRmYmZmNmVmODRhYWY0NjQyZjFjZDAxYTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_caca870de681457dba809b5db162565c",
+      "statement": "Chunk names carry no content hash because publishing lists every dist file by name.",
+      "evidence": [
+        {
+          "resource": "repo://tools/build.ts#L24-L25",
+          "version": "repo-lines-v1:sha256:54edcddecd494b7ff6811c19731b3e6141eb0b8a936ddfc49b1212575276ebaa:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjM0YjlhNjQyZWJjMjEyNTQ3ZjdhOGVjNWQ2YmUxMjgyOTgwNzVhMWU3OTAwMzM5ZTM5Y2EyNWQyZjQxM2ZmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWE3Y2JiNDdjNmI4NWNmN2U5NzRjNjAyNGEwZDdhNzViMjczZThmOGZmNTkzNTMzNmU4ZDA4YmYzZDc3ZTE5MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjZiNmVlZDJlNTU0MjA3NTI2YzM5MTgyMWZlNDNjZDQxMzVmOWIyZjdkYTcwOGI4ODNlMjI5MzVkZmZiMWVhMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjJmMWQxNWE1YTE4ZDZhMGZiNDk2MWI3ZmFjYmU5NTJiNjFlZTY5MDc2YmYwMDU3NjFlMmUyZGFmZjIxOTQ4ZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7c4c1c60b0a14b74b523825f87a60744",
+      "statement": "three and three/addons/* are external to the bundle and resolved by an import map in index.html and capture.html pointing at a pinned CDN build.",
+      "evidence": [
+        {
+          "resource": "repo://capture.html#L21-L22",
+          "version": "repo-lines-v1:sha256:e4d3e874fb93214e69be2d947b583700e11a97703b2c591620741f3446608070:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTA3MmY1ZDgxNzM5ZDk2YWU4NDRhMDdmNzFiYTE5NDI0YTEyZjUwZWQ1N2Q0NGFkMTExNzhiZTE1YWI0Njc1MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGFhYjU0N2EwYWU0MjJkNDc4N2FhOTAwNjkxY2RjZWM4ZDEyN2U0ZWI2NmQzMmU2ODFlMDdlNzBkN2RhMTE2NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDdkZThjNjk3N2Y4NWE0NDA5YTgwODc3NzVmOWZmNDg0N2M5NGNjYjk3MjhmNWRiZWU0YTVmZDQ3ZmYyMWNhMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjIsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDJlZDU0ZWRjNDJmYmJiYzM2OTg4YjJhMTg0YjY3ZTQ5NTY4YmU0ODA3ODMyNTM4YmE5YjdlZGRhNTM3NDRkOCJ9"
+        },
+        {
+          "resource": "repo://index.html#L1040-L1042",
+          "version": "repo-lines-v1:sha256:1c95c36a8297c7728ee341306ea200e4122a8f3c024077491c7f4b24835008ba:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTA1MDBhOTQwMjE2ZWZiNjQ3OWY3ZTkzZjQ1MDNiYTU5YTdiY2VhYzg1N2UyZGI1ZGU5MWExNDY2NmNkNDY5NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWEzNDI0YjY2MzkwNmJlYmQ4OWQwMzMyYWNiNzcwNjBlODAwY2I1YTk0NmE5YzNlYTIzOThhODE4NTc4ODJjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTFkZWJmMTljZjY0ODQxZmU5MzE3Mzg4M2I4YTkyZTYzZTdiMGI5MzYwZTRmMmFhNmZkYjQyZjFlMjU1NWZlYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjIsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDJlZDU0ZWRjNDJmYmJiYzM2OTg4YjJhMTg0YjY3ZTQ5NTY4YmU0ODA3ODMyNTM4YmE5YjdlZGRhNTM3NDRkOCJ9"
+        },
+        {
+          "resource": "repo://tools/build.ts#L15-L16",
+          "version": "repo-lines-v1:sha256:2746a7d41b5e4378d215ef1272fdeabd793a09d92be7be81ea4bedf3d1b2a938:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGY0ODBlOWI1YTM0YTJiODc5ZjgxMmE2ZWZiMGVmOTI4NzMxOTMyY2NhNzc0MjZiN2U3ZjdkOWY3ZTQzOWE4NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjIxOGE1NDRiYjE4Y2ZlMjA4YzQ5OWU4YmJhZmZmNjIyY2NhMWU0ZjNiNWVlY2QxNWVmYjM2Y2QzM2EzN2RhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzA1YmM0MTU5ZDJjOTNjMzViMTFjYjQxYWZmMGRmN2RkMWJhZDMyOTNkNmEzYjIwZmYxY2Y0OWJhMzk3MTg5NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmIyNGViMzkwYzExYzBlMjNmMGFiZWVlZTkwMDYxYjBiYWQ1ODFkOTgzODk1MTExNWQ3NzRhZTIwNTJlZjcyNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3476fcc3433d42bb8c39e9d8975b5cc1",
+      "statement": "A one-shot build fails with exit code 1 when dist/app.js exceeds 300000 bytes; game chunks that load later are not counted.",
+      "evidence": [
+        {
+          "resource": "repo://tools/build.ts#L32-L40",
+          "version": "repo-lines-v1:sha256:bdc92ef894c3e950c36726e87927a3399c89270e7ae870c70ca54a420334b31d:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmNiYjFlY2I1YzA5ODJhYzM3ZGY1MGI0NWY4YzM2OWY1MDRmYzFjODRlN2M1YTEzZjA2MjQzNTQzNDkyODEzYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjdlNTc4OGQ1ZDlkNzNkMjRhODFkYmMwYTVhNzRiZmE4MmM5YzNiM2FmOTllNTJhZjc5NmU5MGI0NjhhOGEzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDI2MDE1YTkxZjY5MDU1NjY2Yjg5ZTc3NTBiMGI0YzZkYjA3ZWFlMWUxNjdlNjkzZjA5MWY0ZDdhZDRiNWJkYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_09dadf7433ee424c80953e5ec95c85c8",
+      "statement": "The dev command runs the esbuild watch build alongside a python http.server on 127.0.0.1 at PORT (default 8765) and stops both children when either exits or a signal arrives.",
+      "evidence": [
+        {
+          "resource": "repo://tools/dev.ts#L1-L20",
+          "version": "repo-lines-v1:sha256:79625cc5bbe27569c3bd8db800175aaf92a648921fb91e1d1c4b6ccbc12e1a1d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZTYxMjJjYjVjYTQ2NGFmZTZiYzg0Zjk5ZTk5YWQyZWRmODEzYmFkNGY4MTM5N2I2YmJmNzMxYmZlNjIxYjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cd2c09106af44edfbe0ce7124d6c9b70",
+      "statement": "fake-db.js installs window.claude.use('db') backed by an in-memory db seeded from window.MOCK, and is for local preview and UI smoke only.",
+      "evidence": [
+        {
+          "resource": "repo://src/fake-db-page.ts#L1-L20",
+          "version": "repo-lines-v1:sha256:b6e1e680dfeb04b82f8a6110dd8f92e825fc2e14071ee9b835e5755959fb9fb7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkYTNhM2I0ODQ5OTY3ZDgzZTFlNzI0ZmQ1NzQ4MGU4NjMxNDJhNTYxMWQwOTkwNDdlYzFjZGM0ZGI4NWZjYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhMWQxYTYzMzkwMjI5Yzc5ODM0N2U4M2EwNDA1NDQxYzk0MDAwMzUyODRhZDE2OGMxYmY2Y2RmMWQ3MGEzNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b79b79d990a4f348cd6d353f2500bf5",
+      "statement": "capture.js mounts the Ecosystem with a synthetic game state and exposes window.Ecosystem for the model pipeline's headless tools.",
+      "evidence": [
+        {
+          "resource": "repo://src/capture-page.ts#L1-L22",
+          "version": "repo-lines-v1:sha256:5d398a5c7171205f654ce127e4d757e20f2e916fc0c4bcfe246d0129486a9e96:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhM2VjNmEyZWRiNjljMWYxOTVmNjA5NTQzYjc3NmU4MDVhMmQxNjc1MDA3ZjBjOGNlYThiOGVlYjU0YTQ4ZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiMDMzYjIzZTM3M2RlMGQ0YzM1NWEzZGZkNjE1ODZlNWMwNTVmZGIwMTk0NzI0NzYzZTRjNjBkMDA3N2EwYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}

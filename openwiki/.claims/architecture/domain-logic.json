@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ab15e33c6ad99983636990f8386d51e2ae91c8e0e906ba5059a0d1a92126ef9f",
+  "claims": [
+    {
+      "id": "claim_c294c0a7442c49a5bf25458436aea544",
+      "statement": "Calendar dates are 'YYYY-MM-DD' strings read as UTC midnight, so date arithmetic never crosses a daylight-saving gap in the browser's zone.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/dates/lib/calendar-dates.ts#L1-L3",
+          "version": "repo-lines-v1:sha256:f00e81f278c18e488df30eef08eae339f31021b16877f11d34d0a0b6ef951c05:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmJhYTAyZTA1OGIzMzg5OTEwNzBjNmZjODFiN2YwYjk3MWE1MDQ1MWM4NTZlNDI1NGFiZDJmYWQ4ZGEyNzBkZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjc1YzcxMDYxMjdkODVkYWFlZGRkZDRjMzQzNDVjNjJiNzQ2ZDU2Y2QyNTcyMzAzZGU2NDI5NGIwMGM3ZTFlZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b3a7c09614804c37990c3edbcb53f86e",
+      "statement": "The board's today and date-of-instant come from a single zone-aware formatter that uses the browser's zone until setTimeZone switches to the profile's IANA zone; an unknown zone keeps the old one and returns false.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/dates/lib/board-clock.ts#L1-L43",
+          "version": "repo-lines-v1:sha256:135a4d7a9c9b70be0c941a1a4547ebebc1f5b6e3072dd8b03dbe5ae764e114d9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyOWUxZWFlNjliZDllZGMzZWFkZTczNWY1MDE2ZjE0ZjNkZGVhZGE4ODczYjk3OTBjY2Y1ZmE0ZGY3YmQ5MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZjc3OThkYzYwNTg4NTdkYTc4NTI4ZGVkYWY3ZTk2MmUzMjJiODBjN2VmZmRjN2M0ODgyNjA5ZjcxNjYyMjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxMWRiMDRmMDZiMWU0N2IwYWVkOTRmMjNlOTg3MGQzODNiNzg3ZTE0ZTVjY2NkMDFhZTRhNjBlZWE2YTkwMjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_baee0445239e43b39fe53828227b4d1c",
+      "statement": "nextDueDate computes the next due date from the task's own scheduled date (due, else deadline, else completion date), except interval rules, which count from the completion date unless basis is schedule.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/recurrence/lib/rules.ts#L46-L59",
+          "version": "repo-lines-v1:sha256:5aaa84c180ab22a1afddd2a923702d778c47c306904e4379b1a991f97db76bd7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiZTg1MTVkZmZiNThkYmNlMTA0NzZiZTU3NDIwODMxNDQ3MDc5NTQxYWZhMmQ5ZTJlNjAzZTgwMDg4MDdmOTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5YjdmOWIxMDkxM2Q2MGFjMzkwYzM1YzE3MTU3MTJlNzRiZGNhYjA1MTY3MzQ1ODcwZDNjMzJmMmU5YzJiODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2MjUwYTNjOGI5Yjg5YTYwYjk0OTU4ZjhmZmRhMGZjOTEyNmRjYmFhNzM4YjM1NTNiMjFiMDI3ZGZiOWI1ODEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_688337059a744f97ae3ba2a96a79e5f9",
+      "statement": "Monthly and yearly recurrence clamp a fixed day to the month's last day, and an nth-weekday rule that a month lacks rolls forward to the next month that has it.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/recurrence/lib/rules.ts#L38-L44",
+          "version": "repo-lines-v1:sha256:635c569643e3e553d9c9c463032f38e14ba2822281f7aeea7fc7c262acb369be:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTA0NTFiNDE0OGY5YmRkZjA0MjAzOGEwNzUzNDdhMzcwZWY2YWQ5Y2I5ZDgwMWM5MTE5M2I3OWMzZTk0Y2NhYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDQ4NTFhOTAyNzhhNTQ1ZTMxM2EzODg0MWQ3ZDcwODEyMjdiOTRhNjM5YzAzNTcxZDAwMmJlYzcyZTIxNTNhOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzkzYzhkMWM0ODRkMDhlOTZmOWZkMTdiODcyZjljZWU1NGJmYTMwNDU4ZWU3YmViODg3YzhjMzI3OGU1ZDgzZSJ9"
+        },
+        {
+          "resource": "repo://src/packages/recurrence/lib/rules.ts#L60-L90",
+          "version": "repo-lines-v1:sha256:0c865dc876a35478b900b521983b56d20ca6bb53b5725638bf860d53c0ac5af3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOTA0N2I3ZmU0YWJkYWExZTg5ZGNjZDQ0MTYwNGYyNDdhMGEzOGRmZjI3NDdhZDBjMTM4OWI0Y2ZlMjQwMDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU2YzE3ZWFhNWY5Y2FkMTJlMmUyZDNjOTFmNTkwZjBjYjJmMWRmMjUzNjZhZDFmMjM5Y2YzYzNlYWRiZTI4MjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2OGI1NzIyYWIyNTU0YTEzYWY1ZWM4NGVkZmI4NTkzOGZhNzc1N2ZlMGJjMjEwZTc4N2NjZTg3ZTJjZTk3MTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8fad0f60b9e848ef84b7a08444f65295",
+      "statement": "Recurrence numeric fields may arrive as strings from the db, so reads go through Number() and a missing or zero every falls back to 1.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/recurrence/lib/rules.ts#L1-L2",
+          "version": "repo-lines-v1:sha256:d1cce60d8430f2d574673d272d0b5e334b7d6fb46c420872cbfa0b3f196f8ced:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdlYjE1OTY5NjA2ZWFmYzNmZDllNDdmMWRjZTg0Mzg3ZTE3NzljYjVkOTBhYmI4ZTlmMjgxNjMwYjBkODhmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjUzMzVjODcwZmM0MjE5ZmU5NTg0Y2I0MWRmNWYyZTM4MDNmM2ExYjg1ZTU0ZDQ1MGQ2YTRiZDQ1MDU2MTUxYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTZiNDA5ZDJmOTI0ZWYyY2ZkMWI4Y2Y0NjJkOTg3Y2RhOTY2YzYxMmEwMDFiOTk0ZDBkMmJmNzI5ZmUyMDdmZiJ9"
+        },
+        {
+          "resource": "repo://src/packages/recurrence/lib/rules.ts#L36-L36",
+          "version": "repo-lines-v1:sha256:9359981906c0554d2eac6d666038d7450a0a54301df0a24ec793dfcc5c6b67db:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTM1OTk4MTkwNmMwNTU0ZDJlYWM2ZDY2NjAzOGQ3NDUwYTBhNTQzMDFkZjBhMjRlYzc5M2RmY2M1YzZiNjdkYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTM1OTk4MTkwNmMwNTU0ZDJlYWM2ZDY2NjAzOGQ3NDUwYTBhNTQzMDFkZjBhMjRlYzc5M2RmY2M1YzZiNjdkYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMThlY2VlYzE4NzEwODgyMTEzOTg2Mjg0NGUwNjFkOGM4NjIxZWI0NTIwMTFmM2VmY2U2MDI2NWQzZTFmMzU1MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjkwM2YxOTM5YWM5YWE0MzBlYmM3YmI4NWZlMzViOGFmNTZhODMxYzk5ZmE4YWZmYTA0N2Q4MWY0MzkzMDI2YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a86684a2f7ed49f29aaded418dd6c26c",
+      "statement": "A task's effective date is the earlier of its do date and deadline; it is overdue when the deadline passed (or the do date passed with no deadline) and slipped when the do date passed but the deadline is still ahead.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/tasks/lib/task-dates.ts#L28-L46",
+          "version": "repo-lines-v1:sha256:a318e89cc4c38f3749f5463886c15e90002500c48510d82fd87c59561389993c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYzU5MzcwY2Q5ZGM1M2U5YmQ1ZTRmN2NhNmZmNTIyMWVlNGZiYWRlZjMwYTM1ZjIyNzcyZDAzNDY0Yjc4N2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhMzcwNTgwNDcwMzU3MjM0OWJmOTE5YTFiNjNhMWMxMWY2NDkzNTdlNDI0OTIzZGQyMWQzNGY3ZTZiOTJjMDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2MTAxY2ZjNDIyOTEwYmZhMjMwZTcxZDA5MDJmMDE1OGNhNzI1OGE0OGIzYmZkNTdiYTRjNmMxNjRiZjhmOTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0b5857fdb4c24683b2ebe96fae13f8aa",
+      "statement": "bucketTasks splits open tasks into urgent (effective date today or earlier), week (within 7 days), later and none; the urgent list orders hand-ordered tasks first, then overdue ones, then by date.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/tasks/lib/task-dates.ts#L63-L102",
+          "version": "repo-lines-v1:sha256:ab286e0673255da0e1c990e618fd5163e4ce8c751898ff56de724146f4392609:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2NDk2OGFlZDNiZDc2OTNjNzI0ZWFhN2U4NDdmOTIyN2NiYjUyODczMTRhODMwYjc4YTY1NDJlNjBmOGFmNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkNTMzYjFjZmQ0NDBmMjJjZTk3YWVjODAyNjRjZDAyYjMyNTA0YzFmYTMyMTBlZTRlNTYwYjJhNWVjY2Q1OGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d9f4a07dca564a8aada1599f8330f9d6",
+      "statement": "ringTally counts per date the tasks committed to it and not finished before it plus everything finished on it, and uses the effective date when a task has no committed days; ringPercent is done over committed capped at 1 and null when nothing was committed.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/tasks/lib/commitment.ts#L20-L38",
+          "version": "repo-lines-v1:sha256:42db30f1d3ea63cf73f7e57fe3433a8b8d782d731309d11afe91a59b45ddc78a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5ZDk3ZDEyNDgyYTgzYzZhYTQzZWFiMzNkMjM2NWJjOGEwZDgyMDJlZjUzOGRjZjc4YmM1YzQ3ZDVlNTRhYzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExZDFiYjJjM2FmZjI1NjU5ZTVkYjY1NTRhNjFkYTMwZDhiODgyNDljZTJmN2MwODdhMWZhZmYwYWJmYTU4YTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2ODE1MzI4MzBiYzNjNWIyYjI5MWYyNjM3Y2M2OWQwM2QxM2Q0YTcxMDI5ODQxZTgyMjkwZjkxY2M5ZTk2ODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1MDRhNDc5N2VlNDJmMjQ3YjYyNGVkZTgxZDk5OWM2ZTY4ZjAwYjM1MWMxMDE0NjljODgzODIwZWExNjRiYjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_903857cffbf04c889632b5433e20d9df",
+      "statement": "Task age counts days from the first committed day, so rescheduling never resets it, and is 0 for tasks not yet committed.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/tasks/lib/commitment.ts#L40-L50",
+          "version": "repo-lines-v1:sha256:1360708b54e7884d6ddf3c5fb8cbfd22c5957cb3b2f7f3c344dce71f0c775fec:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkYmZkNzdmYjEwZTQxMjFhMDZjOGIxNzcxZmZmNmMzZThhNDQ3Njg4Y2FjMmIwOThiMDFmMThhMGEyZjczZGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxOTM2OWU3M2RmZWZlMzY4NTU4MTU5MThjYTMyOGMwMjc0MTM4ZjFjMjFkNzJlNzMyMjY2MTdlYjU3OTE2NzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1ZDFkZmY2Mjc2MTY1MDYzNWQ5N2VlM2MzZWZlNjg3NDhhNTQxZWQ3MjJkNzE3ZjFjNTU1MmQ1ODM0ODg0MjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_87a19342dd6844d5949034fc34131c2a",
+      "statement": "missedTaskStatus classifies a missed day's task as done late, moved, overdue or slipped.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/tasks/lib/commitment.ts#L56-L68",
+          "version": "repo-lines-v1:sha256:145fef251044368f91b54a3d8e59df5dc8ae5ac2deec682a3cbddc25da8ba9a0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmNjhkMjNmNmE0OGYwMTU3NTVhMzZjOTJkOTBmYmM3MzI0ZjI0NDlhODVmZTg4MzIzYzYwNDE0ZjU0ZTAxNTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2YWFlZWQwNmNhNjEyM2M3MjRiZTgxNzg4OTAxNTdhYmRlZTY2ZTNiOGUxMmU4MzI2ZmVmOWRiY2U3NjU1NTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0caeaabf74a94131ac076456effc7b08",
+      "statement": "A weekly habit meets its floor when the week's count reaches the floor, while a daily habit needs every day so far at the floor; the streak counts floor-met weeks in a row ending this week and best is never below the current streak.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/habits/lib/habit-stats.ts#L1-L2",
+          "version": "repo-lines-v1:sha256:7ab89efaf1780a3b5de5e8aafd1995825b8d27c045d6127dde69a051562e7547:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2U1MjAyN2U3YjVjZmY0YzhkODcwNzBjZmJkZjEzOGI5ZDg5Zjk5M2RmNGFlNmI3NTkwOGQxODk0NmJhNDkxNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODZlMmIxMjEzZTcyNWE0ZjY2NjFmNThjNDYyZTEwMjc5NWFhZTQ1ODQ1MjIzN2IyZWYwNjhjYzI4MzllOTQ2YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDI5OGE5MDc0Mzc2ZDgxNGYzZTNkMzk3ODc1MzBiY2ViODVlNGU0ODI2YjlkMmEyMmFhZDc2YmFmNmIzZjIxNCJ9"
+        },
+        {
+          "resource": "repo://src/packages/habits/lib/habit-stats.ts#L66-L111",
+          "version": "repo-lines-v1:sha256:d5391eea4fa50de0b728eac460978a0c15b93580b11783f0169e6b7303101ffc:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhNmQ4YTIwNmIwMjFlYzRhYmJjZGQ4ODBmOGMwODQ4YWJlM2ZjNzc2YTAwZjZmMWI3NDBmZjI3NTZhMDYxYzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxMTczYmFkOGY2YzNhOTcxNzQ0MDhmNTlkMmE0Mzg3ZTU0NGNmYTRlZDU4NmRhZWJmZjlkNzY3ZGJjOTM3MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:0630bfed1f66147aaa6fd78c005bf8bbdb59a5cbdc696bc85b04166817805419",
+  "claims": [
+    {
+      "id": "claim_e9cd166b95a64860a0f7b29c972c14dc",
+      "statement": "The owner publishes by building first and sending index.html plus every dist file including chunks to the existing artifact URL; publishing is pre-approved only when checks pass and the live diff shows no live-only changes.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L29-L31",
+          "version": "repo-lines-v1:sha256:17e627f77dc34e9daaa3abf237038ec690ff4c482c12ac48ec109bb1596701d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzhkY2M4NDU2NGNiMDI3YzY3NTE0ZmNjMTQ4NjAxMjNjODNkMzdiYzVkNmYwNjEzNjU1ZjNjZGZhOTU0MTNkOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODgxNjIwMTZmZjcwZmUzOGQxMzQ4YjMzZGRmNzYwYzI2NjdkOWI4ZDNhYmFiYjEzZDFmNTcxNjNkMTRlMzM5MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDA1MDQ0MDY1NDU1OGQwMTNkNWVlNWQyNjI3NzcwZDExZTMzYTlhNzQ2NTQyMjUxZDM1YjMyZmRmMGUyODNmYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjc2NzkyZTE0NjQ0ZGY5NDM4YTJhMGFhNzJmNDgwZTA5ZWQ1YWIxMGNkZWFjNmFjODhjOTg1MTc1Yzc0NzlhOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_35660b85d5a442bd8a12eb9a5f23d2df",
+      "statement": "The weekly scheduled task is a template that does nothing until registered; it runs weekly-visitor and garden plants unattended, ships only on a full gate pass, commits on a visitor branch, never merges or pushes to main, and republishes only the existing artifact URL.",
+      "evidence": [
+        {
+          "resource": "repo://.claude/scheduled/weekly-visitor.md#L1-L20",
+          "version": "repo-lines-v1:sha256:8ee014dea8952d716f18f306639f3c0bf511835598918a5f764290aba018f08e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3ODBlNzExZTkwMjk1ZGE4YmQwYjMyYTQwMDBkNmJhYzkwMGI5ZDk4NDBkZTVkMTc1YzYwOWQzYjhlY2FiOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmYTk2NDM3ZmRlNzZhOTE4ODlmZGJiNTk5NzQ2OGU4OTI2M2YwZjUyOWVkNDQ3ZTY0NzJkZTQ5YzE2NmNiYjgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8147722bc8a941cfa685645782429d32",
+      "statement": "The weekly run needs the Mac awake because Blender runs locally, and it starts a run ledger so the budget is enforced by code.",
+      "evidence": [
+        {
+          "resource": "repo://.claude/scheduled/weekly-visitor.md#L5-L15",
+          "version": "repo-lines-v1:sha256:d9c00406a8f79090b17c3bc9d28e9ba06aa5bb3f32ce29dcc1bf4c373da1b170:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmNTAxODFiZWMwNTI4NTk3NDA2ZWNhMjRhNGE2NmQyYWQyYzZiZjY1NmY0NDM3ZDUxZDMwZWJmOTUzMDU0MTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2MGMwYmFlODcwODMzM2VlMzlkZTkxMmIzMTIzNTc0OTQ0ZjM3NmQxMDlhYWZjNDhiMjRlOGE4MDdhM2ZhOWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNlZTc4MGY5YWYzYzU4YjNjOWFiZDhmZTFjZTgyOWEzOTczMjczNWYxNzNlYzlkNzQ3YjIwZjdmNzU3ODQ3OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUxZDI4Mjc4YzU4MmYxOTllMDhlODg5MTQyOTJjYzY1ZDU0MTZlMDQwNzdmMjRmMmVjNjIyMTE3NWJmYjYyZTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_78dbd8da25a6425e8739b9b07c002881",
+      "statement": "The board writes checks/game_status after render, only when it changes, with biome, phase, bleach state, visitor and garden plots needing 3D models, for the weekly agent to read.",
+      "evidence": [
+        {
+          "resource": "repo://src/packages/ui/game/game.ts#L128-L143",
+          "version": "repo-lines-v1:sha256:d88c6927c56b0bc676669d2a4265359dbbf2721d53ec4d3d928dc85f36b78dea:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNmM1OGU5MjA2MWRhMmRkNTc5Y2YyNGNiNzdlY2E4YTJkMDNkMjMyYmFiYjM4NjUzMmVjZTlhNmFlZTcxYjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkMTMyMDI3MmE5OGM4ODVmYTZlMWU5YjFhZTYxMGY4NGM1YzE5ZmU2Y2JiNGY3MTc2NjY1MGJlMTdlODVjNGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhOGRhZWUzZWY0YzQ0OTg1NDZmMmFjOTg0NWMzMTVjNTgxZTRmNTY1ZDVjNzMwZWEzYTgxN2Y4ZGM2YTgwMzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_578f73d4a77c472bbc2c197c5b135949",
+      "statement": "setup.sh has a --check mode that installs nothing and runs the toolchain checks that also serve as the weekly run's preflight.",
+      "evidence": [
+        {
+          "resource": "repo://setup.sh#L1-L10",
+          "version": "repo-lines-v1:sha256:23760821632b120d7e10108c7c0d83c57e186f7f2ac68b7bfd08182cd21ee9ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5OWVkZGJiMDY1MTIyZjk1OTkyNGM0MjkzYzIxYjlkZTU3ZjZlOTY5MTkyZWJjNzZhNzY4NWQ1NGQ3YzY0NjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllMGZmZDU3ZGU2ODg2MGZkYzUyODUwNDVjZWM5ZmZkMTNmZjBkYTlmYWZiZTQ0YjBkY2IyODVhODAxZDE3NzkifQ"
+        },
+        {
+          "resource": "repo://setup.sh#L94-L100",
+          "version": "repo-lines-v1:sha256:5f488b725285d968194583be5772ff5c709646740ae71ab5a5f4b6ca9bf4ea52:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM5NjE5NmY1NDRjNjM4MWZjNTBhZDBhNzA4ZGQ4NjhjNjY4MGJjMGFhMmRkZDJjMWQ3NzRiZGM3ZDM5ODIyNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdlMzIyYzFjNGYyOWFmNWVhYjJlNjk0MTJiMzkxZTk0YWY3OWFmNDQ5YjAwNzQxMjMxNzEzYTY2NGJhMzgzMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWYxY2VlMzk5MmJjOTQyNGY3NzE3MmY3M2IwZTExODBkNmNhYmNmNmNmNTQ1ZjgwOGNmNjUyMGM4YWFhMjY2OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTg4NmFiYWQ3ODI3YWM0ZTkzMDhlNjUyZDZmNTk5MzIxYmNmMzY2OTIwZGI4OTQ5ZGQ4Nzk5NjJiMzQ5MDI2YiJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}

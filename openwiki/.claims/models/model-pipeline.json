@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:e1f06b114cb6ad6292b6294e0489299ac0bddf396f3e9cfd01f78141f4f25fcb",
+  "claims": [
+    {
+      "id": "claim_a44aa80dd3fa46d1ba9cb7ac49ccea56",
+      "statement": "The model pipeline defines three kinds (creature, plant, scenery), each with its own contract, archetypes, specs, QA and calibration, and shared code dispatches on the spec's kind.",
+      "evidence": [
+        {
+          "resource": "repo://models/README.md#L1-L30",
+          "version": "repo-lines-v1:sha256:25f05ba2478a12737359b1faa5c9e8eef74ba1e12209a4bca2a18b34f1aab43f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyOGE5OWVhOTM3Y2NjYjc4YmJmNmVhMjNhZjJkZTQ4YmFkOWZhZWQxNWEzZWZhNTM0ZTdjMmI5NWRlNjZkYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4YTdlMjFiZDcyZTM1MzI3MzEyOGYxZTgzMWI5ZGY2OTZlY2MxNDc4OTdhMzdhZmU0MDQ4ZWQyMWQwNTUzOGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhNjQxZjU0MmNkNjlhZjU5OGQ1Mjg5YTRiYWE2MzM1NTdlMjlhZDU2YTQzYTE3YjgyNDkwYTRlMGZmY2MwYmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_22b4ada3a8e645778325c207ff7c84c4",
+      "statement": "A model must pass six gates: spec-check, shape-check, motion-check, export-check, judge-panel and page-test; the four code gates are run by verify.sh.",
+      "evidence": [
+        {
+          "resource": "repo://models/README.md#L44-L56",
+          "version": "repo-lines-v1:sha256:043a4a9bce061cb1cd4e407e1c0b213e2e0e3cf0ed889f969b537a4e36f52135:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkZjAyNDhiZWNkZjY3MWE0NzY4ZWMwOGRiZTEyNzQwOWI4Zjg1NTU5YWEwMDRiMTM0MGY2OThmMGQ4ODI5ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3ZDNlYTk2ZTU5ZDllNzM5ZGY4NTgzNmRhZjU0ZDI2OGVmZTRkYTIzOGQ2ZjFjYTk5NjBiOGE5YjhjZDc0MGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzNTk1NTE2ZTEzMDM4ZmI5MDljODdmYWZhMDMyOTE1MGRkNDkwMDhlNWM3NGI2YzIxNWFkMTFiMWE3ZTU0ZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3YzAzZDUwYTIzYzA3ZGU0M2IzNzdlNTAwNWI0NjlhMGQxMDkyMzQyYjIyYzQ4YTU2NDg3MmE1MjFmMmQyYTAifQ"
+        },
+        {
+          "resource": "repo://models/shared/tools/verify.sh#L1-L12",
+          "version": "repo-lines-v1:sha256:28d181d4c6476b0c679f8315b43eae79a669fa5b0682138668efb18818b75fff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwMTBlZGY1NDcwN2Y1MjA3MGVlNjQwM2RiMmIzNzk2OGQ2YzY0OWFmZmViMTU3NTNmZGI2N2VlMjgyOTRjNzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNzk5OWIxYWMzZTZkZDQ0Y2I1MjZhZDU5NGEwYTlmNWVjMGE4ZWI5MWY4NDA2OTZlYTg5NzA5YzMyZmI2ODEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_365dea9a7c964af28eb458e0d38e9b6a",
+      "statement": "verify.sh only accepts a glb inside the model's out folder so QA output never lands beside a shipped asset.",
+      "evidence": [
+        {
+          "resource": "repo://models/shared/tools/verify.sh#L14-L24",
+          "version": "repo-lines-v1:sha256:ee63d583b868ede227fbddbfc967fbe4c98943ece21110167889a9c64af7d4ae:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhZmYyY2UxODJjODBiNjVjZTA3Y2M1YmYwMGZkMzE3MmZhM2ZhMjA0NDgxOTQzOTAzYzdkYjA4NmEwYzJhZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4N2Y5MmM2NGFkYjk5NjFiZjQ0ZjQ0NjBkMGE3NDRlNTJmMDY2ZmI2MTBkMDA0MDJmNjBmZTAzODFlNzc3Y2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhZjdiNzA0OTBkYTM3NmE1YTFkNzQwNTYzODgyMzE1ZGM1NTcyMGJhZTcwZGIwYThjZjNkZGIxYWVhMzg2MGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2YzU3NTgyYTEwZDQxNWVkNTYyYjFmNjUwZDA5MjQ1MTcyZmM1NWVmOWE2NjU0Y2VmMGY1MWFhNDNlNjVkYWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fcb69b08f8df4a149a98add9be66de2b",
+      "statement": "The judge verdict is the per-criterion median of judge scores, passing when every median meets the floor and the mean of medians meets the bar, with the numbers living only in each kind's qa_calibration.json.",
+      "evidence": [
+        {
+          "resource": "repo://models/shared/tools/judge_verdict.py#L1-L22",
+          "version": "repo-lines-v1:sha256:d318594ccb1a3337278d24c0216be990eeb7e9c9bc1c2c9d2f1c23e29b52ad88:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4NDQ3ZDUwOTk4ZWRiYzA5ZGJiZWQ2NGFkZWIyZDhlNmI4YzBjMTE1MDA1NDgxMzFmNGRlYmNjZWMxMDBhYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1MTc1Nzc4NTFjNDg5ZTQ1YWJhZTI1OTEyNTZjNDA0MDRhMDVjNmQxOWNkNGQ1YWU3ZmQyMmIwMDg0Y2VjNmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxYWIwMTA3MzYyNGY2M2Q1M2VkYmU2MDA2NTk0MWZmMDBjZjEwMzZlZDgyZDZiYWE1ZTY4MTU3YjJiZGFiMmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ba481d1e8ec54ff89c6e719f81ddaa9a",
+      "statement": "The run ledger is the only budget counter: it limits judge rounds and minutes, refuses a reused judge (exit 5), and refuses the next build after a judged one until a plan names the criterion it fixes (exit 6).",
+      "evidence": [
+        {
+          "resource": "repo://models/shared/tools/ledger.py#L1-L26",
+          "version": "repo-lines-v1:sha256:780f892e7f429d91d5144dbb79e0b0330a3e9bd25af4bb6f91ced6488881d1da:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxOGUxNzEyMDQxYWIzYjgzYTAxOGYzNzE5M2ViYzBkOTkwMTk0NTczYTk5NDVlZDc3ZTU3N2FmZGU0MWJhZGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1MTc1Nzc4NTFjNDg5ZTQ1YWJhZTI1OTEyNTZjNDA0MDRhMDVjNmQxOWNkNGQ1YWU3ZmQyMmIwMDg0Y2VjNmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA2YzBhMmI5MTkxMWIzZGFjNzFjY2Q0NWQ5MDBlMjcxYzhhZTg2OWVhNDYwZjdhOTdlMWM4NjljODEyMjI2ZGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_027f7c0cf1a94a1abd892d994ec54a08",
+      "statement": "build.py records counted builds in the ledger with --run and exits 4 on exhausted budget or 6 when a plan is needed.",
+      "evidence": [
+        {
+          "resource": "repo://models/shared/blender/build.py#L1-L8",
+          "version": "repo-lines-v1:sha256:3c4eb3f0325c4859072197720e8b089df9a11a425e92407ff57dba5a401759f9:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjljNGJkYmJmZjlhMmRiZDkwMmJjZDM1MDBhNjVhYmY2MjIyNGMyZjU0Y2JkMGUzY2VkNzA1MzgzN2QxNTExZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGRmZGFjZWUyN2M2OGMxNjQzZjFlNWZkOGM5N2M0MjkxNzYyNTI0MTRkMDQ1NGIzZTBhZDU1MWIwZTVkYjdmNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDgxZTRiMTU4MGRlNjhkYjYyMTI5NDIwODgwZmU5ZTYzN2I5NmE0NGNmNmM3N2Q4MTg1NTQ3YzlkNmExZDYyMSJ9"
+        },
+        {
+          "resource": "repo://models/shared/blender/build.py#L37-L66",
+          "version": "repo-lines-v1:sha256:ce874a7ca8333f51359bc2427a1a2f4607482012807eacd0dff483ae4becc1cb:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmYjRmZWQ3YmIwNmI0OWYyMDM2ZGJhMDAzZjMyM2RiMzMzYWNhZjc1NjYxZDQ1MjE0NmNmZWIxYWUxMjQ3MjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4OGIzMzhiZDFlZjVmMzI4Yjc4ZTc4MDgxYTU5NTk2OGRhODA3OTI2ZWZiZTFlZGI2NTVkYTcxMDU5MWE0N2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjM2IyYWY4MjI3ZWI0OWRjYTRhOTNhNmFhNjg1M2I4MjJjNzNkN2I5OTk5NWI4NTBiOTE5MzA4MjZhNjdlMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0ZGQyYTU2NWFmODEwOWZhNWFmYzk2YzczNmE5YjNkZWZmMjYzNDk3Nzc5ZTI4MGQ3Yzk1NWZhOTVlZTg4ZjAifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T17:23:06.062Z"
+  }
+}
