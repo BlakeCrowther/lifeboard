@@ -128,7 +128,7 @@ find board -> hydrate (model files, migrate) -> ledger -> brief -> build -> anim
 
 | Step | Change |
 |---|---|
-| 1 | Prove access from a cloud session: read `checks/profile` and the live model files, then (on a test artifact) write a record and publish one file. Cover a scheduled run as well as an interactive one (cloud-pipeline.md rows 14 and 17). Everything below depends on this. **Status 2026-11-24:** interactive reads and publishing work (cloud-pipeline.md row 14). Files a publish leaves out are kept: the live board still holds `clownfish-glb.js` and its example spec, which no current publish sends. Open: the scheduled run. |
+| 1 | Prove access from a cloud session: read `checks/profile` and the live model files, then (on a test artifact) write a record and publish one file. Cover a scheduled run as well as an interactive one (cloud-pipeline.md rows 14 and 17). Everything below depends on this. **Status 2026-11-24:** interactive reads and publishing work (cloud-pipeline.md row 14). Files a publish leaves out are kept: the live board still holds `clownfish-glb.js` and its example spec, which no current publish sends. A scheduled session reads them too (cloud-pipeline.md row 17), but it had no repository checked out: the weekly run's scheduled task must be created with the repo attached (claude.ai routines), or clone it as its first step. Open: publishing from a scheduled session. |
 | 2 | Read the owner's live roster and diff it against the repo's. Record models that exist only in the store; decide which belong in the starter set. **Status 2026-11-24:** live `roster.json` and `biomes.json` match `main` (14 models). No live-only models. Stale on live: `models/assets/clownfish-glb.js` and `models/creature/specs/examples/clownfish.json` (not in the roster); remove them in the first model-only publish. |
 | 3 | Move the starter set to `models/starter/`; setup publishes it as the board's model files. |
 | 4 | `tools/live-diff.ts`: compare page files only; model files are reported, never fail. |
@@ -144,7 +144,7 @@ find board -> hydrate (model files, migrate) -> ledger -> brief -> build -> anim
 
 | Item | Note |
 |---|---|
-| Store access from scheduled cloud runs | Unproven; step 1. If it fails, a scheduled run cannot hydrate or ship, and runs stay local until it works. |
+| Store access from scheduled cloud runs | Reads proven (step 1). Unproven: publishing from a scheduled session, and how the scheduled task gets the repo. If publishing fails, a scheduled run cannot ship, and runs stay interactive until it works. |
 | Losing the artifact | A plugin-tier board exists only in its artifact; deleting the artifact deletes it. Version history covers bad publishes, not deletion. `make-it-mine` gives a repo copy. |
 | The maintainer's own board | Upstream never commits `models/board/`, so the maintainer's board relies on version history. Open: a private copy for it. |
 | Publish conflicts | Another publish can land between a read and a write. The tool rejects the later write and returns the live version; the run re-reads and merges. |
