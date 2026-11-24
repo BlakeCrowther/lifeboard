@@ -17,7 +17,7 @@ Terms:
 - **Code files**: `index.html`, `dist/app.js` and `dist/chunks/*.js`.
 - **Starter set**: the models and biomes committed in the repo, so a new board has something to show.
 - **Hydrate**: copy the board's model files into a local working folder before a run.
-- **Pointer**: the one setting a computer needs to find a board store (today the artifact URL).
+- **Pointer**: how a run finds its board store (today the artifact URL, looked up with `Artifact list`).
 
 ## Problem
 
@@ -48,7 +48,7 @@ These follow established patterns:
 | Code and user data kept apart | App separated from user data | Obsidian (app vs vault), the XDG folder spec |
 | Preferences in the board store | Settings synced with the account | VS Code Settings Sync |
 | A local backup folder known only to one computer | Device-only settings | VS Code `machine`-scoped settings |
-| The pointer as the only local setting | Config holds the backing service's address | Twelve-Factor App "Config" and "Backing services" |
+| The pointer is the only link from code to data | Config holds the backing service's address | Twelve-Factor App "Config" and "Backing services" |
 | One main copy plus a one-way backup | A backup is a snapshot, not a sync | 3-2-1 backups |
 | `schemaVersion` plus migrations | Versioned data formats | Database migrations |
 
@@ -68,19 +68,34 @@ The page already fetches `models/roster.json` and `models/biomes.json` at run ti
 
 ## Where each setting lives
 
+The board's db already uses one collection, `checks`, for single settings documents, each with an id (`checks/<id>`, see GLOSSARY.md "Profile"). Preferences extend the two that exist; no new collection is needed.
+
 | Setting | Where | Reachable from |
 |---|---|---|
-| Name, timezone, place, pets (exists today) | Board store record `checks/profile` | Page, local and cloud runs, any device |
-| Theme, icon style, model style (future) | `checks/profile` | Same |
-| Backup target when it is a GitHub repo | `checks/profile` (`backup: {kind: "github", repo: "<owner>/<repo>"}`) | Same |
-| Pointer (artifact URL) | Local: untracked config, or the plugin's `userConfig` when it is a plugin. Cloud: a variable on the cloud environment, or the scheduled task's prompt | One computer, or one cloud environment |
+| Name, timezone, place, pets (exist today) | `checks/profile` | Page, local and cloud runs, any device |
+| Model style, backup target when it is a GitHub repo (`backup: {kind: "github", repo: "<owner>/<repo>"}`) | `checks/profile` | Same |
+| Theme (exists today), icon style | `checks/ui_prefs` (board prefs, `src/packages/ui/shared/prefs.ts`) | Same |
+| Folds and list sorts (exist today) | Browser `localStorage` `lb-ui` (device prefs) | That browser only |
+| Pointer (artifact URL) | Not stored. Runs find the board with `Artifact list` (as `break-setup` does today) and confirm it is not a mock build. An unattended scheduled run gets the URL in its prompt, which lives in the user's account | Any session on the user's account |
 | Local backup folder | Untracked local config, or plugin `userConfig` (type `directory`) | That computer only |
 
 Never in the repo: the pointer and any artifact ID (public-safe rule). No secrets are needed. Cloud sessions reach GitHub through the session's own GitHub access.
 
-Plugin `userConfig` and `${CLAUDE_PLUGIN_DATA}` are per computer. Cloud sessions do not read the user's `~/.claude/settings.json`, so neither reaches a cloud run. That is why only the pointer and machine-specific paths live there.
+Plugin `userConfig` and `${CLAUDE_PLUGIN_DATA}` are per computer. Cloud sessions do not read the user's `~/.claude/settings.json`, so neither reaches a cloud run. That is why only machine-specific paths live there.
 
 Themes and styles are settings that one shared page reads and applies as it loads. A preference change needs no republish, and every board still runs the same code, so updates reach everyone. A model style applies to new models. Existing models keep theirs, and a run may offer to rebuild them.
+
+## Plugin-first, and user changes
+
+Design rule: assume the user has no copy of the code and never edits it. Everything that differs per user is data in the board store. A clone is the developer path, not the user path.
+
+| A user wants to | How | Survives code updates? |
+|---|---|---|
+| Pick a theme, style or backup | A preference | Yes |
+| Add their own fields to a record | Allowed: collections are `z.looseObject` and settings writes merge (`{...current, ...patch}`), so unknown fields pass through | Yes, under the rule below |
+| Change the page, add a collection, change rules | Fork the code. They own their fork and merge upstream changes like any fork | Only as well as their merges go |
+
+Rule for all code: never delete or rewrite fields or documents it does not own. Migrations (`schemaVersion`) change only the fields the code defines. This keeps a user's extra fields, and data written by a newer version, intact.
 
 ## Publish rules
 
@@ -96,7 +111,7 @@ Version fields:
 ## Run flow (local or cloud)
 
 ```
-hydrate (read pointer, read model files, migrate) -> ledger -> brief -> build -> animate -> verify -> ship (model files only) -> backup -> report
+hydrate (find board, read model files, migrate) -> ledger -> brief -> build -> animate -> verify -> ship (model files only) -> backup -> report
 ```
 
 - **Hydrate first.** A fresh clone or plugin folder has only the starter set, so briefs, duplicate checks (for example the idle-loop duplicate check) and "what exists" would be wrong without it. The hydrated copy goes into a gitignored working folder.
@@ -132,9 +147,9 @@ No install detection is needed: both use the same flow and the same store. A clo
 | 2 | Read the store's roster and diff it against the repo's. Record models that exist only in the store. Port one into the starter set only if it should ship to everyone. |
 | 3 | `tools/live-diff.ts`: split code files from model files; the exit code reflects code only. |
 | 4 | `tools/models-hydrate.ts` (hydrate plus `schemaVersion` migration) and `models:backup`. Test against a fixture folder. Add `schemaVersion` to `roster.json` and `biomes.json`. |
-| 5 | `model-ship`: replace "commit, then republish everything" with "re-read roster, merge, publish model files only, then back up". Make specs a required file. |
+| 5 | `model-ship`: replace "commit, then republish everything" with "re-read roster, merge, publish model files only, then back up". Specs become required, kept in one `models/specs.json` (one file per model instead of two). Add a capacity check: count the files and bytes the new version would hold; warn in the report above 70% of either limit, refuse to ship at the limit. |
 | 6 | `weekly-visitor` (hydrate as a new step 0c), `season-seeds`, `scenery-make`, `biome-brief`: hydrate first; ship through model-ship. |
-| 7 | `lifeboard-setup`: ask for the backup choice; save the pointer locally; describe the publish rules. `AGENTS.md` owner workflow and Publish: a code publish sends no model files. |
+| 7 | `lifeboard-setup`: ask for the backup choice; describe how runs find the board (`Artifact list`) and the publish rules. `AGENTS.md` owner workflow and Publish: a code publish sends no model files. |
 | 8 | `.claude/scheduled/weekly-visitor.md`: drop "commit on branch, do not merge or push"; say models ship to the store, and the report lists backup status. Note where the pointer comes from in a cloud run. |
 | 9 | `models/pipeline.html`: add the new stages (hydrate, model-only publish, backup) and regenerate its data block. |
 | 10 | A dry run in a cloud session end to end, then one real week. |
@@ -146,5 +161,5 @@ No install detection is needed: both use the same flow and the same store. A clo
 | Store access from scheduled cloud runs | Unproven; step 1. If it fails, a scheduled run cannot hydrate or ship, and runs stay local until it works. |
 | Losing the artifact | Without a backup, the models exist only there. Mitigation: backup choice in setup, backup status in each report. |
 | Publish conflicts | Another publish can land between a read and a write. The tool rejects the later write and returns the live version; the run re-reads and merges. |
-| Size | Each asset is base64 in a JS file. Limits: 16 MB per file, 64 MB per publish, 256 MB per version. About 2.7 MB today. |
+| Size | Published files never expire: a file stays in every later version until a publish removes it (`null`). Version limits: 511 files, 256 MB (also 16 MB per file, 64 MB per publish). Models average about 230 KB, so the file count binds first: about 500 models with one specs file, years at the weekly rate. When the capacity check first warns, decide how to archive old models (remove the asset, keep it in the backup, mark the roster entry `archived`). Whether version history counts toward any quota is not documented. |
 | Tied to claude.ai | The store only works through Claude's tools; nothing outside claude.ai can read or write it. The interface above keeps a move to another store contained. |
