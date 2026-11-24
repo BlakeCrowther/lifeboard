@@ -11,16 +11,17 @@ tags: [models, publishing, cloud, setup]
 
 **Goal:** a board's models, data and preferences live in a store that belongs to that board, apart from the code that builds it. Publishing code (from the upstream repo, a user's own repo, or the plugin) never removes or overwrites them, and a weekly run ships a model the same way on a laptop or in a cloud session, with no git merge in between.
 
-Companion docs: [plugin and git tiers](user-customization.md) (how users get, change and update lifeboard) and [UI components](ui-components.md) (whether the page moves to React and Radix).
+Companion docs: [plugin and git tiers](plugin-and-git-tiers.md) (how users get, change and update lifeboard) and [UI components](ui-components.md) (whether the page moves to React and Radix).
 
 Terms:
 - **Board**: one user's lifeboard as it runs: the published page plus its models, data and preferences.
 - **Board store**: where a board lives. It holds records (tasks, habits, preferences), files (page and model files) and version history. Today the board store is the board's claude.ai artifact: its `db` holds records and its published files hold files.
-- **Upstream**: the public lifeboard repo. **A user's repo**: a git-tier user's private copy of it ([tiers](user-customization.md)).
+- **Upstream**: the public lifeboard repo. **A user's repo**: a git-tier user's private copy of it ([tiers](plugin-and-git-tiers.md)).
 - **Model files**: `models/roster.json`, `models/biomes.json`, `models/assets/*-glb.js` and `models/specs.json`, as published.
 - **Page files**: `index.html` and `dist/**`, built by `pnpm build`.
 - **Starter set**: the models and biomes in `models/starter/`, published by setup so a new board has something to show.
-- **Hydrate**: copy a board's model files into a local working folder before a run.
+- **Hydrate**: copy a board's model files from the store into `models/board/` before a run.
+- **`models/board/`**: the board's own model files, laid out as published (`models/board/roster.json` is the board's `models/roster.json`). Upstream's `.gitignore` excludes it, so it is a scratch copy in upstream and the plugin tier; a git-tier repo commits it, which makes it that board's model history and backup. Siblings: `models/starter/` (ships with upstream) and `models/out/` (build scratch, never committed).
 - **Pointer**: how a run finds its board store (today the artifact URL, looked up with `Artifact list`).
 
 ## Problem
@@ -44,7 +45,7 @@ Today the repo is the source of truth for models, and every publish sends page a
 - **The board store is the one main copy of a board's models.** A model reaches the board when it is published; no merge gates it.
 - **Page publishes and model ships never overlap.** Each sends only its own files, and the Artifact tool keeps files a publish leaves out.
 - **The starter set lives apart** (`models/starter/`), so upstream changes to it never collide with a board's models.
-- **Backup is not a separate feature.** A git-tier user's repo keeps a copy of shipped models (below); every board also has the store's version history.
+- **Backup is not a separate feature.** A git-tier repo commits `models/board/` (below); every board also has the store's version history.
 
 These follow established patterns:
 
@@ -82,7 +83,7 @@ The page already fetches `models/roster.json` and `models/biomes.json` at run ti
 
 ## Where each setting lives
 
-Settings documents live in the `checks` collection today (`checks/<id>`, see GLOSSARY.md "Profile"); they move to a `settings` collection ([tiers](user-customization.md#settings)).
+Settings documents live in the `checks` collection today (`checks/<id>`, see GLOSSARY.md "Profile"); they move to a `settings` collection ([tiers](plugin-and-git-tiers.md#settings)).
 
 | Setting | Where | Reachable from |
 |---|---|---|
@@ -108,14 +109,14 @@ Settings documents live in the `checks` collection today (`checks/<id>`, see GLO
 ## Run flow (local or cloud, both tiers)
 
 ```
-find board -> hydrate (model files, migrate) -> ledger -> brief -> build -> animate -> verify -> ship (model files only) -> copy to repo (git tier) -> report (incl. update line)
+find board -> hydrate (model files, migrate) -> ledger -> brief -> build -> animate -> verify -> ship (model files only) -> commit models/board (git tier) -> report (incl. update line)
 ```
 
-- **Hydrate first.** A fresh checkout or plugin folder has only the starter set, so briefs, duplicate checks (for example the idle-loop duplicate check) and "what exists" would be wrong without it. The hydrated copy goes into a gitignored working folder.
+- **Hydrate first** into `models/board/`. A fresh checkout or plugin folder has only the starter set, so briefs, duplicate checks (for example the idle-loop duplicate check) and "what exists" would be wrong without it. In a git-tier repo this also refreshes the committed copy if the store moved ahead.
 - **Re-read the roster just before publishing**, then merge by `id`. That way two runs, or a run and the owner, can't silently drop each other's entries. If the same `id` exists in the store with different content, stop and report.
 - **Never publish a roster entry without its asset file in the same call**, and never remove one.
-- **Copy to repo (git tier only):** commit the shipped model files under `board/` in the user's repo. `board/` is in upstream's `.gitignore`, so it never enters upstream; a user's repo force-adds it (`git add -f board/`), and once tracked it stays tracked. The step is skipped in upstream itself (a repo with no `upstream` remote) and in the plugin tier. Restoring a board publishes from `board/`.
-- **Report.** The update line comes from the tier's update check ([tiers](user-customization.md#updates)).
+- **Commit `models/board/` (git tier only):** after a ship, commit the updated `models/board/` in the user's repo. A user's repo force-adds it once (`git add -f models/board/`), since upstream's `.gitignore` excludes it; once tracked it stays tracked. Skipped in upstream itself (a repo with no `upstream` remote) and in the plugin tier. Restoring a board publishes from `models/board/`.
+- **Report.** The update line comes from the tier's update check ([tiers](plugin-and-git-tiers.md#updates)).
 
 ## Drift check
 
@@ -132,11 +133,11 @@ find board -> hydrate (model files, migrate) -> ledger -> brief -> build -> anim
 | 3 | Move the starter set to `models/starter/`; setup publishes it as the board's model files. |
 | 4 | `tools/live-diff.ts`: compare page files only; model files are reported, never fail. |
 | 5 | `tools/board-hydrate.ts` (model files plus `schemaVersion` migration). Test against a fixture folder. Add `schemaVersion` to `roster.json` and `biomes.json`. |
-| 6 | `model-ship`: replace "commit, then republish everything" with "re-read roster, merge, publish model files only, then copy to `board/` (git tier)". Specs become required, kept in one `models/specs.json` (one file per model instead of two). Add a capacity check: count the files and bytes the new version would hold; warn in the report above 70% of either limit, refuse to ship at the limit. |
+| 6 | `model-ship`: replace "commit, then republish everything" with "re-read roster, merge, publish model files only, then commit `models/board/` (git tier)". Specs become required, kept in one `models/specs.json` (one file per model instead of two). Add a capacity check: count the files and bytes the new version would hold; warn in the report above 70% of either limit, refuse to ship at the limit. |
 | 7 | `weekly-visitor` (find board and hydrate as step 0c), `season-seeds`, `scenery-make`, `biome-brief`: hydrate first; ship through model-ship. |
 | 8 | `lifeboard-setup` and `AGENTS.md`: the publish rules above; how runs find the board (`Artifact list`); a page publish builds first and sends no model files. |
 | 9 | `.claude/scheduled/weekly-visitor.md`: drop "commit on branch, do not merge or push"; say models ship to the store; note where the pointer comes from in a cloud run. |
-| 10 | `models/pipeline.html`: add the new stages (find board, hydrate, model-only publish, copy to repo) and regenerate its data block. |
+| 10 | `models/pipeline.html`: add the new stages (find board, hydrate, model-only publish, commit `models/board/`) and regenerate its data block. |
 | 11 | A dry run in a cloud session end to end, then one real week. |
 
 ## Risks and open questions
@@ -145,7 +146,7 @@ find board -> hydrate (model files, migrate) -> ledger -> brief -> build -> anim
 |---|---|
 | Store access from scheduled cloud runs | Unproven; step 1. If it fails, a scheduled run cannot hydrate or ship, and runs stay local until it works. |
 | Losing the artifact | A plugin-tier board exists only in its artifact; deleting the artifact deletes it. Version history covers bad publishes, not deletion. `make-it-mine` gives a repo copy. |
-| The maintainer's own board | Upstream never commits `board/`, so the maintainer's board relies on version history. Open: a private copy for it. |
+| The maintainer's own board | Upstream never commits `models/board/`, so the maintainer's board relies on version history. Open: a private copy for it. |
 | Publish conflicts | Another publish can land between a read and a write. The tool rejects the later write and returns the live version; the run re-reads and merges. |
-| Size | Published files never expire: a file stays in every later version until a publish removes it (`null`). Version limits: 511 files, 256 MB (also 16 MB per file, 64 MB per publish). Models average about 230 KB, so the file count binds first: about 500 models with one specs file, years at the weekly rate. When the capacity check first warns, decide how to archive old models (remove the asset, keep it in `board/`, mark the roster entry `archived`). Whether version history counts toward any quota is not documented. |
+| Size | Published files never expire: a file stays in every later version until a publish removes it (`null`). Version limits: 511 files, 256 MB (also 16 MB per file, 64 MB per publish). Models average about 230 KB, so the file count binds first: about 500 models with one specs file, years at the weekly rate. When the capacity check first warns, decide how to archive old models (remove the asset, keep it in `models/board/` in git-tier repos, mark the roster entry `archived`). Whether version history counts toward any quota is not documented. |
 | Tied to claude.ai | The store only works through Claude's tools; nothing outside claude.ai can read or write it. The interface above keeps a move to another store contained. |

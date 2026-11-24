@@ -22,10 +22,10 @@ Builds on [board store and model storage](model-storage.md): every board keeps i
 | Their board | The stock page plus their settings, models and data | Their page plus their settings, models and data |
 | Changes | Settings only | Ask Claude: edit, `pnpm verify`, commit to `main`, publish |
 | Updates | Automatic: the plugin updates; the next run builds and publishes the new stock page and reports "updated to 1.4: adds X" | On request: the run reports "1.4 is out: adds X"; `/lifeboard-update` merges, verifies, previews and asks |
-| Models copied to | Nowhere (store version history only) | `board/` in their repo |
+| Model history | Store version history only | `models/board/` committed in their repo |
 | To go further | `/lifeboard:make-it-mine` | Contribute a change upstream (optional) |
 
-**`/lifeboard:make-it-mine`** (plugin to git, one way): clone upstream at the release the plugin is on (so history is shared and later updates merge cleanly), create their private repo, push, record upstream, copy the board's models into `board/`, and from then on start sessions on their repo. Settings, models and data stay in the board store, so nothing else moves. There is no way back to the plugin tier, and none is needed.
+**`/lifeboard:make-it-mine`** (plugin to git, one way): clone upstream at the release the plugin is on (so history is shared and later updates merge cleanly), create their private repo, push, record upstream, hydrate the board's models into `models/board/` and commit them, and from then on start sessions on their repo. Settings, models and data stay in the board store, so nothing else moves. There is no way back to the plugin tier, and none is needed.
 
 Precedents for the split: Expo managed apps with a path to editing native code, Create React App's "eject", and in Neovim the LazyVim distribution versus kickstart.nvim, a starting point you own. The difference here is that Claude does the merging, which is what makes owning everything practical to keep updated.
 

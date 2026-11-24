@@ -11,7 +11,7 @@ tags: [ui, accessibility, themes, customization]
 
 **Goal:** decide whether the board's page should move to React with Radix (or shadcn/ui, which is built on Radix), to get accessible menus and popovers, cleaner components and easier themes, and to make it easier for users (and Claude on their behalf) to change their own board. Decision open.
 
-Related: [plugin and git tiers](user-customization.md) (git-tier users change their own copy; `/lifeboard-update` merges upstream releases).
+Related: [plugin and git tiers](plugin-and-git-tiers.md) (git-tier users change their own copy; `/lifeboard-update` merges upstream releases).
 
 ## Today
 
@@ -41,7 +41,7 @@ Related: [plugin and git tiers](user-customization.md) (git-tier users change th
 
 ## Recommendation
 
-Moving is worth it if user customization is central, which is the direction of [user customization](user-customization.md). B keeps the board's CSS and readable class names; C gives the most ready-made pieces at the cost of Tailwind. Either way, no big-bang rewrite:
+Moving is worth it if user customization is central, which is the direction of [user customization](plugin-and-git-tiers.md). B keeps the board's CSS and readable class names; C gives the most ready-made pieces at the cost of Tailwind. Either way, no big-bang rewrite:
 
 | Step | Change | Useful even if the move stops here |
 |---|---|---|
