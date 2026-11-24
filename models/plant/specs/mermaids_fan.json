@@ -23,26 +23,26 @@
       1.0
     ],
     "stem": {
-      "radius_ratio": 0.05,
-      "lean": 0.03
+      "radius_ratio": 0.035,
+      "lean": 0.02
     },
     "leaf": {
       "count": 1,
-      "whorl": 3,
-      "length_ratio": 0.08,
+      "whorl": 1,
+      "length_ratio": 0.05,
       "width_ratio": 0.3,
       "pitch_deg": 50,
       "low": 0.2,
       "high": 0.3
     },
     "head": {
-      "petals": 7,
-      "radius_ratio": 0.3,
-      "petal_width_ratio": 0.95,
-      "cup_deg": 78,
-      "disc_ratio": 0.1,
-      "bud_ratio": 0.3,
-      "bud_stretch": 2.2
+      "petals": 9,
+      "radius_ratio": 0.4,
+      "petal_width_ratio": 1.0,
+      "cup_deg": 84,
+      "disc_ratio": 0.06,
+      "bud_ratio": 0.22,
+      "bud_stretch": 2.6
     },
     "seed_ratio": 0.04
   },
@@ -67,9 +67,9 @@
     },
     "tend": {
       "frames": 48,
-      "lift_deg": 6,
-      "stretch": 0.1,
-      "open": 0.15
+      "lift_deg": 4,
+      "stretch": 0.2,
+      "open": 0.5
     }
   },
   "budget": {
