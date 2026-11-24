@@ -5,7 +5,7 @@ description: The headless-Blender pipelines that design, build, animate, verify 
 tags: [models, blender, pipeline, gates, judge-panel, ledger, roster]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-24T16:14:32.981Z
 sources:
   - id: openwiki-source-52e269b6c098f325787e1ee5
     resource: repo://models/README.md

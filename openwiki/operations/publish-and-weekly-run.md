@@ -5,7 +5,7 @@ description: How the board is published as a claude.ai Artifact, the live-versus
 tags: [publish, artifact, weekly-run, scheduled-task, setup, game-status]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-24T16:14:32.981Z
 sources:
   - id: openwiki-source-4ebd3c72c0984747086af6f8
     resource: repo://.claude/scheduled/weekly-visitor.md

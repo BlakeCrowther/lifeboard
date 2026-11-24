@@ -5,7 +5,7 @@ description: Task-routing map for the lifeboard wiki, covering what the project 
 tags: [quickstart, overview, navigation]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-24T16:14:32.981Z
 sources:
   - id: openwiki-source-8037e2358a2c4f9b2c722a11
     resource: repo://AGENTS.md
