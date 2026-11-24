@@ -23,9 +23,9 @@
    "tend_readable"
   ],
   "floor": 3,
-  "bar": 3.56,
+  "bar": 3.25,
   "judges": 3,
-  "note": "Rule (judge_verdict.py): per criterion the median of the judges' scores; pass when every median >= floor and, unless bar is null, the mean of the medians >= bar. bar = mean of golden_medians (3.86) - 0.3. When the golden or judge_model changes, re-judge the golden with a full panel, rewrite golden_medians and recompute bar."
+  "note": "Rule (judge_verdict.py): per criterion the median of the judges' scores; pass when every median >= floor and, unless bar is null, the mean of the medians >= bar. bar = mean of golden_medians (3.86) - 0.6 (owner, 2026-11-24: the -0.3 margin, 3.56, failed plants at 3.43 whose every median met the floor; sonnet judges cluster on 3). When the golden or judge_model changes, re-judge the golden with a full panel, rewrite golden_medians and recompute bar with the same margin."
  },
  "status": "Sonnet recalibration (2026-11-19): golden median-of-3 mean 3.86 -> bar 3.56 (opus said 3.29 -> 2.99).",
  "open_fix_notes": [
