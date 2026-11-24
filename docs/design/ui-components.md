@@ -11,7 +11,7 @@ tags: [ui, accessibility, themes, customization]
 
 **Goal:** decide whether the board's page should move to React with Radix (or shadcn/ui, which is built on Radix), to get accessible menus and popovers, cleaner components and easier themes, and to make it easier for users (and Claude on their behalf) to change their own board. Decision open.
 
-Related: [user customization and updates](user-customization.md) (users edit their board's source; `update-board` merges toolkit updates).
+Related: [plugin and git tiers](user-customization.md) (git-tier users change their own copy; `/lifeboard-update` merges upstream releases).
 
 ## Today
 
@@ -35,7 +35,7 @@ Related: [user customization and updates](user-customization.md) (users edit the
 | Themes | CSS variables (already) | CSS variables; adopt shadcn's standard token names to reuse its themes | shadcn tokens; theme generators' output can be pasted in |
 | User CSS tweaks | Readable class names to target | Readable class names to target | Utility classes leave few names to target; changes mean editing the component |
 | Claude editing on a user's behalf | Fine | Easier: React is what Claude writes most | Easiest: React plus a large set of ready-made components |
-| Updates (`update-board`) | Views spread across shared files | One file per component, so edits stay local and merges are smaller | Same as B; shadcn's own model is copy-in |
+| Updates (`/lifeboard-update`) | Views spread across shared files | One file per component, so edits stay local and merges are smaller | Same as B; shadcn's own model is copy-in |
 | Page weight | None added | React plus Radix, about 50 to 70 KB compressed | Same, plus a Tailwind build step |
 | Cost | Building menu keyboard behavior by hand | Rewriting the UI half of the code | Same as B, plus restyling to Tailwind |
 
@@ -51,7 +51,7 @@ Moving is worth it if user customization is central, which is the direction of [
 | 4 | Move one tab at a time (Today, Plan, Lists, Life, Grow) | |
 | 5 | Remove the string-view render loop once nothing uses it | |
 
-Each step is checked by `pnpm verify`, including the UI smoke test (`tests/e2e/ui-smoke.ts`), and lands as its own PR. Do it before many boards exist, so `update-board` does not have to carry every board across the whole rewrite.
+Each step is checked by `pnpm verify`, including the UI smoke test (`tests/e2e/ui-smoke.ts`), and lands as its own PR. Do it before many boards exist, so `/lifeboard-update` does not have to carry every git-tier repo across the whole rewrite.
 
 ## Risks and open questions
 

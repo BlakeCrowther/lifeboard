@@ -1,141 +1,173 @@
 ---
 type: Design Doc
-title: User customization and updates
-description: Users change their board however they like (settings, house rules for Claude, or the page source itself), and toolkit updates arrive as proposals that update-board merges with their changes, never overwriting them silently.
+title: Plugin and git tiers
+description: Two ways to run lifeboard from one codebase. The plugin tier gives settings-only boards that update automatically; the git tier gives each user a private copy of the repo they can change completely, with upstream releases merged by Claude on request. make-it-mine moves a user from the first to the second.
 status: draft
 design_status: proposed
 tags: [setup, customization, updates, plugin]
 ---
 
-# User customization and updates
+# Plugin and git tiers
 
-**Goal:** a user can change anything about their board (settings, how Claude runs their skills, the spec, the page, new tabs and list types) without git, and still take toolkit updates later. An update never overwrites their changes; it arrives as a proposal that Claude merges with their changes and the user approves.
+**Goal:** anyone can run lifeboard. People who are happy with the settings that ship install a plugin and never touch code. People who want to change anything (the spec, the page, the pipeline, "a new visitor every day") get their own private copy of the repo, which Claude changes for them and merges upstream releases into on request. Both share one codebase and one way of storing a board.
 
-Builds on [board store and model storage](model-storage.md): the board holds its own page source (`source.json`), its install record (`board.json`: `basedOn`, `contractVersion`, file hashes) and its settings documents. Terms (toolkit, board, board store, contract) are defined there.
+Builds on [board store and model storage](model-storage.md): every board keeps its models, data and preferences in its board store, apart from code. Terms (board, board store, upstream, page files) are defined there.
 
-## Ways to customize
+## The two tiers
 
-| The user wants to | How | On a toolkit update |
+| | Plugin tier | Git tier |
 |---|---|---|
-| Pick a theme, style, backup, or change a game number | A **setting** (below) | Their value wins for each field they set; defaults change underneath. If a default they overrode changes, the run report says so |
-| Change how Claude does something ("visitors are birds only", "skip plant runs in December") | A **house rule** (below) | Survives; the run report flags a rule that no longer fits |
-| Add fields to their own data | Allowed: collections are `z.looseObject` and settings writes merge (`{...current, ...patch}`) | Survives, under the rule below |
-| Change the page, the spec, a list type; add a tab or a feature | Ask Claude to **edit the board's source**. Claude hydrates `source.json`, edits, runs the board's tests, builds and publishes (page files only) | Edited files are merged by `update-board`; untouched files update quietly |
-| Add their own skills or automation | A plugin of their own, next to lifeboard's | Unaffected |
+| For | People happy with the settings that ship | People who want to change anything |
+| Their code | None: they run the plugin's code | Their own private repo, a copy of upstream with shared history |
+| Their board | The stock page plus their settings, models and data | Their page plus their settings, models and data |
+| Changes | Settings only | Ask Claude: edit, `pnpm verify`, commit to `main`, publish |
+| Updates | Automatic: the plugin updates; the next run builds and publishes the new stock page and reports "updated to 1.4: adds X" | On request: the run reports "1.4 is out: adds X"; `/lifeboard-update` merges, verifies, previews and asks |
+| Models copied to | Nowhere (store version history only) | `board/` in their repo |
+| To go further | `/lifeboard:make-it-mine` | Contribute a change upstream (optional) |
 
-Rule for all toolkit code and migrations: never delete or rewrite fields or documents it does not own. This keeps a user's extra fields, and data written by a newer version, intact.
+**`/lifeboard:make-it-mine`** (plugin to git, one way): clone upstream at the release the plugin is on (so history is shared and later updates merge cleanly), create their private repo, push, record upstream, copy the board's models into `board/`, and from then on start sessions on their repo. Settings, models and data stay in the board store, so nothing else moves. There is no way back to the plugin tier, and none is needed.
 
-Not offered: overriding single toolkit files (copies go stale quietly) and turning plugin auto-update off (users would also miss pipeline fixes; the page is already protected by rule 5 in [model storage](model-storage.md#publish-rules)). Users can still turn auto-update off per marketplace in `/plugin`, or pin a marketplace to a git tag.
+Precedents for the split: Expo managed apps with a path to editing native code, Create React App's "eject", and in Neovim the LazyVim distribution versus kickstart.nvim, a starting point you own. The difference here is that Claude does the merging, which is what makes owning everything practical to keep updated.
 
 ## Settings
 
-Three levels already exist in the code:
+The plugin tier's ceiling, and shortcuts for git-tier users. Three levels already exist in the code:
 
-| Level | Where | For |
+| Level | Where | Settings |
 |---|---|---|
 | Device | Browser `localStorage` `lb-ui` | Folds, list sorts |
-| Board | `checks/ui_prefs` | How the page looks: theme, Ecosystem and Garden on or off, commit lock; later icon style |
-| Owner | `checks/profile` | Who the owner is and how runs behave: name, timezone, place, pets; later model style and backup target |
+| Board | `checks/ui_prefs` | Theme, Ecosystem and Garden on or off, commit lock; icon style |
+| Owner | `checks/profile` | Name, timezone, place, pets; model style, run day (weekly) |
 
-Rule overrides already follow the settings pattern: `checks/lesson_rules` and `checks/break_rules` override `RULES` field by field (`src/packages/ui/game/lessons.ts`, `src/packages/ui/game/game.ts`). Generalize this: one list of the rules a user may change, each with an allowed range, validated when the page loads so a bad value cannot break the game. `SPEC.md` and `pnpm spec-check` keep defining the defaults. Unattended runs still never change game numbers; only the user can.
+Game numbers: `checks/lesson_rules` and `checks/break_rules` already override `RULES` field by field (`src/packages/ui/game/lessons.ts`, `src/packages/ui/game/game.ts`). Generalize this into one list of user-changeable rules, each with an allowed range, validated when the page loads so a bad value cannot break the game. `SPEC.md` and `pnpm spec-check` keep defining the defaults. Unattended runs never change game numbers; only the user can.
 
-### Rename `checks` to `settings` (open)
+New settings are added as they come up. Settings are values only; anything that would be an instruction to Claude is a git-tier change ([model storage](model-storage.md#where-each-setting-lives) explains why).
 
-`checks` began as checkbox state (one document per checkbox, with a `week` field) and became a catch-all for settings, rule overrides and computed game status. Proposal:
+Rule for all code and migrations: never delete or rewrite fields or documents it does not own. Collections are `z.looseObject` and settings writes merge (`{...current, ...patch}`), so a user's extra fields and data written by a newer version stay intact.
 
-| Today | Proposed |
+### Rename `checks` to `settings`
+
+`checks` began as checkbox state (one document per checkbox, with a `week` field) and became a catch-all for settings, rule overrides and computed game status.
+
+| Today | After |
 |---|---|
 | Checkbox documents in `checks` | Stay in `checks` |
-| `checks/profile`, `ui_prefs`, `week_start`, `lesson_rules`, `break_rules`, `house_rules` | `settings/<id>` |
+| `checks/profile`, `ui_prefs`, `week_start`, `lesson_rules`, `break_rules` | `settings/<id>` |
 | `checks/game_status` | `game_state` (the collection exists) |
 
 Migration, run once per board when the page loads, with no fallback reads:
 1. Read the board's data version (`settings/_schema`).
 2. If behind, run each missing migration in order (copy `checks/<id>` to `settings/<id>`), then save the new version.
 3. From then on, read only the new place.
-4. A tab still running older code sees a newer code version is live, shows "lifeboard updated, reload" and stops writing.
+4. A tab still running older code sees that a newer version is live, shows "lifeboard updated, reload" and stops writing.
 
-Migrations stay in the code, because boards update on their own schedule and a long-skipped board must still migrate. If the list grows long, set a minimum supported version and route older boards through a stepping-stone release.
+Migrations stay in the code, because boards update on their own schedule. If the list grows long, set a minimum supported version and route older boards through a stepping-stone release. Do this before the plugin tier ships, since settings become a promise to plugin users then.
 
-Do this as its own change, before themes and styles add more settings.
+## Git tier
 
-## House rules
+### Setup
 
-One settings document, `checks/house_rules` (`settings/house_rules` after the rename), holding plain-language instructions:
+A new user opens a Claude Code session on upstream and runs `/lifeboard-setup`, which asks: settings only (plugin) or your own copy (git). For git, setup does this for them:
 
-```json
-{ "value": { "all": ["Keep reports short."], "creature-brief": ["Visitors are birds only."], "season-seeds": ["Skip runs in December."] }, "updated_at": 0 }
+```bash
+git clone --branch v<latest> https://github.com/<owner>/lifeboard && cd lifeboard
+git switch -c main && git remote rename origin upstream
+gh api user/repos -f name=lifeboard -F private=true
+git remote add origin https://github.com/<user>/lifeboard && git push -u origin main
 ```
 
-- Every lifeboard skill reads its entry and `all` as its first step.
-- Order of precedence: quality gates and safety, then house rules, then the skill's defaults. A house rule never loosens a gate.
-- When a rule conflicts with a skill step or no longer applies after an update, the run follows the gate or the skill and says so in its report.
-- Stored in the board, not in a local file, so cloud runs see it.
+Then it asks for their profile and settings, publishes their board (build, page files, starter set) and schedules the weekly run on their repo. The repo is private by default; it is theirs to make public later. The only prerequisite is a GitHub account; a local-only user can skip GitHub and keep the repo on their computer.
 
-## Updates
+This is GitHub's documented "duplicating a repository" plus "syncing a fork" with an `upstream` remote. A template copy would start with unrelated history, so updates could not merge; a GitHub fork of a public repo cannot be private.
 
-### What a release ships
+### Which rules apply
 
-| Item | For |
+One check, no config file: a repo with an `upstream` remote is a user's copy; a repo without one is upstream.
+
+| Repo | Workflow |
 |---|---|
-| A version tag in the public repo | The merge base: the template exactly as a board at that version had it |
-| Upgrade notes written for an agent | What changed and why, file by file, so Claude can apply a fix to a user's edited version of a file |
-| Migrations | Data and contract changes, run the same way every time |
-| A one-line summary | "Adds X, fixes Y", shown in run reports |
-| Supported contract range | So older boards keep working, or are told to update |
+| A user's copy | Commit to `main` after `pnpm verify`. No branches or PRs |
+| Upstream, or a change being sent upstream | `CONTRIBUTING.md`: issues, branches, PR format, Conventional Commits |
 
-### Flow
+### Updates
 
-```
-toolkit release -> plugin auto-updates -> a skill runs -> sees toolkit > basedOn -> report line "update available: adds X, fixes Y" -> user runs update-board -> preview -> user approves -> publish -> basedOn updated
-```
+1. **Detect.** Each run does `git fetch upstream --tags`, compares the newest release tag with the repo's version, and if newer adds the summary line from `docs/releases/<version>.md` in that tag to its report. No other request is made and nothing is counted.
+2. **`/lifeboard-update`:**
+   1. `git merge v<new>`. Git uses the shared history as the merge base.
+   2. Claude resolves conflicts using the release's upgrade notes.
+   3. Flag anything risky in the incoming diff (new network calls, scripts, hooks, dependency changes) before asking.
+   4. Run the release's migrations, then `pnpm verify`, then show a preview.
+   5. On approval: commit and publish page files. On a failed check or a no: nothing is committed.
+3. **Undo:** `git revert`, then publish.
+4. **Never automatic.** Even a clean merge changes something the user built.
 
-1. **Detect.** Every lifeboard skill starts by comparing the toolkit version with the board's `basedOn`. Claude Code has no plugin-update event, and plugin hooks are not documented to run in cloud sessions, so the check lives in the skills, where it works everywhere.
-2. **Notify.** The skill finishes its own work, then adds one line to its report or reply. If the board is outside the supported contract range, the skill stops first and asks for the update.
-3. **`update-board`** (a skill, run by the user):
-   1. Hydrate the board's source and `board.json`.
-   2. Files whose hash still matches `board.json` (untouched): take the new version.
-   3. Files the user edited: three-way merge of the template at `basedOn`, the user's version and the new template. Claude resolves conflicts using the upgrade notes.
-   4. Run the release's migrations, then the board's tests and a build.
-   5. Show a preview and a summary of what changed and what was merged.
-   6. On approval: publish page files, update `basedOn` and the file hashes. On a failed test or a no: publish nothing.
-4. **Undo.** A bad result is rolled back from the board's version history.
-5. **Never automatic.** Even a clean merge changes something the user built, so it is always a proposal, like a Renovate pull request.
+A user who never updates keeps a working board.
 
-If the user never runs it, their page stays at its version and keeps working while the toolkit supports its contract version.
+### Contributing back
 
-### Precedents
+Optional. A contribute step builds a clean branch from the upstream release with only the change, runs a basic public-safety scan (home paths, emails, artifact IDs), shows the diff, and opens a PR following `CONTRIBUTING.md`. Nothing leaves a user's repo otherwise.
 
-No AI-agent toolkit checked does all of record, notify and merge. Each part has a precedent:
+### Security
 
-| Part | Precedent | What it does |
+| Risk | Mitigation |
+|---|---|
+| Upstream releases are code that runs in users' sessions; a compromised upstream would reach users who update | Updates only from release tags and only on approval; risky changes flagged in the diff; optionally signed tags |
+| Upgrade notes are instructions Claude follows | Read only from the tagged release in upstream, never from issues, PRs or elsewhere |
+| Setup runs repo code (`pnpm install`, `./setup.sh` installing the repo's pre-commit hook) | Normal for any clone; same trust as the code |
+| A user's repo made public later | Their data stays in the board store; the repo's pre-commit hook blocks stray JS; the public-safety scan runs on contribute |
+| The weekly run can push to their repo | Claude's GitHub access is granted per repo |
+| Contributing leaks personal changes | Clean branch from the release, scan, diff shown first |
+
+## Plugin tier
+
+- **Install:** the plugin is upstream at a release tag; the marketplace entry pins the tag. A plugin turned on for the user's claude.ai account is what reaches cloud sessions.
+- **Setup:** `/lifeboard:setup` asks for settings, builds the page from the plugin's source in a scratch folder (`pnpm install`, `pnpm build`), and publishes page files plus the starter set.
+- **Runs:** the same pipeline from the plugin folder. Each run compares the plugin's version with the version the published page records. If the plugin is newer, it builds and publishes the stock page and reports "updated to 1.4: adds X". The page migrates its data on load. Undo is the store's version history.
+- **No branch of built files.** Building is a publish step in both tiers, so the plugin needs nothing beyond the tagged source.
+
+## Releases
+
+A release is a version marked finished: a semantic version, a tag `v<version>`, and `docs/releases/<version>.md` with a one-line summary (for run reports) and upgrade notes written for an agent (what changed and why, file by file). Git-tier users update to tags, never to upstream `main`, which can hold unfinished work. The plugin tier updates when the version in `.claude-plugin/plugin.json` changes.
+
+The `release` skill does it: bump the version in `package.json` and `plugin.json`, write the notes from the merged PRs, tag and push. It runs only in upstream (no `upstream` remote) and refuses elsewhere. Contributors never release. Process: `RELEASING.md`.
+
+Usage: nothing is built to count users. Stars and the repo's traffic page are enough.
+
+## Repo files
+
+| File | For | Holds |
 |---|---|---|
-| Record what was installed | Agent OS (installed version in `config.yml`), GitHub Spec Kit (a list of managed files) | Knows what the project came from |
-| Cheap "am I behind?" check | Cruft (`cruft check` fails when the project is behind) | Detection without changing anything |
-| Untouched files update, edited files are not overwritten | Spec Kit (`specify integration upgrade` stops on an edited file unless forced) | Safety |
-| Three-way merge plus migrations | Copier (`copier update` rebuilds the stock project and reapplies the user's changes; conflicts marked inline; pre- and post-migrations) | The merge |
-| Ask before applying | Agent OS, Copier, Cruft | Consent |
+| `README.md` | Everyone | What lifeboard is, the two tiers, how to start |
+| `AGENTS.md` | Agents in every copy | How the repo works and the rules every board follows, including what the owner-workflow section says today about publishing a board from its repo |
+| `CONTRIBUTING.md` | Upstream and anyone sending changes to it | Issues and labels, PR format, Conventional Commits, `pnpm verify`, testing rules, public safety. dev-home's standards block lands here |
+| `RELEASING.md` | Maintainers | When to cut a release, the `release` skill, version numbers, upgrade notes |
 
-New here: Claude resolves merge conflicts from the release's upgrade notes, and skills announce updates instead of the user having to know to check. Sources: Spec Kit `docs/upgrade.md`, Agent OS `CHANGELOG.md`, Copier `docs/updating.md`, Cruft `README.md` (each on GitHub).
+`AGENTS.md` says: "Sending a change to upstream? Follow `CONTRIBUTING.md`." These files ship in every copy and do nothing in a user's repo, the usual open-source arrangement. `.gitignore` cannot hold them back: an ignored file is never in the repo, so cloud sessions and other computers would lose it.
+
+The public-safety pre-commit hook (home paths, emails, artifact IDs, keys, private words) stays in dev-home (`install-hooks.sh`) and is never shipped. The repo's own pre-commit hook (no stray JS, typecheck) ships, because those are project rules.
 
 ## Work
 
 | Step | Change |
 |---|---|
-| 1 | `checks` to `settings` migration (own change; see above). |
-| 2 | Rule overrides: one list of user-changeable rules with ranges, validated on load; generalize `lesson_rules` and `break_rules`. |
-| 3 | House rules: the settings document, a shared "read house rules" first step in every lifeboard skill, the precedence rule, report lines for conflicts. |
-| 4 | Board-owned source ([model storage](model-storage.md#work) step 11): `source.json`, `board.json` with file hashes, `contractVersion`. |
-| 5 | Release process: version tags, upgrade notes for agents, a migrations folder, the one-line summary. |
-| 6 | Update detection: the `basedOn` comparison and report line in every lifeboard skill. |
-| 7 | `update-board` skill. Test: a fixture board with one edited and one untouched file, a release that changes both; the untouched file updates, the edited one merges, tests run, nothing publishes without approval. |
+| 1 | `checks` to `settings` migration. |
+| 2 | Repo files: split `AGENTS.md` into `AGENTS.md`, `CONTRIBUTING.md` (issue tracker, triage labels, domain docs, the standards block) and `RELEASING.md`; generalize the owner-workflow section for every board; the `upstream`-remote rule. |
+| 3 | dev-home: `repos.tsv` gains a target-file column; `sync-standards.sh` writes the standards block into it (`CONTRIBUTING.md` for lifeboard); dev-home `AGENTS.md` notes this. Separate PR in dev-home. |
+| 4 | Rule overrides: one list of user-changeable rules with ranges, validated on load. |
+| 5 | Releases: version in `package.json`, `docs/releases/`, the `release` skill, `RELEASING.md`, first tag. |
+| 6 | Git tier: the git path in `lifeboard-setup`, the update line in runs, `/lifeboard-update`, the contribute step. Test `/lifeboard-update` on a fixture repo with one edited and one untouched file and a release that changes both: the untouched file updates, the edited one merges, `pnpm verify` runs, nothing is committed without approval. |
+| 7 | Plugin tier, once a scheduled cloud run without a repo is proven: `.claude-plugin/plugin.json` and a marketplace entry; skill paths that work from `${CLAUDE_PLUGIN_ROOT}` as well as a checkout; build-in-scratch publish; automatic stock-page updates; `/lifeboard:make-it-mine`. |
+
+Model storage ([steps 1 to 11](model-storage.md#work)) comes first: both tiers need it.
 
 ## Risks and open questions
 
 | Item | Note |
 |---|---|
-| Merge quality | Claude may merge wrongly. Mitigations: the board's tests, a preview, approval, version-history undo. |
-| Upgrade notes discipline | A release without good notes makes merges guesswork. Make the notes part of the release checklist and check they exist. |
-| Board tests travel with the source | A user who deletes tests loses the safety net for their merges. `update-board` reports when the board has no tests. |
-| House rules are unverifiable | Plain language cannot be checked by a gate. Gates stay first; conflicts are reported, not hidden. |
-| Stable names | Settings field names, the house-rules format and contract points become a promise. Change them only with a migration and a note. |
+| Plugin tier in scheduled cloud runs | Unproven: whether an account-level plugin runs in a scheduled cloud session with no repo, and how Blender gets installed there. Prove before promising the tier. |
+| Plugin skill paths | Skills live in `.agents/skills/`; check how a plugin manifest points at them, or move them. |
+| Merge quality | Claude may merge wrongly. Mitigations: `pnpm verify`, a preview, approval, `git revert`. |
+| Upgrade-notes discipline | A release without good notes makes merges guesswork. The `release` skill writes them and refuses to tag without them. |
+| Heavily changed repos | Some users will stop taking updates. Their board keeps working. |
+| Stable names | Settings field names become a promise to plugin users. Change them only with a migration and a note. |
+| Build cost in the plugin tier | `pnpm install` and `pnpm build` on each stock-page update (only when the plugin version changes). The page build needs only esbuild, so a slim install is possible. |
