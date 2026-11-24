@@ -375,7 +375,9 @@ def rig(spec, mesh):
 
 
 CHAIN = ["spine1", "spine2", "tail"]
-HEAD_LIFT = 0.3  # x L: root lift per sin(head pitch), keeps the head above the sand (page-test "stays above the ground")
+HEAD_LIFT = (
+    0.3  # x L: root lift per sin(head pitch), keeps the head above the sand (page-test "stays above the ground")
+)
 SULK_PAPILLAE_DEG = 70
 SULK_PAPILLAE_FOLD_DEG = 40
 SULK_TILT_DEG = 16  # head droop alone moved the hunched side silhouette only 19% (motion-check needs 25%)  # papillae pressed flat in sulk: the shaggy top must collapse to read at card size
