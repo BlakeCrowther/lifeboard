@@ -1,13 +1,15 @@
-/* 3D plots for roster kind 'plant' (models/plant/CONTRACT.md). A plot whose species is a roster plant gets a canvas over
-   its SVG bed: one shared offscreen WebGL renderer draws each plot (stage_<n> visible, sway_<n> loop, tend once when the
-   tile was just logged) and copies the frame in; the SVG plant (roster `svg` shape) shows until then.
+/* 3D plants for roster kind 'plant' (models/plant/CONTRACT.md). A roster plant is a canvas over an empty SVG bed: one
+   shared offscreen WebGL renderer draws each canvas (stage_<n> visible, sway_<n> loop, tend once when the tile was just
+   logged) and copies the frame in. Thirsty and withered plants are the model at their last stage, dried by CSS.
+   A canvas carries a key (`data-k`); a re-render that rebuilds the markup picks the same plant back up (pose, loop time)
+   and draws it before the next paint, so logging a session never flashes an empty bed.
    Same viewBox scale as the SVG plants: soil point at (40, 28), the bloom ~46 units tall. ~20 fps, paused off-screen.
    three.js loads lazily through the page's import map. */
 import type * as Three from 'three';
 import type { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { PLANT_STAGES, escapeHtml, lookLabel, plotLook, speciesNames, type GardenPlot } from './labels.ts';
-import { specimen } from './plant-svg.ts';
+import { emptyBed, specimen, type PlantLook } from './plant-svg.ts';
 import { rosterPlants } from './roster.ts';
 
 declare global {
@@ -29,18 +31,21 @@ interface ThreeKit {
 interface PlantInstance {
   root: Three.Object3D;
   mixer: Three.AnimationMixer;
+  sway: Three.AnimationAction | null;
+  tend: Three.AnimationAction | null;
   height: number;
-  drawn: boolean;
 }
 
 let kit: ThreeKit | null = null;
 let kitLoad: Promise<void> | null = null;
 const loadedPlants: Record<string, GLTF> = {};
 const plantLoads: Record<string, Promise<void>> = {};
-const instances = new WeakMap<HTMLCanvasElement, PlantInstance>();
+/** canvas key -> its plant, kept while any canvas with that key is on the page */
+const instances = new Map<string, PlantInstance>();
+/** canvases drawn at least once; a canvas not in here is new markup and draws on the next frame, throttle or not */
+const drawnCanvases = new WeakSet<HTMLCanvasElement>();
 let frameRequest = 0;
 let lastFrame = 0;
-
 const prefersReducedMotion = (): boolean => (typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false);
 
 const loadScript = (src: string): Promise<void> =>
@@ -91,7 +96,8 @@ function loadPlant(id: string): Promise<void> {
 }
 
 function instanceFor(canvas: HTMLCanvasElement, threeKit: ThreeKit): PlantInstance | null {
-  const existing = instances.get(canvas);
+  const key = canvas.dataset.k ?? '';
+  const existing = instances.get(key);
   if (existing) return existing;
   const id = canvas.dataset.p3 ?? '';
   const gltf = loadedPlants[id];
@@ -113,22 +119,29 @@ function instanceFor(canvas: HTMLCanvasElement, threeKit: ThreeKit): PlantInstan
   const swayClip = clipNamed('sway_' + String(stageIndex));
   const tendClip = clipNamed('tend');
   const sway = swayClip ? mixer.clipAction(swayClip) : null;
-  const tend = canvas.closest('.add') && tendClip ? mixer.clipAction(tendClip) : null;
+  const tend = tendClip ? mixer.clipAction(tendClip) : null;
   if (tend) {
     tend.setLoop(THREE.LoopOnce, 1);
-    tend.play();
     /* tend ends on rest, which is sway frame 0 */
     mixer.addEventListener('finished', () => {
       tend.stop();
       if (sway) sway.reset().play();
     });
-  } else if (sway) {
+  }
+  if (sway) {
     sway.play();
     sway.time = Math.random() * sway.getClip().duration;
   }
-  const instance: PlantInstance = { root, mixer, height: Math.max(1e-3, box.max.y - box.min.y), drawn: false };
-  instances.set(canvas, instance);
+  const instance: PlantInstance = { root, mixer, sway, tend, height: Math.max(1e-3, box.max.y - box.min.y) };
+  instances.set(key, instance);
   return instance;
+}
+
+/** New markup for a tile that was just logged: play tend once from rest. */
+function tendIfLogged(canvas: HTMLCanvasElement, instance: PlantInstance): void {
+  if (!instance.tend || !canvas.closest('.add') || canvas.dataset.still) return;
+  instance.sway?.stop();
+  instance.tend.reset().play();
 }
 
 function drawPlant(canvas: HTMLCanvasElement, instance: PlantInstance, threeKit: ThreeKit, deltaSeconds: number): void {
@@ -147,10 +160,6 @@ function drawPlant(canvas: HTMLCanvasElement, instance: PlantInstance, threeKit:
   if (context) {
     context.clearRect(0, 0, width, height);
     context.drawImage(renderer.domElement, 0, 0);
-  }
-  if (!instance.drawn) {
-    instance.drawn = true;
-    canvas.parentElement?.classList.add('on');
   }
 }
 
@@ -171,13 +180,16 @@ function animationFrame(time: number): void {
     });
     return;
   }
-  if (lastFrame && time - lastFrame < 45) {
+  const hasNew = canvases.some((canvas) => !drawnCanvases.has(canvas));
+  if (!hasNew && lastFrame && time - lastFrame < 45) {
     frameRequest = requestAnimationFrame(animationFrame);
     return;
   }
   const deltaSeconds = lastFrame ? Math.min(0.1, (time - lastFrame) / 1000) : 0;
   lastFrame = time;
   const reducedMotion = prefersReducedMotion();
+  const onPage = new Set(canvases.map((canvas) => canvas.dataset.k ?? ''));
+  for (const key of instances.keys()) if (!onPage.has(key)) instances.delete(key);
   let pending = false;
   for (const canvas of canvases) {
     const instance = instanceFor(canvas, kit);
@@ -185,22 +197,42 @@ function animationFrame(time: number): void {
       pending = true;
       continue;
     }
-    if (reducedMotion && instance.drawn) continue;
-    const box = canvas.getBoundingClientRect();
-    if (instance.drawn && (box.bottom < 0 || box.top > window.innerHeight)) continue;
-    drawPlant(canvas, instance, kit, reducedMotion ? 0 : deltaSeconds);
+    const fresh = !drawnCanvases.has(canvas);
+    if (fresh) tendIfLogged(canvas, instance);
+    else {
+      if (reducedMotion || canvas.dataset.still) continue;
+      const box = canvas.getBoundingClientRect();
+      if (box.bottom < 0 || box.top > window.innerHeight) continue;
+    }
+    drawPlant(canvas, instance, kit, reducedMotion || canvas.dataset.still ? 0 : deltaSeconds);
+    drawnCanvases.add(canvas);
   }
   if (!reducedMotion || pending) frameRequest = requestAnimationFrame(animationFrame);
 }
 
-/** A plot's bed and plant, `size` px wide; roster plants also get a 3D canvas over the SVG. */
-export function plotSVG(plot: GardenPlot, size: number): string {
-  const look = plotLook(plot);
-  const svg = specimen(look, { ...plot.seed, kind: plot.species, base: plot.stageName }, size, `${plot.name}: ${lookLabel(look).toLowerCase()} ${(speciesNames[plot.species] || 'plant').toLowerCase()}`);
-  /* thirsty and withered keep the SVG shape */
-  if (!rosterPlants[plot.species] || !PLANT_STAGES.includes(look)) return svg;
+interface PlantArt {
+  /** stable across re-renders of the same plant (a plot key, a keepsake id) */
+  key: string;
+  /** plotLook: a stage name, 'wilt' or 'dead' */
+  look: string;
+  plant: PlantLook;
+  size: number;
+  label: string;
+}
+
+/** A plant in its raised bed, `size` px wide: a roster plant's 3D model, else its SVG species (plots with no model yet). */
+export function plantArt({ key, look, plant, size, label }: PlantArt): string {
+  if (plant.kind === undefined || !rosterPlants[plant.kind]) return specimen(look, plant, size, label);
+  const dried = look === 'wilt' || look === 'dead';
+  const stageIndex = Math.max(0, PLANT_STAGES.indexOf(dried ? (plant.base ?? 'leafy') : look));
   const height = Math.round((size * 92) / 80);
   const pixelRatio = Math.min(2, window.devicePixelRatio || 1);
-  setTimeout(startAnimating);
-  return `<span class="gp3w" style="width:${String(size)}px;height:${String(height)}px">${svg}<canvas class="gp3" aria-hidden="true" data-p3="${escapeHtml(plot.species)}" data-st="${String(PLANT_STAGES.indexOf(look))}" width="${String(Math.round(size * pixelRatio))}" height="${String(Math.round(height * pixelRatio))}"></canvas></span>`;
+  startAnimating();
+  return `<span class="gp3w" style="width:${String(size)}px;height:${String(height)}px">${emptyBed(size, label)}<canvas class="gp3${dried ? ' ' + look : ''}" aria-hidden="true" data-k="${escapeHtml(`${key}|${plant.kind}|${String(stageIndex)}|${String(size)}`)}" data-p3="${escapeHtml(plant.kind)}" data-st="${String(stageIndex)}"${look === 'dead' ? ' data-still="1"' : ''} width="${String(Math.round(size * pixelRatio))}" height="${String(Math.round(height * pixelRatio))}"></canvas></span>`;
+}
+
+/** A plot's bed and plant, `size` px wide. */
+export function plotSVG(plot: GardenPlot, size: number): string {
+  const look = plotLook(plot);
+  return plantArt({ key: plot.key, look, plant: { ...plot.seed, kind: plot.species, base: plot.stageName }, size, label: `${plot.name}: ${lookLabel(look).toLowerCase()} ${(speciesNames[plot.species] || 'plant').toLowerCase()}` });
 }

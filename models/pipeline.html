@@ -125,7 +125,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
 <main>
   <h1>Model pipeline</h1>
   <p class="lede">How a 3D model goes from an idea to the Ecosystem, and what it must pass at each gate. Pick a kind; click any stage to jump to its details.</p>
-  <p class="meta">Last reviewed: 2026-11-24 (never empty-handed: a spent budget ships the best attempt below the bar; creature bar recomputed from its golden, plant bar lowered; reports never name the new model; preflight runs the code gates without judge renders) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
+  <p class="meta">Last reviewed: 2026-11-24 (plants run in parallel, one agent each, sharing capped build slots; queued time doesn't count against a run; never empty-handed: a spent budget ships the best attempt below the bar; creature bar recomputed from its golden, plant bar lowered; reports never name the new model; preflight runs the code gates without judge renders) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
 
   <div class="bar">
     <div class="seg" role="group" aria-label="Model kind" id="kinds"></div>
@@ -173,6 +173,10 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
   </div>
   <div class="callout">
     <h4>Never empty-handed</h4>When the budget runs out and no build passed the judges, the run ships its best judged attempt anyway (<code>ledger.py best &lt;run&gt; &lt;id&gt; --below-bar</code>, which refuses while budget remains), marked below bar. The automated gates still have to pass: they keep out a model that won't load or behave. Only a run where no build passed them ends in quarantine. Reports call the model "this week's visitor" or "the &lt;habit&gt; plot's plant" and never name or describe it: the board is the reveal.
+  </div>
+
+  <div class="callout">
+    <h4>Parallel plants, shared build slots</h4><code>season-seeds</code> spawns one agent per plant, all at once; each owns its ledger and runs brief → build → grow → verify, then returns its roster entry. The orchestrator writes the roster, commits and publishes once. Blender jobs (<code>build.py</code>, <code>verify.sh</code>) each hold a build slot (<code>shared/tools/slots.py</code>; <code>LB_BUILD_SLOTS</code>, default half the cores), so eight plants don't crawl together. Time queued for a slot is credited back to the run (<code>minutes_queued</code> in <code>ledger.py status</code>), so a plant's minutes measure its own work.
   </div>
 
   <h2>5. Where it lives</h2>

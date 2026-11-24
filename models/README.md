@@ -33,7 +33,7 @@ shared:   lifeboard-setup · model-build · model-verify · model-ship
 creature: weekly-visitor (orchestrator) → creature-brief → model-build → creature-animate → model-verify → model-ship
 plant:    season-seeds (orchestrator) → plant-brief → model-build → plant-grow → model-verify → model-ship
 ```
-Each step is its own skill, so steps can be re-run alone (e.g. re-animate without re-modeling).
+Each step is its own skill, so steps can be re-run alone (e.g. re-animate without re-modeling). season-seeds runs one subagent per plant in parallel; every Blender job holds a build slot (`shared/tools/slots.py`, `LB_BUILD_SLOTS`), and time queued for one is credited back to the run ledger.
 
 ## Gates
 

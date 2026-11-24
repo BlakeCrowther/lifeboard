@@ -15,8 +15,6 @@ export interface RosterModel {
   gen?: number | null;
   /** the script under models/ that sets window.LB_PLANTS[id] */
   js?: string;
-  /** plants: the SVG species drawn until the 3D model is on screen */
-  svg?: string;
 }
 
 export interface BiomeLook {
@@ -55,7 +53,6 @@ export function readRosterModels(json: unknown): RosterModel[] {
     setDefined(model, 'plot', raw.plot === null ? null : optionalString(raw.plot));
     setDefined(model, 'gen', raw.gen === null ? null : optionalNumber(raw.gen));
     setDefined(model, 'js', optionalString(raw.js));
-    setDefined(model, 'svg', optionalString(raw.svg));
     return [model];
   });
 }

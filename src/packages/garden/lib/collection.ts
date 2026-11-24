@@ -3,7 +3,8 @@
 import type { GameState, PressedPlant } from '../../game/derive.ts';
 import { dioramaSVG } from './diorama.ts';
 import { RARITY_LABELS, capitalize, escapeHtml, formatShortDate, lookLabel, speciesNames } from './labels.ts';
-import { specimen, type PlantLook } from './plant-svg.ts';
+import { plantArt } from './plant-3d.ts';
+import type { PlantLook } from './plant-svg.ts';
 import { biomeById, visitorsOf } from './roster.ts';
 
 /** The owner's title and note for one keepsake (db `keepsakes`, keyed by keepsake id). */
@@ -96,7 +97,7 @@ function dioramaTile(diorama: DioramaKeepsake, notes: Readonly<Record<string, Ke
 function plantTile(plant: PressedPlant, notes: Readonly<Record<string, KeepsakeNote>>): string {
   const note = notes[plant.id] ?? {};
   const title = note.title || keepsakeTitle(plant);
-  return `<li><button class="dio-t pl${plant.died ? ' gone' : ''}" data-act="inspect" data-id="${escapeHtml(plant.id)}"><span class="dio-a">${specimen(plant.died ? 'dead' : plant.stageName, plantLookOf(plant), 76, title)}</span><span class="dio-n">${escapeHtml(title)}</span><span class="dio-s">${capitalize(plant.season)} · ${plant.bloomed ? 'bloomed' : plant.died ? 'withered' : lookLabel(plant.stageName).toLowerCase()}</span>${note.note ? `<span class="dio-note">${escapeHtml(note.note)}</span>` : ''}</button></li>`;
+  return `<li><button class="dio-t pl${plant.died ? ' gone' : ''}" data-act="inspect" data-id="${escapeHtml(plant.id)}"><span class="dio-a">${plantArt({ key: plant.id, look: plant.died ? 'dead' : plant.stageName, plant: plantLookOf(plant), size: 76, label: title })}</span><span class="dio-n">${escapeHtml(title)}</span><span class="dio-s">${capitalize(plant.season)} · ${plant.bloomed ? 'bloomed' : plant.died ? 'withered' : lookLabel(plant.stageName).toLowerCase()}</span>${note.note ? `<span class="dio-note">${escapeHtml(note.note)}</span>` : ''}</button></li>`;
 }
 
 function inspectModal(keepsake: Keepsake, notes: Readonly<Record<string, KeepsakeNote>>, editing: string | null, animate: boolean): string {
@@ -124,7 +125,7 @@ function inspectModal(keepsake: Keepsake, notes: Readonly<Record<string, Keepsak
     body = `<dl class="dio-st">${stats.map(([term, value]) => `<div><dt>${term}</dt><dd class="num">${escapeHtml(String(value))}</dd></div>`).join('')}</dl>${owns ? `<p class="dio-l"><b>Signature</b> ${escapeHtml(owns.join(', '))}</p>` : ''}<p class="dio-l"><b>Visitors</b> ${visitorList}</p>`;
   } else {
     const summary = plantSummary(keepsake);
-    art = specimen(keepsake.died ? 'dead' : keepsake.stageName, plantLookOf(keepsake), 200, keepsakeTitle(keepsake));
+    art = plantArt({ key: keepsake.id, look: keepsake.died ? 'dead' : keepsake.stageName, plant: plantLookOf(keepsake), size: 200, label: keepsakeTitle(keepsake) });
     kicker = `Pressed plant · ${keepsake.season}`;
     head = nameRow(keepsake, note, keepsake.kind, keepsakeTitle(keepsake), editing, 'dio-h');
     subtitle = escapeHtml(summary.subtitle);

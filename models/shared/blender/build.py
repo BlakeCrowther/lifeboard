@@ -4,6 +4,7 @@ Runs spec-check (check_spec) first and exits 3 on failure (fail fast, before any
 --run <run_id>: records the attempt in the run ledger (shared/tools/ledger.py) after spec-check passes; exits 4 with
 "BUDGET EXHAUSTED" (no Blender work) when the run's build or time budget is spent, exits 6 "PLAN NEEDED" when the last build
 was judged and no `ledger.py plan` follows it. Pipeline runs must always pass it.
+Holds a build slot (shared/tools/slots.py) while it runs; time queued for one doesn't count against the run.
 --preview: an uncounted trial build into out/<id>/preview/ (with --run it still checks the run's minutes, never its builds).
 shared/tools/preflight.sh wraps it with verify.sh so size, bones and height fail before a counted build is spent.
 Writes outdir/blockout_{side,top}.png (only if the archetype defines blockout()), <id>_model.blend,
@@ -54,6 +55,9 @@ if run_id:
     print("LEDGER", msg)
     if not ok:
         sys.exit(6 if msg.startswith("PLAN") else 4)
+import slots  # noqa: E402  one Blender job per build slot; queued time is credited back to the run ledger
+
+_slot = slots.acquire(run_id)
 out = argv[1] if len(argv) > 1 else os.path.join(ROOT, "out", sid, *(["preview"] if preview else []))
 os.makedirs(out, exist_ok=True)
 
