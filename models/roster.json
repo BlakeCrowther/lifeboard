@@ -144,6 +144,40 @@
       "plot": "surfing",
       "gen": 0,
       "habit": "Surfing"
+    },
+    {
+      "id": "mermaids_fan",
+      "kind": "plant",
+      "name": "Mermaid's Fan",
+      "spec": "plant/specs/mermaids_fan.json",
+      "glb": "assets/mermaids_fan.glb",
+      "js": "assets/mermaids_fan-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "svg": "tulip",
+      "golden": false,
+      "below_bar": true,
+      "added": "2026-11-24",
+      "plot": "meditation",
+      "gen": 0,
+      "habit": "Meditation"
+    },
+    {
+      "id": "seaside_goldenrod",
+      "kind": "plant",
+      "name": "Seaside Goldenrod",
+      "spec": "plant/specs/seaside_goldenrod.json",
+      "glb": "assets/seaside_goldenrod.glb",
+      "js": "assets/seaside_goldenrod-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "svg": "lavender",
+      "golden": false,
+      "below_bar": true,
+      "added": "2026-11-24",
+      "plot": "journaling",
+      "gen": 0,
+      "habit": "Journaling"
     }
   ]
 }
