@@ -1,0 +1,79 @@
+{
+  "kind": "plant",
+  "id": "shaving_brush_alga",
+  "name": "Neptune's Shaving Brush",
+  "lore": "A stubby green brush for the lagoon's chin.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "stem_bloom",
+  "reference": "Penicillus capitatus: one short stout pale-green stalk topped by a dense round brush of fine upright green filaments, like a shaving brush; young plants a bare stalk with a few hair tufts; fall: tips frosted pale with lime crust",
+  "plot": "drumming",
+  "gen": 0,
+  "habit": "Drumming",
+  "svg": "fern",
+  "size": {
+    "height_m": 0.12
+  },
+  "shape": {
+    "stage_heights": [
+      0.07,
+      0.3,
+      0.6,
+      0.85,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.06,
+      "lean": 0.03
+    },
+    "leaf": {
+      "count": 2,
+      "whorl": 5,
+      "length_ratio": 0.1,
+      "width_ratio": 0.12,
+      "pitch_deg": 55,
+      "low": 0.3,
+      "high": 0.6
+    },
+    "head": {
+      "petals": 24,
+      "radius_ratio": 0.2,
+      "petal_width_ratio": 0.22,
+      "cup_deg": 70,
+      "disc_ratio": 0.3,
+      "bud_ratio": 0.5,
+      "bud_stretch": 1.3
+    },
+    "seed_ratio": 0.045
+  },
+  "palette": {
+    "main": [
+      "#7fae3a",
+      "#5f9a36"
+    ],
+    "accent": "#a9d44a",
+    "disc": "#d8c48a",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.5,
+    "coat": 0.1
+  },
+  "motion": {
+    "sway": {
+      "frames": 104,
+      "cycles": 2,
+      "amp_deg": 4
+    },
+    "tend": {
+      "frames": 40,
+      "lift_deg": 7,
+      "stretch": 0.14,
+      "open": 0.25
+    }
+  },
+  "budget": {
+    "tris": 4500,
+    "texture": 1024
+  }
+}

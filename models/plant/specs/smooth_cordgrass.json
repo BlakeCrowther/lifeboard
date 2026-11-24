@@ -1,0 +1,79 @@
+{
+  "kind": "plant",
+  "id": "smooth_cordgrass",
+  "name": "Smooth Cordgrass",
+  "lore": "Golden seed spikes that ride every swell.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "stem_bloom",
+  "reference": "Spartina alterniflora: tall clump-stem with long ribbon-thin arching green blades; fall: seed head = slender upright golden-tan spike of pressed spikelets; blade tips turning russet-gold",
+  "plot": "surfing",
+  "gen": 0,
+  "habit": "Surfing",
+  "svg": "lavender",
+  "size": {
+    "height_m": 0.2
+  },
+  "shape": {
+    "stage_heights": [
+      0.06,
+      0.32,
+      0.62,
+      0.86,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.035,
+      "lean": 0.09
+    },
+    "leaf": {
+      "count": 5,
+      "whorl": 1,
+      "length_ratio": 0.4,
+      "width_ratio": 0.07,
+      "pitch_deg": 28,
+      "low": 0.08,
+      "high": 0.55
+    },
+    "head": {
+      "petals": 10,
+      "radius_ratio": 0.1,
+      "petal_width_ratio": 0.4,
+      "cup_deg": 82,
+      "disc_ratio": 0.3,
+      "bud_ratio": 0.5,
+      "bud_stretch": 2.6
+    },
+    "seed_ratio": 0.03
+  },
+  "palette": {
+    "main": [
+      "#6a9a3a",
+      "#4f8a36"
+    ],
+    "accent": "#e0a84a",
+    "disc": "#c9893a",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.5,
+    "coat": 0.05
+  },
+  "motion": {
+    "sway": {
+      "frames": 128,
+      "cycles": 2,
+      "amp_deg": 7
+    },
+    "tend": {
+      "frames": 52,
+      "lift_deg": 10,
+      "stretch": 0.12,
+      "open": 0.12
+    }
+  },
+  "budget": {
+    "tris": 4500,
+    "texture": 1024
+  }
+}

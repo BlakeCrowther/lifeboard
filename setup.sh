@@ -50,8 +50,9 @@ install_blender() {
              log "add the Blender folder (C:\\Program Files\\Blender Foundation\\Blender $BLENDER_SERIES) to PATH, then reopen the shell" ;;
     linux)
       [[ "$(uname -m)" == x86_64 ]] || die "Blender has no official Linux build for $(uname -m); install >= $BLENDER_SERIES by hand"
-      pkg_install curl xz-utils libxi6 libxkbcommon0 libsm6 libxrender1 libxfixes3 libgl1 2>/dev/null \
-        || pkg_install curl xz libXi libxkbcommon libSM libXrender libXfixes mesa-libGL
+      # libEGL + Mesa drivers: Blender 5 renders headless (Eevee QA renders) through EGL; libGL alone exports but can't render
+      pkg_install curl xz-utils libxi6 libxkbcommon0 libsm6 libxrender1 libxfixes3 libgl1 libegl1 libegl-mesa0 libgl1-mesa-dri 2>/dev/null \
+        || pkg_install curl xz libXi libxkbcommon libSM libXrender libXfixes mesa-libGL mesa-libEGL mesa-dri-drivers
       $SUDO mkdir -p /opt/blender
       curl -fsSL "https://download.blender.org/release/Blender$BLENDER_SERIES/blender-$BLENDER_VERSION-linux-x64.tar.xz" \
         | $SUDO tar -xJ -C /opt/blender --strip-components=1
@@ -153,6 +154,10 @@ $(sed 's/^/        /' <<<"$out")" "fix models/shared/tools/judge_verdict.py"; fi
 tmp=$(mktemp -d)
 blender -b --factory-startup --python-expr "import bpy;bpy.ops.mesh.primitive_cube_add();bpy.ops.export_scene.gltf(filepath='$tmp/t.glb',export_format='GLB')" >/dev/null 2>&1 \
   && [[ -s "$tmp/t.glb" ]] && pass "headless glb export" || fail "headless glb export" "run blender -b manually and read the error"
+# Eevee render: verify.sh's QA renders (turntables, card size, contact sheet) need a working GL/EGL stack, which an export
+# alone doesn't touch (a cloud container exported fine and then failed every render on a missing libEGL.so.1)
+blender -b --factory-startup --python-expr "import bpy;bpy.ops.mesh.primitive_cube_add();s=bpy.context.scene;s.render.engine='BLENDER_EEVEE';s.render.resolution_x=s.render.resolution_y=32;bpy.ops.object.camera_add(location=(4,-4,3),rotation=(1.1,0,0.785));s.camera=bpy.context.object;s.render.filepath='$tmp/r.png';bpy.ops.render.render(write_still=True)" >/dev/null 2>&1 \
+  && [[ -s "$tmp/r.png" ]] && pass "headless Eevee render" || fail "headless Eevee render" "QA renders will be missing; on Linux install libegl1 libegl-mesa0 libgl1-mesa-dri (re-run ./setup.sh)"
 rm -rf "$tmp"
 
 echo "$ok ok, $bad failing"; [[ $bad -eq 0 ]]

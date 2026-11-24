@@ -1,0 +1,36 @@
+{
+  "kind": "creature",
+  "id": "ragged_sea_hare",
+  "name": "Ragged Sea Hare",
+  "lore": "A shaggy lump of lagoon lawn that grazes the lawn.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "ragged_sea_hare",
+  "based_on": "soft_glider",
+  "locomotion": "crawl",
+  "reference": "Bursatella leachii: plump, soft, hunched sea slug covered in shaggy branched papillae like a tuft of seagrass, olive-green mottled with sand-tan, small orange-rimmed eyespots, two rolled ear-like rhinophores and two flat oral tentacles at the front",
+  "notes": {
+    "path": "novel (ragged_sea_hare, own generator based on soft_glider, first slug in this biome): candidates bucktooth parrotfish (struck: failed beak), dugong (struck: torpedo swimmer, streamlined_swimmer used), green sea turtle (struck: flippers + shell, needs a walker rig, too big for one 30-min run), queen conch (struck: spiral shell breaks bilateral contract), ragged sea hare (kept: a crawling, shaggy grazer, nothing like the pipefish stick)",
+    "traits": ["branched shaggy papillae (side twig on every papilla)", "rolled ear-like rhinophores (flared tip)", "orange-rimmed eyespots over olive mottling", "plump hunched body"],
+    "rest": "sea hares lie still on the sand between grazing bouts"
+  },
+  "size": {"length_m": 0.1, "height_ratio": 0.42, "width_ratio": 0.4},
+  "shape": {"profile": [[0, 0.0], [0.04, 0.45], [0.14, 0.68], [0.3, 0.92], [0.5, 1.0], [0.7, 0.9], [0.86, 0.6], [0.96, 0.25], [1.0, 0.08]]},
+  "palette": {"main": ["#6f8a3e", "#a6a35a", "#d6ad55"], "accent": "#ff9f43", "lip": "#3a4a22", "oral": "#7f9447"},
+  "pattern": {"type": "ocelli", "spots": 26, "spot_ratio": 0.045, "mottle": 0.5},
+  "parts": {
+    "cerata": {"rows": 6, "per_side": 2, "length_ratio": 0.12, "radius_ratio": 0.024, "u0": 0.22, "u1": 0.82, "branch": 0.55},
+    "rhinophores": {"length_ratio": 0.17, "radius_ratio": 0.022, "flare": 1.7},
+    "oral_tentacles": {"length_ratio": 0.13, "radius_ratio": 0.024}
+  },
+  "eye": {"ratio": 0.1},
+  "material": {"roughness": 0.5, "coat": 0.2},
+  "motion": {
+    "idle": {"frames": 120, "cycles": 2, "amp_deg": 7, "chain_lag_frames": 6, "sway_deg": 14, "personality": "slow grazing drift: the hunched body leans side to side with the current, shaggy papillae trailing like seagrass, rhinophores twitching to taste the water"},
+    "feed": {"frames": 72, "technique": "rears its head back, then lunges down onto the seagrass and rasps three times with the radula, oral tentacles spreading, papillae flaring, slow settle back", "reach_ratio": 0.16},
+    "sulk": {"frames": 132, "cycles": 1, "energy": 0.3, "droop_deg": 40, "frown": 0.9, "technique": "a deflated lump: head sunk flat to the sand, rhinophores folded back, papillae flattened, barely breathing, mouth corners down"}
+  },
+  "ecosystem": {"depth": "low", "anchor": "kelp", "shelter": "kelp", "schooling": false},
+  "rest": {"on": "sand", "pose": "lie", "share": 0.45, "bout_s": [14, 30], "why": "Sea hares sit motionless on the sand among seagrass bases between slow grazing bouts."},
+  "budget": {"tris": 7000, "texture": 1024}
+}

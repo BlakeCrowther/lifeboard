@@ -1,0 +1,79 @@
+{
+  "kind": "plant",
+  "id": "mermaids_fan",
+  "name": "Mermaid's Fan",
+  "lore": "A green paper fan, half-buried in sand.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "stem_bloom",
+  "reference": "Udotea flabellum: short pale stalk from a sand anchor holding one broad, upright, ribbed green fan blade with faint concentric bands; young: a small club; fall: fan edge pale-crusted with lime",
+  "plot": "meditation",
+  "gen": 0,
+  "habit": "Meditation",
+  "svg": "tulip",
+  "size": {
+    "height_m": 0.13
+  },
+  "shape": {
+    "stage_heights": [
+      0.07,
+      0.3,
+      0.6,
+      0.85,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.05,
+      "lean": 0.03
+    },
+    "leaf": {
+      "count": 1,
+      "whorl": 3,
+      "length_ratio": 0.08,
+      "width_ratio": 0.3,
+      "pitch_deg": 50,
+      "low": 0.2,
+      "high": 0.3
+    },
+    "head": {
+      "petals": 7,
+      "radius_ratio": 0.3,
+      "petal_width_ratio": 0.95,
+      "cup_deg": 78,
+      "disc_ratio": 0.1,
+      "bud_ratio": 0.3,
+      "bud_stretch": 2.2
+    },
+    "seed_ratio": 0.04
+  },
+  "palette": {
+    "main": [
+      "#8bb24a",
+      "#5f9a36"
+    ],
+    "accent": "#6fb84a",
+    "disc": "#d8c48a",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.45,
+    "coat": 0.15
+  },
+  "motion": {
+    "sway": {
+      "frames": 120,
+      "cycles": 2,
+      "amp_deg": 4
+    },
+    "tend": {
+      "frames": 48,
+      "lift_deg": 6,
+      "stretch": 0.1,
+      "open": 0.15
+    }
+  },
+  "budget": {
+    "tris": 4500,
+    "texture": 1024
+  }
+}

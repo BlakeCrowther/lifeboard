@@ -1,0 +1,79 @@
+{
+  "kind": "plant",
+  "id": "sea_oxeye",
+  "name": "Sea Oxeye",
+  "lore": "Sunny little daisy that loves salty feet.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "stem_bloom",
+  "reference": "Borrichia frutescens: stout stem with thick, short grey-green leaves in pairs; bloom = golden-yellow daisy of ~14 broad rays around a big brown-orange domed disc; fall: rays sun-bleached at the tips",
+  "plot": "spanish-speaking",
+  "gen": 0,
+  "habit": "Spanish speaking",
+  "svg": "sunflower",
+  "size": {
+    "height_m": 0.15
+  },
+  "shape": {
+    "stage_heights": [
+      0.06,
+      0.3,
+      0.6,
+      0.85,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.045,
+      "lean": 0.05
+    },
+    "leaf": {
+      "count": 3,
+      "whorl": 2,
+      "length_ratio": 0.16,
+      "width_ratio": 0.32,
+      "pitch_deg": 45,
+      "low": 0.2,
+      "high": 0.6
+    },
+    "head": {
+      "petals": 14,
+      "radius_ratio": 0.19,
+      "petal_width_ratio": 0.42,
+      "cup_deg": 8,
+      "disc_ratio": 0.38,
+      "bud_ratio": 0.45,
+      "bud_stretch": 1.1
+    },
+    "seed_ratio": 0.035
+  },
+  "palette": {
+    "main": [
+      "#5d8a4a",
+      "#749a4e"
+    ],
+    "accent": "#ffc23a",
+    "disc": "#b5651d",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.5,
+    "coat": 0.05
+  },
+  "motion": {
+    "sway": {
+      "frames": 112,
+      "cycles": 2,
+      "amp_deg": 5
+    },
+    "tend": {
+      "frames": 36,
+      "lift_deg": 8,
+      "stretch": 0.1,
+      "open": 0.18
+    }
+  },
+  "budget": {
+    "tris": 4500,
+    "texture": 1024
+  }
+}

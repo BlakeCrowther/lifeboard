@@ -1,0 +1,79 @@
+{
+  "kind": "plant",
+  "id": "saltmarsh_aster",
+  "name": "Saltmarsh Aster",
+  "lore": "Fall's last stars, blooming at the tide line.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "stem_bloom",
+  "reference": "Symphyotrichum tenuifolium: slender green stem with a few long ribbon-thin leaves; bloom = small aster with ~20 thin pale-lilac rays around a warm orange-yellow disc; fall bloomer, leaf tips russet",
+  "plot": "dating-outreach",
+  "gen": 0,
+  "habit": "Dating outreach",
+  "svg": "daisy",
+  "size": {
+    "height_m": 0.16
+  },
+  "shape": {
+    "stage_heights": [
+      0.06,
+      0.3,
+      0.6,
+      0.85,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.035,
+      "lean": 0.07
+    },
+    "leaf": {
+      "count": 4,
+      "whorl": 1,
+      "length_ratio": 0.28,
+      "width_ratio": 0.1,
+      "pitch_deg": 35,
+      "low": 0.15,
+      "high": 0.6
+    },
+    "head": {
+      "petals": 20,
+      "radius_ratio": 0.16,
+      "petal_width_ratio": 0.2,
+      "cup_deg": 12,
+      "disc_ratio": 0.3,
+      "bud_ratio": 0.4,
+      "bud_stretch": 1.3
+    },
+    "seed_ratio": 0.03
+  },
+  "palette": {
+    "main": [
+      "#4f8a3a",
+      "#6aa040"
+    ],
+    "accent": "#d9c2f0",
+    "disc": "#ff9f43",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.45,
+    "coat": 0.1
+  },
+  "motion": {
+    "sway": {
+      "frames": 88,
+      "cycles": 2,
+      "amp_deg": 6
+    },
+    "tend": {
+      "frames": 44,
+      "lift_deg": 9,
+      "stretch": 0.12,
+      "open": 0.2
+    }
+  },
+  "budget": {
+    "tris": 4500,
+    "texture": 1024
+  }
+}
