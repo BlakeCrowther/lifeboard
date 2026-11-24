@@ -128,8 +128,8 @@ find board -> hydrate (model files, migrate) -> ledger -> brief -> build -> anim
 
 | Step | Change |
 |---|---|
-| 1 | Prove access from a cloud session: read `checks/profile` and the live model files, then (on a test artifact) write a record and publish one file. Cover a scheduled run as well as an interactive one (cloud-pipeline.md rows 14 and 17). Everything below depends on this. |
-| 2 | Read the owner's live roster and diff it against the repo's. Record models that exist only in the store; decide which belong in the starter set. |
+| 1 | Prove access from a cloud session: read `checks/profile` and the live model files, then (on a test artifact) write a record and publish one file. Cover a scheduled run as well as an interactive one (cloud-pipeline.md rows 14 and 17). Everything below depends on this. **Status 2026-11-24:** interactive reads and publishing work (cloud-pipeline.md row 14). Files a publish leaves out are kept: the live board still holds `clownfish-glb.js` and its example spec, which no current publish sends. Open: the scheduled run. |
+| 2 | Read the owner's live roster and diff it against the repo's. Record models that exist only in the store; decide which belong in the starter set. **Status 2026-11-24:** live `roster.json` and `biomes.json` match `main` (14 models). No live-only models. Stale on live: `models/assets/clownfish-glb.js` and `models/creature/specs/examples/clownfish.json` (not in the roster); remove them in the first model-only publish. |
 | 3 | Move the starter set to `models/starter/`; setup publishes it as the board's model files. |
 | 4 | `tools/live-diff.ts`: compare page files only; model files are reported, never fail. |
 | 5 | `tools/board-hydrate.ts` (model files plus `schemaVersion` migration). Test against a fixture folder. Add `schemaVersion` to `roster.json` and `biomes.json`. |
