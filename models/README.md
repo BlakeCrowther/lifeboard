@@ -33,7 +33,7 @@ shared:   lifeboard-setup · model-build · model-verify · model-ship
 creature: weekly-visitor (orchestrator) → creature-brief → model-build → creature-animate → model-verify → model-ship
 plant:    season-seeds (orchestrator) → plant-brief → model-build → plant-grow → model-verify → model-ship
 ```
-Each step is its own skill, so steps can be re-run alone (e.g. re-animate without re-modeling).
+Each step is its own skill, so steps can be re-run alone (e.g. re-animate without re-modeling). season-seeds runs one subagent per plant in parallel; every Blender job holds a build slot (`shared/tools/slots.py`, `LB_BUILD_SLOTS`), and time queued for one is credited back to the run ledger.
 
 ## Gates
 
@@ -109,7 +109,8 @@ Doing a lesson drops food into the Ecosystem. Every creature within range plays 
 ## Failure policy
 - Each gate failure returns machine-readable reasons; the failing step retries with them (max 2 retries, 3 for novel archetypes).
 - Still failing → fall back to a safe-path variant (proven archetype, new params/palette) and re-verify.
-- Still failing → no visitor this week; work is moved to `out/quarantine/<id>/` (dry runs: `out/dryrun/quarantine/<id>/`) with the report, and the spec to `<kind>/specs/quarantined/`. Never ship unverified.
+- Budget spent and still no judge-panel PASS → ship the best judged attempt anyway, marked below bar (`ledger.py best <run> <id> --below-bar`); every automated gate must still pass. A week is never left empty-handed over looks.
+- No build passed the automated gates → no visitor this week; work is moved to `out/quarantine/<id>/` (dry runs: `out/dryrun/quarantine/<id>/`) with the report, and the spec to `<kind>/specs/quarantined/`. Never ship a model that fails an automated gate.
 - Every run writes `out/<id>/report.json` and a contact sheet, so a human can audit later without being needed now.
 
 ## Where it runs

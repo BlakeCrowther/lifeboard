@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # The code checks (spec, shape, motion, export, and for creatures page-test) + renders for the judge-panel. The judge-panel is run by the model-verify skill.
 # Usage: models/shared/tools/verify.sh <id> [path/to/<id>.glb] [path/to/spec.json]
+#   VERIFY_RUN=<run_id>: queued time for a build slot is credited to that run. VERIFY_CODE_ONLY=1 stops after the code checks (no judge renders, no contact sheet): what preflight.sh runs.
 #   Any kind (spec.kind, default creature): shared gates + the kind's models/<kind>/qa.py.
 #   The glb must sit directly in models/out/<id>/, its preview/ (preflight.sh) or models/out/dryrun/<id>/ (any file name; a relative path is tried from
 #   the cwd, then from models/). Anything else exits 2, so QA output always lands in that folder's qa/ and never beside a
@@ -12,6 +13,8 @@
 #   row: the garden package draws them normalised per plot, not at the Ecosystem's metres-to-pixels scale.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd -P)"   # models/
+# one Blender job per build slot (slots.py); VERIFY_RUN=<run_id> credits time queued for a slot back to that run's ledger
+if [[ -z ${LB_SLOT_HELD:-} ]]; then exec python3 "$ROOT/shared/tools/slots.py" ${VERIFY_RUN:+--run "$VERIFY_RUN"} -- "$0" "$@"; fi
 ID=${1:-}; [[ -n $ID ]] || { echo "usage: verify.sh <id> [path/to/<id>.glb] [path/to/spec.json]"; exit 2; }
 GLB=${2:-$ROOT/out/$ID/$ID.glb}; SPEC=${3:-}
 [[ -f $GLB ]] || { [[ -f $ROOT/$GLB ]] && GLB=$ROOT/$GLB; }
@@ -58,6 +61,8 @@ if [[ $KIND == creature ]]; then   # plants are checked in the garden plots and 
   PT_GLB=$OPT; [[ -f $PT_GLB ]] || PT_GLB=$GLB
   node "$ROOT/shared/tools/page-test.ts" "$ID" "$PT_GLB" "$SPEC" "$OUT" || { rc=1; [[ -s "$OUT/page-test.json" ]] || echo "  FAIL page-test did not run (browser missing? run pnpm bootstrap)"; }
 fi
+if [[ -n ${VERIFY_CODE_ONLY:-} ]]; then   # preflight.sh: the code gates only; no judge sees a trial build, so don't spend minutes rendering sheets for it
+  echo "== automated gates: $([[ $rc -eq 0 ]] && echo PASS || echo FAIL)  (code gates only: renders skipped, VERIFY_CODE_ONLY)"; exit $rc; fi
 echo "== judge-panel renders"
 CLIPS=$(python3 -c "import json;s=json.load(open('$SPEC'));k=s.get('kind','creature');print({'plant':'sway_4,tend','scenery':'sway' if (s.get('motion') or {}).get('sway') else ''}.get(k,'idle,feed,sulk'))")
 PITCH=$(python3 -c "import json;print(30 if json.load(open('$SPEC')).get('kind')=='scenery' else 8)")   # scenery: see the top face (sand dollar petals)

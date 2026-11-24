@@ -1,0 +1,78 @@
+{
+  "kind": "plant",
+  "id": "bead_whorl_alga",
+  "name": "Bead Whorl Alga",
+  "lore": "Rings of green hair on a stalk, like a bottle brush.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "stem_bloom",
+  "reference": "Batophora oerstedii: slender pale stalk ringed by evenly spaced whorls of fine branched green hairs, getting denser to the top; bloom = round fuzzy tip with orange-tan bead-like gametangia; fall: hairs tipped pale",
+  "plot": "reading",
+  "gen": 0,
+  "habit": "Reading",
+  "size": {
+    "height_m": 0.12
+  },
+  "shape": {
+    "stage_heights": [
+      0.07,
+      0.3,
+      0.6,
+      0.85,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.04,
+      "lean": 0.04
+    },
+    "leaf": {
+      "count": 5,
+      "whorl": 7,
+      "length_ratio": 0.1,
+      "width_ratio": 0.1,
+      "pitch_deg": 55,
+      "low": 0.2,
+      "high": 0.8
+    },
+    "head": {
+      "petals": 18,
+      "radius_ratio": 0.12,
+      "petal_width_ratio": 0.3,
+      "cup_deg": 50,
+      "disc_ratio": 0.5,
+      "bud_ratio": 0.5,
+      "bud_stretch": 1.2
+    },
+    "seed_ratio": 0.035
+  },
+  "palette": {
+    "main": [
+      "#6aa040",
+      "#4f9a46"
+    ],
+    "accent": "#7fbf4a",
+    "disc": "#e0a84a",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.45,
+    "coat": 0.15
+  },
+  "motion": {
+    "sway": {
+      "frames": 100,
+      "cycles": 2,
+      "amp_deg": 5
+    },
+    "tend": {
+      "frames": 38,
+      "lift_deg": 7,
+      "stretch": 0.12,
+      "open": 0.22
+    }
+  },
+  "budget": {
+    "tris": 3500,
+    "texture": 1024
+  }
+}

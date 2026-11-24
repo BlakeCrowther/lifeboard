@@ -8,13 +8,16 @@ Usage: python3 models/shared/tools/ledger.py start  <run_id> [--rounds 4] [--min
        python3 models/shared/tools/ledger.py notes  <run_id> [<id>]   # every judged build's medians + every fix, by the criterion it raises
        python3 models/shared/tools/ledger.py plan   <run_id> <id> --fixes artifacts[,sway_readable] [--skip "reads_as: why"] "<what the next build changes>"
        python3 models/shared/tools/ledger.py best   <run_id> <id>     # the passing build to ship (highest mean, ties: newer) + its snapshot
+       python3 models/shared/tools/ledger.py best   <run_id> <id> --below-bar   # budget spent, nothing passed: the best judged build (never empty-handed)
        python3 models/shared/tools/ledger.py status <run_id>
+       python3 models/shared/tools/ledger.py wait   <run_id> <seconds>   # time queued for a build slot (slots.py records it)
 Run log: a judge recorded with --reply is filed under the latest build; judges tag each fix with the criterion it raises
 (or "placement" for runtime placement, which plans ignore). After a build is judged, the next build is refused (exit 6,
 PLAN NEEDED) until `plan` names the criteria it fixes; `plan` refuses unless one of the build's lowest-median criteria is
 fixed or skipped with a reason. A plan after a passing build (judge_verdict.py's verdict under the kind's pass_rule) is a polish round (max 2;
 retries after a failed build don't count) and first snapshots out/<id>/ to out/runs/<run_id>/build<N>/.
-Budget: judge rounds (a round = a counted build that judges saw), wall-clock minutes, at most rounds+2 counted builds, and
+Budget: judge rounds (a round = a counted build that judges saw), wall-clock minutes less time queued for a build slot
+(slots.py), at most rounds+2 counted builds, and
 at most 5 uncounted preflight trial builds between counted ones. Tokens go to judge rounds, so rounds are the limit.
 State: models/out/runs/<run_id>.json. Exit codes: 0 ok, 2 usage / unknown or duplicate run, 4 budget, 5 reused judge, 6 plan needed / refused."""
 
@@ -71,7 +74,7 @@ def _rounds(st: dict[str, Any]) -> int:
 
 
 def _summary(st: dict[str, Any]) -> dict[str, Any]:
-    mins = (_now() - st["started_at"]) / 60
+    mins = (_now() - st["started_at"] - st.get("waited_s", 0.0)) / 60
     if "rounds_max" not in st:  # runs started before rounds existed: builds were the limit
         return {
             "run_id": st["run_id"],
@@ -91,6 +94,7 @@ def _summary(st: dict[str, Any]) -> dict[str, Any]:
         "builds_cap": rmax + EXTRA_BUILDS,
         "minutes_used": round(mins, 1),
         "minutes_max": st["minutes_max"],
+        "minutes_queued": round(st.get("waited_s", 0.0) / 60, 1),
         "exhausted": used >= rmax or len(st["builds"]) >= rmax + EXTRA_BUILDS or mins >= st["minutes_max"],
         "judges": len(st["judges"]),
     }
@@ -113,6 +117,16 @@ def start(run_id: str, rounds: int = 4, minutes: int = 30) -> tuple[bool, str]:
         }
     )
     return True, f"run {run_id} started: {rounds} judge rounds, {minutes} minutes"
+
+
+def add_wait(run_id: str, seconds: float) -> tuple[bool, str]:
+    """Credit time spent queued for a build slot: it doesn't count toward the run's minutes."""
+    st = load_run(run_id)
+    if st is None:
+        return False, f"unknown run {run_id}"
+    st["waited_s"] = st.get("waited_s", 0.0) + max(0.0, float(seconds))
+    _save(st)
+    return True, f"queued {seconds:.0f} s for a build slot ({st['waited_s'] / 60:.1f} min in all, not counted)"
 
 
 def record_build(run_id: str, creature_id: str) -> tuple[bool, str]:
@@ -350,22 +364,31 @@ def plan(
     )
 
 
-def best(run_id: str, cid: str) -> tuple[bool, str]:
+def best(run_id: str, cid: str, below_bar: bool = False) -> tuple[bool, str]:
+    """The build to ship: the highest-mean passing build. below_bar: only once the run's budget is spent and no build
+    passed, the highest-mean judged build instead, so the week still gets its model (shipped marked below bar)."""
     st = load_run(run_id)
     if st is None:
         return False, f"unknown run {run_id}"
-    rows = []
+    rows, judged = [], []
     for b, js in _graded(st, cid).items():
         _, mean, passed = _judge(js)
+        judged.append((mean, b))
         if passed:
             rows.append((mean, b))
+    if below_bar:
+        if rows:
+            return False, "a build passed: ship it with plain `best`, not --below-bar"
+        if not _summary(st)["exhausted"]:
+            return False, "budget not spent: keep retrying before shipping below the bar"
+        rows = [r for r in judged if r[0] is not None]
     if not rows:
-        return False, "no passing build"
+        return False, "no judged build" if below_bar else "no passing build"
     mean, b = max(rows)
     snap = os.path.join(RUNS, run_id, f"build{b}")
     latest = st["builds"][-1]["n"] if st["builds"] else 0
     where = f"out/{cid}/ (latest build)" if b == latest else (snap if os.path.isdir(snap) else "MISSING SNAPSHOT")
-    return True, json.dumps({"build": b, "mean": mean, "files": where})
+    return True, json.dumps({"build": b, "mean": mean, "files": where, **({"below_bar": True} if below_bar else {})})
 
 
 def main(argv: list[str]) -> int:
@@ -414,8 +437,8 @@ def main(argv: list[str]) -> int:
         ok, msg = plan(rest[0], rest[1], fx, sk, rest[2])
         print(msg)
         return 0 if ok else 6
-    if cmd == "best" and len(rest) == 2:
-        ok, msg = best(*rest)
+    if cmd == "best" and len(rest) in (2, 3) and rest[2:] in ([], ["--below-bar"]):
+        ok, msg = best(rest[0], rest[1], below_bar=rest[2:] == ["--below-bar"])
         print(msg)
         return 0 if ok else 2
     if cmd == "judge":
@@ -434,6 +457,10 @@ def main(argv: list[str]) -> int:
         ok, msg = record_judge(*rest, reply=rep)
         print(msg)
         return 0 if ok else (2 if msg.startswith("unknown") else 5)
+    if cmd == "wait" and len(rest) == 2:
+        ok, msg = add_wait(rest[0], float(rest[1]))
+        print(msg)
+        return 0 if ok else 2
     if cmd == "status" and len(rest) == 1:
         st = load_run(rest[0])
         if st is None:

@@ -5,11 +5,10 @@
    Thirsty and withered reuse the species' own shape, drooped and dried.
    Shapes use `url(#P-…)` for shared gradients; renderPlant rewrites that to the SVG's own id prefix. */
 import { PLANT_STAGES, escapeHtml, lookLabel, nextSvgIdPrefix } from './labels.ts';
-import { rosterPlants } from './roster.ts';
 
 /** stage: seed|sprout|leafy|bud|bloom|wilt|dead. base: the stage drawn under wilt/dead. */
 export interface PlantLook {
-  /** species id: an SVG species or a roster plant (drawn as its `svg` species) */
+  /** species id: an SVG species (any other id draws as a daisy) */
   kind?: string | undefined;
   rarity?: string | undefined;
   mutated?: boolean | undefined;
@@ -222,8 +221,7 @@ const EXOTIC_SPARKLES =
 /** The plant's markup (no bed) for an SVG whose gradient ids start with idPrefix. */
 export function renderPlant(stage: string | null | undefined, look: PlantLook | null | undefined, idPrefix: string): string {
   const plantLook = look ?? {};
-  const rosterPlant = plantLook.kind === undefined ? undefined : rosterPlants[plantLook.kind];
-  const species = plantLook.kind !== undefined && plantLook.kind in SPECIES_DRAWINGS ? plantLook.kind : rosterPlant?.svg !== undefined && rosterPlant.svg in SPECIES_DRAWINGS ? rosterPlant.svg : 'daisy';
+  const species = plantLook.kind !== undefined && plantLook.kind in SPECIES_DRAWINGS ? plantLook.kind : 'daisy';
   const rarity = plantLook.rarity !== undefined && RARITY_ACCENT[plantLook.rarity] ? plantLook.rarity : 'common';
   const mutated = !!plantLook.mutated;
   const accentGradient = rarity === 'common' ? SPECIES_ACCENT[species] : RARITY_ACCENT[rarity];
@@ -247,6 +245,13 @@ export function renderPlant(stage: string | null | undefined, look: PlantLook | 
 
 /** A plant in its raised bed as a standalone SVG, `width` px wide. */
 export function specimen(stage: string, look: PlantLook, width = 72, label = ''): string {
+  return bedWith((idPrefix) => `<g class="gpl">${renderPlant(stage, look, idPrefix)}</g>`, width, label || lookLabel(stage) + ' plant');
+}
+
+/** The raised bed alone, `width` px wide, for a 3D plant drawn over it. */
+export const emptyBed = (width: number, label: string): string => bedWith(() => '', width, label);
+
+function bedWith(plant: (idPrefix: string) => string, width: number, label: string): string {
   const idPrefix = nextSvgIdPrefix('gp');
-  return `<svg class="gplot" viewBox="0 -26 80 92" width="${width}" height="${Math.round((width * 92) / 80)}" role="img" aria-label="${escapeHtml(label || lookLabel(stage) + ' plant')}">${DEFS(idPrefix)}${BED(idPrefix)}<g class="gpl">${renderPlant(stage, look, idPrefix)}</g><path d="M40 7 L3 26 L40 45 L77 26z" fill="url(#${idPrefix}gl)" opacity=".5"/></svg>`;
+  return `<svg class="gplot" viewBox="0 -26 80 92" width="${width}" height="${Math.round((width * 92) / 80)}" role="img" aria-label="${escapeHtml(label)}">${DEFS(idPrefix)}${BED(idPrefix)}${plant(idPrefix)}<path d="M40 7 L3 26 L40 45 L77 26z" fill="url(#${idPrefix}gl)" opacity=".5"/></svg>`;
 }

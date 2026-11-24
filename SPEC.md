@@ -62,7 +62,7 @@ The random rolls are seeded from the habit key, so every reload agrees. There ar
 
 **3D plants, one per plant.** The weekly job (`season-seeds`) makes a model for each plant that needs one: `checks/game_status.garden.needs` lists the plant growing now in a plot that has no model (a new habit), plus the next plant for each plot showing a bloom or withered plant (it goes in Monday). Each lists the plot (habit key and name), its `gen` (0 for the plot's first plant), the seed's rarity, and the biome. A roster plant (`models/roster.json`, `kind: "plant"`) with `plot` = habit key and `gen` is that plant's species. Rare seeds (rare, exotic) get a creative plant: something playful tied to the habit, like a tiny hat, a running shoe leaf or a book-page petal. No stock is modelled ahead.
 
-**3D plots.** A plot whose plant has a model shows it at the plot's stage (`stage_<n>`, `sway_<n>` idle, `tend` when a session is logged); thirsty and withered plots, and any plot before its model loads, use the plant's SVG fallback shape (roster `svg`). Rarity and mutation recolours show on the SVG shapes only.
+**3D plots.** A plot whose plant has a model shows it at the plot's stage (`stage_<n>`, `sway_<n>` idle, `tend` when a session is logged); thirsty and withered plots show the model at their last stage, dried and drooped. A plant with a model never shows an SVG shape; while the model loads the bed is empty. Pressed plants in the Collection use the model the same way. Rarity and mutation recolours show on the SVG shapes only.
 
 **Not built:** rarity/mutation looks on 3D plants beyond what the model itself has, grace token (revisit after seeing how often weeks get missed), Claude-written titles and notes for pressed plants.
 

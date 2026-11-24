@@ -16,7 +16,18 @@ import { fileURLToPath } from 'node:url';
 import type { Browser, Page } from 'playwright';
 
 interface Check { gate: string; check: string; pass: boolean; detail: string }
-interface Snap { state: string; loop: string | null; feeding: boolean; pos: number[]; box: number[][]; ground: number; quat: number[] }
+interface Snap { state: string; loop: string | null; feeding: boolean; pos: number[]; box: number[][]; ground: number; quat: number[]; site?: { p: number[]; n: number[] } | null }
+/* Ground clearance. Roaming: the box's lowest point over the sand under the centre. Resting on a site (settle, perched, leave):
+   the body is tilted to the site's slope, so a world box's bottom sits below the centre's sand on any slope even when the
+   belly is on the surface; there it is the centre's height above the site along its normal, which goes negative only
+   when the body sinks through the surface it rests on. */
+const clearance = (x: Snap): number => {
+  if ((x.state === 'settle' || x.state === 'perched' || x.state === 'leave') && x.site) {
+    const { p, n } = x.site;
+    return x.pos.reduce((sum, v, i) => sum + (v - (p[i] ?? 0)) * (n[i] ?? 0), 0);
+  }
+  return (x.box[0]?.[1] ?? 0) - x.ground;
+};
 interface Spec { biome?: number; rarity?: string; locomotion?: string; rest?: unknown }
 interface Roster { models: { id: string }[] }
 
@@ -66,7 +77,7 @@ async function open(w: number, h: number, errs: string[]): Promise<Page> {
   await p.waitForFunction(() => !!window.Ecosystem?.debug()?.creatures.length, null, { timeout: 60000 });
   return p;
 }
-const snap = (p: Page): Promise<Snap[]> => p.evaluate(() => (window.Ecosystem?.debug()?.creatures ?? []).map((c) => ({ state: c.state, loop: c.loop, feeding: c.feeding, pos: c.pos, box: c.box, ground: c.ground, quat: c.quat })));
+const snap = (p: Page): Promise<Snap[]> => p.evaluate(() => (window.Ecosystem?.debug()?.creatures ?? []).map((c) => ({ state: c.state, loop: c.loop, feeding: c.feeding, pos: c.pos, box: c.box, ground: c.ground, quat: c.quat, site: c.site })));
 const rafFps = (p: Page): Promise<number> => p.evaluate(() => new Promise<number>((res) => { let n = 0; const t = performance.now(); const f = () => { n++; if (performance.now() - t < 2000) requestAnimationFrame(f); else res(n / 2); }; requestAnimationFrame(f); }));
 
 let fps = 0;
@@ -92,7 +103,7 @@ try {
     const now = (Date.now() - t0) / 1000;
     if (!fed && now > feedAt) { fed = true; await p.evaluate(() => { window.Ecosystem?.feed(4); }); }
     const cs = await snap(p), c = cs[0];
-    for (const x of cs) { st.states.add(x.state); if (x.loop) st.loops.add(x.loop); if (x.feeding) st.feed = true; st.minClear = Math.min(st.minClear, (x.box[0]?.[1] ?? 0) - x.ground); }
+    for (const x of cs) { st.states.add(x.state); if (x.loop) st.loops.add(x.loop); if (x.feeding) st.feed = true; st.minClear = Math.min(st.minClear, clearance(x)); }
     if (st.feed && !cs.some((x) => x.feeding) && !cs.some((x) => x.state === 'seek' || x.state === 'eat')) st.back = true;
     if (last && c) {
       const prev = last, d = c.pos.map((v, i) => v - (prev[i] ?? 0)), sp = Math.hypot(...d);

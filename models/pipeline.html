@@ -125,7 +125,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
 <main>
   <h1>Model pipeline</h1>
   <p class="lede">How a 3D model goes from an idea to the Ecosystem, and what it must pass at each gate. Pick a kind; click any stage to jump to its details.</p>
-  <p class="meta">Last reviewed: 2026-11-22 (weekly run now starts with a live-drift check; no model stage changed) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
+  <p class="meta">Last reviewed: 2026-11-24 (plants run in parallel, one agent each, sharing capped build slots; queued time doesn't count against a run; never empty-handed: a spent budget ships the best attempt below the bar; creature bar recomputed from its golden, plant bar lowered; reports never name the new model; preflight runs the code gates without judge renders) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
 
   <div class="bar">
     <div class="seg" role="group" aria-label="Model kind" id="kinds"></div>
@@ -170,6 +170,13 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
   <div class="tablewrap"><table class="plain" id="budget"></table></div>
   <div class="callout">
     <h4>What counts as a round</h4>A judge round is one <b>build</b> that got judged. Polish rounds are rebuilds after a <b>pass</b>, to raise quality; the run keeps the best passing build (<code>ledger.py best</code>). Retries after a fail use the same loop but can't stop early.
+  </div>
+  <div class="callout">
+    <h4>Never empty-handed</h4>When the budget runs out and no build passed the judges, the run ships its best judged attempt anyway (<code>ledger.py best &lt;run&gt; &lt;id&gt; --below-bar</code>, which refuses while budget remains), marked below bar. The automated gates still have to pass: they keep out a model that won't load or behave. Only a run where no build passed them ends in quarantine. Reports call the model "this week's visitor" or "the &lt;habit&gt; plot's plant" and never name or describe it: the board is the reveal.
+  </div>
+
+  <div class="callout">
+    <h4>Parallel plants, shared build slots</h4><code>season-seeds</code> spawns one agent per plant, all at once; each owns its ledger and runs brief → build → grow → verify, then returns its roster entry. The orchestrator writes the roster, commits and publishes once. Blender jobs (<code>build.py</code>, <code>verify.sh</code>) each hold a build slot (<code>shared/tools/slots.py</code>; <code>LB_BUILD_SLOTS</code>, default half the cores), so eight plants don't crawl together. Time queued for a slot is credited back to the run (<code>minutes_queued</code> in <code>ledger.py status</code>), so a plant's minutes measure its own work.
   </div>
 
   <h2>5. Where it lives</h2>
@@ -217,7 +224,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
      "feed_readable"
     ],
     "floor": 2,
-    "bar": 3.03,
+    "bar": 2.7,
     "judges": 3
    },
    "judge_model": "sonnet",
@@ -290,7 +297,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
      "tend_readable"
     ],
     "floor": 3,
-    "bar": 3.56,
+    "bar": 3.25,
     "judges": 3
    },
    "judge_model": "sonnet",
@@ -432,7 +439,7 @@ const STAGES = {
                     scenery: "Capture in the Ecosystem (capture.html): placed among neighbours; sway-check measures the shader motion." },
             fail: "→ animate, or runtime (src/packages/ecosystem) for steering and placement" },
   ship:   { g: "ship", t: "Ship", s: "roster + publish", owner: "model-ship",
-            what: "Refuses without a passing report.json. Optimizes, wraps as base64 JS, adds to roster.json, commits, publishes the board.", fail: "" },
+            what: "Ships a passing report.json, or, once the budget is spent with no pass, the best judged attempt (ledger.py best --below-bar; every automated gate still passed), marked below_bar in the roster. Optimizes, wraps as base64 JS, adds to roster.json, commits, publishes the board.", fail: "" },
 };
 const GROUPS = [
   ["make", "Make", ["brief", "build", "animate"]],
@@ -477,6 +484,7 @@ const WEAK = [
   { id: "coin flip", t: "Verdict depends on which judges you draw", b: "Near the floor or bar, three judges split, and the same model passes or fails. Drift algae mat: 4 of 20 possible 3-judge panels pass. See presets above." },
   { id: "Q1", t: "Extra judges on one build are free", b: "Rounds count builds, not judges, and the verdict uses the latest panel. Spawning more judges until one panel passes isn't refused yet." },
   { id: "creature floor", t: "Creature floor lets a weak feed ship", b: "It was lowered because the golden itself scores low on artifacts and feed, so any creature as weak there passes." },
+  { id: "central 3s", t: "Sonnet judges cluster on 3", b: "Every creature panel so far, the golden included, lands near all-3 medians. A bar held above the golden's own mean failed every visitor (2026-w48); the bar is now the golden mean minus the margin, and a spent budget ships below the bar instead of nothing." },
   { id: "Q3", t: "Card size isn't measured", b: "The phone draws a pipefish about 5 px tall. Judges see it on the sheet; no code check fails it." },
   { id: "sway-check", t: "Sway check is more lenient than judges", b: "Eelgrass passes sway-check while all six judges call its sway too small at game distance." },
   { id: "categorical rule", t: "Planned fix: pass/fail questions", b: "Judges agree on what is wrong (6 of 6 on each top defect) but not on numbers. Plan: identity + traits + major defects instead of score bars." },
@@ -512,7 +520,8 @@ function renderFlow() {
   const b = D.budget;
   document.getElementById("loops").innerHTML =
     `<div class="loop fail"><b>Fail loop:</b> any gate fails → its fix notes go to the stage that owns them (each card's "On fail") → rebuild → re-check. Bounded per piece by ${b.judge_rounds} judged builds or ${b.minutes} minutes.</div>
-     <div class="loop"><b>Polish loop:</b> judge-panel passes → up to ${b.polish_rounds} more rounds on the lowest-scoring criteria → ship the best passing build.</div>`;
+     <div class="loop"><b>Polish loop:</b> judge-panel passes → up to ${b.polish_rounds} more rounds on the lowest-scoring criteria → ship the best passing build.</div>
+     <div class="loop fail"><b>Budget spent, no pass:</b> ship the best judged build below the bar (automated gates passed); quarantine only when no build passed the automated gates.</div>`;
 }
 
 function renderCards() {

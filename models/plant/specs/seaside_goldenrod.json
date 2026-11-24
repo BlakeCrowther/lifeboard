@@ -1,0 +1,78 @@
+{
+  "kind": "plant",
+  "id": "seaside_goldenrod",
+  "name": "Seaside Goldenrod",
+  "lore": "Autumn's gold torch on the lagoon's edge.",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "stem_bloom",
+  "reference": "Solidago sempervirens: stout upright stem with long fleshy strap leaves; fall bloom = dense club-shaped plume of tiny golden-yellow flowers at the top; lower leaves edged russet",
+  "plot": "journaling",
+  "gen": 0,
+  "habit": "Journaling",
+  "size": {
+    "height_m": 0.18
+  },
+  "shape": {
+    "stage_heights": [
+      0.06,
+      0.3,
+      0.6,
+      0.85,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.04,
+      "lean": 0.05
+    },
+    "leaf": {
+      "count": 5,
+      "whorl": 1,
+      "length_ratio": 0.25,
+      "width_ratio": 0.16,
+      "pitch_deg": 38,
+      "low": 0.1,
+      "high": 0.7
+    },
+    "head": {
+      "petals": 16,
+      "radius_ratio": 0.13,
+      "petal_width_ratio": 0.5,
+      "cup_deg": 72,
+      "disc_ratio": 0.45,
+      "bud_ratio": 0.5,
+      "bud_stretch": 2.0
+    },
+    "seed_ratio": 0.03
+  },
+  "palette": {
+    "main": [
+      "#4f8a3a",
+      "#5f9a3e"
+    ],
+    "accent": "#ffb52e",
+    "disc": "#ff9f43",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.5,
+    "coat": 0.05
+  },
+  "motion": {
+    "sway": {
+      "frames": 96,
+      "cycles": 3,
+      "amp_deg": 5
+    },
+    "tend": {
+      "frames": 56,
+      "lift_deg": 8,
+      "stretch": 0.1,
+      "open": 0.16
+    }
+  },
+  "budget": {
+    "tris": 4500,
+    "texture": 1024
+  }
+}

@@ -9,7 +9,7 @@ ID=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['id'])" "$SP
 BLENDER=${BLENDER:-blender}
 "$BLENDER" -b --factory-startup --python "$ROOT/shared/blender/build.py" -- "$SPEC" --preview "$@" 2>&1 | grep -E "^(BUILD|LEDGER)" ; rc=${PIPESTATUS[0]}
 [[ $rc -ne 0 ]] && { echo "PREFLIGHT build failed (exit $rc)"; exit $rc; }
-"$ROOT/shared/tools/verify.sh" "$ID" "$ROOT/out/$ID/preview/$ID.glb" "$SPEC" | grep -E "FAIL|automated gates"
+VERIFY_CODE_ONLY=1 "$ROOT/shared/tools/verify.sh" "$ID" "$ROOT/out/$ID/preview/$ID.glb" "$SPEC" | grep -E "FAIL|automated gates"
 # swaying scenery: the motion is measured in the real Ecosystem (shader sway can't be seen in Blender)
 if python3 -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(0 if d.get('kind')=='scenery' and (d.get('motion') or {}).get('sway') else 1)" "$SPEC"; then
   node "$ROOT/shared/tools/capture_ecosystem.ts" "$ID" --glb "$ROOT/out/$ID/preview/$ID.glb" --spec "$SPEC" | grep -E "sway-check|FAIL"
