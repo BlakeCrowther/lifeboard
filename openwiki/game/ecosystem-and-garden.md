@@ -5,7 +5,7 @@ description: How the three.js Ecosystem scene and the Garden and Collection view
 tags: [ecosystem, garden, three.js, rendering, lazy-loading, models]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T17:23:06.062Z
+    at: 2026-11-24T16:14:32.981Z
 sources:
   - id: openwiki-source-a5e85d559310f47547b34206
     resource: repo://src/capture-page.ts
