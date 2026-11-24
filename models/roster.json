@@ -65,6 +65,22 @@
       "pass_through": true,
       "golden": false,
       "added": "2026-11-20"
+    },
+    {
+      "id": "shaving_brush_alga",
+      "kind": "plant",
+      "name": "Neptune's Shaving Brush",
+      "spec": "plant/specs/shaving_brush_alga.json",
+      "glb": "assets/shaving_brush_alga.glb",
+      "js": "assets/shaving_brush_alga-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "svg": "fern",
+      "golden": false,
+      "added": "2026-11-24",
+      "plot": "drumming",
+      "gen": 0,
+      "habit": "Drumming"
     }
   ]
 }
