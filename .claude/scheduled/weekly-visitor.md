@@ -13,10 +13,10 @@ Run the weekly-visitor skill for lifeboard (repo root = working directory), incl
 Unattended: do not ask questions; decide, log, report.
 Start a run ledger first: python3 models/shared/tools/ledger.py start <YYYY>-w<WW> --rounds 4 --minutes 30
 (the ledger enforces the budget; every build uses build.py --run <run_id>; every judge is recorded).
-Ship only on a full PASS. Follow AGENTS.md and the model-ship skill for commit/publish:
+Ship on a full PASS; when the budget runs out without one, ship the best attempt below the bar (weekly-visitor fallback 2). Follow AGENTS.md and the model-ship skill for commit/publish:
 commit on branch visitor/<id>; do not merge or push to main; republish the existing lifeboard artifact URL only.
 End with the retro (AGENTS.md "Improve as you go"): fix what this run tripped on in the skill/gate that owns it, same commit.
-Final message: the weekly-visitor report (visitor or no-visitor reason, plants made, gates, ledger status, contact sheet path, retro fixes).
+Final message: the weekly-visitor report (visitor or no-visitor reason, plants made by plot, gates, ledger status, retro fixes). No spoilers: never name or describe a visitor or plant; the board reveals them.
 ```
 
 ## Register (later, by a human)

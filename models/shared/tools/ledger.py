@@ -8,6 +8,7 @@ Usage: python3 models/shared/tools/ledger.py start  <run_id> [--rounds 4] [--min
        python3 models/shared/tools/ledger.py notes  <run_id> [<id>]   # every judged build's medians + every fix, by the criterion it raises
        python3 models/shared/tools/ledger.py plan   <run_id> <id> --fixes artifacts[,sway_readable] [--skip "reads_as: why"] "<what the next build changes>"
        python3 models/shared/tools/ledger.py best   <run_id> <id>     # the passing build to ship (highest mean, ties: newer) + its snapshot
+       python3 models/shared/tools/ledger.py best   <run_id> <id> --below-bar   # budget spent, nothing passed: the best judged build (never empty-handed)
        python3 models/shared/tools/ledger.py status <run_id>
 Run log: a judge recorded with --reply is filed under the latest build; judges tag each fix with the criterion it raises
 (or "placement" for runtime placement, which plans ignore). After a build is judged, the next build is refused (exit 6,
@@ -350,22 +351,31 @@ def plan(
     )
 
 
-def best(run_id: str, cid: str) -> tuple[bool, str]:
+def best(run_id: str, cid: str, below_bar: bool = False) -> tuple[bool, str]:
+    """The build to ship: the highest-mean passing build. below_bar: only once the run's budget is spent and no build
+    passed, the highest-mean judged build instead, so the week still gets its model (shipped marked below bar)."""
     st = load_run(run_id)
     if st is None:
         return False, f"unknown run {run_id}"
-    rows = []
+    rows, judged = [], []
     for b, js in _graded(st, cid).items():
         _, mean, passed = _judge(js)
+        judged.append((mean, b))
         if passed:
             rows.append((mean, b))
+    if below_bar:
+        if rows:
+            return False, "a build passed: ship it with plain `best`, not --below-bar"
+        if not _summary(st)["exhausted"]:
+            return False, "budget not spent: keep retrying before shipping below the bar"
+        rows = [r for r in judged if r[0] is not None]
     if not rows:
-        return False, "no passing build"
+        return False, "no judged build" if below_bar else "no passing build"
     mean, b = max(rows)
     snap = os.path.join(RUNS, run_id, f"build{b}")
     latest = st["builds"][-1]["n"] if st["builds"] else 0
     where = f"out/{cid}/ (latest build)" if b == latest else (snap if os.path.isdir(snap) else "MISSING SNAPSHOT")
-    return True, json.dumps({"build": b, "mean": mean, "files": where})
+    return True, json.dumps({"build": b, "mean": mean, "files": where, **({"below_bar": True} if below_bar else {})})
 
 
 def main(argv: list[str]) -> int:
@@ -414,8 +424,8 @@ def main(argv: list[str]) -> int:
         ok, msg = plan(rest[0], rest[1], fx, sk, rest[2])
         print(msg)
         return 0 if ok else 6
-    if cmd == "best" and len(rest) == 2:
-        ok, msg = best(*rest)
+    if cmd == "best" and len(rest) in (2, 3) and rest[2:] in ([], ["--below-bar"]):
+        ok, msg = best(rest[0], rest[1], below_bar=rest[2:] == ["--below-bar"])
         print(msg)
         return 0 if ok else 2
     if cmd == "judge":

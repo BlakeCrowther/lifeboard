@@ -21,11 +21,11 @@
    "feed_readable"
   ],
   "floor": 2,
-  "bar": 3.03,
+  "bar": 2.7,
   "judges": 3,
-  "note": "Rule (judge_verdict.py): per criterion the median of the judges' scores; pass when every median >= floor and, unless bar is null, the mean of the medians >= bar. bar was set as the 2026-11-19 golden mean (3.33) - 0.3 and is held there: the rebuilt golden scores 3.00, under its own bar, as it did on fresh panels before the rebuild. When the golden or judge_model changes, re-judge the golden with a full panel, rewrite golden_medians and recompute bar. Sonnet recalibration 2026-11-19: floor lowered to 2 because sonnet scores the golden 2 on artifacts and feed."
+  "note": "Rule (judge_verdict.py): per criterion the median of the judges' scores; pass when every median >= floor and, unless bar is null, the mean of the medians >= bar. bar = mean of golden_medians - 0.3. When the golden or judge_model changes, re-judge the golden with a full panel, rewrite golden_medians and recompute bar. Sonnet recalibration 2026-11-19: floor lowered to 2 because sonnet scores the golden 2 on artifacts and feed. 2026-11-24 (owner): bar recomputed from the rebuilt golden (mean 3.00); the held 2026-11-19 value sat above the golden's own score, so the golden failed its own bar and every all-3s visitor failed."
  },
- "status": "Golden rebuilt 2026-11-20 (tapered fins, card-size sulk, pectoral mounted on the flank); two fresh sonnet panels both gave these medians (mean 3.00). Bar held at its 2026-11-19 value until the identity/traits/defects rule replaces the score bar.",
+ "status": "Golden rebuilt 2026-11-20; two fresh sonnet panels both gave these medians (mean 3.00). Bar recomputed from them 2026-11-24 (it had been held above the golden's own score).",
  "known_judge_errors": [
   "estimates eye at ~6% of body height; measured 10.0% (build_meta.json) - trust shape-check over judge for eye size"
  ],
