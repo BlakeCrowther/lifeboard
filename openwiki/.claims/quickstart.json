@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:16f42938028df27e06ebf9f2635929d8ef32aaa35dd08bca243e1c8e974b0467",
+  "pageVersion": "sha256:5b0754daca5e2bc08d2883f6a0c617baaebbd8aa2dd95be34d2c0d9933e0821b",
   "claims": [
     {
       "id": "claim_bceee1a5f7474b6dbc583fa57f6e488e",
       "statement": "Repo commands are pnpm scripts: bootstrap, dev, build, typecheck, lint, test, spec-check, sim, test:ui and verify, where verify runs tools/verify.sh.",
       "evidence": [
         {
-          "resource": "repo://package.json#L6-L18",
-          "version": "repo-lines-v1:sha256:103459a1ba67d743ed056187ff41b9211a37f7aed955c093adcb3dfd6dde3aad:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0ODMzZDU5NDljMDNhNDBjYTk1MjQ5MTYxMGE2NjU5NjQ0YjNhYTQ2NjM2MmY3OTkwMjBkYmYxOTgxNTQ3ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2YzE3M2Q2ZDIyMDdjNzhhMmJhZmQ1OWVhN2U4MTE5MGM3OWFjYzBiMDE3NDA3ZWViZjQ0YmMzNGMxMGQ2ZTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmNjBmNGE4YjIzMGM5MzNkNzFmOWI2NjFkZThkZGI2M2JiOGFjMTQ0MWYzYWE4ZWNmNWU4MGM3ZjIyM2Q4YTAifQ"
+          "resource": "repo://package.json#L6-L25",
+          "version": "repo-lines-v1:sha256:f2dde66b402080f42cc1c7b52aeae03663b220ca404f84bb29f9fdf80a3a0102:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0ODMzZDU5NDljMDNhNDBjYTk1MjQ5MTYxMGE2NjU5NjQ0YjNhYTQ2NjM2MmY3OTkwMjBkYmYxOTgxNTQ3ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwZjBiMmM0OWIwOTRkMjA0YzY1ZjlmNTMzYzU2MjZhODNhYWEyN2I0OTY0MjZjNjE2MTFjOGNlNWUzNjQ0YjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2YzE3M2Q2ZDIyMDdjNzhhMmJhZmQ1OWVhN2U4MTE5MGM3OWFjYzBiMDE3NDA3ZWViZjQ0YmMzNGMxMGQ2ZTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5NTJjZGNkMTk0NzM1MTJjNGJlZTc2M2ZlY2JkOGNlMjkwNjBlODZmYTBiMDY3MzEzNDFmMDZkZDg5M2VlOTIifQ"
         }
       ]
     },
@@ -25,6 +25,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T17:23:06.062Z"
+    "at": "2026-11-24T16:14:32.981Z"
   }
 }

@@ -1,24 +1,24 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b93161fd33fd1d1fe1444ca34ef5eed4898f02af2426a2840ffcd1b23398978e",
+  "pageVersion": "sha256:3d2d99fce5cda1e9043e6ab9ac6c652cae00d2ab969ffbbbdb7a24423e601063",
   "claims": [
     {
       "id": "claim_81fb6c7f1c8d4cc6b789b2282a742cdd",
       "statement": "verify.sh runs every check without stopping at the first failure, prints a PASS/FAIL/SKIP table and exits 1 on any failure, skipping steps whose tools are missing.",
       "evidence": [
         {
-          "resource": "repo://tools/verify.sh#L1-L27",
-          "version": "repo-lines-v1:sha256:29bddde0e272d1610afed3719bb02f49ae6f6545984abd0d7ee7d6f61001660a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5YTkzN2MxODcyODgyMWQ2ZDZhNTlmZjE2NGE5ZDVjMDAxNzQ1YTFmOGY2ZDJkNGZhOTlkOTg1NmNmYTY0NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://tools/verify.sh#L1-L32",
+          "version": "repo-lines-v1:sha256:bd8843c5b35a398a734449294c0e513fbd2e9a9a8f4ec6e91b940ad2a10eafbc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5YTkzN2MxODcyODgyMWQ2ZDZhNTlmZjE2NGE5ZDVjMDAxNzQ1YTFmOGY2ZDJkNGZhOTlkOTg1NmNmYTY0NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
     {
       "id": "claim_ffaebc306ab54ec0afa5f6f71b233528",
-      "statement": "The verify steps are syntax, spec-check, a short sim, typecheck, lint, build, vitest, eval grader self-test, pipeline map currency, UI smoke and doc frontmatter.",
+      "statement": "The verify steps are no-stray-JavaScript, spec-check, a short sim, typecheck, lint, build, vitest, eval grader self-test, biomes check, break timer pacing, pipeline map currency, UI smoke, doc frontmatter and python lint.",
       "evidence": [
         {
-          "resource": "repo://tools/verify.sh#L12-L24",
-          "version": "repo-lines-v1:sha256:7002237b531ba393e17712ea65b00a6cdcccbd629357750cd08a9e6794e3e119:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhNzlhMDBhZjIwM2Q3NDc1NjlhNDVkZmE5NTI3YWIwZjI5ZTlmNmJiNjU2NzEwMjhkMWNiNWIwYWYwMDU3MWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiZjI4MDc1NGIyY2Q2ZjlhN2MwN2ExZjgzZGVlODMzNGY4ZGM1NTYxNGI5ODYzMmJiMWNmYzU0MjJhNzJlOGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4OTJiN2I3MjlkNzUzZDYwNjQwYjA3YWIxMmUyYmY2MjlmZmNjNzA3NzkzOGM3MzkwNWEwNWE4Mzg0ZGU5NDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhODhlZWE3ZGNhNjNmYjZiZDZlZmY2MmE4ZjcyNjJlYWMxN2VjMTczOTNmZTU3Mjc5MzI2YjM1YjllYTEwZjEifQ"
+          "resource": "repo://tools/verify.sh#L12-L29",
+          "version": "repo-lines-v1:sha256:67353b2fc36a4c5c7dd6f3ad90ab84b77c09dcd0ed9931b0f0ff5dcc8ba17ba1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5NjNmYjhiMDU3OTQ1NDBhYzI2MzUxYWM2YTY0MGE3M2ZiYmJkYTk4Y2M2YTFhMjBiNTY0Y2I2YjlhMjQ0ZWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiN2I0MDA4Mzg0ODA5ZWNhYzZhZjhhMWUzNjI0YjE3YzIyMmM5ZWIwMzQyOGJiZWZhMGFhNTlhYmZjZGViZjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4OTJiN2I3MjlkNzUzZDYwNjQwYjA3YWIxMmUyYmY2MjlmZmNjNzA3NzkzOGM3MzkwNWEwNWE4Mzg0ZGU5NDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhODhlZWE3ZGNhNjNmYjZiZDZlZmY2MmE4ZjcyNjJlYWMxN2VjMTczOTNmZTU3Mjc5MzI2YjM1YjllYTEwZjEifQ"
         }
       ]
     },
@@ -37,8 +37,8 @@
       "statement": "The UI smoke test serves the repo, injects a fixture and the fake db into headless Chromium, clicks every tab with a db write, and fails on page errors, console errors or failed local requests, with a 120 second timeout.",
       "evidence": [
         {
-          "resource": "repo://tools/ui-smoke/run.js#L1-L30",
-          "version": "repo-lines-v1:sha256:f3dfee3c1790a9cc321871990e4a75c98d9a0aff4c347b9586e603250aa8d5af:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhODIyMjNmYWE5ZWIwMTNiN2Q2MzlkZGJmMDc1N2VmMGE3OTIwMDY0YTRmMDc5YjExNzA2MmQxODdiNzEwMDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNzUyODk1OTk3YTNiMWE2ZmUyOGUwNzhmNjg2OGY1MGIxZWNjOGU5MDdhM2I3MjdjYTljYjFjOTUwODI2NTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI1NThmY2IzZDJlOTgwNWE4OTkwODE3YzkzN2ZhOTcxYmM1Mjc4MjhlYTdkMmU0MTE2ZDY0YTA2YmNkZTdkNGEifQ"
+          "resource": "repo://tests/e2e/ui-smoke.ts#L1-L60",
+          "version": "repo-lines-v1:sha256:720c806ec694dd37b2224597edb0af9ef0c4c3fb9d4c7794da8f0b1f3cb5405b:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhODIyMjNmYWE5ZWIwMTNiN2Q2MzlkZGJmMDc1N2VmMGE3OTIwMDY0YTRmMDc5YjExNzA2MmQxODdiNzEwMDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2MzhjMDRkZjdlYWExNmQ1OGU1Njc3YjE0YWEzZjBmN2YxYzU5NzNiN2I2Zjg4MDQyZmUxMjY2Mjc0ZThjNzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4MTUyNzQ2NDUyMjA4MDY5NmM3YTEwYjU5YzBlZTdjMDEwM2MzYjljNzkzOWRkZTUxYjAyMzQ4OTQzYmJmNTMifQ"
         }
       ]
     },
@@ -65,6 +65,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T17:23:06.062Z"
+    "at": "2026-11-24T16:14:32.981Z"
   }
 }
