@@ -178,6 +178,40 @@
       "plot": "journaling",
       "gen": 0,
       "habit": "Journaling"
+    },
+    {
+      "id": "widgeon_grass",
+      "kind": "plant",
+      "name": "Widgeon Grass",
+      "spec": "plant/specs/widgeon_grass.json",
+      "glb": "assets/widgeon_grass.glb",
+      "js": "assets/widgeon_grass-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "svg": "fern",
+      "golden": false,
+      "below_bar": true,
+      "added": "2026-11-24",
+      "plot": "running",
+      "gen": 0,
+      "habit": "Running"
+    },
+    {
+      "id": "bead_whorl_alga",
+      "kind": "plant",
+      "name": "Bead Whorl Alga",
+      "spec": "plant/specs/bead_whorl_alga.json",
+      "glb": "assets/bead_whorl_alga.glb",
+      "js": "assets/bead_whorl_alga-glb.js",
+      "biome": 0,
+      "rarity": "common",
+      "svg": "fern",
+      "golden": false,
+      "below_bar": true,
+      "added": "2026-11-24",
+      "plot": "reading",
+      "gen": 0,
+      "habit": "Reading"
     }
   ]
 }
