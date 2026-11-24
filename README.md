@@ -18,7 +18,7 @@ How the game scores things is in [SPEC.md](SPEC.md). A new board starts with a f
 
 ## Quick start
 
-You need a Claude account with Artifacts and Claude Code (desktop app or CLI). Lifeboard works with Claude only for now; other agents are planned ([feature lifeboard#22: agent-agnostic lifeboard](https://github.com/BlakeCrowther/lifeboard/issues/22)).
+You need a Claude account with Artifacts and Claude Code (desktop app or CLI). Lifeboard works with Claude only for now; other agents are planned ([feature lifeboard#10: agent-agnostic lifeboard](https://github.com/BlakeCrowther/lifeboard/issues/10)).
 
 **Just the board (no terminal skills needed):**
 1. Clone or download this repo and open the folder in Claude Code.
