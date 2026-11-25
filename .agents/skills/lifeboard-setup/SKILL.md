@@ -19,7 +19,7 @@ Order: 1 toolchain (`./setup.sh`) → 2 local preview → 3 Ecosystem/Garden tog
 | Blender ≥ 5.3 | Headless modeling, rigging, animation, baking, QA renders, glTF export (`blender -b`) | `./setup.sh` (free, GPL) |
 | ImageMagick | Contact sheets for the visual judge | `./setup.sh` |
 | Node ≥ 20 + `npx @gltf-transform/cli@4` | Validate + optimize `.glb` | `./setup.sh` (gltf-transform fetched by npx) |
-| Claude desktop app scheduled tasks | Runs `weekly-visitor` locally (Blender is a local app); Mac must be awake | Desktop app → Scheduled |
+| Scheduled tasks (cloud or desktop app) | Runs `weekly-visitor`: cloud = a fresh session per run in the lifeboard environment (setup script runs `./setup.sh`); Mac = desktop app, Mac must be awake | `.claude/scheduled/weekly-visitor.md` |
 
 ### Optional (interactive development only)
 **Blender MCP** (official, Blender Lab) lets Claude drive a live Blender window. The weekly run does NOT use it.
