@@ -20,7 +20,10 @@ if [ -d node_modules/typescript ]; then
 else skip "typecheck, lint, build, vitest" "run pnpm bootstrap"; fi
 run "eval graders (self-test)" pnpm -s eval --self-test
 run "biomes.json valid (check_biome.py)" python3 models/shared/tools/check_biome.py
-if command -v swiftc >/dev/null; then run "break timer pacing" break/test.sh; else skip "break timer pacing" "swiftc not installed"; fi
+if command -v swiftc >/dev/null; then run "break timer pacing (Swift, macOS app)" break/test.sh; else skip "break timer pacing (Swift, macOS app)" "swiftc not installed"; fi
+if [ "$(uname -s)" = Linux ] && command -v xvfb-run >/dev/null && command -v openbox >/dev/null && command -v xdotool >/dev/null && [ -d node_modules/electron ]; then
+  run "break overlay e2e (Electron, Xvfb)" tests/e2e/break-overlay.sh
+else skip "break overlay e2e" "Linux with xvfb-run, openbox, xdotool (apt-get install xvfb openbox xdotool)"; fi
 run "model pipeline map current" python3 models/shared/tools/render_pipeline_map.py --check
 if [ -d node_modules/playwright ]; then run "UI smoke (headless Chromium)" node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/e2e/ui-smoke.ts; else skip "UI smoke" "run pnpm bootstrap"; fi
 if [ -d node_modules/playwright ]; then run "Garden flicker (headless Chromium)" node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/e2e/garden-flicker.ts; else skip "Garden flicker" "run pnpm bootstrap"; fi

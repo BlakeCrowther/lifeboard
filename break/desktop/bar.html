@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'">
+<title>Lifeboard Break</title>
+<style>
+  html,body{margin:0;height:100%;background:#121110;color:#f3ede2;font:16px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif;overflow:hidden}
+  body{display:flex;align-items:flex-end}
+  #bar{display:flex;align-items:center;gap:16px;height:64px;width:100%;padding:0 24px;box-sizing:border-box}
+  #countdown{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;margin-right:auto}
+  button{font:inherit;padding:6px 16px;border-radius:999px;border:1px solid #444;background:#222;color:inherit;cursor:pointer}
+  button:disabled{opacity:.45;cursor:default}
+</style>
+</head>
+<body>
+<div id="bar">
+  <span id="countdown">–:––</span>
+  <button id="postpone" type="button"></button>
+  <button id="skip" type="button" disabled>Skip</button>
+</div>
+<script src="bar.js"></script>
+</body>
+</html>

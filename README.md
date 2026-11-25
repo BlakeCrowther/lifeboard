@@ -28,7 +28,7 @@ You need a Claude account with Artifacts and Claude Code (desktop app or CLI). L
 **With the 3D models** (creatures and plants made each week): setup also checks Blender, ImageMagick and Node, offers to install what's missing with `./setup.sh` (macOS, Linux and Windows; also what a cloud environment's setup script can call), and registers the weekly job. See [models/README.md](models/README.md).
 
 **Optional extras:**
-- **Lifeboard Break** (macOS): a menu-bar app that covers your screens with the board during timed breaks. Say *"run break-setup"*.
+- **Lifeboard Break** (Linux, Windows, macOS): a tray app that covers your screens with the board during timed breaks. Say *"run break-setup"*.
 - **Lessons**: say *"make lessons from &lt;book, video, article&gt;"* (the `lesson-make` skill).
 
 ## Agent support

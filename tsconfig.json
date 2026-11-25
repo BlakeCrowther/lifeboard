@@ -15,5 +15,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src", "tests", "tools/**/*.ts", "evals/**/*.ts", "models/shared/tools/*.ts", "*.config.ts"]
+  "include": ["src", "tests", "break/desktop", "tools/**/*.ts", "evals/**/*.ts", "models/shared/tools/*.ts", "*.config.ts"]
 }

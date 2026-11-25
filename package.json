@@ -18,7 +18,11 @@
     "test:ui": "pnpm -s build && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/e2e/ui-smoke.ts",
     "check:no-js": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/check-no-js.ts",
     "lint:py": "tools/lint-python.sh",
-    "eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON evals/run.ts"
+    "eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON evals/run.ts",
+    "break:build": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON break/desktop/build.ts",
+    "break": "pnpm -s break:build && electron break/out/desktop/main.cjs",
+    "break:install": "pnpm -s break:build && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON break/desktop/install.ts",
+    "test:break": "tests/e2e/break-overlay.sh"
   },
   "packageManager": "pnpm@12.21.0",
   "dependencies": {
@@ -29,6 +33,7 @@
     "@types/node": "26.6.6",
     "@types/three": "0.170.0",
     "dependency-cruiser": "18.8.0",
+    "electron": "45.5.0",
     "esbuild": "0.28.2",
     "eslint": "10.15.0",
     "playwright": "^1.65.1",

@@ -15,6 +15,7 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 - **Lists** (`list_items`, code `listItemsByKey`): books, films and other lists, grouped by `list_key`.
 - **Groceries** (`groceries`), **Recipes** (`recipes`), **Goals** (`goals`), **Logs** (`logs`): same name in code and UI.
 - **Snapshot** (`snapshots`): fetched outside data (calendar, conditions) the page shows.
+- **Lifeboard Break**: the app that covers every screen with the board during timed breaks (`break/desktop/` Electron for Linux, Windows and macOS; `break/` Swift for macOS). A break ends by **done** (time up or the page's `done()`), **skip**, **postpone** ("N more min") or **escape** (the shortcut); each end is a `logs` row with `kind: 'break'`.
 - **Duet**: the owner's own scheduled Claude agent. Tasks show "Send to Duet" only when the profile has a `duet_trigger`.
 
 ## Tasks and the ring
