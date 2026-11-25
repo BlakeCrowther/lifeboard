@@ -1,6 +1,6 @@
 ---
 name: weekly-visitor
-description: Kind: creature (orchestrator). Runs the weekly autonomous Ecosystem visitor: reads the game state, starts the run ledger, then creature-brief -> shared model-build -> creature-animate -> shared model-verify -> shared model-ship with retries and fallbacks, and reports. The weekly scheduled task calls this. Never ships an unverified creature.
+description: Kind: creature (orchestrator). Makes this week's Ecosystem visitor, a 3D creature, without asking anything: reads the game state, starts the run ledger, then creature-brief -> shared model-build -> creature-animate -> shared model-verify -> shared model-ship with retries and fallbacks, and reports. Also runs biome-brief, scenery-make and season-seeds when they are due. Never ships an unverified creature. Use when the weekly scheduled task fires, or when asked to run this week's visitor by hand.
 ---
 
 # Weekly visitor

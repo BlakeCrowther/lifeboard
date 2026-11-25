@@ -117,7 +117,7 @@ function renderPage(): void {
   syncGrowViews();
   if (todayDate() !== clock.today) { clock.today = todayDate(); watchCalendar(); if (store.state.status === 'ready') { refreshBoard(); recordCommitments(); } }
   const focused = focusKey();
-  /* re-rendering main must not move the page (a log tap used to jump it) */
+  /* re-rendering main must not move the page (a tap that re-renders, like logging a habit, would jump it) */
   const scrolledTo = scrollY;
   writeHash();
   const tabs = byId('tabs');

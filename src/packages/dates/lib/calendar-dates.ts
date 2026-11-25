@@ -36,7 +36,7 @@ export function datePartsOf(date: DateString): DateParts {
   return { year: utc.getUTCFullYear(), month: utc.getUTCMonth() + 1, day: utc.getUTCDate(), weekday: utc.getUTCDay() };
 }
 
-/** The date as UTC midnight, for callers that still want a Date. Read it with getUTC* only. */
+/** The date as UTC midnight, for code that needs a Date. Read it with getUTC* only. */
 export const toUtcDate = utcDateOf;
 
 export function addDays(date: DateString, days: number): DateString {

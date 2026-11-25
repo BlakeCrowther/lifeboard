@@ -1,6 +1,6 @@
 ---
 name: lifeboard-setup
-description: Set up lifeboard for a new owner or a fresh clone, and health-check it later. Starts by asking how much to decide (do it all with defaults, a few choices, or everything), then makes the owner's own copy, asks only that level's questions (name, timezone, week start, commit lock, Ecosystem and Garden, tips, models), publishes the board as the user's own artifact, and optionally installs the 3D model toolchain (Blender, ImageMagick, Node) and the weekly job. Use when someone first opens this repo, says "set up lifeboard", moves to a new machine, or a model skill fails with a tooling error.
+description: Set up a new lifeboard board, or health-check an existing one. Starts by asking how much to decide (do it all with defaults, a few choices, or everything), then makes the board's own copy of the repo, asks only that level's questions (name, timezone, week start, commit lock, Ecosystem and Garden, tips, models), publishes the board as the user's own artifact, and optionally installs the 3D model toolchain (Blender, ImageMagick, Node) and the weekly run. Use when someone first opens this repo, says "set up lifeboard", moves to a new machine, or a model skill fails with a tooling error.
 ---
 
 # Lifeboard setup (fresh clone)

@@ -1,6 +1,6 @@
 ---
 name: season-seeds
-description: Kind: plant (orchestrator). Weekly: makes a 3D plant for each garden plot that needs one (a new habit's plot, or the next plant after one bloomed or died), from checks/game_status garden.needs: plant-brief -> shared model-build -> plant-grow -> shared model-verify -> shared model-ship, with a run ledger per plant, retries and fallbacks like weekly-visitor. Plants still growing are left alone. Never ships an unverified plant; publishes the live board after a PASS (pre-approved).
+description: Kind: plant (orchestrator). Makes a 3D plant for each garden plot that needs one (a new habit's plot, or the next plant after one bloomed or died), from the list the board keeps in checks/game_status (garden.needs): plant-brief -> shared model-build -> plant-grow -> shared model-verify -> shared model-ship, with a run ledger per plant, retries and fallbacks like weekly-visitor. Plants still growing are left alone. Never ships an unverified plant. Use when weekly-visitor reaches its plant step, or to make a plot's plant by hand.
 ---
 
 # Season seeds (weekly plants)

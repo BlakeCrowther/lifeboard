@@ -1,6 +1,6 @@
 ---
 name: break-setup
-description: Install, configure, or uninstall Lifeboard Break, the macOS menu-bar app that covers every screen with the lifeboard during timed breaks. Use to set it up on a Mac, change work/break lengths, postpone/skip rules or the lifeboard URL, or remove it. Safe to run again any time to change settings.
+description: Install, configure, or uninstall Lifeboard Break, the macOS menu-bar app that covers every screen with your board during timed breaks. Use to set it up on a Mac, change work/break lengths, postpone/skip rules or the board's URL, or remove it. Safe to run again any time to change settings.
 ---
 
 # Lifeboard Break setup

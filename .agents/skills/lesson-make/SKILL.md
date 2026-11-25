@@ -1,6 +1,6 @@
 ---
 name: lesson-make
-description: Turn a book, video, post, article, talk, podcast, course or note into lifeboard lessons (Ecosystem). Interviews the user about what mattered, or with "do it for me" works from the source alone; rates size and salience, picks the source's format ladder, writes a prompt per rung, and adds rows to the live lifeboard's sources and lessons collections. Use when the user hands over something to learn from, says "make lessons from X", or wants to see the lesson queue.
+description: Turn a book, video, post, article, talk, podcast, course or note into lifeboard lessons (short daily cards that feed the Ecosystem). Interviews the user about what mattered, or with "do it for me" works from the source alone; rates size and salience, picks the source's format ladder, writes a prompt per rung, and adds rows to the board's sources and lessons collections. Use when the user hands over something to learn from, says "make lessons from X", or wants to see the lesson queue.
 ---
 
 # Make lessons

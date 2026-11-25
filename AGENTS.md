@@ -1,6 +1,6 @@
 # lifeboard
 
-Personal life dashboard, published as a claude.ai Artifact with the `db` capability. Strict TypeScript in `src/` is bundled by esbuild to `dist/` (gitignored): `dist/app.js` (ES module) plus `dist/chunks/` (the garden and ecosystem packages, loaded on demand) and `dist/capture.js` (`capture.html`). Newcomer overview: `README.md`; terms: `GLOSSARY.md`.
+Personal life dashboard, published as a claude.ai Artifact with the `db` capability. Strict TypeScript in `src/` is bundled by esbuild to `dist/` (gitignored): `dist/app.js` (ES module) plus `dist/chunks/` (the garden and ecosystem packages, loaded on demand) and `dist/capture.js` (`capture.html`). Newcomer overview: `README.md`; terms: `GLOSSARY.md`; sending changes upstream: `CONTRIBUTING.md`.
 
 - `src/`: TypeScript. `src/main.ts` is the bundle entry; `src/packages/<name>/` are deep modules, see [src/packages/README.md](./src/packages/README.md) before adding or importing one. Unit tests (Vitest) sit in each package's `tests/`; e2e in `tests/e2e/`. `.dependency-cruiser.cjs` enforces boundaries (`pnpm lint:boundaries`).
 - Commands: `pnpm bootstrap`, `dev` (serve + watch build; `PORT` env, default 8765), `build`, `typecheck`, `lint`, `test`, `verify`, `test:ui`, `board` (a board's model files: seed, files, hydrate, merge-roster, publish-set).
@@ -25,7 +25,7 @@ Pipeline map: `models/pipeline.html` is the living, visual map of the model pipe
 Break overlay: `break/` is a native macOS menu-bar app (Swift, no Xcode) that covers all screens with a web view during timed breaks. `break/build.sh [--run|--now]` builds `break/out/LifeboardBreak.app`; `break/install.sh [--uninstall]` installs to ~/Applications + LaunchAgent (start at login). Skill: `break-setup`. Settings via `defaults write com.lifeboard.break` (workMinutes, breakMinutes, postponeMinutes, maxPostpones, skipDelaySeconds, url). Page bridge: `window.lifeboardBreak.{skip,postpone,done}()`, `lifeboardbreaktick` event. Escape: ⌃⌥⌘B.
 
 ## Which repo publishes which board
-The public repo (`origin` is `github.com/BlakeCrowther/lifeboard`) is the template: it holds code, skills and the starter models, and **never publishes anyone's live board**. The only board it publishes is the demo board ([feature lifeboard#11](https://github.com/BlakeCrowther/lifeboard/issues/11)): synthetic data from `demo/seed.json`, shown with a Demo badge when `checks/profile` has `demo: true`, published with the `demo-board` skill. Every real board, the owner's included, runs from its own copy of this repo (the owner's is a private copy with an `upstream` remote pointing here) and publishes only from there. A copy takes upstream changes with the `lifeboard-update` skill (merge commit, never squash; the board's models stay its own) and sends a fix back with `lifeboard-contribute` (a clean branch from upstream, scanned for personal data). Weekly runs and their models live in that copy, so no one's models or habit names reach the public repo. In the public repo, never publish to a live board and never commit a board's models: `pnpm verify` fails if git tracks anything under `models/board/` in a checkout of the public repo (`tools/check-public-board.ts`).
+The public repo (`origin` is `github.com/BlakeCrowther/lifeboard`) is the template: it holds code, skills and the starter models, and **never publishes anyone's live board**. The only board it publishes is the demo board ([feature lifeboard#11](https://github.com/BlakeCrowther/lifeboard/issues/11)): synthetic data from `demo/seed.json`, shown with a Demo badge when `checks/profile` has `demo: true`, published with the `demo-board` skill. Every real board, the maintainer's included, runs from its own copy of this repo (a board copy: a private repo with an `upstream` remote pointing here) and publishes only from there. A copy takes upstream changes with the `lifeboard-update` skill (merge commit, never squash; the board's models stay its own) and sends a fix back with `lifeboard-contribute` (a clean branch from upstream, scanned for personal data). Weekly runs and their models live in that copy, so no one's models or habit names reach the public repo. In the public repo, never publish to a live board and never commit a board's models: `pnpm verify` fails if git tracks anything under `models/board/` in a checkout of the public repo (`tools/check-public-board.ts`).
 
 ## Board workflow (a board's own copy)
 Cloners: your board is yours; publish it to your own artifact URL (setup does the first publish) and change it however you like.
@@ -44,21 +44,9 @@ Every task and every skill run in this repo ends with this loop. It's how the pr
 3. **Fix the cause where it lives**, in the same commit: the skill step, prompt wording, gate threshold or tool that let it happen, not just this instance. Prefer a check that fails loudly (a gate, an assert, spec-check) over a sentence of advice.
 4. **Log it**: one line in `LESSONS.md` (date, what happened, what changed). Read `LESSONS.md` before starting a skill run or a big change.
 5. **Re-verify** the fix on the thing that failed (re-run the gate, the sim, the skill step). If it still fails, go round again; after three rounds, stop and report.
-Unattended runs (the weekly check) do steps 1–5 themselves and list the fixes in their report; they never change game numbers; they do publish (pre-approved, see Publish).
+Unattended runs (the weekly run) do steps 1–5 themselves and list the fixes in their report; they never change game numbers; they do publish (pre-approved, see Publish).
 
-## Agent skills
-
-### Issue tracker
-
-GitHub Issues on this repo, with the epic/feature/task labels and Dev Board. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context; ADRs use OKF frontmatter. See `docs/agents/domain.md`.
+Sending a change to the public repo? Follow [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 <!-- dev-home:standards:start -->
 <!-- Managed by dev-home sync-standards.sh. Edit repo-rules.md in dev-home, not here. -->

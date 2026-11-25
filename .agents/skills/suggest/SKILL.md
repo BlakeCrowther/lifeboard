@@ -1,6 +1,6 @@
 ---
 name: suggest
-description: Turn a plain-language wish ("I want something that tracks my water", "help me read more", "remind me to call my mom") into two or three concrete ways to build it inside lifeboard, each grounded in what the board already has (tasks, habits and their garden plots, lists, the Ecosystem, lessons, the weekly job), with at least one playful, gamified option when it fits. The user picks one and it hands off to building it. For people new to AI or to lifeboard; no jargon. Use when someone says "I want something that…", "could lifeboard do…", "how would I add…", or "suggest a way to…".
+description: Turn a plain-language wish ("I want something that tracks my water", "help me read more") into two or three concrete ways to build it inside lifeboard, each grounded in what the board already has (tasks, habits and their garden plots, lists, the Ecosystem, lessons, the weekly run), with at least one playful, gamified option when it fits. The user picks one and it hands off to building it. Plain words, no jargon. Use when someone says "I want something that…", "could lifeboard do…", "how would I add…", or "suggest a way to…".
 ---
 
 # Suggest a way to fit an idea into lifeboard
