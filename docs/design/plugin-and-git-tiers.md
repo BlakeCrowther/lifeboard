@@ -125,6 +125,31 @@ Optional. A contribute step builds a clean branch from the upstream release with
 - **Runs:** the same pipeline from the plugin folder. Each run compares the plugin's version with the version the published page records. If the plugin is newer, it builds and publishes the stock page and reports "updated to 1.4: adds X". The page migrates its data on load. Undo is the store's version history.
 - **No branch of built files.** Building is a publish step in both tiers, so the plugin needs nothing beyond the tagged source.
 
+## The maintainer's own board
+
+The public repo is the product, not anyone's board. It publishes a **demo board** on seed data ([feature lifeboard#11](https://github.com/BlakeCrowther/lifeboard/issues/11)): synthetic habits and tasks, the starter models, and a visible "Demo" badge. The maintainer's real board runs from a **private git-tier copy** of the public repo, set up like any user's (clone, push to a new private repo, `upstream` = the public repo). Personal data and models then never reach the public repo.
+
+| | Public repo | Maintainer's private copy |
+|---|---|---|
+| Publishes | The demo board | The maintainer's live board |
+| Weekly run | None | Yes, with the auto-merging PR from [PR lifeboard#26](https://github.com/BlakeCrowther/lifeboard/pull/26) inside the private copy |
+| Product work | Here, tested on the demo board, merged by PR (`CONTRIBUTING.md`) | Not here |
+| Takes changes from | Contributors | Upstream `main` (the maintainer follows `main`, not release tags): `/lifeboard-update --main` |
+| Run retro fixes | Arrive by the contribute step | Made here, then sent upstream with the contribute step |
+
+The two boards never share data, which is what lifeboard#11 asks for. "One publish updates both" becomes two steps: publish the demo from upstream, then `/lifeboard-update` in the private copy publishes the live board.
+
+### Moving the maintainer's board out (order)
+
+| Step | Change | Touches the live board? |
+|---|---|---|
+| 1 | Create the private copy from the public repo's `main` (it starts with today's roster, so the live board is unchanged). | No |
+| 2 | Re-register the weekly run in claude.ai on the private copy (repo and lifeboard environment attached); delete the old registration if any. From then on the live board publishes only from the private copy. | Publishes only |
+| 3 | Public repo PR: the roster becomes the starter set (generic biome-0 scenery and creatures; the maintainer's plants leave, since they are made for his habits); the hardcoded habit-icon map becomes generic name hints; the demo board: seed data, "Demo" badge, its own artifact. Merge only after step 2, so no live publish runs from a roster without the maintainer's models. | No |
+| 4 | Model storage steps 3 to 11 ([model storage](model-storage.md#work)) in the public repo, pulled into the private copy with `/lifeboard-update`. | Through the private copy |
+
+After step 3, upstream's roster changes rarely, so the private copy's own roster merges cleanly until model storage moves it to `models/board/`. Names already in the public repo's history stay; rewriting it was judged not worth breaking every clone.
+
 ## Releases
 
 A release is a version marked finished: a semantic version, a tag `v<version>`, and `docs/releases/<version>.md` with a one-line summary (for run reports) and upgrade notes written for an agent (what changed and why, file by file). Git-tier users update to tags, never to upstream `main`, which can hold unfinished work. The plugin tier updates when the version in `.claude-plugin/plugin.json` changes.
@@ -158,7 +183,7 @@ The public-safety pre-commit hook (home paths, emails, artifact IDs, keys, priva
 | 6 | Git tier: the git path in `lifeboard-setup`, the update line in runs, `/lifeboard-update`, the contribute step. Test `/lifeboard-update` on a fixture repo with one edited and one untouched file and a release that changes both: the untouched file updates, the edited one merges, `pnpm verify` runs, nothing is committed without approval. |
 | 7 | Plugin tier, once a scheduled cloud run without a repo is proven: `.claude-plugin/plugin.json` and a marketplace entry; skill paths that work from `${CLAUDE_PLUGIN_ROOT}` as well as a checkout; build-in-scratch publish; automatic stock-page updates; `/lifeboard:make-it-mine`. |
 
-Model storage ([steps 1 to 11](model-storage.md#work)) comes first: both tiers need it.
+Order: move the maintainer's board out first ([steps 1 to 3 above](#moving-the-maintainers-board-out-order)), then model storage ([steps 3 to 11](model-storage.md#work)), which both tiers need, then the steps in this table.
 
 ## Risks and open questions
 
