@@ -7,6 +7,7 @@ import type { BoardTask } from '../board-model.ts';
 import { clock, relativeDay, weekdayName, weekdayShortName } from '../shared/clock.ts';
 import { escapeHtml } from '../shared/format.ts';
 import { icon } from '../shared/icons.ts';
+import { tipEarnPoints, tipLosePoints, tipRow } from '../shared/tips.ts';
 import { ringTasksOpenByDefault } from '../shared/media.ts';
 import { isFoldOpen, setFoldOpen } from '../shared/prefs.ts';
 import { render } from '../shared/redraw.ts';
@@ -84,5 +85,5 @@ export function weekRings(panelHtml: string, ringTiles: RingTile[]): string {
   const what = sel === clock.today ? 'Today' : relativeDay(sel) === 'yesterday' ? 'Yesterday' : weekdayName(weekdayOf(sel));
   const toggle = `<div class="rt-tiles">${tiles}</div><button class="rt-b" data-act="ring-tasks" aria-expanded="${String(open)}" aria-controls="rtasks"><span class="rt-t">${open ? (sel === clock.today ? 'Hide tasks' : `Hide ${what}'s tasks`) : 'All tasks'}</span>${icon(open ? 'up' : 'chevD', 16)}${open ? '<kbd class="rt-k">Esc</kbd>' : ''}</button>`;
   const body = open ? `<div class="rt-body" id="rtasks">${sel === clock.today ? panelHtml : pastDayTasks(sel)}</div>` : '';
-  return `<section class="sec z-now" aria-label="Tasks done of tasks committed, last seven days"><div class="card rings${open ? ' open' : ''}"><ol class="wrow">${cells}</ol><p class="wmsg">${escapeHtml(msg)}</p>${toggle}${body}</div></section>`;
+  return `<section class="sec z-now" aria-label="Tasks done of tasks committed, last seven days"><div class="card rings${open ? ' open' : ''}"><ol class="wrow">${cells}</ol><p class="wmsg">${escapeHtml(msg)}</p>${tipRow(tipEarnPoints(), tipLosePoints())}${toggle}${body}</div></section>`;
 }

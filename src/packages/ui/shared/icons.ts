@@ -11,6 +11,7 @@ const LINE_ICON_PATHS: Readonly<Record<string, string>> = {
   list:'<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9" fill="currentColor"/><circle cx="4.8" cy="12" r=".9" fill="currentColor"/><circle cx="4.8" cy="17.5" r=".9" fill="currentColor"/>',
   leaf:'<path d="M5 19.5C5 10.5 10 5 20 4.5c0 10-5.5 15-14 15"/><path d="M5 19.5l7.5-7.5"/>',
   sprout:'<path d="M12 21v-9"/><path d="M12 12c0-4-3-7-8-7 0 5 3 7 8 7zM12 10c0-3 2.2-6 7.5-6 0 4-2.2 6-7.5 6z"/>',
+  info:'<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.9" r=".9" fill="currentColor" stroke="none"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   minus:'<path d="M5 12h14"/>',
   check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',

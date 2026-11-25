@@ -1,5 +1,5 @@
 /* Two kinds of view preference. Device prefs (folds, list sorts) are remembered per device in localStorage `lb-ui`.
-   Board prefs (Ecosystem, Garden, theme, commit lock) live in checks/ui_prefs so every device matches; the newest
+   Board prefs (Ecosystem, Garden, Tips, theme, commit lock) live in checks/ui_prefs so every device matches; the newest
    change wins. The Ecosystem and Garden switches are mirrored into device prefs. */
 import { store } from './state.ts';
 
@@ -29,6 +29,10 @@ export const ecosystemOn = (): boolean => devicePrefs.eco || ecosystemLink.force
 export const gardenOn = (): boolean => devicePrefs.garden;
 export const gameOn = (): boolean => ecosystemOn() || gardenOn();
 
+/** Explanatory tips (checks/ui_prefs.tips): on unless the board turned them off. */
+let tipsEnabled = true;
+export const tipsOn = (): boolean => tipsEnabled;
+
 export function setTheme(theme: string): void {
   if (theme === 'auto') delete document.documentElement.dataset['theme']; else document.documentElement.dataset['theme'] = theme;
   try { localStorage.setItem('lb-theme', theme); } catch { /* ignore */ }
@@ -40,6 +44,7 @@ interface BoardPrefs {
   /** old name for eco and garden together */
   labs?: unknown;
   theme?: unknown;
+  tips?: unknown;
   /** commit lock minutes, or 'end' */
   commitLock?: unknown;
 }
@@ -62,7 +67,13 @@ export function applyBoardPrefs(): boolean {
     switched = true;
   }
   if (typeof v.theme === 'string' && v.theme) setTheme(v.theme);
+  const tips = v.tips !== false;
+  tipsEnabled = tips;
   return switched;
+}
+export function setTips(on: boolean): void {
+  tipsEnabled = on;
+  saveBoardPrefs({ tips: on });
 }
 export function saveBoardPrefs(patch: BoardPrefs): void {
   const now = Date.now();

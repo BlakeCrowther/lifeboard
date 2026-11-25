@@ -451,6 +451,12 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:inset 0 0 0 2px 
 .pop .kinds{margin:4px 0 0}
 .pop .kinds button{font-size:14px}
 .pop-n{margin:6px 2px 0;font-size:12.5px;color:var(--muted)}
+/* tips: an info button per explanation, the note opens under the row */
+.tip-row{display:flex;flex-wrap:wrap;gap:4px 8px;justify-content:center;margin:4px 0 0}
+.tip-b{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:0 8px;color:var(--soft);font-size:13px;font-weight:600}
+.tip-b[aria-expanded="true"]{color:var(--text)}
+.tip-n{margin:0 4px 6px;padding:8px 10px;border-radius:var(--r);background:var(--sunk);color:var(--muted);font-size:13.5px;line-height:1.45;text-align:left}
+.tip-n[hidden]{display:none}
 
 /* ---------- responsive (two-column layout lives in the final5 block below) ---------- */
 @media (min-width:700px){

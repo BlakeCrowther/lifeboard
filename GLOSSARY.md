@@ -30,6 +30,7 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 ## Ecosystem
 
 - **Ecosystem**: the scene the ring grows (`src/packages/ecosystem`). One name in code, files, docs and UI; not "habitat" (it reads like "habit").
+- **Tips**: short "how does this work" notes behind an info button, shown only while the board's Tips setting (`checks/ui_prefs.tips`, display menu next to Theme, default on) is on. Numbers in them come from `RULES`.
 - **Life points**: what a day's ring earns; they move the current biome through its phases.
 - **Biome**: one stage of the Ecosystem (e.g. a seagrass lagoon), listed in `models/biomes.json`. Each has **phases**; finishing the last saves a **diorama** to the Collection.
 - **Visitor** (met ones in `visitors_met`): a creature that arrives in the Ecosystem: one a week, plus rare and exotic ones for full-ring weeks and for finishing old tasks. **Rarity**: common, rare, exotic.

@@ -85,6 +85,24 @@ async function main(): Promise<void> {
     }
     console.log(`ui-smoke: ${String(tabActions.length)} tab actions run`);
 
+    /* tips: on by default (a board with no tips pref), and the note opens on click */
+    await click('[data-act="tab"][data-val="today"]');
+    const tipButton = page.locator('[data-act="tip"]').first();
+    if (!(await tipButton.count())) errors.push('tips are on by default but no info button rendered');
+    else {
+      const controls = (await tipButton.getAttribute('aria-controls')) ?? '';
+      await click('[data-act="tip"]');
+      if ((await tipButton.getAttribute('aria-expanded')) !== 'true' || !(await page.locator(`#${controls}`).isVisible())) errors.push('clicking an info button should open its note');
+    }
+    const tipsOff = await browser.newPage();
+    tipsOff.on('pageerror', (e) => errors.push(`tips-off pageerror: ${e.message}`));
+    await tipsOff.addInitScript({ content: `window.MOCK = ${JSON.stringify({ ...board, checks: { ...board.checks, ui_prefs: { value: { tips: false }, updated_at: Date.now() } } })};` });
+    await tipsOff.addInitScript({ path: path.join(ROOT, 'dist/fake-db.js') });
+    await tipsOff.goto(`${base}/index.html`, { waitUntil: 'domcontentloaded' });
+    await tipsOff.waitForFunction(() => /Sam/.test(document.querySelector('.greet')?.textContent ?? ''), null, { timeout: 5000 }).catch(() => undefined);
+    if (await tipsOff.locator('[data-act="tip"]').count()) errors.push('ui_prefs.tips === false but an info button rendered');
+    console.log('ui-smoke: tips on by default, off with ui_prefs.tips = false');
+
     const backdated = await page.evaluate(() => {
       const t3 = window.MOCK?.['tasks']?.['t3'] as Doc | undefined;
       const days = t3?.['committed_days'];

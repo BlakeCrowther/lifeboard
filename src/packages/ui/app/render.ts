@@ -13,7 +13,7 @@ import { clock } from '../shared/clock.ts';
 import { recordCommitments } from '../shared/commitments.ts';
 import { escapeHtml, plural } from '../shared/format.ts';
 import { icon } from '../shared/icons.ts';
-import { devicePrefs, ecosystemLink, ecosystemOn, gameOn, gardenOn } from '../shared/prefs.ts';
+import { devicePrefs, ecosystemLink, ecosystemOn, gameOn, gardenOn, tipsOn } from '../shared/prefs.ts';
 import { setRenderer } from '../shared/redraw.ts';
 import { refreshBoard } from '../shared/refresh.ts';
 import { model, store, viewState, type Tab } from '../shared/state.ts';
@@ -36,7 +36,7 @@ const VIEWS: Readonly<Record<Tab, () => string>> = { today: viewToday, plan: vie
 const byId = (id: string): HTMLElement | null => document.getElementById(id);
 const mainEl = (): HTMLElement | null => byId('main');
 
-/* display popover: theme, Ecosystem, Garden */
+/* display popover: theme, Ecosystem, Garden, Tips */
 let popoverOpener: HTMLElement | null = null;
 const popover = (): HTMLElement | null => byId('pop');
 export const popoverOpen = (): boolean => !(popover()?.hidden ?? true);
@@ -49,6 +49,7 @@ function renderPopover(): void {
   pop.innerHTML = group('Theme', 'set-theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']], theme)
     + group('Ecosystem', 'set-eco', [['off', 'Off'], ['on', 'On']], ecosystemOn() ? 'on' : 'off')
     + group('Garden', 'set-garden', [['off', 'Off'], ['on', 'On']], gardenOn() ? 'on' : 'off')
+    + group('Tips', 'set-tips', [['off', 'Off'], ['on', 'On']], tipsOn() ? 'on' : 'off')
     + (ecosystemLink.forced && !devicePrefs.eco ? '<p class="pop-n">Ecosystem on for this visit (link).</p>' : '');
 }
 export function setPopover(open: boolean, button?: HTMLElement | null): void {

@@ -11,6 +11,7 @@ import { lastWeekCheck } from '../shared/habit-weeks.ts';
 import { icon } from '../shared/icons.ts';
 import { gardenOn } from '../shared/prefs.ts';
 import { goLink, sectionHeader } from '../shared/sections.ts';
+import { tipGarden, tipRow } from '../shared/tips.ts';
 import { viewState } from '../shared/state.ts';
 import { daysBetween } from '../../dates/index.ts';
 
@@ -130,5 +131,5 @@ export function gardenHabits(hs: HabitTile[], done: number, total: number, daysL
     : lowN ? `${plural(lowN, 'plant')} need${lowN === 1 ? 's' : ''} water in the next ${plural(daysLeft, 'day')}.` : `Tap a plant to log a session. Meet the floor and it grows a stage on ${firstDay}.`;
   const season = g.season.opens ? `Garden opens Mon ${garden.formatShortDate(g.season.opens)}` : g.season.label;
   return `<section class="sec z-now habitsec">${sectionHeader('Habits', goLink('History', 'grow/habits'), 2, `${String(done)}/${String(total)}`)}
-    <div class="card gcard"><p class="gwh"><span>${escapeHtml(season)}</span>${g.season.opens ? '' : `<span class="muted">ends ${garden.formatShortDate(g.season.ends)}</span>`}</p>${tiles}</div><p class="wmsg">${escapeHtml(lastWeekLine() + msg)}</p></section>`;
+    <div class="card gcard"><p class="gwh"><span>${escapeHtml(season)}</span>${g.season.opens ? '' : `<span class="muted">ends ${garden.formatShortDate(g.season.ends)}</span>`}</p>${tiles}</div><p class="wmsg">${escapeHtml(lastWeekLine() + msg)}</p>${tipRow(tipGarden())}</section>`;
 }
