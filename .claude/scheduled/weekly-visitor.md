@@ -4,6 +4,7 @@ This file is a template. Nothing runs until someone registers it; `lifeboard-set
 
 ## Suggested schedule
 - Cron: `<minute> <hour> * * <day>` in the owner's time zone, day = the board's week start (`checks/week_start`) or the night before it (0 = Sunday … 6 = Saturday). Default: Sunday night, e.g. `CRON_TZ=America/Los_Angeles 43 22 * * 0`.
+- Which repo: the board's own copy (for the owner, the private copy), never the public lifeboard repo (AGENTS.md "Which repo publishes which board"). The run commits models and opens its PR there.
 - Where it runs:
   - **Cloud (recommended)**: a scheduled task that starts a fresh cloud session in the lifeboard environment each time. The environment's setup script runs `./setup.sh` (Blender, its render libraries, ImageMagick, Node); its network must allow `download.blender.org`. Nothing has to be awake.
   - **Mac**: the Claude desktop app → Scheduled, working directory = this repo. The Mac must be **awake** with the app running (System Settings → Battery/Energy → schedule wake, or `sudo pmset repeat wakeorpoweron U 05:55:00`).
