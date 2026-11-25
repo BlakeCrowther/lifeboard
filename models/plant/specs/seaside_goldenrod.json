@@ -6,6 +6,7 @@
   "biome": 0,
   "rarity": "common",
   "archetype": "stem_bloom",
+  "notes": {"why_library_form": "shipped 2026-11-24 on stem_bloom, before per-species generators (lifeboard#25); not rebuilt since"},
   "reference": "Solidago sempervirens: stout upright stem with long fleshy strap leaves; fall bloom = dense club-shaped plume of tiny golden-yellow flowers at the top; lower leaves edged russet",
   "plot": "journaling",
   "gen": 0,

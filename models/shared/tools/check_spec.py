@@ -70,7 +70,7 @@ def main(path: str) -> dict[str, Any]:
         if S > 0.15 and not 0.45 <= S <= 0.95:
             fails.append(f"{c} saturation {S:.2f} outside 0.45-0.95 (neutrals <0.15 allowed)")
     if kind == "plant":
-        return _plant(s, fails)
+        return _plant(s, fails, root)
     if kind == "scenery":
         return _scenery(s, fails)
     idle = s["motion"].get("idle", {})
@@ -159,8 +159,28 @@ def _rest(s: dict[str, Any]) -> list[str]:
     return f
 
 
-def _plant(s: dict[str, Any], fails: list[str]) -> dict[str, Any]:
-    """Plant draft contract (models/plant/CONTRACT.md): per-stage sway loops + a tend reaction."""
+LIBRARY_REASON_MIN = 20  # characters: a real sentence, not "ok"
+
+
+def _plant(s: dict[str, Any], fails: list[str], root: str) -> dict[str, Any]:
+    """Plant contract (models/plant/CONTRACT.md): per-stage sway loops + a tend reaction, and the species' own
+    generator (archetype == id, models/plant/archetypes/<id>.py, copied from a growth form named in `based_on`).
+    Building straight on a library growth form needs notes.why_library_form: why that form, as is, is the species."""
+    arch_dir = os.path.join(root, "plant", "archetypes")
+    if s["archetype"] == s["id"]:
+        if not os.path.exists(os.path.join(arch_dir, s["id"] + ".py")):
+            fails.append(
+                f"archetype {s['id']}: write models/plant/archetypes/{s['id']}.py (the species' own generator)"
+            )
+        if not os.path.exists(os.path.join(arch_dir, str(s.get("based_on", "")) + ".py")):
+            fails.append("based_on must name the growth form the generator was copied from (models/plant/archetypes/)")
+    else:
+        why = str((s.get("notes") or {}).get("why_library_form", "")).strip()
+        if len(why) < LIBRARY_REASON_MIN:
+            fails.append(
+                f"archetype {s['archetype']} is a shared growth form: give the species its own generator "
+                f"(archetype = id, based_on = the form) or say in notes.why_library_form why the form as is is the species"
+            )
     sw = s["motion"].get("sway", {})
     td = s["motion"].get("tend", {})
     if not 48 <= sw.get("frames", 0) <= 144:

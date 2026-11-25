@@ -1,0 +1,79 @@
+{
+  "kind": "plant",
+  "id": "spray_example",
+  "name": "Goldenrod plume (form example)",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "spray",
+  "reference": "Solidago: one upright leafy stalk with long narrow strap leaves; bloom = a dense plume of many tiny golden-yellow florets on short arching side branches at the top, shortening upward into a cone",
+  "notes": {
+    "why_library_form": "growth-form example for the library (lifeboard#25): a leafy stalk topped by a branching plume is exactly spray"
+  },
+  "size": {
+    "height_m": 0.18
+  },
+  "shape": {
+    "stage_heights": [
+      0.06,
+      0.3,
+      0.6,
+      0.85,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.035,
+      "lean": 0.05
+    },
+    "leaf": {
+      "count": 4,
+      "length_ratio": 0.28,
+      "width_ratio": 0.16,
+      "pitch_deg": 38,
+      "droop_deg": 35,
+      "low": 0.08,
+      "high": 0.55
+    },
+    "spray": {
+      "layout": "panicle",
+      "branches": 7,
+      "branch_ratio": 0.16,
+      "angle_deg": 48,
+      "span": 0.32,
+      "florets": 5,
+      "floret_ratio": 0.022,
+      "puff": 0.2,
+      "droop_deg": 18
+    },
+    "seed_ratio": 0.03
+  },
+  "palette": {
+    "main": [
+      "#4f8a3a",
+      "#5f9a3e"
+    ],
+    "accent": "#ffb52e",
+    "disc": "#c9a23a",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.5,
+    "coat": 0.05
+  },
+  "motion": {
+    "sway": {
+      "frames": 96,
+      "cycles": 2,
+      "amp_deg": 5
+    },
+    "tend": {
+      "frames": 48,
+      "lift_deg": 8,
+      "stretch": 0.12,
+      "open": 0.2
+    }
+  },
+  "budget": {
+    "tris": 7500,
+    "texture": 512
+  }
+}

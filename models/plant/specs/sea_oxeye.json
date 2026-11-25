@@ -6,6 +6,7 @@
   "biome": 0,
   "rarity": "common",
   "archetype": "stem_bloom",
+  "notes": {"why_library_form": "shipped 2026-11-24 on stem_bloom, before per-species generators (lifeboard#25); not rebuilt since"},
   "reference": "Borrichia frutescens: stout stem with thick, short grey-green leaves in pairs; bloom = golden-yellow daisy of ~14 broad rays around a big brown-orange domed disc; fall: rays sun-bleached at the tips",
   "plot": "spanish-speaking",
   "gen": 0,

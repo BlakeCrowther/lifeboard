@@ -6,6 +6,7 @@
   "biome": 0,
   "rarity": "common",
   "archetype": "stem_bloom",
+  "notes": {"why_library_form": "shipped 2026-11-24 on stem_bloom, before per-species generators (lifeboard#25); not rebuilt since"},
   "reference": "Ruppia maritima: thread-thin branching green stem with long hair-fine ribbon blades; fall: long stalk carrying a small umbel of 4 olive pear-shaped fruits on stalklets; blade tips speckled with epiphytes",
   "plot": "running",
   "gen": 0,

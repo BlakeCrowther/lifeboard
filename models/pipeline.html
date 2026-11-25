@@ -125,7 +125,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
 <main>
   <h1>Model pipeline</h1>
   <p class="lede">How a 3D model goes from an idea to the Ecosystem, and what it must pass at each gate. Pick a kind; click any stage to jump to its details.</p>
-  <p class="meta">Last reviewed: 2026-11-24 (the weekly run opens a PR and squash-merges it once verify passes, so main matches the live board; plants run in parallel, one agent each, sharing capped build slots; queued time doesn't count against a run; never empty-handed: a spent budget ships the best attempt below the bar; creature bar recomputed from its golden, plant bar lowered; reports never name the new model; preflight runs the code gates without judge renders) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
+  <p class="meta">Last reviewed: 2026-11-25 (each plant gets its own generator from six growth forms, enforced by spec-check; the weekly run opens a PR and squash-merges it once verify passes, so main matches the live board; plants run in parallel, one agent each, sharing capped build slots; queued time doesn't count against a run; never empty-handed: a spent budget ships the best attempt below the bar; creature bar recomputed from its golden, plant bar lowered; reports never name the new model; preflight runs the code gates without judge renders) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
 
   <div class="bar">
     <div class="seg" role="group" aria-label="Model kind" id="kinds"></div>
@@ -410,7 +410,7 @@ const CRITERIA = {
 // Stages per kind. Hand-written: update when a stage, owner or route changes.
 const STAGES = {
   brief:  { g: "make", t: "Brief", s: "design the spec", owner: { creature: "creature-brief", plant: "plant-brief", scenery: "scenery-make" },
-            what: "Picks what to make: species, reference, palette, size, motion intent. Writes <code>models/&lt;kind&gt;/specs/&lt;id&gt;.json</code>.",
+            what: "Picks what to make: species, reference, palette, size, motion intent. Writes <code>models/&lt;kind&gt;/specs/&lt;id&gt;.json</code>. Each creature and each plant gets its own generator, copied from the closest body plan or growth form (plants: <code>stem_bloom</code>, <code>blade_clump</code>, <code>blade_fan</code>, <code>rosette</code>, <code>spray</code>, <code>brush</code>); spec-check refuses a plant built straight on a shared form unless the spec says why.",
             fail: "spec-check failures come back here." },
   build:  { g: "make", t: "Build", s: "Blender, headless", owner: "model-build",
             what: "Archetype generator builds the mesh: blockout, model, cleanup, UVs, material, bake (<code>build.py --run</code>). Refuses to rebuild without a plan once judged (exit 6).",
@@ -485,6 +485,7 @@ const WEAK = [
   { id: "Q1", t: "Extra judges on one build are free", b: "Rounds count builds, not judges, and the verdict uses the latest panel. Spawning more judges until one panel passes isn't refused yet." },
   { id: "creature floor", t: "Creature floor lets a weak feed ship", b: "It was lowered because the golden itself scores low on artifacts and feed, so any creature as weak there passes." },
   { id: "central 3s", t: "Sonnet judges cluster on 3", b: "Every creature panel so far, the golden included, lands near all-3 medians. A bar held above the golden's own mean failed every visitor (2026-w48); the bar is now the golden mean minus the margin, and a spent budget ships below the bar instead of nothing." },
+  { id: "plant forms", t: "Plant forms are new and unjudged in weekly use", b: "Five growth forms beside stem_bloom pass the code gates on their examples; how each scores with judges on a real weekly species is still to be seen (2026-w48: 6 of 8 plants missed the bar on species_read and anatomy when every plant was stem_bloom)." },
   { id: "Q3", t: "Card size isn't measured", b: "The phone draws a pipefish about 5 px tall. Judges see it on the sheet; no code check fails it." },
   { id: "sway-check", t: "Sway check is more lenient than judges", b: "Eelgrass passes sway-check while all six judges call its sway too small at game distance." },
   { id: "categorical rule", t: "Planned fix: pass/fail questions", b: "Judges agree on what is wrong (6 of 6 on each top defect) but not on numbers. Plan: identity + traits + major defects instead of score bars." },

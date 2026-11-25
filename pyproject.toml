@@ -34,6 +34,7 @@ ignore = ["ANN401", "E501", "E731", "B905", "B007"]
 # Blender-side scripts: bpy-heavy, short-lived; keep real lint (E,F,I,UP,B) but not annotation demands.
 "models/shared/blender/**" = ["ANN"]
 "models/*/archetypes/**" = ["ANN"]
+"models/plant/plant_kit.py" = ["ANN"]  # Blender-side helper for the plant archetypes, like shared/blender/lib.py
 "models/*/qa.py" = ["ANN", "F821"]
 # sys.path.insert(...) before a sibling import is how these scripts find each other (run as scripts, not packages).
 "models/shared/**" = ["E402"]

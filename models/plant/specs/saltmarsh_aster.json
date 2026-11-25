@@ -6,6 +6,7 @@
   "biome": 0,
   "rarity": "common",
   "archetype": "stem_bloom",
+  "notes": {"why_library_form": "shipped 2026-11-24 on stem_bloom, before per-species generators (lifeboard#25); not rebuilt since"},
   "reference": "Symphyotrichum tenuifolium: slender green stem with a few long ribbon-thin leaves; bloom = small aster with ~20 thin pale-lilac rays around a warm orange-yellow disc; fall bloomer, leaf tips russet",
   "plot": "dating-outreach",
   "gen": 0,
