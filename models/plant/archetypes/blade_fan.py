@@ -16,7 +16,7 @@ Spec fields (all optional except size/palette/motion):
   shape.seed_ratio .035
   palette.main [stalk, ribs], palette.accent (blade), palette.disc (rim crust; default main[1]), palette.seed
   motion.sway {frames, cycles, amp_deg, lag_frames}, motion.tend {frames, lift_deg, stretch, open}
-Contract: origin at the soil point, +Z up, +X is the best side (the fan faces it), meters."""
+Contract: origin at the soil point, +Z up, +X is the best side (the fan faces between +X and +Y), meters."""
 
 import math
 import os
@@ -29,6 +29,7 @@ from mathutils import Matrix, Vector
 
 _PATHS = {}
 _STEM_K = 2
+FACE = 0.3 * math.pi  # blade yaw: its face turned toward +X (the garden camera) and partly +Y (side views)
 
 
 def _stalk_len(spec, n):
@@ -64,7 +65,7 @@ def _outline(R, spread, wave, base_w, pts=18):
 
 def _turn(splay):
     """Blade frame: the outline's XZ plane turned to face +X, then fanned by `splay` about the vertical."""
-    return Matrix.Rotation(math.pi / 2 + splay, 3, "Z")
+    return Matrix.Rotation(FACE + splay, 3, "Z")
 
 
 def _place(local, top, splay):
@@ -99,7 +100,7 @@ def model(spec):
             continue
         R = kit.heights(spec)[n] - top.z
         for name, splay in _blades(spec, n):
-            o = lib.flat_part(name, _outline(R, spread, wave, bw), th, at=tuple(top), rot=(0, 0, math.pi / 2 + splay))
+            o = lib.flat_part(name, _outline(R, spread, wave, bw), th, at=tuple(top), rot=(0, 0, FACE + splay))
             parts[name] = o
             _PATHS[name] = [top, _place((0, R), top, splay)]
             for j in range(nribs):  # ribs fan out over both faces, from the stalk toward the rim

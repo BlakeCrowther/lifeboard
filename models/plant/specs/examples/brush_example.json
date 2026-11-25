@@ -21,15 +21,15 @@
       1.0
     ],
     "stem": {
-      "radius_ratio": 0.09,
-      "length_ratio": 0.5,
+      "radius_ratio": 0.055,
+      "length_ratio": 0.45,
       "lean": 0.02
     },
     "brush": {
-      "filaments": 36,
-      "cone_deg": 60,
+      "filaments": 56,
+      "cone_deg": 70,
       "jitter": 0.25,
-      "filament_ratio": 0.012,
+      "filament_ratio": 0.009,
       "collar": 0.0
     },
     "seed_ratio": 0.045
@@ -40,7 +40,7 @@
       "#5f9a36"
     ],
     "accent": "#6fae3a",
-    "disc": "#d9ecb8",
+    "disc": "#9fcf6a",
     "seed": "#e9d3a6"
   },
   "material": {

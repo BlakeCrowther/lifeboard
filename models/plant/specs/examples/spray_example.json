@@ -21,13 +21,13 @@
       1.0
     ],
     "stem": {
-      "radius_ratio": 0.035,
+      "radius_ratio": 0.022,
       "lean": 0.05
     },
     "leaf": {
-      "count": 4,
-      "length_ratio": 0.28,
-      "width_ratio": 0.16,
+      "count": 5,
+      "length_ratio": 0.34,
+      "width_ratio": 0.12,
       "pitch_deg": 38,
       "droop_deg": 35,
       "low": 0.08,
@@ -35,10 +35,10 @@
     },
     "spray": {
       "layout": "panicle",
-      "branches": 7,
-      "branch_ratio": 0.16,
-      "angle_deg": 48,
-      "span": 0.32,
+      "branches": 9,
+      "branch_ratio": 0.2,
+      "angle_deg": 40,
+      "span": 0.42,
       "florets": 5,
       "floret_ratio": 0.022,
       "puff": 0.2,

@@ -114,8 +114,9 @@ def model(spec):
                 for i in range(pc):
                     yaw = 2 * math.pi * i / pc
                     pn = f"{hn}_petal{i}"
-                    outline = [(0, 0)] + [(hr * u, hr * 0.32 * math.sin(math.pi * u)) for u in (0.2, 0.4, 0.6, 0.8)]
-                    outline += [(hr, 0)] + [(hr * u, -hr * 0.32 * math.sin(math.pi * u)) for u in (0.8, 0.6, 0.4, 0.2)]
+                    pl = hr * 1.5  # open petals reach past the bud's radius
+                    outline = [(0, 0)] + [(pl * u, pl * 0.3 * math.sin(math.pi * u)) for u in (0.2, 0.4, 0.6, 0.8)]
+                    outline += [(pl, 0)] + [(pl * u, -pl * 0.3 * math.sin(math.pi * u)) for u in (0.8, 0.6, 0.4, 0.2)]
                     parts[pn] = lib.flat_part(
                         pn, outline, kit.thickness(spec), at=tuple(top), rot=(math.pi / 2, -0.4, yaw)
                     )
