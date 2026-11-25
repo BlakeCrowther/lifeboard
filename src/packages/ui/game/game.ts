@@ -56,7 +56,7 @@ export function currentGame(): GameState | null {
   const from = gameRun.derivedFrom;
   if (from && from.revision === modelRevision.count && from.poolVersion === poolVersion && gameRun.game && gameRun.game.today === clock.today) return gameRun.game;
   const tasks = model.tasks.map((t) => ({ eff: effectiveDateOf(t), done: t.done, doneDate: t.done && t.doneAt ? dateOfInstant(t.doneAt) : null, days: t.days }));
-  const habits = model.habits.map((h) => ({ key: h.key, name: h.name, floor: h.floor, target: h.target, daily: h.daily, since: h.doc.created_at ? dateOfInstant(h.doc.created_at) : null }));
+  const habits = model.habits.map((h) => ({ key: h.key, ...(h.plot ? { plot: h.plot } : {}), name: h.name, floor: h.floor, target: h.target, daily: h.daily, since: h.doc.created_at ? dateOfInstant(h.doc.created_at) : null }));
   const sessions = model.habitSessions.map((x) => { const h = model.habits.find((k) => k.key === x.h || k.id === x.h); return { h: h ? h.key : x.h, date: x.date }; });
   const breakSkips = store.all('logs').filter((l) => l.kind === 'break' && l.label === 'skip').map((l) => l.date);
   const lessonDates = store.all('logs').filter((l) => l.kind === 'lesson').map((l) => l.date);
@@ -127,14 +127,14 @@ export function afterRenderGame(): void {
 
 /* checks/game_status: the ecosystem's biome/phase for Claude's weekly run (weekly-visitor reads it to know when a
    biome is finished and the next one needs designing), and the garden for season-seeds: `needs` = plots whose current plant
-   (habit key + gen) has no 3D model yet, i.e. a new habit or a plant pressed this week. Written only when it changes. */
+   (plot id + gen) has no 3D model yet, i.e. a new habit or a plant pressed this week. Written only when it changes. */
 function writeGameStatus(g: GameState): void {
   const r = g.reef, season = g.season, last = g.history.slice(-12);
   /* the plant growing now when it has no model, plus the next one for a plot showing a bloom/withered plant (pressed when the week starts) */
-  const needs = g.plots.flatMap((p) => p.upcoming ? (p.upcoming.made ? [] : [{ plot: p.key, habit: p.name, gen: p.upcoming.gen, rarity: p.upcoming.rarity, mutated: false, biome: season.biome, sown: 'next Monday' }])
-    : p.made ? [] : [{ plot: p.key, habit: p.name, gen: p.gen, rarity: p.rarity, mutated: p.mutated, biome: p.biome, sown: p.sown }]);
+  const needs = g.plots.flatMap((p) => p.upcoming ? (p.upcoming.made ? [] : [{ plot: p.plot, habit: p.name, gen: p.upcoming.gen, rarity: p.upcoming.rarity, mutated: false, biome: season.biome, sown: 'next Monday' }])
+    : p.made ? [] : [{ plot: p.plot, habit: p.name, gen: p.gen, rarity: p.rarity, mutated: p.mutated, biome: p.biome, sown: p.sown }]);
   const garden = { season: season.name, from: season.from, ends: season.ends, opens: season.opens || null, biome: season.biome, plots: g.plots.length, needs,
-    pressed: last.map((h) => ({ plot: h.key, gen: h.gen, species: h.species, bloomed: h.bloomed, earned: h.earned.rarity, to: h.to })) };
+    pressed: last.map((h) => ({ plot: h.plot, gen: h.gen, species: h.species, bloomed: h.bloomed, earned: h.earned.rarity, to: h.to })) };
   const v = { biome: r.biome, phase: r.phase, phases: r.phases, bleached: r.bleached, dioramas: r.dioramas.length, visitor: g.visitor || null, visitorWeek: g.visitorWeek || null, garden };
   const cur = store.get('checks', 'game_status'), key = JSON.stringify(v);
   if (!store.ready || (cur && JSON.stringify(cur.value) === key) || gameRun.statusKey === key) return;

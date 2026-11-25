@@ -27,6 +27,8 @@ export interface GameTask {
 
 export interface GameHabit {
   key: string;
+  /** the habit's garden plot id, the `plot` its roster plants carry: random, so a committed roster names no habit. Habits from before it have none and use `key`. */
+  plot?: string;
   name: string;
   floor: number;
   target: number;
@@ -39,7 +41,7 @@ export interface GameHabit {
 export interface PlantPool {
   n?: number;
   byBiome?: Record<string, string[]>;
-  /** roster plants: plot = habit key, gen = which plant of that plot */
+  /** roster plants: plot = the habit's plot id (older entries: its key), gen = which plant of that plot */
   plants?: Record<string, { added?: string; plot?: string | null; gen?: number | null }>;
 }
 
@@ -119,6 +121,8 @@ export interface PressedPlant {
   id: string;
   kind: 'plant';
   key: string;
+  /** the habit's plot id (GameHabit.plot, else its key) */
+  plot: string;
   name: string;
   gen: number;
   species: string;
@@ -254,7 +258,10 @@ export function deriveGame(input: GameInput) {
     const plant = meta[id];
     if (plant?.plot != null && plant.gen != null) madeFor[`${plant.plot}#${String(plant.gen)}`] = id;
   }
-  const speciesFor = (key: string, gen: number): string => madeFor[`${key}#${String(gen)}`] ?? speciesOf[key] ?? 'daisy';
+  const plotOf = (habit: GameHabit): string => habit.plot || habit.key;
+  /* a roster plant matches by plot id; entries made before plot ids exist match by habit key */
+  const modelFor = (habit: GameHabit, gen: number): string | undefined => madeFor[`${plotOf(habit)}#${String(gen)}`] ?? madeFor[`${habit.key}#${String(gen)}`];
+  const speciesFor = (habit: GameHabit, gen: number): string => modelFor(habit, gen) ?? speciesOf[habit.key] ?? 'daisy';
   const history: PressedPlant[] = [];
   const plots = habits.map((habit, habitIndex) => {
     const perWeek: Record<number, number> = {};
@@ -294,7 +301,7 @@ export function deriveGame(input: GameInput) {
       if (finished) {
         const gen = plot.gen - 1;
         history.push({
-          id: `plant-${habit.key}-g${String(gen)}`, kind: 'plant', key: habit.key, name: habit.name, gen, species: speciesFor(habit.key, gen), hi: habitIndex,
+          id: `plant-${habit.key}-g${String(gen)}`, kind: 'plant', key: habit.key, plot: plotOf(habit), name: habit.name, gen, species: speciesFor(habit, gen), hi: habitIndex,
           from: dateOfDayNumber(sown), to: dateOfDayNumber(week + 6), season: calendarSeason(dateOfDayNumber(sown), hemisphere).name, biome: biomeOn(sown),
           seed: grewFrom, stage: finished.died ? 0 : 4, stageName: finished.died ? 'seed' : 'bloom', bloomed: finished.bloomed, died: finished.died, score: finished.score, sessions: sessionsSinceSown, earned: finished.seed,
         });
@@ -310,8 +317,8 @@ export function deriveGame(input: GameInput) {
     const need = habit.daily ? Math.max(1, habit.floor) - todayCount : Math.max(1, habit.floor) - week;
     const showing = doomed ? 'withered' : plot.rest > 0 ? (plant.alive ? 'bloom' : 'withered') : null;
     return {
-      key: habit.key, name: habit.name, gen: plot.gen, species: speciesFor(habit.key, plot.gen), made: !!madeFor[`${habit.key}#${String(plot.gen)}`], sown: dateOfDayNumber(sown), biome: biomeOn(sown),
-      upcoming: showing ? { gen: plot.gen + 1, made: !!madeFor[`${habit.key}#${String(plot.gen + 1)}`], rarity: plant.alive && !doomed ? rarityOf(plant.score) : 'common', compost: !plant.alive || doomed } : null,
+      key: habit.key, plot: plotOf(habit), name: habit.name, gen: plot.gen, species: speciesFor(habit, plot.gen), made: !!modelFor(habit, plot.gen), sown: dateOfDayNumber(sown), biome: biomeOn(sown),
+      upcoming: showing ? { gen: plot.gen + 1, made: !!modelFor(habit, plot.gen + 1), rarity: plant.alive && !doomed ? rarityOf(plant.score) : 'common', compost: !plant.alive || doomed } : null,
       stage: plant.stage, stageName: stages[plant.stage], alive: plant.alive && !doomed, daily: !!habit.daily, today: todayCount, wilted: !!plant.wilted, showing, rarity: plant.seed.rarity, mutated: !!plant.seed.mutated,
       thirsty: !waiting && !showing && plant.alive && plant.stage > 0 && need > 0 && (!!habit.daily || daysLeft <= need + 2), week, floor: habit.floor, target: habit.target, seed: plant.seed, plant,
       /* this week's floor met: the plant grows a stage when the week closes */

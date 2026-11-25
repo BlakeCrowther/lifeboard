@@ -64,6 +64,7 @@ export const COLLECTION_SCHEMAS = {
   habits: z.looseObject({
     name: z.string(), key: str, cadence: z.nullish(z.enum(['week', 'day'])), target_per_week: z.number(), streak_floor_per_week: num,
     sort_order: num, notes: str, icon_key: str, hidden: bool, created_at: num,
+    plot_id: str, /* random garden plot id; roster plants match on it, so a committed roster names no habit */
   }),
   /* `exception` (a late log's reason + evidence) is read by the page, not checked here. */
   habit_sessions: z.looseObject({ habit_id: z.string(), date: dateString, created_at: num }),

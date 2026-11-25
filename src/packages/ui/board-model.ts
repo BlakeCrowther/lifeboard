@@ -53,7 +53,12 @@ export function readProfile(value: unknown): Profile & { timeZone: string } {
 const LEGACY_ICON_KEYS: Readonly<Record<string, string>> = { plant: 'leaf', tooth: 'med', medical: 'med', mail: 'chat', broom: 'house', droplet: 'drop', dumbbell: 'flame', plane: 'pin', cake: 'gift', music: 'drum', bag: 'cart', books: 'book', 'book-open': 'book', surf: 'wave', key: 'house', chart: 'target', scissors: 'person', journal: 'book', hola: 'chat', cup: 'drop', diamond: 'star', flag: 'target', dot: 'spark', clipboard: 'list', pumpkin: 'spark', 'bubble-heart': 'heart', sunset: 'sun', stopwatch: 'clock', news: 'list', bulb: 'spark' };
 /** A stored icon key as one this icon set draws ('spark' when unknown). */
 export const iconKeyOf = (key: string | null | undefined): string => (key && hasLineIcon(key) ? key : (key && LEGACY_ICON_KEYS[key]) || 'spark');
-const HABIT_ICONS: Readonly<Record<string, string>> = { drumming: 'drum', 'spanish-speaking': 'chat', surfing: 'wave', running: 'shoe', meditation: 'lotus', journaling: 'book', reading: 'book' };
+/* a habit without its own icon_key gets one guessed from its name */
+const HABIT_ICON_HINTS: readonly (readonly [RegExp, string])[] = [
+  [/drum|guitar|piano|music|sing/, 'drum'], [/speak|language|talk|call|chat/, 'chat'], [/surf|swim|paddle/, 'wave'],
+  [/run|jog|walk|hike/, 'shoe'], [/meditat|breath|yoga/, 'lotus'], [/journal|read|book|writ|study/, 'book'],
+];
+const habitIconOf = (name: string): string | undefined => HABIT_ICON_HINTS.find(([pattern]) => pattern.test(name.toLowerCase()))?.[1];
 export const GOAL_CATEGORIES = ['Climbing', 'Work', 'School', 'Self Care', 'Personal'] as const;
 export const GOAL_CATEGORY_ICONS: Readonly<Record<string, string>> = { Climbing: 'mountain', Work: 'laptop', School: 'book', 'Self Care': 'lotus', Personal: 'star' };
 export const GROCERY_AISLES = ['Produce', 'Dairy', 'Meat & seafood', 'Bakery', 'Pantry', 'Frozen', 'Drinks', 'Household', 'Other'] as const;
@@ -87,6 +92,8 @@ export interface BoardTask {
 export interface BoardHabit {
   id: string;
   key: string;
+  /** habits.plot_id: the garden plot id its roster plants carry (GameHabit.plot) */
+  plot?: string;
   name: string;
   icon: string;
   target: number;
@@ -307,7 +314,7 @@ export function buildBoardModel(read: BoardReader, { today, weekStart, pets, liv
   m.tasks = allTasks.filter((t) => !isSuggested(t));
   m.hiddenHabits = read('habits').filter((d) => d.hidden).sort(bySortOrder).map((d) => ({ id: d.id, name: d.name }));
   m.habits = read('habits').filter((d) => !d.hidden).sort(bySortOrder).map((d) => ({
-    id: d.id, key: d.key || d.id, name: d.name, icon: iconKeyOf(d.icon_key || HABIT_ICONS[d.key ?? '']), target: Math.max(1, d.target_per_week || 1),
+    id: d.id, key: d.key || d.id, ...(d.plot_id ? { plot: d.plot_id } : {}), name: d.name, icon: iconKeyOf(d.icon_key || habitIconOf(d.name)), target: Math.max(1, d.target_per_week || 1),
     floor: Math.max(1, Number(d.streak_floor_per_week) || 1), daily: d.cadence === 'day', notes: d.notes || '', doc: d,
   }));
   /* a session counts when it was logged during its own week. Later logs count only with an exception (reason + evidence). Older docs without created_at count. */

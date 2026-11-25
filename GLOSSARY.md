@@ -37,6 +37,7 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 ## Garden
 
 - **Garden**: one **plot** per habit, one plant at a time.
+- **Plot id**: a habit's random garden id (`habits.plot_id`, e.g. `p3f9a0c1d2e4b`), set when the habit is created. A roster plant's `plot` is its plot id, so the public roster names no habit. Habits from before plot ids use their key.
 - **Habit** (`habits`). **Habit session** (`habit_sessions`, code `habitSessions`): one logged session of a habit on a date. A session logged after its week counts only with an exception (reason + evidence); the rest are `voidHabitSessions`.
 - **Floor**: the fewest sessions a week (or day) that keeps a habit's plant alive. **Target**: the number you're aiming for. Beating it earns rarer seeds.
 - **Seed**: the next plant for a plot, its rarity set by how the last one did.

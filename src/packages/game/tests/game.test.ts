@@ -133,3 +133,21 @@ describe('deriveGame: the garden opens on the game start day (SPEC.md Game start
     expect(plotOf(daily, ['2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08'])?.stageName).toBe('sprout');
   });
 });
+
+describe('deriveGame: roster plants match a plot by its plot id (SPEC.md 3D plants)', () => {
+  const plotWith = (habit: GameHabit, plot: string) =>
+    deriveGame({ today: '2026-11-10', start: '2026-11-02', tasks: [], habits: [habit], sessions: [], plantPool: { plants: { sea_aster: { plot, gen: 0 } } } }).plots[0];
+  const habit: GameHabit = { key: 'run', plot: 'p0a1b2c3d4e5f', name: 'Run', floor: 2, target: 3 };
+
+  it('uses the model made for the plot id', () => {
+    expect(plotWith(habit, 'p0a1b2c3d4e5f')).toMatchObject({ plot: 'p0a1b2c3d4e5f', made: true, species: 'sea_aster' });
+  });
+
+  it('still uses a model made before plot ids, keyed by the habit key', () => {
+    expect(plotWith(habit, 'run')).toMatchObject({ made: true, species: 'sea_aster' });
+  });
+
+  it('falls back to the habit key as the plot id for a habit without one', () => {
+    expect(plotWith({ key: 'run', name: 'Run', floor: 2, target: 3 }, 'run')).toMatchObject({ plot: 'run', made: true });
+  });
+});

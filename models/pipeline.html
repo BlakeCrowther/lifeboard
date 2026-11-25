@@ -176,6 +176,10 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
   </div>
 
   <div class="callout">
+    <h4>Plants name no habit</h4>A plant's spec and roster entry carry <code>plot</code> = the habit's random plot id (<code>needs[].plot</code>, from <code>habits.plot_id</code>) and <code>gen</code>, never the habit's name: both are committed to a public repo. <code>tools/committed-models.test.ts</code> (in <code>pnpm verify</code>) fails on a <code>habit</code> field or a non-id <code>plot</code>. Commit messages and PR bodies name plots by plot id; the run's final message to the owner may use habit names.
+  </div>
+
+  <div class="callout">
     <h4>Parallel plants, shared build slots</h4><code>season-seeds</code> spawns one agent per plant, all at once; each owns its ledger and runs brief → build → grow → verify, then hands its renders back. Subagents can't start agents, so the orchestrator runs every judge panel and sends the verdict back to the same plant agent, which retries or finishes and returns its roster entry. The orchestrator writes the roster, commits and publishes once. Blender jobs (<code>build.py</code>, <code>verify.sh</code>) each hold a build slot (<code>shared/tools/slots.py</code>; <code>LB_BUILD_SLOTS</code>, default half the cores), so eight plants don't crawl together. Time queued for a slot is credited back to the run (<code>minutes_queued</code> in <code>ledger.py status</code>), so a plant's minutes measure its own work.
   </div>
 

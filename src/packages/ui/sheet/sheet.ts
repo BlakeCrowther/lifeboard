@@ -202,6 +202,8 @@ function submitGoal(f: Record<string, FormDataEntryValue>): boolean {
   viewState.growView = 'goals';
   return true;
 }
+/** A garden plot id: random, so a roster that names it says nothing about the habit. */
+const newPlotId = (): string => 'p' + Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => b.toString(16).padStart(2, '0')).join('');
 function submitHabit(f: Record<string, FormDataEntryValue>, c: Sheet): boolean {
   const name = fieldText(f, 'name').trim();
   if (!name) { toast('Name the habit first'); return false; }
@@ -212,7 +214,7 @@ function submitHabit(f: Record<string, FormDataEntryValue>, c: Sheet): boolean {
     return true;
   }
   const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'habit';
-  void runWrite((rec) => store.create('habits', { key: model.habits.some((h) => h.key === key) ? key + '-' + Date.now().toString(36) : key, name, cadence, target_per_week: target, streak_floor_per_week: floor, notes: fieldText(f, 'notes').trim(), sort_order: (model.habits.length + 1) * 10 }, rec), 'Habit added');
+  void runWrite((rec) => store.create('habits', { key: model.habits.some((h) => h.key === key) ? key + '-' + Date.now().toString(36) : key, plot_id: newPlotId(), name, cadence, target_per_week: target, streak_floor_per_week: floor, notes: fieldText(f, 'notes').trim(), sort_order: (model.habits.length + 1) * 10 }, rec), 'Habit added');
   viewState.tab = 'grow';
   viewState.growView = 'habits';
   return true;

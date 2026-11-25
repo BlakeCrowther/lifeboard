@@ -90,9 +90,8 @@
       "rarity": "common",
       "golden": false,
       "added": "2026-11-24",
-      "plot": "drumming",
-      "gen": 0,
-      "habit": "Drumming"
+      "plot": "p04beadf9202b",
+      "gen": 0
     },
     {
       "id": "saltmarsh_aster",
@@ -105,9 +104,8 @@
       "rarity": "common",
       "golden": false,
       "added": "2026-11-24",
-      "plot": "dating-outreach",
-      "gen": 0,
-      "habit": "Dating outreach"
+      "plot": "p709911f7928d",
+      "gen": 0
     },
     {
       "id": "sea_oxeye",
@@ -121,9 +119,8 @@
       "golden": false,
       "below_bar": true,
       "added": "2026-11-24",
-      "plot": "spanish-speaking",
-      "gen": 0,
-      "habit": "Spanish speaking"
+      "plot": "p297e22f5367e",
+      "gen": 0
     },
     {
       "id": "smooth_cordgrass",
@@ -137,9 +134,8 @@
       "golden": false,
       "below_bar": true,
       "added": "2026-11-24",
-      "plot": "surfing",
-      "gen": 0,
-      "habit": "Surfing"
+      "plot": "p6d8de252366d",
+      "gen": 0
     },
     {
       "id": "mermaids_fan",
@@ -153,9 +149,8 @@
       "golden": false,
       "below_bar": true,
       "added": "2026-11-24",
-      "plot": "meditation",
-      "gen": 0,
-      "habit": "Meditation"
+      "plot": "p3ac19f81ce75",
+      "gen": 0
     },
     {
       "id": "seaside_goldenrod",
@@ -169,9 +164,8 @@
       "golden": false,
       "below_bar": true,
       "added": "2026-11-24",
-      "plot": "journaling",
-      "gen": 0,
-      "habit": "Journaling"
+      "plot": "pd89ff91d4672",
+      "gen": 0
     },
     {
       "id": "widgeon_grass",
@@ -185,9 +179,8 @@
       "golden": false,
       "below_bar": true,
       "added": "2026-11-24",
-      "plot": "running",
-      "gen": 0,
-      "habit": "Running"
+      "plot": "p32e23d2d03bc",
+      "gen": 0
     },
     {
       "id": "bead_whorl_alga",
@@ -201,9 +194,8 @@
       "golden": false,
       "below_bar": true,
       "added": "2026-11-24",
-      "plot": "reading",
-      "gen": 0,
-      "habit": "Reading"
+      "plot": "pe893da8fa256",
+      "gen": 0
     }
   ]
 }

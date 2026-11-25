@@ -7,7 +7,7 @@ description: Kind: plant. Design a seed species as a plant spec (models/plant/sp
 
 Output: `models/plant/specs/<id>.json`, `"kind": "plant"`, passing `python3 models/shared/tools/check_spec.py <spec>`. Read `models/plant/CONTRACT.md`, `models/STYLE.md` and the archetype's docstring first. Worked example: `models/plant/specs/mermaids_cup.json`.
 
-1. **Inputs** (from season-seeds' `needs` entry): biome id (entry in `models/biomes.json`; its `medium` decides wind vs water sway), rarity (common / rare / exotic), habit name, calendar season, `plot` + `gen`; `models/roster.json` (no repeated species; `kind: "plant"` entries). Spec carries `plot`, `gen`, `habit`.
+1. **Inputs** (from season-seeds' `needs` entry): biome id (entry in `models/biomes.json`; its `medium` decides wind vs water sway), rarity (common / rare / exotic), habit name (for the design only), calendar season, `plot` + `gen`; `models/roster.json` (no repeated species; `kind: "plant"` entries). Spec carries `plot` (the plot id from `needs`) and `gen`, never the habit's name: specs are committed to a public repo.
 2. **Species**: a real plant / alga / fungus with a graphic silhouette per stage (seed → sprout → leafy → bud → bloom). `reference` = binomial + 2–4 traits for the late stages.
    - Biome identity: follow `look.plants`, `look.shape`, `look.palette` and `identity_rules`. Never use a motif another biome `owns`. The bloom (`palette.accent`) carries the biome's accent colour.
 3. **Archetype** (growth form) from `models/plant/archetypes/`: `stem_bloom` (one stem, alternate leaves, terminal head: tulip, daisy, poppy, stalked algae, polyp tufts). No fit → novel path (write a new archetype per `archetypes/README.md`; note it for the orchestrator).
