@@ -133,10 +133,10 @@ find board -> hydrate (model files, migrate) -> ledger -> brief -> build -> anim
 | 3 | Move the starter set to `models/starter/`; setup publishes it as the board's model files. |
 | 4 | `tools/live-diff.ts`: compare page files only; model files are reported, never fail. |
 | 5 | `tools/board-hydrate.ts` (model files plus `schemaVersion` migration). Test against a fixture folder. Add `schemaVersion` to `roster.json` and `biomes.json`. |
-| 6 | `model-ship`: replace "commit, then republish everything" with "re-read roster, merge, publish model files only, then commit `models/board/` (git tier)". Specs become required, kept in one `models/specs.json` (one file per model instead of two). Add a capacity check: count the files and bytes the new version would hold; warn in the report above 70% of either limit, refuse to ship at the limit. |
+| 6 | `model-ship` (as of [PR lifeboard#26](https://github.com/BlakeCrowther/lifeboard/pull/26): one branch per run, a PR, squash-merge once `verify` passes): models stop riding that PR. Ship = re-read roster, merge, publish model files only, then commit `models/board/` (git tier, straight to `main`). The branch, PR and auto-merge stay for upstream, carrying only the run's retro fixes to skills and gates; a run with no fixes opens no PR. Specs become required, kept in one `models/specs.json` (one file per model instead of two). Add a capacity check: count the files and bytes the new version would hold; warn in the report above 70% of either limit, refuse to ship at the limit. |
 | 7 | `weekly-visitor` (find board and hydrate as step 0c), `season-seeds`, `scenery-make`, `biome-brief`: hydrate first; ship through model-ship. |
 | 8 | `lifeboard-setup` and `AGENTS.md`: the publish rules above; how runs find the board (`Artifact list`); a page publish builds first and sends no model files. |
-| 9 | `.claude/scheduled/weekly-visitor.md`: drop "commit on branch, do not merge or push"; say models ship to the store; note where the pointer comes from in a cloud run. |
+| 9 | `.claude/scheduled/weekly-visitor.md`: keep the cloud setup PR lifeboard#26 added (a fresh session per run in the lifeboard environment, setup script runs `./setup.sh`) and the task-list progress. Register the task in claude.ai with the repo and environment attached: a task created from a session (`create_trigger`) gets no repo (cloud-pipeline.md row 17). Prompt: models ship to the store; the PR step covers retro fixes only; the scheduled session has no `send_message`, so the report is its final message; the board's URL is in the prompt. |
 | 10 | `models/pipeline.html`: add the new stages (find board, hydrate, model-only publish, commit `models/board/`) and regenerate its data block. |
 | 11 | A dry run in a cloud session end to end, then one real week. |
 
@@ -144,7 +144,7 @@ find board -> hydrate (model files, migrate) -> ledger -> brief -> build -> anim
 
 | Item | Note |
 |---|---|
-| Store access from scheduled cloud runs | Reads proven (step 1). Unproven: publishing from a scheduled session, and how the scheduled task gets the repo. If publishing fails, a scheduled run cannot ship, and runs stay interactive until it works. |
+| Store access from scheduled cloud runs | Reads proven (step 1). Unproven: publishing from a scheduled session. If it fails, a scheduled run cannot ship, and runs stay interactive until it works. |
 | Losing the artifact | A plugin-tier board exists only in its artifact; deleting the artifact deletes it. Version history covers bad publishes, not deletion. `make-it-mine` gives a repo copy. |
 | The maintainer's own board | Upstream never commits `models/board/`, so the maintainer's board relies on version history. Open: a private copy for it. |
 | Publish conflicts | Another publish can land between a read and a write. The tool rejects the later write and returns the live version; the run re-reads and merges. |
