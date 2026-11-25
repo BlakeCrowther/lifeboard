@@ -6,6 +6,7 @@
   "biome": 0,
   "rarity": "common",
   "archetype": "stem_bloom",
+  "notes": {"why_library_form": "golden reference: Acetabularia is one stalk with a terminal parasol cap, which stem_bloom builds as is"},
   "reference": "Acetabularia acetabulum: single slender pale-lime stalk; young stalks carry whorls of fine hair-like branches; bloom = flat ribbed lime parasol cap of ~18 fused rays around a small coral centre; bud = closed club at the tip",
   "size": {
     "height_m": 0.14

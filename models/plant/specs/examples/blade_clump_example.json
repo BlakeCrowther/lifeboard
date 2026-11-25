@@ -1,0 +1,21 @@
+{
+  "kind": "plant",
+  "id": "blade_clump_example",
+  "name": "Cordgrass clump (form example)",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "blade_clump",
+  "reference": "Spartina alterniflora clump: 7-9 long narrow arching green blades from one base, tips turning gold; bloom = one upright stalk with a slender golden seed spike of pressed spikelets",
+  "notes": {"why_library_form": "growth-form example for the library (lifeboard#25): a clump of blades with a seed spike is exactly blade_clump"},
+  "size": {"height_m": 0.18},
+  "shape": {
+    "stage_heights": [0.07, 0.32, 0.62, 0.86, 1.0],
+    "blades": {"count": 8, "width_ratio": 0.055, "thick_ratio": 0.01, "pitch_deg": 80, "droop_deg": 60, "spread": 0.04, "vary": 0.35, "tip_taper": 0.85, "reach": 0.8},
+    "spike": {"count": 1, "length_ratio": 0.3, "radius_ratio": 0.035, "spikelets": 12, "lean": 0.05},
+    "seed_ratio": 0.035
+  },
+  "palette": {"main": ["#6a9a3a", "#5c9a3e"], "accent": "#e0a84a", "disc": "#c9893a", "seed": "#e9d3a6"},
+  "material": {"roughness": 0.5, "coat": 0.05},
+  "motion": {"sway": {"frames": 112, "cycles": 2, "amp_deg": 6}, "tend": {"frames": 48, "lift_deg": 9, "stretch": 0.14, "open": 0.15}},
+  "budget": {"tris": 6000, "texture": 1024}
+}

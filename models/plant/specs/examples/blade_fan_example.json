@@ -1,0 +1,69 @@
+{
+  "kind": "plant",
+  "id": "blade_fan_example",
+  "name": "Mermaid's fan (form example)",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "blade_fan",
+  "reference": "Udotea flabellum: short pale stalk from a sand anchor holding one broad, upright, ribbed green fan blade with a rippled rim; young plants a small club; fall: rim crusted pale with lime",
+  "notes": {
+    "why_library_form": "growth-form example for the library (lifeboard#25): one stalked fan blade is exactly blade_fan"
+  },
+  "size": {
+    "height_m": 0.13
+  },
+  "shape": {
+    "stage_heights": [
+      0.07,
+      0.3,
+      0.6,
+      0.85,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.035,
+      "length_ratio": 0.3,
+      "lean": 0.03
+    },
+    "fan": {
+      "blades": 1,
+      "spread_deg": 120,
+      "wave": 0.05,
+      "ribs": 7,
+      "rib_ratio": 0.011,
+      "base_ratio": 0.05,
+      "rim": 0.014
+    },
+    "seed_ratio": 0.04
+  },
+  "palette": {
+    "main": [
+      "#a9c46a",
+      "#4f8a36"
+    ],
+    "accent": "#6fb84a",
+    "disc": "#e6ecd0",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.45,
+    "coat": 0.15
+  },
+  "motion": {
+    "sway": {
+      "frames": 120,
+      "cycles": 2,
+      "amp_deg": 4
+    },
+    "tend": {
+      "frames": 48,
+      "lift_deg": 7,
+      "stretch": 0.14,
+      "open": 0.18
+    }
+  },
+  "budget": {
+    "tris": 5000,
+    "texture": 1024
+  }
+}

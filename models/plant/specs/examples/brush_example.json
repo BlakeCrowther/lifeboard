@@ -1,0 +1,67 @@
+{
+  "kind": "plant",
+  "id": "brush_example",
+  "name": "Shaving brush alga (form example)",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "brush",
+  "reference": "Penicillus capitatus: one short stout pale-green stalk topped by a dense round brush of fine upright green filaments, like a shaving brush; young plants a bare stalk with a few hairs; tips frosted pale",
+  "notes": {
+    "why_library_form": "growth-form example for the library (lifeboard#25): a stalk with a dense filament tuft is exactly brush"
+  },
+  "size": {
+    "height_m": 0.12
+  },
+  "shape": {
+    "stage_heights": [
+      0.08,
+      0.32,
+      0.6,
+      0.82,
+      1.0
+    ],
+    "stem": {
+      "radius_ratio": 0.055,
+      "length_ratio": 0.45,
+      "lean": 0.02
+    },
+    "brush": {
+      "filaments": 56,
+      "cone_deg": 70,
+      "jitter": 0.25,
+      "filament_ratio": 0.009,
+      "collar": 0.0
+    },
+    "seed_ratio": 0.045
+  },
+  "palette": {
+    "main": [
+      "#a9c96a",
+      "#5f9a36"
+    ],
+    "accent": "#6fae3a",
+    "disc": "#9fcf6a",
+    "seed": "#e9d3a6"
+  },
+  "material": {
+    "roughness": 0.5,
+    "coat": 0.1
+  },
+  "motion": {
+    "sway": {
+      "frames": 104,
+      "cycles": 2,
+      "amp_deg": 4
+    },
+    "tend": {
+      "frames": 40,
+      "lift_deg": 7,
+      "stretch": 0.14,
+      "open": 0.25
+    }
+  },
+  "budget": {
+    "tris": 7000,
+    "texture": 512
+  }
+}

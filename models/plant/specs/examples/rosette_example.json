@@ -1,0 +1,21 @@
+{
+  "kind": "plant",
+  "id": "rosette_example",
+  "name": "Sea lavender rosette (form example)",
+  "biome": 0,
+  "rarity": "common",
+  "archetype": "rosette",
+  "reference": "Limonium carolinianum: a flat basal rosette of broad spoon-shaped leathery green leaves hugging the ground; bloom = one slender stalk from the centre ending in a small pale-lavender flower with a darker centre",
+  "notes": {"why_library_form": "growth-form example for the library (lifeboard#25): a basal leaf rosette with a centre flower stalk is exactly rosette"},
+  "size": {"height_m": 0.14},
+  "shape": {
+    "stage_heights": [0.07, 0.3, 0.45, 0.8, 1.0],
+    "rosette": {"leaves": 10, "rings": 2, "length_ratio": 0.42, "width_ratio": 0.42, "pitch_deg": 26, "droop_deg": 30, "fleshy": 0.3, "round": 0.8},
+    "center": {"kind": "stalk", "stalk_ratio": 0.6, "radius_ratio": 0.022, "petals": 6, "head_ratio": 0.09},
+    "seed_ratio": 0.035
+  },
+  "palette": {"main": ["#5f8a4a", "#4f9a46"], "accent": "#b9a2e6", "disc": "#6a4a8a", "seed": "#e9d3a6"},
+  "material": {"roughness": 0.45, "coat": 0.15},
+  "motion": {"sway": {"frames": 96, "cycles": 2, "amp_deg": 4}, "tend": {"frames": 44, "lift_deg": 10, "stretch": 0.14, "open": 0.22}},
+  "budget": {"tris": 5000, "texture": 1024}
+}
