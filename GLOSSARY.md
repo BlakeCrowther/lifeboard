@@ -38,6 +38,8 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 ## Garden
 
 - **Garden**: one **plot** per habit, one plant at a time.
+- **Upstream**: the public lifeboard repo (`github.com/BlakeCrowther/lifeboard`), the template every board's copy comes from. It never publishes a live board.
+- **Board copy**: one board's own git repo, cloned from upstream with an `upstream` remote; it publishes that board. `lifeboard-update` brings upstream changes in, `lifeboard-contribute` sends fixes back.
 - **Habit** (`habits`). **Habit session** (`habit_sessions`, code `habitSessions`): one logged session of a habit on a date. A session logged after its week counts only with an exception (reason + evidence); the rest are `voidHabitSessions`.
 - **Floor**: the fewest sessions a week (or day) that keeps a habit's plant alive. **Target**: the number you're aiming for. Beating it earns rarer seeds.
 - **Seed**: the next plant for a plot, its rarity set by how the last one did.
