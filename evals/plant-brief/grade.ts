@@ -1,5 +1,5 @@
 /* plant-brief grader. check_spec.py (plant contract) plus the skill's own rules, then a short rubric. */
-import { existsSync, readdirSync } from 'node:fs';
+import { copyFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { ok, py, readJson, writeJson } from '../lib.ts';
 import type { BiomesFile, Case, Check, RosterFile, SkillEval } from '../lib.ts';
@@ -22,6 +22,11 @@ const grade: SkillEval<PlantCase, PlantSpec> = {
 
   place(wd, _c, output) {
     writeJson(join(specsDir(wd), `${output.id}.json`), output);
+    /* a fixture names its own generator (archetype = id) but carries no code: stand in a copy of the form it is based on */
+    const arch = join(wd, 'models/plant/archetypes');
+    if (output.archetype === output.id && output.based_on && existsSync(join(arch, `${output.based_on}.py`))) {
+      copyFileSync(join(arch, `${output.based_on}.py`), join(arch, `${output.id}.py`));
+    }
   },
 
   collect(wd) {
