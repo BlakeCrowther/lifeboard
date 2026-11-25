@@ -2,12 +2,14 @@
 type: Design Doc
 title: Board store and model storage
 description: Each board's models, data and preferences live in its own board store (today the published claude.ai artifact and its db), apart from any code, so a code update never wipes them and a model reaches the board without a git merge, locally or in the cloud.
-status: draft
-design_status: proposed
+status: stable
+design_status: approved
 tags: [models, publishing, cloud, setup]
 ---
 
 # Board store and model storage
+
+**Status:** approved; built in [PR lifeboard#31](https://github.com/BlakeCrowther/lifeboard/pull/31) (models/starter, models/board, `pnpm board`, model-only publish, page-only live-diff), in review. Not built: the capacity check's archive policy (decided when it first warns).
 
 **Goal:** a board's models, data and preferences live in a store that belongs to that board, apart from the code that builds it. Publishing code (from the upstream repo, a user's own repo, or the plugin) never removes or overwrites them, and a weekly run ships a model the same way on a laptop or in a cloud session, with no git merge in between.
 

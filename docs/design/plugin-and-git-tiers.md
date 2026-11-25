@@ -2,12 +2,14 @@
 type: Design Doc
 title: Plugin and git tiers
 description: Two ways to run lifeboard from one codebase. The plugin tier gives settings-only boards that update automatically; the git tier gives each user a private copy of the repo they can change completely, with upstream releases merged by Claude on request. make-it-mine moves a user from the first to the second.
-status: draft
-design_status: proposed
+status: stable
+design_status: approved
 tags: [setup, customization, updates, plugin]
 ---
 
 # Plugin and git tiers
+
+**Status:** approved. Git tier built, in review as stacked PRs: the owner's board split ([PR lifeboard#29](https://github.com/BlakeCrowther/lifeboard/pull/29), merged; `BlakeCrowther/my-lifeboard`), the demo board ([PR lifeboard#32](https://github.com/BlakeCrowther/lifeboard/pull/32)), `lifeboard-update` and `lifeboard-contribute` ([PR lifeboard#30](https://github.com/BlakeCrowther/lifeboard/pull/30)), setup's own-copy step ([PR lifeboard#33](https://github.com/BlakeCrowther/lifeboard/pull/33)). Not built: the plugin tier, releases (tags, `docs/releases/`, the `release` skill), the `checks` to `settings` rename, rule overrides with ranges.
 
 **Goal:** anyone can run lifeboard. People who are happy with the settings that ship install a plugin and never touch code. People who want to change anything (the spec, the page, the pipeline, "a new visitor every day") get their own private copy of the repo, which Claude changes for them and merges upstream releases into on request. Both share one codebase and one way of storing a board.
 
