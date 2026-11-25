@@ -32,6 +32,7 @@ You need a Claude account with Artifacts and Claude Code (desktop app or CLI). L
 **Optional extras:**
 - **Lifeboard Break** (macOS): a menu-bar app that covers your screens with the board during timed breaks. Say *"run break-setup"*.
 - **Lessons**: say *"make lessons from &lt;book, video, article&gt;"* (the `lesson-make` skill).
+- **Not sure how to fit an idea in?** Say *"I want something that…"* and the `suggest` skill offers two or three ways to build it into your board.
 
 ## Agent support
 
