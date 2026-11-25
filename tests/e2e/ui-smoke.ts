@@ -105,6 +105,28 @@ async function main(): Promise<void> {
     const egreet = await empty.locator('.greet').first().innerText().catch(() => '');
     if (egreet.includes(',')) errors.push(`greeting without a profile name should be plain, got "${egreet}"`);
     console.log(`ui-smoke: empty board seeded ${String(seeded)} starter tasks`);
+
+    /* demo board: checks/profile.demo shows the Demo badge and retitles the page; a real board shows neither */
+    const demoBadge = (b: typeof board): Promise<{ shown: boolean; barShown: boolean; title: string }> => (async () => {
+      const demo = await browser.newPage();
+      demo.on('pageerror', (e) => errors.push(`demo board pageerror: ${e.message}`));
+      await demo.addInitScript({ content: `window.MOCK = ${JSON.stringify(b)};` });
+      await demo.addInitScript({ path: path.join(ROOT, 'dist/fake-db.js') });
+      await demo.goto(`${base}/index.html`, { waitUntil: 'domcontentloaded' });
+      /* .greet is hidden by CSS: wait for it to exist, and let a page that never boots fail here */
+      await demo.waitForSelector('.greet', { state: 'attached', timeout: 10000 });
+      const shown = await demo.locator('#demoBadge').isVisible();
+      /* the collapsed bar is off-screen until scrolled, so check the element's own state */
+      const barShown = await demo.evaluate(() => document.getElementById('barDemo')?.hidden === false);
+      const title = await demo.title();
+      await demo.close();
+      return { shown, barShown, title };
+    })();
+    const withDemo = await demoBadge({ ...board, checks: { profile: { value: { name: 'Sam', demo: true } } } });
+    if (!withDemo.shown || !withDemo.barShown || withDemo.title !== 'Lifeboard Demo') errors.push(`demo profile should show the Demo badge and title, got shown=${String(withDemo.shown)} bar=${String(withDemo.barShown)} title="${withDemo.title}"`);
+    const withoutDemo = await demoBadge(board);
+    if (withoutDemo.shown || withoutDemo.barShown || withoutDemo.title === 'Lifeboard Demo') errors.push('a board without profile.demo must not show the Demo badge or title');
+    console.log('ui-smoke: demo badge checked');
   } finally {
     await browser.close();
     server.close();

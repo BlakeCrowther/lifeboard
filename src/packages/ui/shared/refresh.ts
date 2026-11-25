@@ -19,9 +19,20 @@ export function refreshBoard(): void {
   profile.placeName = read.placeName;
   profile.duetTrigger = read.duetTrigger;
   profile.pets = read.pets;
+  profile.demo = read.demo;
+  applyDemoMarks(read.demo);
   Object.assign(model, buildBoardModel(store.all, {
     today: clock.today, weekStart: clock.weekStart, pets: profile.pets,
     liveCalendar: liveCalendar.events ? { events: liveCalendar.events, fetchedAt: liveCalendar.fetchedAt } : null,
   }));
   modelRevision.count++;
+}
+
+/** The Demo badge (header and collapsed bar) and the document title follow checks/profile.demo. */
+function applyDemoMarks(demo: boolean): void {
+  for (const id of ['demoBadge', 'barDemo']) {
+    const badge = document.getElementById(id);
+    if (badge) badge.hidden = !demo;
+  }
+  document.title = demo ? 'Lifeboard Demo' : 'lifeboard';
 }
