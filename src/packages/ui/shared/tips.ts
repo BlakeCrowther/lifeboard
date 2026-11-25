@@ -4,7 +4,7 @@
 import { RULES } from '../../game/index.ts';
 import { escapeHtml } from './format.ts';
 import { icon } from './icons.ts';
-import { tipsOn } from './prefs.ts';
+import { ecosystemOn, tipsOn } from './prefs.ts';
 import { viewState } from './state.ts';
 
 const key = (id: string): string => 'tip-' + id;
@@ -37,14 +37,17 @@ export function tipRow(...tips: { button: string; note: string }[]): string {
 
 const pct = (f: number): string => String(Math.round(f * 100)) + '%';
 
-export const tipEarnPoints = (): { button: string; note: string } => tip('points', 'What earns points',
+/* Points tips talk about life points and the Ecosystem, so they show only while it is on. */
+const none = { button: '', note: '' };
+
+export const tipEarnPoints = (): { button: string; note: string } => !ecosystemOn() ? none : tip('points', 'What earns points',
   `Each day’s ring is the tasks you finished ÷ the tasks you committed to that day. A closed ring earns ${String(RULES.tide.perPct + RULES.tide.fullBonus)} life points (${String(RULES.tide.perPct)} for the ring, ${String(RULES.tide.fullBonus)} bonus for closing it); a part ring earns its share of ${String(RULES.tide.perPct)}. Life points move the Ecosystem along.`);
 
-export const tipLosePoints = (): { button: string; note: string } => tip('losses', 'What loses points',
-  `Points are never taken away, but a task you commit to a day and don’t finish leaves that day’s ring short. Open tasks turn into murk (${String(RULES.tide.cloudyAt)} overdue tasks is fully murky) and, after ${String(RULES.tide.blightAfter)} days, blight. Rings averaging under ${pct(RULES.bleach.below)} for ${String(RULES.bleach.days)} days bleach the Ecosystem. Missing a habit’s weekly floor breaks its streak and kills its plant.`);
+export const tipLosePoints = (): { button: string; note: string } => !ecosystemOn() ? none : tip('losses', 'What loses points',
+  `Skipping a break costs ${String(RULES.breaks.skipCost)} Ecosystem growth (never below the current phase). A task you commit to a day and don’t finish leaves that day’s ring short, so it earns less. Overdue tasks also cloud the water or air (${String(RULES.tide.cloudyAt)} is fully murky) and, after ${String(RULES.tide.blightAfter)} days, bring blight. Rings averaging under ${pct(RULES.bleach.below)} for ${String(RULES.bleach.days)} days bleach the scene. Murk, blight and bleaching change how it looks and cost no points; they fade as you clear tasks.`);
 
 export const tipGarden = (): { button: string; note: string } => tip('garden', 'How plants grow',
-  `Each habit has a floor (the least you must do each week) and a target (your goal). A plant grows one stage each week you reach the floor, and withers the first week you don’t. It takes ${String(RULES.garden.stages.length - 1)} floor weeks to bloom. A target week scores ${String(RULES.garden.points.target)} points toward a rarer next seed, above target ${String(RULES.garden.points.above)}, the floor ${String(RULES.garden.points.floor)}.`);
+  `Each habit has a floor (the least you must do) and a target (your goal), per week, or per day for daily habits. A plant grows one stage each week you reach the floor, and dies the first week you don’t; for a daily habit, one day under the floor kills it. A seed that hasn’t sprouted just waits. It takes ${String(RULES.garden.stages.length - 1)} floor weeks to bloom. A floor week scores ${String(RULES.garden.points.floor)} point toward a rarer next seed, a target week ${String(RULES.garden.points.target)}, above target ${String(RULES.garden.points.above)}. A missed floor also breaks the habit’s streak.`);
 
 export const tipEcosystem = (): { button: string; note: string } => tip('ecosystem', 'What changes the Ecosystem',
-  `Closing rings earns life points, and those carry the scene through ${String(RULES.tide.phases)} phases per biome; the last phase starts the next biome. One visitor arrives each week, and a rare one comes after ${String(RULES.visitor.fullDaysForRare)} full rings in a week or finishing a task that waited ${String(RULES.visitor.rareOverdue)}+ days. Overdue tasks cloud the water; old ones bring blight. Lessons feed the creatures.`);
+  `Rings earn life points, part rings too, and those carry the scene through ${String(RULES.tide.phases)} phases per biome; the last phase starts the next biome. One visitor arrives each week (none while the scene is bleached), and a rare one comes after ${String(RULES.visitor.fullDaysForRare)} full rings in a week or finishing a task that waited ${String(RULES.visitor.rareOverdue)}+ days. Overdue tasks cloud the water or air; old ones bring blight. Lessons feed the creatures.`);

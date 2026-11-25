@@ -99,8 +99,9 @@ async function main(): Promise<void> {
     await tipsOff.addInitScript({ content: `window.MOCK = ${JSON.stringify({ ...board, checks: { ...board.checks, ui_prefs: { value: { tips: false }, updated_at: Date.now() } } })};` });
     await tipsOff.addInitScript({ path: path.join(ROOT, 'dist/fake-db.js') });
     await tipsOff.goto(`${base}/index.html`, { waitUntil: 'domcontentloaded' });
-    await tipsOff.waitForFunction(() => /Sam/.test(document.querySelector('.greet')?.textContent ?? ''), null, { timeout: 5000 }).catch(() => undefined);
+    await tipsOff.waitForSelector('.card.rings', { timeout: 10000 });
     if (await tipsOff.locator('[data-act="tip"]').count()) errors.push('ui_prefs.tips === false but an info button rendered');
+    await tipsOff.close();
     console.log('ui-smoke: tips on by default, off with ui_prefs.tips = false');
 
     const backdated = await page.evaluate(() => {
