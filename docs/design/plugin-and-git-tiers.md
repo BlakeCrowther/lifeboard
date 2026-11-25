@@ -148,6 +148,18 @@ The two boards never share data, which is what lifeboard#11 asks for. "One publi
 | 3 | Public repo PR: the roster becomes the starter set (generic biome-0 scenery and creatures; the maintainer's plants leave, since they are made for his habits); the hardcoded habit-icon map becomes generic name hints; the demo board: seed data, "Demo" badge, its own artifact. Merge only after step 2, so no live publish runs from a roster without the maintainer's models. | No |
 | 4 | Model storage steps 3 to 11 ([model storage](model-storage.md#work)) in the public repo, pulled into the private copy with `/lifeboard-update`. | Through the private copy |
 
+**Taking step 3 into the private copy.** Upstream deletes the maintainer's plant files, and the private copy never changed most of them since it was created, so a plain merge would delete them there too. Merge once, then restore the board's models from before the merge and commit:
+
+```bash
+git merge upstream/main
+git checkout ORIG_HEAD -- models/roster.json models/assets models/plant/specs
+git commit -m "chore: keep this board's models after upstream's starter-set split"
+```
+
+After that merge, the shared history already contains the deletion, so later updates leave those files alone. The models stay at their current paths (`models/roster.json`, `models/assets/`), because every pipeline step and the page read them there; they move to `models/board/` with the model-storage work.
+
+Status 2026-11-25: step 1 done (`BlakeCrowther/my-lifeboard`, private); step 2 done (the weekly task's prompt targets the private copy; the lifeboard environment still lists only the public repo, so the run installs the toolchain itself); step 3 split into [PR lifeboard#29](https://github.com/BlakeCrowther/lifeboard/pull/29) (roster to starter set, generic habit icons, which-repo-publishes rule) and the demo board (lifeboard#11).
+
 After step 3, upstream's roster changes rarely, so the private copy's own roster merges cleanly until model storage moves it to `models/board/`. Names already in the public repo's history stay; rewriting it was judged not worth breaking every clone.
 
 ## Releases
