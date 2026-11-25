@@ -1,6 +1,6 @@
 # Glossary
 
-One meaning per term, used the same way in code, docs and UI. Code names data after its db collection (`buyListItems` for `buy_list_items`); where the UI label differs, the term below names the collection. Shapes: `src/packages/db/lib/schemas.ts`. Game rules and numbers live in [SPEC.md](SPEC.md); model-pipeline terms (kind, archetype, gate, golden, roster) in [models/README.md](models/README.md#terms).
+One meaning per term, used the same way in code, docs and UI. Code names data after its db collection (`buyListItems` for `buy_list_items`); where the UI label differs, the term below names the collection. Shapes: `src/packages/db/lib/schemas.ts`. Game rules and numbers live in [SPEC.md](SPEC.md); more model-pipeline terms (kind, archetype, gate, roster) in [models/README.md](models/README.md#terms).
 
 ## The board and its repos
 
@@ -26,6 +26,7 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 - **Lists** (`list_items`, code `listItemsByKey`): books, films and other lists, grouped by `list_key`.
 - **Groceries** (`groceries`), **Recipes** (`recipes`), **Goals** (`goals`), **Logs** (`logs`): same name in code and UI.
 - **Snapshot** (`snapshots`): fetched outside data (calendar, conditions) the page shows.
+- **Conditions card**: the weather and surf for the profile's place, from `snapshots/conditions`, on Today under "At a glance"; titled with the place, or "Local conditions" without one.
 - **Duet**: an owner's own scheduled Claude agent. Tasks show "Send to Duet" only when the profile has a `duet_trigger`.
 
 ## Tasks and the ring
@@ -33,7 +34,7 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 - **Task** (`tasks`).
 - **Committed**: a task counts toward a day once that day arrives with the task due (or it's put on today). Recorded in `tasks.committed_days`; never before the task was created.
 - **Ring**: a day's done ÷ committed. Drawn as a ring per day on Today.
-- **Commit lock**: how long after a task lands on today you can still move it off without it counting as missed.
+- **Commit lock** (`checks/ui_prefs.commitLock`): how long after a task lands on today you can still move it off without it counting as missed.
 - **Age**: days since a task was first committed. Pushing it later never resets it.
 - **Overdue / Slipped / Moved / Done late**: what a missed task became (SPEC.md, Ring %).
 
@@ -67,8 +68,11 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 
 - **Lifeboard Break**: an optional macOS menu-bar app (`break/`, skill `break-setup`) that covers every screen with the board during timed breaks.
 - **Skill**: an agent instruction set in `.agents/skills/`, named for its job (`lifeboard-setup`, `lesson-make`, …). Claude Code finds them through `.claude/skills`.
-- **Weekly run**: the scheduled task (template `.claude/scheduled/weekly-visitor.md`, registered by `lifeboard-setup`) that runs `weekly-visitor` once a week in a board copy: it makes the week's visitor and, through `season-seeds`, the plants plots need, then publishes the models. SPEC.md's "Weekly job" section describes the same run.
+- **Weekly run**: the scheduled task (template `.claude/scheduled/weekly-visitor.md`, registered by `lifeboard-setup`) that runs `weekly-visitor` once a week in a board copy: it makes the week's visitor and, through `season-seeds`, the plants plots need, then publishes the models when the board's settings pre-approve it (AGENTS.md "This board's settings"). Rules: SPEC.md, "Weekly run".
 - **Pipeline**: the chain of skills that turns a spec into a shipped 3D model (brief → build → animate or grow → verify → ship). Map: [models/pipeline.html](models/pipeline.html); stages: [models/README.md](models/README.md).
+- **Golden**: a kind's reference model (`golden` in `models/<kind>/qa_calibration.json`). Its judge-panel scores anchor the judges and set the bar a new model must reach.
+- **Judge panel** (gate `judge-panel`): fresh AI judges that score a model's renders against the golden; the kind's pass rule turns their scores into a verdict. Run by `model-verify`.
+- **Page-test** (gate `page-test`): a creature loaded into the real Ecosystem page in headless Chromium before it ships (`models/shared/tools/page-test.ts`).
 - **Run ledger**: one pipeline run's record and budget (`models/shared/tools/ledger.py`, saved in `models/out/runs/<run>.json`): every build and judge round counts against it, and a run stops when it is spent. Details: [models/README.md](models/README.md), "Run ledger".
 
 ## Code structure

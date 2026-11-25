@@ -14,6 +14,7 @@
     "spec-check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/spec-check.ts",
     "sim": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/sim.ts",
     "demo:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/demo-seed.ts",
+    "demo:mock": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/demo-seed.ts --mock mockdata.js",
     "live-diff": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/live-diff.ts",
     "board": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/board.ts",
     "verify": "tools/verify.sh",
@@ -24,6 +25,9 @@
     "eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON evals/run.ts"
   },
   "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=24"
+  },
   "dependencies": {
     "zod": "4.6.7"
   },

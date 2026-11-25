@@ -23,16 +23,16 @@ Each input drives exactly one thing, so no system can game another.
 | Daily ring % (tasks) | Ecosystem: growth, phases, biomes | Garden, lessons |
 | Lessons answered | Life in the scenes: creatures feeding, pollinators, book species; a perfect lesson week's rare visitor | Growth, health, ring % |
 
-- **Week start.** Habit weeks (streaks, the garden, the weekly check message) start on one board-wide day, `checks/week_start` (0 Sunday … 6 Saturday, default 1 Monday). `lifeboard-setup` asks for it; it's usually the same day as the weekly check. Every habit uses it, so nothing is asked per habit.
+- **Week start.** Habit weeks (streaks, the garden, the habits card's "Last week" line) start on one board-wide day, `checks/week_start` (0 Sunday … 6 Saturday, default 1 Monday). `lifeboard-setup` asks for it; the weekly run happens the night before it. Every habit uses it, so nothing is asked per habit.
 - **Game start.** The game starts at zero on the day the game is first turned on (`game_state/game.started`, written once and never overwritten; `game_state` is store-tracked so it is read only after the db fully loads). History before that is ignored; tasks already overdue then count as overdue from that day. The garden opens on the start day itself: its first, partial week is scored like a new habit's (full floor; a miss leaves the seed waiting; days before the start are never misses).
 - **Derived, not stored.** All game state (plants, seeds, ecosystem phase, biomes, dioramas, visitors due) is recomputed from db history on every load by `deriveGame` in `src/packages/game/lib/derive-game.ts`. Only things that can't be recomputed are stored: the start date, titles and notes you write (`keepsakes`), and visitors met (`visitors_met`). Task commitments are recorded as they happen (`tasks.committed_days`, see Ring %), so rescheduling never rewrites a past day's ring. *Planned:* freezing closed weeks (`week_results`) so a changed floor or target never re-scores past weeks.
 - **Surprises are decoration only.** They show up at reward moments and never change numbers.
-- **Claude suggests, never changes.** Weekly-job suggestions need a tap to apply.
+- **Claude suggests, never changes.** Weekly-run suggestions need a tap to apply.
 - **Display:** (Ecosystem and Garden each have an on/off toggle in the display menu, both on by default, synced board-wide via `checks/ui_prefs`) Today's first column is the ring card, which holds the task lists (tap a day's ring for that day: today's lists, or a past day's Done and Missed); the second column has the Lessons card, the ecosystem scene right under it, then the habit plants. On phones the task lists start folded so the scene stays near the top. Grow → Collection holds dioramas and pressed plants (and, when built, finished lesson sources).
 
 ## Garden (habits)
 
-**Status:** Built (per-plot plant lifecycle and calendar seasons, Nov 19; new habits planted the day they're created, Nov 21; garden opens on the game start day, Nov 22; 3D plants made per plant by the weekly job). Not built: rarity looks and accessories on 3D plants, herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), grace token.
+**Status:** Built (per-plot plant lifecycle and calendar seasons, Nov 19; new habits planted the day they're created, Nov 21; garden opens on the game start day, Nov 22; 3D plants made per plant by the weekly run). Not built: rarity looks and accessories on 3D plants, herbarium titles and notes written by Claude (you can name and caption pressed plants yourself), grace token.
 
 One plot per habit, one plant at a time. Each plant is its own species, made for that plot (below); until its model exists the plot shows an SVG species (`daisy`, `tulip`, `sunflower`, `mushroom`, `cactus`, `fern`, `bonsai`, `lavender`, no repeats until all are used). A plant grows one stage per week you hit the floor, and dies the first week you don't. Everything is per plot: a new habit gets a plot (and a seed) the day it's created, even mid-week. That first partial week is scored against the full floor (daily habits: only the days from creation on, each at the floor, total scored against that many days × floor / target): hit it and the seed sprouts; miss it and the seed just waits, as any unsprouted seed does. Nothing waits for other plots.
 
@@ -60,7 +60,7 @@ The random rolls are seeded from the habit key, so every reload agrees. There ar
 
 **Seasons** are the real calendar seasons, meteorological, for `garden.hemisphere = "north"` (Mar–May spring, Jun–Aug summer, Sep–Nov fall, Dec–Feb winter; flipped for "south"). They don't end plants. They name the time on the Habits card and pressed plants, and shape new plants: a species in its prime that season, a seasonal finish (frosted, russet), and a seasonal twist on a rare plant's accessory.
 
-**3D plants, one per plant.** The weekly job (`season-seeds`) makes a model for each plant that needs one: `checks/game_status.garden.needs` lists the plant growing now in a plot that has no model (a new habit), plus the next plant for each plot showing a bloom or withered plant (it goes in Monday). Each lists the plot (habit key and name), its `gen` (0 for the plot's first plant), the seed's rarity, and the biome. A roster plant (`models/roster.json`, `kind: "plant"`) with `plot` = habit key and `gen` is that plant's species. Rare seeds (rare, exotic) get a creative plant: something playful tied to the habit, like a tiny hat, a running shoe leaf or a book-page petal. No stock is modelled ahead.
+**3D plants, one per plant.** The weekly run (`season-seeds`) makes a model for each plant that needs one: `checks/game_status.garden.needs` lists the plant growing now in a plot that has no model (a new habit), plus the next plant for each plot showing a bloom or withered plant (it goes in Monday). Each lists the plot (habit key and name), its `gen` (0 for the plot's first plant), the seed's rarity, and the biome. A roster plant (`models/roster.json`, `kind: "plant"`) with `plot` = habit key and `gen` is that plant's species. Rare seeds (rare, exotic) get a creative plant: something playful tied to the habit, like a tiny hat, a running shoe leaf or a book-page petal. No stock is modelled ahead.
 
 **3D plots.** A plot whose plant has a model shows it at the plot's stage (`stage_<n>`, `sway_<n>` idle, `tend` when a session is logged); thirsty and withered plots show the model at their last stage, dried and drooped. A plant with a model never shows an SVG shape; while the model loads the bed is empty. Pressed plants in the Collection use the model the same way. Rarity and mutation recolours show on the SVG shapes only.
 
@@ -77,7 +77,7 @@ Each habit tile shows its week at a glance (`habitPips` in `src/packages/ui/toda
 
 ## Ecosystem (rings and tasks)
 
-**Status:** Partly built. Built: Growth from the ring, ring = done ÷ committed with recorded commitments (`tasks.committed_days`) and the commitment lock, adaptive phases, 8 biomes, dioramas, weekly visitor, aged-task visitor drops, murk, blight from task age (per-biome look via `neglect`), bleaching. Not built: Claude-written diorama titles. Claude-invented biomes: built as the `biome-brief` skill, run by `weekly-visitor`.
+**Status:** Partly built. Built: Growth from the ring, ring = done ÷ committed with recorded commitments (`tasks.committed_days`) and the commit lock, adaptive phases, 8 biomes, dioramas, weekly visitor, aged-task visitor drops, murk, blight from task age (per-biome look via `neglect`), bleaching. Not built: Claude-written diorama titles. Claude-invented biomes: built as the `biome-brief` skill, run by `weekly-visitor`.
 
 Every day earns **Growth** from the day's ring %, and Growth moves the current biome through its phases. Biomes take as long as they take, independent of the garden calendar.
 
@@ -110,7 +110,7 @@ Every day earns **Growth** from the day's ring %, and Growth moves the current b
 | 6 | Cloud canopy | air |
 | 7 | Jungle understory | land |
 
-Each biome owns its shapes, palette, creatures and plants (`look` in `biomes.json`; rules in `models/STYLE.md`), and each phase adds that biome's own things. When the list runs out, the weekly job invents the next biome (`biome-brief`, validated by `models/shared/tools/check_biome.py`): it runs when the ecosystem is on its final phase and the next biome has no entry, or the ecosystem is already in a biome with no entry. The board reports its biome and phase to `checks/game_status` for this. Restarting with fresh biomes (`game-reset`) archives every biome and creature (`models/*.archive.json`) so every one is invented, biome 0 included; until then the ecosystem shows a plain "Uncharted" water scene. Biome design needs no Blender; creatures do.
+Each biome owns its shapes, palette, creatures and plants (`look` in `biomes.json`; rules in `models/STYLE.md`), and each phase adds that biome's own things. When the list runs out, the weekly run invents the next biome (`biome-brief`, validated by `models/shared/tools/check_biome.py`): it runs when the ecosystem is on its final phase and the next biome has no entry, or the ecosystem is already in a biome with no entry. The board reports its biome and phase to `checks/game_status` for this. Restarting with fresh biomes (`game-reset`) archives every biome and creature (`models/*.archive.json`) so every one is invented, biome 0 included; until then the ecosystem shows a plain "Uncharted" water scene. Biome design needs no Blender; creatures do.
 
 Finishing the last phase saves the biome as a **diorama** (biome, days taken, full days, Growth earned) and starts the next. Dioramas show in Grow → Collection with a title and note you can edit. *Planned:* Claude names the run and sums it up.
 
@@ -168,7 +168,7 @@ Later candidate: **Scenario** (a short situation; pick which idea applies). Drop
 | Again | All | Keep the same level, comes back on the same interval |
 | Drop | All (overflow menu) | Remove from the pool; counts as resolved for finishing the source |
 | Skip today | All (overflow menu) | Back tomorrow, no level change |
-| Flag | All (overflow menu) | Marks it unclear; the weekly job rewrites it |
+| Flag | All (overflow menu) | Marks it unclear; the weekly run rewrites it |
 
 **Lessons per source** = size × salience. Claude rates both when making lessons.
 
@@ -202,9 +202,9 @@ Random, decorative, and never change numbers. Rare visitors are earned, so they'
 | Surprise | What it is | Status |
 | --- | --- | --- |
 | Mutations | ~5% of seeds sprout an odd colour or pattern (`garden.mutation`) | Built |
-| Notes from Claude | 1–2 lines a week from the weekly job, tied to what happened ("a crab moved into the shell you found Tuesday") | Planned |
+| Notes from Claude | 1–2 lines a week from the weekly run, tied to what happened ("a crab moved into the shell you found Tuesday") | Planned |
 | Real-world scene changes | The scene mirrors real conditions from lifeboard's snapshots: rain when it rains, a glowing night on an actual full moon, a big swell on a big surf day | Planned |
-| Weekly event | The weekly job picks one event for one named day next week, e.g. "Thursday: coral spawning night" or "Saturday: monarch migration". Shown only that day | Planned |
+| Weekly event | The weekly run picks one event for one named day next week, e.g. "Thursday: coral spawning night" or "Saturday: monarch migration". Shown only that day | Planned |
 
 **Milestones (permanent unlocks, Planned):**
 
@@ -213,11 +213,11 @@ Random, decorative, and never change numbers. Rare visitors are earned, so they'
 | 10 straight floor weeks on a habit | A new plot shape for that habit's plant |
 | 3 dioramas | You choose the next biome (or ask Claude to invent one) instead of the next in the list |
 
-## Weekly job
+## Weekly run
 
 **Status:** Partly built. Built: the `weekly-visitor` and `season-seeds` skills and the scheduled-task template (`.claude/scheduled/weekly-visitor.md`; `lifeboard-setup` asks which day it runs and registers it). Not built: written reports.
 
-One Claude routine runs once a week on the day you pick at setup (default Sunday), reads its own past reports, and writes this week's report into the db.
+One Claude routine runs once a week, the night before the week starts (default Sunday, 22:43 local; `lifeboard-setup` registers it), reads its own past reports, and writes this week's report into the db.
 
 **Every week:**
 
@@ -277,7 +277,7 @@ Before building UI, the rules became one pure module (now the game package, no D
 
 **What each run reports:**
 
-- Garden: deaths and blooms per plot per month, new plants a week (the weekly job's build load), seed rarity mix, dead plot-weeks.
+- Garden: deaths and blooms per plot per month, new plants a week (the weekly run's build load), seed rarity mix, dead plot-weeks.
 - Ecosystem: weeks per biome (target 3–6), rare and exotic visitors per month, days of cloudy water, bleaching events.
 - Lessons: deck backlog over time at 1, 2 and 4 books a month; days to finish a book; graduation rate.
 - Exploits: e.g. does adding and finishing tiny tasks inflate rings? Does a low floor make death impossible?
@@ -287,7 +287,7 @@ Before building UI, the rules became one pure module (now the game package, no D
 **Two passes:**
 
 1. **Numbers (no Claude):** pure seeded statistics, so every run is repeatable and comparable after a tweak. Claude's jobs are stubbed with plain rules, which is safe because Claude never changes numbers.
-2. **Playtest (Claude in the loop):** feed a few simulated weeks to the real weekly-job prompt and read what it writes. Judges tone and variety, not balance. *Not run yet.*
+2. **Playtest (Claude in the loop):** feed a few simulated weeks to the real weekly-run prompt and read what it writes. Judges tone and variety, not balance. *Not run yet.*
 
 **Run 1 results** (200 seeds × 28 weeks; real habit data from the snapshot used as a cross-check):
 
@@ -319,7 +319,7 @@ A typical board (a few tasks overdue, none 7+ days old) sits around 40% murk wit
 
 **Hard habits:** habits done less than weekly (e.g. a 3-of-7-weeks pace) would die nearly every season even at a floor of 1. They need a biweekly cadence option, since the floor can't go lower. A habit that beats its target most weeks (4–6 vs 3) earns exotic seeds every season; the tweak suggestion should raise its target.
 
-**Run 3 (Nov 19, per-plot plants, 200 seeds × 28 weeks):** no seasons ending plants; each plot finishes on its own and is replanted after a week on show. Dead plot-weeks fall from ~30% to 12% (steady), 16% bursty, 20% light. Blooms per plot a month: steady 0.46, overachiever 0.70, light 0.29. Seed mix after the points change (Nov 19; common/rare/exotic % of blooms): steady 30/67/3, bursty 24/68/8, overachiever 2/53/45, light 36/63/0. Rare at 7 instead would give steady 54/43/3. A composted plant (3 growing weeks, max 9) can't earn exotic. The weekly job makes ~0.9 new plants a week for 4 habits (0.5 for the light user), so one or two builds a week.
+**Run 3 (Nov 19, per-plot plants, 200 seeds × 28 weeks):** no seasons ending plants; each plot finishes on its own and is replanted after a week on show. Dead plot-weeks fall from ~30% to 12% (steady), 16% bursty, 20% light. Blooms per plot a month: steady 0.46, overachiever 0.70, light 0.29. Seed mix after the points change (Nov 19; common/rare/exotic % of blooms): steady 30/67/3, bursty 24/68/8, overachiever 2/53/45, light 36/63/0. Rare at 7 instead would give steady 54/43/3. A composted plant (3 growing weeks, max 9) can't earn exotic. The weekly run makes ~0.9 new plants a week for 4 habits (0.5 for the light user), so one or two builds a week.
 
 ## Open questions
 

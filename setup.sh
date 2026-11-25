@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs the model-pipeline toolchain (Blender >= 5.3, ImageMagick, Node >= 20) and the
+# Installs the model-pipeline toolchain (Blender >= 5.3, ImageMagick, Node >= 24) and the
 # repo's JS deps plus the Chromium that `pnpm test:ui` needs (`pnpm bootstrap`), then checks
 # the toolchain and repo health. Works on macOS (Homebrew), Linux (apt or dnf; Blender from
 # download.blender.org) and Windows (Git Bash, winget). Idempotent: skips whatever is already
@@ -10,7 +10,7 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 BLENDER_SERIES=5.3
 BLENDER_MIN=$BLENDER_SERIES
 BLENDER_VERSION=5.3.0
-NODE_MIN=20
+NODE_MIN=24 # the repo's tools run .ts files directly; package.json engines and CI agree
 
 MODE=${1:-}
 
@@ -77,7 +77,7 @@ install_node() {
   if have node; then
     local major; major=$(node -v | sed 's/^v//; s/\..*//')
     if (( major >= NODE_MIN )); then log "node ok"; return; fi
-    log "node $(node -v) is older than $NODE_MIN (export-check needs >= $NODE_MIN)"
+    log "node $(node -v) is older than $NODE_MIN (the repo tools and export-check need >= $NODE_MIN)"
   fi
   case $OS in
     mac) brew install node ;;
@@ -113,11 +113,11 @@ else fail "blender not found" "./setup.sh"; fi
 
 if have magick && magick -version >/dev/null 2>&1; then pass "imagemagick"; else fail "imagemagick" "./setup.sh"; fi
 
-# export-check's optimizer (sharp) needs Node >= NODE_MIN.
+# The repo's tools run .ts files directly, and export-check's optimizer (sharp) needs a recent Node: >= NODE_MIN.
 if have node; then
   nv=$(node -v); nmajor=${nv#v}; nmajor=${nmajor%%.*}
   if [[ "$nmajor" =~ ^[0-9]+$ ]] && (( nmajor >= NODE_MIN )); then pass "node $nv"
-  else fail "node >= $NODE_MIN (found $nv; export-check fails on older)" "./setup.sh, or put node >= $NODE_MIN first on PATH (nvm use $NODE_MIN)"; fi
+  else fail "node >= $NODE_MIN (found $nv; the repo tools and export-check fail on older)" "./setup.sh, or put node >= $NODE_MIN first on PATH (nvm use $NODE_MIN)"; fi
 else fail "node" "./setup.sh"; fi
 if npx -y @gltf-transform/cli@4 --version >/dev/null 2>&1; then pass "gltf-transform"; else fail "gltf-transform (npx @gltf-transform/cli@4)" "check network / npm"; fi
 

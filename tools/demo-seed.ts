@@ -1,5 +1,6 @@
 // Turns demo/seed.json (dates as day offsets from "today") into ArtifactData batch files for the demo board.
 //   node tools/demo-seed.ts [--today YYYY-MM-DD] [--out <file>] [--existing <dir>]
+//   node tools/demo-seed.ts [--today YYYY-MM-DD] --mock <file>   (pnpm demo:mock: mockdata.js for the local preview)
 // Writes `<out>-1.json`, `<out>-2.json`, ...: each a JSON array of at most BATCH_SIZE `{op, collection, doc_id, ...}` entries
 // (default <out>: demo-batch under the OS temp dir). Every doc is checked against the db schemas first; any invalid doc
 // prints why and exits 1 with no files written. --today defaults to today in the seed profile's time zone.
@@ -7,6 +8,8 @@
 // board's seeded collections (ArtifactData `list` with `out_dir`: <dir>/<collection>/<doc_id>.json, each with `version`);
 // existing docs then get `if_version`, and docs in a seeded collection that the seed lacks (the page's starter tasks,
 // old sessions) get a pinned `delete`.
+// --mock writes the same docs as `window.MOCK = {collection: {doc_id: doc}}`, the fake db's seed (src/fake-db-page.ts),
+// instead of batch files. mockdata.js is gitignored.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -112,6 +115,13 @@ export function invalidDocs(ops: readonly Op[]): string[] {
   return ops.flatMap((o) => { if (o.op !== 'set') return []; const why = validate(o.collection, o.data); return why ? [`${o.collection}/${o.doc_id}: ${why}`] : []; });
 }
 
+/** The docs as the fake db's `window.MOCK`: collection -> doc id -> doc. */
+export function mockData(ops: readonly SetOp[]): Record<string, Record<string, Record<string, unknown>>> {
+  const out: Record<string, Record<string, Record<string, unknown>>> = {};
+  for (const o of ops) (out[o.collection] ??= {})[o.doc_id] = o.data;
+  return out;
+}
+
 export function batches(ops: readonly Op[]): Op[][] {
   const out: Op[][] = [];
   for (let i = 0; i < ops.length; i += BATCH_SIZE) out.push(ops.slice(i, i + BATCH_SIZE));
@@ -120,7 +130,7 @@ export function batches(ops: readonly Op[]): Op[][] {
 
 function main(argv: string[]): number {
   const arg = (name: string): string | undefined => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
-  const usage = 'usage: demo-seed.ts [--today YYYY-MM-DD] [--out <file>] [--existing <dir>]';
+  const usage = 'usage: demo-seed.ts [--today YYYY-MM-DD] [--out <file>] [--existing <dir>] | [--today YYYY-MM-DD] --mock <file>';
   const seed = JSON.parse(readFileSync(new URL('../demo/seed.json', import.meta.url), 'utf8')) as Seed;
   const today = arg('--today') ?? todayIn(seed.profile['tz']);
   if (!isRealDate(today)) { console.error(`demo-seed: --today must be a real YYYY-MM-DD date\n${usage}`); return 2; }
@@ -129,6 +139,12 @@ function main(argv: string[]): number {
   const seeded = buildDocs(seed, today);
   const bad = invalidDocs(seeded);
   if (bad.length) { console.error(`demo-seed: ${String(bad.length)} invalid doc(s):\n- ${bad.join('\n- ')}`); return 1; }
+  const mock = arg('--mock');
+  if (mock) {
+    writeFileSync(mock, `window.MOCK = ${JSON.stringify(mockData(seeded), null, 1)};\n`);
+    console.log(`demo-seed: ${String(seeded.length)} made-up docs for ${today} in ${mock} (window.MOCK for the local preview)`);
+    return 0;
+  }
   const ops = existingDir ? reconcile(seeded, readExisting(existingDir)) : seeded;
   const out = arg('--out') ?? join(tmpdir(), 'demo-batch');
   const files = batches(ops).map((batch, i) => { const file = `${out}-${String(i + 1)}.json`; writeFileSync(file, JSON.stringify(batch, null, 1) + '\n'); return file; });

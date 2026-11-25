@@ -20,21 +20,21 @@ A new board starts with a few starter tasks that explain the scoring as you go, 
 
 ## Start your board
 
-You need a Claude account with Artifacts and Claude Code (the desktop app, claude.ai/code, or the CLI). A GitHub account is recommended (your copy of the repo lives there) but not required. Lifeboard works only with Claude; see [Agent support](#agent-support).
+You need a Claude account with Artifacts and Claude Code (the desktop app, claude.ai/code, or the CLI), and a GitHub account to hold your private copy of the repo. GitHub is required in a cloud session (claude.ai/code), because the cloud machine is thrown away afterwards; only a session on your own computer can keep the copy there instead. Lifeboard works only with Claude; see [Agent support](#agent-support).
 
 **Not technical? Three steps, no terminal.**
 1. Open this repo in Claude Code: start a session on `github.com/BlakeCrowther/lifeboard`.
-2. Say *"run lifeboard-setup"* and choose **do it all**. It makes your own private copy of the repo, picks sensible settings, and publishes your board as your own private artifact. (Choose **a few choices** or **everything** instead to set your name, timezone, week start and the rest yourself.)
+2. Say *"run lifeboard-setup"* and choose **do it all**. It makes your own private copy of the repo, picks sensible settings, publishes your board as your own private artifact, and sets up the weekly run. (Choose **a few choices** or **everything** instead to set your name, timezone, week start and the rest yourself.)
 3. Open the link it gives you and pin it in claude.ai. From then on, start Claude Code sessions in your copy, not here.
 
-**Technical? Clone and run it locally first.** You need git, Node 24 and pnpm (`corepack enable`).
+**Technical? Clone and run it locally first.** You need git, Node 24 or newer, pnpm (`corepack enable`) and python3; `pnpm verify` also runs the Python lint and doc checks when [uv](https://docs.astral.sh/uv/) is installed (it skips them otherwise).
 ```bash
 git clone https://github.com/BlakeCrowther/lifeboard && cd lifeboard
 pnpm bootstrap   # install dependencies and the headless browser for the UI check
-pnpm dev         # build, watch, and serve the page on port 8765 (PORT overrides)
-pnpm verify      # every check: types, lint, game rules vs SPEC.md, unit tests, UI smoke, ...
+pnpm demo:mock   # write made-up board data to mockdata.js (gitignored)
+pnpm dev         # build, watch, and serve on port 8765 (PORT overrides)
 ```
-Outside claude.ai there is no database, so the local page needs a gitignored `test.html` with made-up data (`lifeboard-setup` skill, "Local preview"). To publish a real board, run *"run lifeboard-setup"* in Claude Code from the clone; it makes your board copy and publishes from there.
+Open http://127.0.0.1:8765/test.html: the page running on the made-up data, with an in-memory stand-in for the database (the real one exists only on claude.ai). Run `pnpm verify` before you call a change done. To publish a real board, say *"run lifeboard-setup"* in Claude Code from this clone; it turns the clone into your board copy and publishes from there.
 
 **Optional extras:**
 - **3D models**: a new creature each week and a plant for each habit, made by the weekly run. Setup checks Blender, ImageMagick and Node, offers to install them with `./setup.sh` (macOS, Linux, Windows, or a cloud environment's setup script) and registers the weekly run. See [models/README.md](models/README.md).

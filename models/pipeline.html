@@ -446,7 +446,7 @@ const STAGES = {
                     scenery: "Capture in the Ecosystem (capture.html): placed among neighbours; sway-check measures the shader motion." },
             fail: "→ animate, or runtime (src/packages/ecosystem) for steering and placement" },
   ship:   { g: "ship", t: "Ship", s: "roster + model-only publish", owner: "model-ship",
-            what: "Ships a passing report.json, or, once the budget is spent with no pass, the best judged attempt (ledger.py best --below-bar; every automated gate still passed), marked below_bar in the roster. Optimizes, wraps as base64 JS, adds to <code>models/board/roster.json</code>, re-reads the live roster and merges by id (a differing id stops the run), publishes only the model files (<code>pnpm board publish-set</code>, which refuses at the artifact's version limits), then commits <code>models/board/</code>. Never publishes page files.", fail: "" },
+            what: "Ships a passing report.json, or, once the budget is spent with no pass, the best judged attempt (ledger.py best --below-bar; every automated gate still passed), marked below_bar in the roster. Optimizes, wraps as base64 JS, adds to <code>models/board/roster.json</code>, re-reads the live roster and merges by id (a differing id stops the run), publishes only the model files (<code>pnpm board publish-set</code>, which refuses at the artifact's version limits) when the board's AGENTS.md \"This board's settings\" pre-approve publishing (otherwise asks, or reports it unpublished when unattended), then commits <code>models/board/</code>. Never publishes page files.", fail: "" },
 };
 const GROUPS = [
   ["make", "Make", ["hydrate", "brief", "build", "animate"]],
