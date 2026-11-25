@@ -24,8 +24,8 @@ OUTDIR=$(cd "$ROOT/out" 2>/dev/null && pwd -P)   # physical, so a symlinked out/
 if [[ $GDIR != "$OUTDIR/$ID" && $GDIR != "$OUTDIR/$ID/preview" && $GDIR != "$OUTDIR/dryrun/$ID" ]]; then
   echo "refusing $GLB: the glb must be directly in models/out/$ID/, models/out/$ID/preview/ or models/out/dryrun/$ID/ (QA output goes to that folder's qa/); copy it there first"; exit 2; fi
 if [[ -z $SPEC ]]; then
-  MDIR=$(python3 "$ROOT/shared/tools/model_files.py" dir)   # the board's models (starter until a board dir exists)
-  for c in "$MDIR"/{creature,plant,scenery}/specs/$ID.json "$ROOT"/{creature,plant,scenery}/specs/$ID.json "$ROOT"/{creature,plant,scenery}/specs/examples/$ID.json "$GDIR/spec.json" "$ROOT/out/dryrun/$ID/spec.json"; do
+  # a spec written by a brief lands in models/board/ before the board has a roster, so search every layer
+  for c in "$ROOT"/board/{creature,plant,scenery}/specs/$ID.json "$ROOT"/starter/{creature,plant,scenery}/specs/$ID.json "$ROOT"/{creature,plant,scenery}/specs/$ID.json "$ROOT"/{creature,plant,scenery}/specs/examples/$ID.json "$GDIR/spec.json" "$ROOT/out/dryrun/$ID/spec.json"; do
     [[ -f $c ]] && { SPEC=$c; break; }; done
 fi
 [[ -f $SPEC ]] || { echo "no spec found for $ID"; exit 2; }
