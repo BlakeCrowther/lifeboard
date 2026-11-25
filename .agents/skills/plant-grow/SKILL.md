@@ -5,7 +5,7 @@ description: Kind: plant. After shared model-build: check the five growth stages
 
 # Plant grow
 
-Input: spec + `models/out/<id>/` from `model-build` (one `build.py <spec> --run <run_id>` produces model, rig, actions and `<id>.glb`). Output: `models/out/<id>/<id>.glb` meeting `models/plant/CONTRACT.md`. Headless Blender only; every rebuild goes through `build.py --run <run_id>` (the ledger counts it).
+Input: spec (in the board dir, `models/board/plant/specs/<id>.json`) + `models/out/<id>/` from `model-build` (one `build.py <spec> --run <run_id>` produces model, rig, actions and `<id>.glb`). Output: `models/out/<id>/<id>.glb` meeting `models/plant/CONTRACT.md`. Headless Blender only; every rebuild goes through `build.py --run <run_id>` (the ledger counts it).
 
 What the archetype does (reference `models/plant/archetypes/stem_bloom.py`), and what to check:
 1. **Stages**: parts `s0_*`…`s4_*` are split after the bake into meshes `stage_0`…`stage_4` (seed, sprout, leafy, bud, bloom), rooted at the soil point, +Z up, one shared texture.

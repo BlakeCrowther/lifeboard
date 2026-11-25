@@ -125,7 +125,7 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
 <main>
   <h1>Model pipeline</h1>
   <p class="lede">How a 3D model goes from an idea to the Ecosystem, and what it must pass at each gate. Pick a kind; click any stage to jump to its details.</p>
-  <p class="meta">Last reviewed: 2026-11-25 (each plant gets its own generator from six growth forms, enforced by spec-check; the weekly run opens a PR and squash-merges it once verify passes, so main matches the live board; plants run in parallel, one agent each, sharing capped build slots; queued time doesn't count against a run; never empty-handed: a spent budget ships the best attempt below the bar; creature bar recomputed from its golden, plant bar lowered; reports never name the new model; preflight runs the code gates without judge renders) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
+  <p class="meta">Last reviewed: 2026-11-25 (a board's models live in <code>models/board/</code>, apart from the starter set, and ship to the store as a model-only publish after a hydrate step; each plant gets its own generator from six growth forms, enforced by spec-check; the weekly run opens a PR and squash-merges it once verify passes, so main holds the board's models; plants run in parallel, one agent each, sharing capped build slots; queued time doesn't count against a run; never empty-handed: a spent budget ships the best attempt below the bar; creature bar recomputed from its golden, plant bar lowered; reports never name the new model; preflight runs the code gates without judge renders) · Rule numbers on this page are read from each kind's <code>qa_calibration.json</code>, never typed by hand. Open findings: <a href="../docs/design/model-pipeline.md">design doc</a>.</p>
 
   <div class="bar">
     <div class="seg" role="group" aria-label="Model kind" id="kinds"></div>
@@ -177,6 +177,10 @@ td.ok { color: var(--pass); } td.bad { color: var(--fail); }
 
   <div class="callout">
     <h4>Parallel plants, shared build slots</h4><code>season-seeds</code> spawns one agent per plant, all at once; each owns its ledger and runs brief → build → grow → verify, then hands its renders back. Subagents can't start agents, so the orchestrator runs every judge panel and sends the verdict back to the same plant agent, which retries or finishes and returns its roster entry. The orchestrator writes the roster, commits and publishes once. Blender jobs (<code>build.py</code>, <code>verify.sh</code>) each hold a build slot (<code>shared/tools/slots.py</code>; <code>LB_BUILD_SLOTS</code>, default half the cores), so eight plants don't crawl together. Time queued for a slot is credited back to the run (<code>minutes_queued</code> in <code>ledger.py status</code>), so a plant's minutes measure its own work.
+  </div>
+
+  <div class="callout">
+    <h4>Where a board's models live</h4>Published paths never change (<code>models/roster.json</code>, <code>models/assets/x-glb.js</code>), but on disk three layers answer them: <code>models/board/</code> (one board's models; absent in the public repo, committed by a board's own copy), <code>models/starter/</code> (the starter set, committed publicly) and <code>models/</code> itself (golden assets and pipeline files). The model dir in use is <code>board/</code> once it has a roster, else <code>starter/</code>. A run hydrates <code>board/</code> from the store first and ships by publishing model files only; a page publish sends page files only, so neither overwrites the other.
   </div>
 
   <h2>5. Where it lives</h2>
@@ -409,8 +413,11 @@ const CRITERIA = {
 
 // Stages per kind. Hand-written: update when a stage, owner or route changes.
 const STAGES = {
+  hydrate:{ g: "make", t: "Hydrate", s: "the board's models from the store", owner: "weekly-visitor 0c",
+            what: "Pulls the live <code>models/roster.json</code>, <code>biomes.json</code> and the files the roster lists from the store into <code>models/board/</code> (<code>pnpm board hydrate</code>), so briefs and duplicate checks see every model the board has. Never deletes; board files the store lacks are reported. Starts from the starter set on a fresh checkout (<code>pnpm board seed</code>).",
+            fail: "" },
   brief:  { g: "make", t: "Brief", s: "design the spec", owner: { creature: "creature-brief", plant: "plant-brief", scenery: "scenery-make" },
-            what: "Picks what to make: species, reference, palette, size, motion intent. Writes <code>models/&lt;kind&gt;/specs/&lt;id&gt;.json</code>. Each creature and each plant gets its own generator, copied from the closest body plan or growth form (plants: <code>stem_bloom</code>, <code>blade_clump</code>, <code>blade_fan</code>, <code>rosette</code>, <code>spray</code>, <code>brush</code>); spec-check refuses a plant built straight on a shared form unless the spec says why.",
+            what: "Picks what to make: species, reference, palette, size, motion intent. Writes <code>models/board/&lt;kind&gt;/specs/&lt;id&gt;.json</code>. Each creature and each plant gets its own generator, copied from the closest body plan or growth form (plants: <code>stem_bloom</code>, <code>blade_clump</code>, <code>blade_fan</code>, <code>rosette</code>, <code>spray</code>, <code>brush</code>); spec-check refuses a plant built straight on a shared form unless the spec says why.",
             fail: "spec-check failures come back here." },
   build:  { g: "make", t: "Build", s: "Blender, headless", owner: "model-build",
             what: "Archetype generator builds the mesh: blockout, model, cleanup, UVs, material, bake (<code>build.py --run</code>). Refuses to rebuild without a plan once judged (exit 6).",
@@ -438,11 +445,11 @@ const STAGES = {
                     plant: "Candidate in its garden plot: stages and sway play, tend reacts, no console errors.",
                     scenery: "Capture in the Ecosystem (capture.html): placed among neighbours; sway-check measures the shader motion." },
             fail: "→ animate, or runtime (src/packages/ecosystem) for steering and placement" },
-  ship:   { g: "ship", t: "Ship", s: "roster + publish", owner: "model-ship",
-            what: "Ships a passing report.json, or, once the budget is spent with no pass, the best judged attempt (ledger.py best --below-bar; every automated gate still passed), marked below_bar in the roster. Optimizes, wraps as base64 JS, adds to roster.json, commits, publishes the board.", fail: "" },
+  ship:   { g: "ship", t: "Ship", s: "roster + model-only publish", owner: "model-ship",
+            what: "Ships a passing report.json, or, once the budget is spent with no pass, the best judged attempt (ledger.py best --below-bar; every automated gate still passed), marked below_bar in the roster. Optimizes, wraps as base64 JS, adds to <code>models/board/roster.json</code>, re-reads the live roster and merges by id (a differing id stops the run), publishes only the model files (<code>pnpm board publish-set</code>, which refuses at the artifact's version limits), then commits <code>models/board/</code>. Never publishes page files.", fail: "" },
 };
 const GROUPS = [
-  ["make", "Make", ["brief", "build", "animate"]],
+  ["make", "Make", ["hydrate", "brief", "build", "animate"]],
   ["code", "Code checks", ["spec", "shape", "motion", "export"]],
   ["judge", "Judges", ["judge"]],
   ["run", "Runtime", ["page"]],
@@ -603,6 +610,7 @@ function renderTables() {
     ["Run budget, judge replies, plans", "models/shared/tools/ledger.py → models/out/runs/ (gitignored)"],
     ["Step-by-step instructions", ".agents/skills/model-verify, model-build, model-ship, weekly-visitor, season-seeds, scenery-make"],
     ["Per-kind contract", "models/&lt;kind&gt;/CONTRACT.md"],
+    ["A board's model files (hydrate, merge, model-only publish)", "tools/board.ts (<code>pnpm board</code>), models/shared/tools/model-files.ts + model_files.py"],
     ["This page's data block", "models/shared/tools/render_pipeline_map.py"],
   ];
   document.getElementById("files").innerHTML = `<thead><tr><th>What</th><th>Where</th></tr></thead><tbody>` +

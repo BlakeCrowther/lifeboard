@@ -2,17 +2,18 @@
    murk, grade and neighbours, without the board), for the judge-panel.
    Usage: node models/shared/tools/capture_ecosystem.ts <id> [--glb <path>] [--spec <path>] [--hour 12] [--frames 12] [--neglect 0..1]
    --neglect defaults to 0.5 when <id> is a biome's neglect.blight (blight props are seen in murk), else 0.
-   Defaults: glb models/out/<id>/<id>.glb, spec models/<kind>/specs/<id>.json. Output <glb dir>/qa/ecosystem/:
+   Defaults: glb models/out/<id>/<id>.glb, spec <kind>/specs/<id>.json in the board dir (model-files.ts). Output <glb dir>/qa/ecosystem/:
      wide.png      the normal game camera, prop on the sand in front (the size players see it at)
      turn.png      4 labelled angles round the prop, mid-sway
      sway.png      <frames> labelled frames across one sway loop, one angle, in order
-   Needs Google Chrome (headless, WebGL), python3 (static server), ImageMagick `montage`, network (three.js from jsdelivr).
+   Needs Google Chrome (headless, WebGL), ImageMagick `montage`, network (three.js from jsdelivr).
    Synthetic game state, no board data. Exit 0 ok, 2 usage, 3 page/capture failure. */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { MODELS, REPO, openHeadlessPage, sleep } from './headless-page.ts';
+import { resolveModelFile } from './model-files.ts';
 
 interface Spec { kind?: string; biome?: number; motion?: { sway?: unknown } }
 interface BiomesFile { biomes?: { neglect?: { blight?: string } }[] }
@@ -22,9 +23,9 @@ const argv = process.argv.slice(2), id = argv[0];
 const opt = (k: string): string | undefined => { const i = argv.indexOf(k); return i > 0 ? argv[i + 1] : undefined; };
 if (!id || id.startsWith('-')) { console.error('usage: capture_ecosystem.ts <id> [--glb p] [--spec p] [--hour 12] [--frames 12]'); process.exit(2); }
 const glb = path.resolve(opt('--glb') ?? path.join(MODELS, 'out', id, id + '.glb'));
-const spec = opt('--spec') ?? ['scenery', 'creature', 'plant'].map((k) => path.join(MODELS, k, 'specs', id + '.json')).find((p) => fs.existsSync(p));
+const spec = opt('--spec') ?? ['scenery', 'creature', 'plant'].map((k) => resolveModelFile(`${k}/specs/${id}.json`)).find((p) => p !== undefined);
 const hour = opt('--hour') ?? '12', frames = Number(opt('--frames') ?? 12);
-const biomes = (JSON.parse(fs.readFileSync(path.join(MODELS, 'biomes.json'), 'utf8')) as BiomesFile).biomes ?? [];
+const biomes = (JSON.parse(fs.readFileSync(resolveModelFile('biomes.json') ?? '', 'utf8')) as BiomesFile).biomes ?? [];
 const neglect = opt('--neglect') ?? (biomes.some((b) => b.neglect?.blight === id) ? '0.5' : '0');
 if (!fs.existsSync(glb)) { console.error(`no glb at ${glb}`); process.exit(2); }
 if (!spec || !fs.existsSync(spec)) { console.error(`no spec for ${id}`); process.exit(2); }

@@ -3,35 +3,30 @@
    Serves the repo, opens index.html with dist/fake-db.js and a synthetic board whose one habit grows the plant golden,
    logs four sessions, and checks every animation frame. Run after `pnpm build`. Exit 0 pass, 1 fail. */
 import fs from 'node:fs';
-import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { resolveModelFile } from '../../models/shared/tools/model-files.ts';
+import { createStaticServer } from '../../models/shared/tools/static-server.ts';
 import { board } from './fixture.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json' };
 /* The template repo ships no board's plants, so the page gets a roster with the plant golden as the habit's gen-0 plant
-   (its model ships in models/assets/). No golden asset = a broken checkout: fail, never skip. */
+   (its model is a golden asset in models/assets/). No golden asset = a broken checkout: fail, never skip. */
 const GOLDEN = 'mermaids_cup';
 const PLOT = 'practice';
-if (!fs.existsSync(path.join(ROOT, `models/assets/${GOLDEN}-glb.js`))) {
+if (!resolveModelFile(`assets/${GOLDEN}-glb.js`)) {
   console.error(`garden-flicker: FAIL, models/assets/${GOLDEN}-glb.js missing`);
   process.exit(1);
 }
-const roster = JSON.parse(fs.readFileSync(path.join(ROOT, 'models/roster.json'), 'utf8')) as { models: Record<string, unknown>[] };
+const roster = JSON.parse(fs.readFileSync(resolveModelFile('roster.json') ?? '', 'utf8')) as { models: Record<string, unknown>[] };
 roster.models = roster.models.filter((model) => model['kind'] !== 'plant').concat({
   id: GOLDEN, kind: 'plant', name: 'Golden', spec: `plant/specs/${GOLDEN}.json`, glb: `assets/${GOLDEN}.glb`, js: `assets/${GOLDEN}-glb.js`,
   biome: 0, rarity: 'common', golden: true, plot: PLOT, gen: 0, habit: 'Practice',
 });
 
-const server = http.createServer((req, res) => {
-  const file = path.join(ROOT, decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname));
-  if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': TYPES[path.extname(file)] ?? 'application/octet-stream' });
-  fs.createReadStream(file).pipe(res);
-});
+const server = createStaticServer(ROOT);
 setTimeout(() => { console.error('garden-flicker: FAIL, timed out after 90s'); process.exit(1); }, 90000).unref();
 
 await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));

@@ -5,7 +5,7 @@ description: Kind: biome. Design the next Ecosystem biome and add it to models/b
 
 # Biome brief
 
-> Paths are relative to `models/` unless they start at the repo root (`src/`, `SPEC.md`).
+> Paths are relative to `models/` unless they start at the repo root (`src/`, `SPEC.md`); `biomes.json`, `biomes.archive.json` and `roster.json` are the board's, in `models/board/`. Run after weekly-visitor step 0c (hydrate), or do it yourself when run alone (`pnpm board seed`, then the live roster and biomes into `models/board`, see weekly-visitor 0c).
 
 Runs unattended when weekly-visitor calls it: decide, validate, report. Never ask the user.
 
@@ -34,7 +34,7 @@ Pick a real-world environment that makes a good next step: vary the medium: neve
 - Swap test against the two neighbours: if it would pass as either after a recolor, change it.
 
 ## 2b. Archive review (your judgment, not a script)
-Read every entry in `models/biomes.archive.json`. Name the archived biome closest to your design and compare four things: real-world environment, shape language (`look.shape`), palette family, owned motifs. If two or more match, it's a replay: redesign (a different Ecosystem, not a recolor). One match is fine with a stated reason. Prefer habitats the archive never tried (deserts, caves, dunes, ice, salt marsh, alpine, rivers, savanna, …). Write the closest archived biome and what differs into the report. `check_biome.py` only catches the unambiguous cases (archived name = FAIL, archived owned motif = WARN).
+Read every entry in `models/board/biomes.archive.json`. Name the archived biome closest to your design and compare four things: real-world environment, shape language (`look.shape`), palette family, owned motifs. If two or more match, it's a replay: redesign (a different Ecosystem, not a recolor). One match is fine with a stated reason. Prefer habitats the archive never tried (deserts, caves, dunes, ice, salt marsh, alpine, rivers, savanna, …). Write the closest archived biome and what differs into the report. `check_biome.py` only catches the unambiguous cases (archived name = FAIL, archived owned motif = WARN).
 
 ## 3. Write + validate
 Append the entry to `biomes.json` (`id` = the next integer; keep ids 0..n-1 in order), then:
@@ -44,7 +44,7 @@ python3 models/shared/tools/check_biome.py <id>
 Fix every FAIL; fix WARN unless the reason is stated in the report. Max 2 redesigns, then fall back to a safe variant of an existing biome's structure with a new name, palette and `owns`.
 
 ## 4. Ship
-Commit `models/biomes.json` with the visitor (weekly-visitor's model-ship publishes `models/biomes.json` alongside the roster). By hand: commit on the working branch and republish the lifeboard artifact with `models/biomes.json` in `files` (lifeboard-setup "Publishing").
+Commit `models/board/biomes.json` with the visitor (weekly-visitor's model-ship publishes it alongside the roster: `pnpm -s board publish-set --biomes`). By hand: commit `models/board/` on the working branch and run model-ship's publish step with `--biomes` (model files only).
 
 ## 5. Report
 Name, medium, scene reused, closest archived biome and what differs, palette swatches, owned motifs, example species, and any WARN kept. List the scenery pieces with their phases, and the neglect form, blight prop and murk. New structures (caves, dunes) need no page code: their props are scenery models.

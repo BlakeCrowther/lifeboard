@@ -19,13 +19,13 @@ The user's live lifeboard artifact (never a mock/test build; see break-setup for
 - **Break skips / lesson days** in `logs`: keep (default). Skips before the new start don't cost growth anyway; lesson days keep hiding accurate.
 
 ## 3. Back up
-ArtifactData `list` (page through with `cursor`) with `out_dir` = `~/lifeboard-backups/<YYYY-MM-DD>/` for: `game_state`, `visitors_met`, `keepsakes`, and `checks` doc `game_status` (`get`). Outside the repo: it's personal data. Copy `models/biomes.json` there too. Report the folder.
+ArtifactData `list` (page through with `cursor`) with `out_dir` = `~/lifeboard-backups/<YYYY-MM-DD>/` for: `game_state`, `visitors_met`, `keepsakes`, and `checks` doc `game_status` (`get`). Outside the repo: it's personal data. Copy `models/board/biomes.json` there too. Report the folder.
 
 ## 4. Reset
 - `game_state/game`: `update` `{ "started": "<today in the board timezone (checks/profile.tz, else the owner's local zone), YYYY-MM-DD>", "created_at": <ms> }` pinned with `if_version`.
 - `checks/game_status`: `delete` (the board rewrites it on next load).
 - If chosen: `delete` every doc in `visitors_met` and `keepsakes` with `batch` (≤ 50 writes per batch, each pinned with its `if_version`).
-- Fresh biomes: move every entry of `models/biomes.json` `biomes` into `models/biomes.archive.json` and every `models/roster.json` `models` entry (creatures and `kind: "plant"` alike) into `models/roster.archive.json` (append under the same key with an `archived: "<date>"` field; keep `note`/`identity_rules`/`version` in the live files, leaving `"biomes": []` and `"models": []`; the `assets/` files stay, and so do `*/qa_calibration.json` goldens: judge-panel still compares new creatures and plants against them). Run `python3 models/shared/tools/check_biome.py`, commit, push, and republish the artifact with `models/biomes.json` and `models/roster.json` in `files` (lifeboard-setup "Publishing"; check the live copy against the repo first per AGENTS.md).
+- Fresh biomes: move every entry of `models/board/biomes.json` `biomes` into `models/board/biomes.archive.json` and every `models/board/roster.json` `models` entry (creatures and `kind: "plant"` alike) into `models/board/roster.archive.json` (append under the same key with an `archived: "<date>"` field; keep `note`/`identity_rules`/`version` in the live files, leaving `"biomes": []` and `"models": []`; the board's `assets/` files stay, and so do `*/qa_calibration.json` goldens: judge-panel still compares new creatures and plants against them). Run `python3 models/shared/tools/check_biome.py`, commit `models/board/`, push, and publish the model files only: `models/roster.json` and `models/biomes.json` from `pnpm -s board publish-set --biomes` (lifeboard-setup "Publishing"; model-ship's merge-roster step does not apply: the live roster is being replaced on purpose).
 
 ## 4b. Fill the new game
 End the reset by running **weekly-visitor** now (run_id `reset-<YYYY-MM-DD>`), not at the next scheduled run. It is the check-and-fill pass: it reads `checks/game_status` (missing after the reset → biome 0, common), designs any biome that has no entry (biome-brief, which reviews the archive and avoids replaying it), builds this week's visitor, and makes plants for any garden plot in `garden.needs` (season-seeds). If `./setup.sh --check` fails (no Blender), skip this step and say the board stays "Uncharted" until a run with Blender. The weekly scheduled run is the same pass, so a fresh board and an ongoing one go through one path.
@@ -34,4 +34,4 @@ End the reset by running **weekly-visitor** now (run_id `reset-<YYYY-MM-DD>`), n
 Tell the user to reload the board (open devices too). Each viewer's browser remembers "new today" progress (`lb-hab-*` local storage); it settles after a day and needs no action. Report: backup folder, what was cleared, the new start date, and the fill pass's report (biome designed, visitor or why none, plants made).
 
 ## Restore
-Put the backed-up docs back with ArtifactData `set` (same ids), and `models/biomes.json` / `models/roster.json` from the archive files, the backup or git history.
+Put the backed-up docs back with ArtifactData `set` (same ids), and `models/board/biomes.json` / `models/board/roster.json` from the archive files, the backup or git history.

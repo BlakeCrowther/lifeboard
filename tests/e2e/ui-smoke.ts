@@ -3,26 +3,18 @@
    console error or failed local request. Then checks owner data stays in the board: the greeting
    uses checks/profile.name, an existing board gets no starter tasks, and an empty board gets them.
    Run after `pnpm build`: node tests/e2e/ui-smoke.ts. Exit 0 pass, 1 fail. */
-import fs from 'node:fs';
-import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { createStaticServer } from '../../models/shared/tools/static-server.ts';
 import { board } from './fixture.ts';
 
 type Doc = Record<string, unknown>;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css' };
 
-const server = http.createServer((req, res) => {
-  if (req.url === '/favicon.ico') { res.writeHead(204); res.end(); return; }
-  const file = path.join(ROOT, decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname));
-  if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': TYPES[path.extname(file)] ?? 'application/octet-stream' });
-  fs.createReadStream(file).pipe(res);
-});
+const server = createStaticServer(ROOT);
 
 /* fail loudly instead of hanging verify: a normal run takes ~10s */
 setTimeout(() => { console.error('ui-smoke: FAIL, timed out after 120s'); process.exit(1); }, 120000).unref();

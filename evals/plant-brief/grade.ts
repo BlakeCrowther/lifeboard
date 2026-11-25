@@ -13,9 +13,9 @@ interface PlantSpec {
 }
 
 const TRIS_CAP: Record<string, number> = { common: 8000, rare: 12000, exotic: 20000 };
-const specsDir = (wd: string) => join(wd, 'models/plant/specs');
-const rosterOf = (wd: string) => (readJson(join(wd, 'models/roster.json')) as RosterFile).models;
-const biomeOf = (wd: string, id: number) => (readJson(join(wd, 'models/biomes.json')) as BiomesFile).biomes.find((b) => b.id === id);
+const specsDir = (wd: string) => join(wd, 'models/board/plant/specs');
+const rosterOf = (wd: string) => (readJson(join(wd, 'models/board/roster.json')) as RosterFile).models;
+const biomeOf = (wd: string, id: number) => (readJson(join(wd, 'models/board/biomes.json')) as BiomesFile).biomes.find((b) => b.id === id);
 
 const grade: SkillEval<PlantCase, PlantSpec> = {
   task: (c) => `Design a seed species for one garden plant. Biome id ${String(c.biome)}, rarity ${c.rarity}, habit "${c.habit}", calendar season ${c.season}, plot ${c.plot}, gen ${String(c.gen)}. Write models/plant/specs/<id>.json (include plot, gen, habit) and make check_spec.py pass.`,
@@ -31,7 +31,7 @@ const grade: SkillEval<PlantCase, PlantSpec> = {
 
   collect(wd) {
     const fresh = readdirSync(specsDir(wd)).filter((f) => f.endsWith('.json') && f !== 'mermaids_cup.json');
-    if (fresh.length !== 1) throw new Error(`expected exactly one new spec in models/plant/specs, found ${String(fresh.length)}`);
+    if (fresh.length !== 1) throw new Error(`expected exactly one new spec in models/board/plant/specs, found ${String(fresh.length)}`);
     const only = fresh[0];
     if (only === undefined) throw new Error('no new spec');
     return readJson(join(specsDir(wd), only)) as PlantSpec;
@@ -39,7 +39,7 @@ const grade: SkillEval<PlantCase, PlantSpec> = {
 
   checks(wd, c, s): Check[] {
     const out: Check[] = [];
-    const path = join('models/plant/specs', `${s.id}.json`);
+    const path = join('models/board/plant/specs', `${s.id}.json`);
     const sc = existsSync(join(wd, path)) ? py(wd, 'models/shared/tools/check_spec.py', [path]) : { status: 1, out: 'spec file missing' };
     out.push(ok('spec-check', sc.status === 0, sc.out.replace(/\s+/g, ' ').slice(0, 300)));
     const roster = rosterOf(wd).filter((m) => m.kind === 'plant');
@@ -48,7 +48,7 @@ const grade: SkillEval<PlantCase, PlantSpec> = {
     out.push(ok('rarity-matches-case', s.rarity === c.rarity, `rarity ${String(s.rarity)}, case says ${c.rarity}`));
     out.push(ok('plot-gen-habit-carried', s.plot === c.plot && s.gen === c.gen && s.habit === c.habit, `plot/gen/habit ${String(s.plot)}/${String(s.gen)}/${String(s.habit)}, case ${c.plot}/${String(c.gen)}/${c.habit}`));
     out.push(ok('new-species', !roster.some((m) => m.id === s.id), `${s.id} already in roster`));
-    const taken = roster.map((m) => (readJson(join(wd, 'models', m.spec)) as PlantSpec).reference?.split(':')[0]?.trim().toLowerCase());
+    const taken = roster.map((m) => (readJson(join(wd, 'models/board', m.spec)) as PlantSpec).reference?.split(':')[0]?.trim().toLowerCase());
     out.push(ok('new-binomial', !taken.includes((s.reference ?? '').split(':')[0]?.trim().toLowerCase()), 'same binomial as a roster plant'));
     out.push(ok('reference-binomial', /^[A-Z][a-z]+ [a-z]+/.test(s.reference ?? ''), 'reference must start with a binomial name'));
     const archs = new Set<string | undefined>(readdirSync(join(wd, 'models/plant/archetypes')).map((f) => f.replace(/\.py$/, '')));

@@ -37,6 +37,7 @@ RUNS = os.path.join(
 MODELS = os.path.dirname(os.path.dirname(RUNS))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import judge_verdict  # the pass rule lives there (numbers in models/<kind>/qa_calibration.json); the ledger never restates it
+import model_files
 
 
 def _path(run_id: str) -> str:
@@ -236,12 +237,14 @@ def _medians(js: list[dict[str, Any]]) -> tuple[dict[str, float], float]:
 
 
 def _kind(cid: str) -> str | None:
-    """The model's kind, from its spec: <kind>/specs/[quarantined/|examples/]<id>.json, else out/[dryrun/]<id>/spec.json."""
+    """The model's kind, from its spec: <kind>/specs/[quarantined/|examples/]<id>.json (in the board's model dir, then
+    models/), else out/[dryrun/]<id>/spec.json."""
     for k in ("creature", "plant", "scenery"):
-        for sub in ("", "quarantined", "examples"):
-            p = os.path.join(MODELS, k, "specs", sub, cid + ".json")
-            if os.path.exists(p):
-                return json.load(open(p)).get("kind", k)
+        for base in (str(model_files.model_dir()), MODELS):
+            for sub in ("", "quarantined", "examples"):
+                p = os.path.join(base, k, "specs", sub, cid + ".json")
+                if os.path.exists(p):
+                    return json.load(open(p)).get("kind", k)
     for p in (os.path.join(MODELS, "out", cid, "spec.json"), os.path.join(MODELS, "out", "dryrun", cid, "spec.json")):
         if os.path.exists(p):
             return json.load(open(p)).get("kind", "creature")

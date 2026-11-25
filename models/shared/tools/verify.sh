@@ -5,7 +5,7 @@
 #   Any kind (spec.kind, default creature): shared gates + the kind's models/<kind>/qa.py.
 #   The glb must sit directly in models/out/<id>/, its preview/ (preflight.sh) or models/out/dryrun/<id>/ (any file name; a relative path is tried from
 #   the cwd, then from models/). Anything else exits 2, so QA output always lands in that folder's qa/ and never beside a
-#   shipped asset. Default glb: models/out/<id>/<id>.glb. Spec search: arg 3, <kind>/specs/<id>.json,
+#   shipped asset. Default glb: models/out/<id>/<id>.glb. Spec search: arg 3, the board's <kind>/specs/<id>.json (shared/tools/model-files.ts),
 #   <kind>/specs/examples/<id>.json, <glb dir>/spec.json, out/dryrun/<id>/spec.json.
 #   contact.png rows, top to bottom: card-size view (creature and scenery only: the model at the pixel size the user sees
 #   on the Ecosystem card, 1x beside the same pixels enlarged, idle then sulk; scale from shared/card_view.json), turntable,
@@ -24,7 +24,8 @@ OUTDIR=$(cd "$ROOT/out" 2>/dev/null && pwd -P)   # physical, so a symlinked out/
 if [[ $GDIR != "$OUTDIR/$ID" && $GDIR != "$OUTDIR/$ID/preview" && $GDIR != "$OUTDIR/dryrun/$ID" ]]; then
   echo "refusing $GLB: the glb must be directly in models/out/$ID/, models/out/$ID/preview/ or models/out/dryrun/$ID/ (QA output goes to that folder's qa/); copy it there first"; exit 2; fi
 if [[ -z $SPEC ]]; then
-  for c in "$ROOT"/{creature,plant,scenery}/specs/$ID.json "$ROOT"/{creature,plant,scenery}/specs/examples/$ID.json "$GDIR/spec.json" "$ROOT/out/dryrun/$ID/spec.json"; do
+  MDIR=$(python3 "$ROOT/shared/tools/model_files.py" dir)   # the board's models (starter until a board dir exists)
+  for c in "$MDIR"/{creature,plant,scenery}/specs/$ID.json "$ROOT"/{creature,plant,scenery}/specs/$ID.json "$ROOT"/{creature,plant,scenery}/specs/examples/$ID.json "$GDIR/spec.json" "$ROOT/out/dryrun/$ID/spec.json"; do
     [[ -f $c ]] && { SPEC=$c; break; }; done
 fi
 [[ -f $SPEC ]] || { echo "no spec found for $ID"; exit 2; }
@@ -70,13 +71,15 @@ PITCH=$(python3 -c "import json;print(30 if json.load(open('$SPEC')).get('kind')
 # Scenery is drawn at biomes.json's per-placement scale on top of px_per_m; show the smallest placement (the worst case).
 CARD=$(python3 - "$ROOT" "$SPEC" <<'EOF'
 import json, sys
+sys.path.insert(0, sys.argv[1] + "/shared/tools")
+import model_files
 root, spec = sys.argv[1:3]
 s = json.load(open(spec)); kind = s.get("kind", "creature")
 if kind == "plant": sys.exit(0)
 ppm, scale, note = json.load(open(root + "/shared/card_view.json"))["px_per_m"], 1.0, ""
 if kind == "scenery":
     note = "not placed in biomes.json: scale 1"
-    for b in json.load(open(root + "/biomes.json")).get("biomes", []):
+    for b in json.load(open(model_files.resolve("biomes.json"))).get("biomes", []):
         mine = [p["scale"][0] for p in b.get("scenery", []) if b.get("id") == s.get("biome") and p.get("id") == s["id"] and p.get("scale")]
         if mine: scale, note = min(mine), "smallest biome placement, scale %g" % min(mine)
 print(ppm, scale, note)
@@ -87,8 +90,8 @@ CARD_ARGS=(); CARD_PPM=; CARD_SCALE=; CARD_NOTE=
 rm -f "$OUT"/renders/card_size* "$OUT/row_card.png"   # a crashed render must not leave a stale card row behind
 # golden source: the contract build out/<gid>/<gid>.glb if present (true meters), else the roster's shipped glb
 GOLD=$(python3 -c "
-import json,os;r=json.load(open('$ROOT/roster.json'))
-print(' '.join(next(p for p in ('$ROOT/out/%s/%s.glb'%(c['id'],c['id']),'$ROOT/'+c['glb']) if os.path.exists(p)) for c in r['models'] if c.get('golden') and c['id']!='$ID' and c.get('kind','creature')==json.load(open('$SPEC')).get('kind','creature')))")
+import json,os,sys;sys.path.insert(0,'$ROOT/shared/tools');import model_files;r=json.load(open(model_files.resolve('roster.json')))
+print(' '.join(next(p for p in ('$ROOT/out/%s/%s.glb'%(c['id'],c['id']),str(model_files.resolve(c['glb']))) if os.path.exists(p)) for c in r['models'] if c.get('golden') and c['id']!='$ID' and c.get('kind','creature')==json.load(open('$SPEC')).get('kind','creature')))")
 blender -b --factory-startup --python "$ROOT/shared/blender/qa_render.py" -- "$GLB" "$OUT/renders" $GOLD --clips "$CLIPS" --pitch "$PITCH" ${CARD_ARGS[@]+"${CARD_ARGS[@]}"} ${QA_LEGACY_FRAMING:+--legacy-framing} 2>&1 | grep -E "QA_RENDER|Error|Traceback" || true
 shopt -s nullglob
 turns=("$OUT"/renders/turn_*.png)

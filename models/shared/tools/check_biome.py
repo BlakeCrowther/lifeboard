@@ -15,10 +15,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-BIOMES = ROOT / "models" / "biomes.json"
-ARCHIVE = ROOT / "models" / "biomes.archive.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import model_files  # where the board's roster, biomes and specs live
+
+BIOMES = model_files.resolve("biomes.json") or model_files.BOARD / "biomes.json"
+ARCHIVE = model_files.resolve("biomes.archive.json") or model_files.BOARD / "biomes.archive.json"
 LOOKS_SRC = ROOT / "src" / "packages" / "ecosystem" / "lib" / "frames.ts"
-ROSTER = ROOT / "models" / "roster.json"
+ROSTER = model_files.resolve("roster.json") or model_files.BOARD / "roster.json"
 SPREADS = {"cluster", "scatter", "edge", "back"}
 HEX = re.compile(r"#[0-9a-fA-F]{6}")
 MEDIA = {"water", "land", "air"}

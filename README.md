@@ -55,7 +55,7 @@ pnpm bootstrap   # install dev tools (Playwright for the UI check)
 pnpm verify      # no stray JS, types, lint, game rules vs SPEC.md, balance sim, evals, UI smoke, python lint
 ```
 
-Local preview: `python3 -m http.server 8765` from the repo root. Outside claude.ai there is no database, so make a gitignored `test.html` that loads `dist/fake-db.js` with made-up data first (see the `lifeboard-setup` skill, "Local preview").
+Local preview: `pnpm dev` (port 8765, `PORT` overrides; it serves the repo root and maps `/models/...` to the board's models, the starter set and the golden assets). Outside claude.ai there is no database, so make a gitignored `test.html` that loads `dist/fake-db.js` with made-up data first (see the `lifeboard-setup` skill, "Local preview").
 
 | Read this | For |
 |---|---|

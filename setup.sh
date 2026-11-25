@@ -136,7 +136,7 @@ if command -v rustup >/dev/null; then
 fi
 
 # Local preview (lifeboard-setup "Local preview")
-if [[ -f "$REPO/.claude/launch.json" ]] && grep -q '"port": 8765' "$REPO/.claude/launch.json"; then pass "preview config .claude/launch.json (http.server 8765)"
+if [[ -f "$REPO/.claude/launch.json" ]] && grep -q '"port": 8765' "$REPO/.claude/launch.json"; then pass "preview config .claude/launch.json (pnpm dev, port 8765)"
 else fail "preview config .claude/launch.json missing" "restore it from git (serves the repo root on 8765)"; fi
 if [[ -f "$REPO/mockdata.js" ]]; then pass "mockdata.js (optional, personal, gitignored)"
 else echo "  skip  mockdata.js not present (optional: create your own window.MOCK={...}, see lifeboard-setup)"; fi

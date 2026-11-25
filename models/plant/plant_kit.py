@@ -18,9 +18,11 @@ import re
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared", "blender"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared", "tools"))
 import bmesh
 import bpy
 import lib
+import model_files
 from mathutils import Vector
 
 STAGES = 5
@@ -183,9 +185,12 @@ def medium(spec):
     m = spec.get("motion", {}).get("medium")
     if m:
         return m
-    p = os.path.join(os.path.dirname(__file__), "..", "biomes.json")
     try:
-        return next(b["medium"] for b in json.load(open(p))["biomes"] if b["id"] == spec["biome"])
+        return next(
+            b["medium"]
+            for b in json.load(open(model_files.resolve("biomes.json")))["biomes"]
+            if b["id"] == spec["biome"]
+        )
     except Exception:
         return "air"
 

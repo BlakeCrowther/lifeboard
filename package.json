@@ -14,9 +14,11 @@
     "spec-check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/spec-check.ts",
     "sim": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/sim.ts",
     "live-diff": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/live-diff.ts",
+    "board": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/board.ts",
     "verify": "tools/verify.sh",
     "test:ui": "pnpm -s build && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/e2e/ui-smoke.ts",
     "check:no-js": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/check-no-js.ts",
+    "check:public-board": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/check-public-board.ts",
     "lint:py": "tools/lint-python.sh",
     "eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON evals/run.ts"
   },

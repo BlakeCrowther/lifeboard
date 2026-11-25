@@ -5,6 +5,8 @@ description: Kind: creature. Rig and animate a built creature in headless Blende
 
 # Creature animate (rig + loops + export)
 
+> Paths: `out/` is relative to `models/`; the spec is in the board dir (`models/board/creature/specs/<id>.json`).
+
 Input `out/<id>/<id>_model.blend` + spec. Output `out/<id>/<id>.glb` meeting `models/creature/CONTRACT.md`. Headless Blender only.
 
 ## 1. Rig

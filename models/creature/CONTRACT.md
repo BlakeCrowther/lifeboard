@@ -65,4 +65,4 @@ How the real animal rests, reasoned per species like scenery's `sit` (design: `d
 | ✓ Materials | ≤ 2 | ≤ 2 | ≤ 3 |
 
 ## Shipping format
-Artifacts don't serve `.glb`, so the shipped asset is `assets/<id>-glb.js` (`window.LB_CREATURES['<id>']="<base64 glb>"`) next to the canonical `assets/<id>.glb`. `roster.json` lists both.
+Artifacts don't serve `.glb`, so the shipped asset (in the board dir, `models/board/`) is `assets/<id>-glb.js` (`window.LB_CREATURES['<id>']="<base64 glb>"`) next to the canonical `assets/<id>.glb`. `roster.json` lists both.
