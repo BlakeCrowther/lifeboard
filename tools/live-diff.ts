@@ -9,7 +9,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { modelDir } from '../models/shared/tools/model-files.ts';
+import { modelDir, resolveModelFile } from '../models/shared/tools/model-files.ts';
 import { publishedFiles, type Roster } from './board.ts';
 
 const sha = (text: string | Buffer): string => createHash('sha256').update(text).digest('hex');
@@ -65,7 +65,8 @@ function main(): number {
     console.log('model files (informational, never fail the check):');
     for (const f of models) {
       const live = bytes(arg, f);
-      const local = existsSync(join(modelDir(), f.slice('models/'.length))) ? sha(readFileSync(join(modelDir(), f.slice('models/'.length)))) : undefined;
+      const file = resolveModelFile(f.slice('models/'.length));
+      const local = file ? sha(readFileSync(file)) : undefined;
       if (live === undefined) console.log(`  not in the store  ${f}`);
       else if (local !== undefined && live !== local) console.log(`  differs from the board's copy  ${f}`);
     }

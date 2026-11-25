@@ -30,33 +30,83 @@ export function seed(models: string = MODELS_ROOT): boolean {
   return true;
 }
 
-/** Published paths (`models/...`) of the model files a roster lists: roster, biomes, then each entry's js and spec. */
-export function publishedFiles(roster: Roster): string[] {
-  return ['models/roster.json', 'models/biomes.json', ...roster.models.flatMap((m) => [`models/${m.js}`, ...(m.spec ? [`models/${m.spec}`] : [])])];
+/** True for a file only the pipeline layer (`models/` itself: goldens, examples) holds, never a board's or the starter's. */
+const pipelineOnly = (rel: string, models: string): boolean =>
+  existsSync(path.join(models, rel)) && !existsSync(path.join(boardDir(models), rel)) && !existsSync(path.join(starterDir(models), rel));
+
+/** Published paths (`models/...`) of the model files a roster lists: roster, biomes, then each entry's js and spec.
+ *  Golden-only files (held by `models/` alone) are left out: they ship with the pipeline, not with a board. */
+export function publishedFiles(roster: Roster, models: string = MODELS_ROOT): string[] {
+  const listed = roster.models.flatMap((m) => [`models/${m.js}`, ...(m.spec ? [`models/${m.spec}`] : [])]);
+  return ['models/roster.json', 'models/biomes.json', ...listed.filter((p) => !pipelineOnly(p.slice('models/'.length), models))];
 }
 
-export interface HydrateReport { added: string[]; changed: string[]; unchanged: number; boardOnly: string[] }
+export interface HydrateReport { added: string[]; changed: string[]; unchanged: number; boardOnly: string[]; kept: string[] }
+interface Biomes { biomes: { id: number; [field: string]: unknown }[]; [field: string]: unknown }
 
-/** Copy `<dir>/models/**` into the board dir. Never deletes: board files the store lacks are reported in `boardOnly`. */
+/** Entries of `store` the board lacks are added; an id in both with different content keeps the board's (`kept`);
+ *  board-only entries stay (`boardOnly`). */
+function mergeById<T extends { id: string | number }>(board: T[], store: T[]): { merged: T[]; added: T[]; kept: (string | number)[]; boardOnly: (string | number)[] } {
+  const mine = new Map(board.map((e) => [e.id, e]));
+  const added = store.filter((e) => !mine.has(e.id));
+  const kept = store.filter((e) => mine.has(e.id) && JSON.stringify(sortKeys(mine.get(e.id))) !== JSON.stringify(sortKeys(e))).map((e) => e.id);
+  const theirs = new Set(store.map((e) => e.id));
+  return { merged: [...board, ...added], added, kept, boardOnly: board.filter((e) => !theirs.has(e.id)).map((e) => e.id) };
+}
+
+/** Copy `<dir>/models/**` into the board dir. roster.json and biomes.json merge by id (the board's own entries survive);
+ *  files of an id whose content differs, and files only the pipeline layer holds (goldens), are not copied. Never deletes. */
 export function hydrate(fromDir: string, models: string = MODELS_ROOT): HydrateReport {
   const src = path.join(fromDir, 'models');
   if (!existsSync(src)) throw new Error(`${src} not found: pull the store's files to <dir>/models/... first`);
   const board = boardDir(models);
-  const report: HydrateReport = { added: [], changed: [], unchanged: 0, boardOnly: [] };
-  for (const file of walk(src)) {
-    const rel = path.relative(src, file).split(path.sep).join('/');
+  const report: HydrateReport = { added: [], changed: [], unchanged: 0, boardOnly: [], kept: [] };
+  const skip = new Set<string>();
+  const write = (rel: string, text: string): void => {
     const dest = path.join(board, rel);
     if (!existsSync(dest)) report.added.push(rel);
-    else if (!readFileSync(file).equals(readFileSync(dest))) report.changed.push(rel);
-    else { report.unchanged++; continue; }
+    else if (readFileSync(dest, 'utf8') !== text) report.changed.push(rel);
+    else { report.unchanged++; return; }
+    mkdirSync(path.dirname(dest), { recursive: true });
+    writeFileSync(dest, text);
+  };
+  const storeRoster = path.join(src, 'roster.json');
+  const boardRoster = path.join(board, 'roster.json');
+  if (existsSync(storeRoster)) {
+    const store = readRoster(storeRoster);
+    if (existsSync(boardRoster)) {
+      const mine = readRoster(boardRoster);
+      const m = mergeById(mine.models, store.models);
+      for (const id of m.kept) { report.kept.push(`roster ${String(id)}`); for (const e of store.models.filter((x) => x.id === id)) [e.js, e.spec].forEach((f) => { if (f) skip.add(f); }); }
+      report.boardOnly.push(...m.boardOnly.map((id) => `roster ${String(id)}`));
+      write('roster.json', m.added.length ? formatRoster({ ...mine, models: m.merged }) : readFileSync(boardRoster, 'utf8'));
+    } else write('roster.json', readFileSync(storeRoster, 'utf8'));
+  }
+  const storeBiomes = path.join(src, 'biomes.json');
+  const boardBiomes = path.join(board, 'biomes.json');
+  if (existsSync(storeBiomes)) {
+    if (existsSync(boardBiomes)) {
+      const mine = JSON.parse(readFileSync(boardBiomes, 'utf8')) as Biomes;
+      const m = mergeById(mine.biomes, (JSON.parse(readFileSync(storeBiomes, 'utf8')) as Biomes).biomes);
+      report.kept.push(...m.kept.map((id) => `biome ${String(id)}`));
+      report.boardOnly.push(...m.boardOnly.map((id) => `biome ${String(id)}`));
+      write('biomes.json', m.added.length ? `${JSON.stringify({ ...mine, biomes: m.merged }, null, 2)}\n` : readFileSync(boardBiomes, 'utf8'));
+    } else write('biomes.json', readFileSync(storeBiomes, 'utf8'));
+  }
+  const listed = existsSync(boardRoster) ? new Set(readRoster(boardRoster).models.flatMap((e) => [e.js, e.spec ?? ''])) : new Set<string>();
+  for (const file of walk(src)) {
+    const rel = path.relative(src, file).split(path.sep).join('/');
+    if (rel === 'roster.json' || rel === 'biomes.json' || skip.has(rel)) continue;
+    if (pipelineOnly(rel, models) && !listed.has(rel)) continue;
+    const dest = path.join(board, rel);
+    if (existsSync(dest) && readFileSync(file).equals(readFileSync(dest))) { report.unchanged++; continue; }
+    (existsSync(dest) ? report.changed : report.added).push(rel);
     mkdirSync(path.dirname(dest), { recursive: true });
     cpSync(file, dest);
   }
-  const boardRoster = path.join(board, 'roster.json');
   if (existsSync(boardRoster)) {
-    report.boardOnly = publishedFiles(readRoster(boardRoster))
-      .map((p) => p.slice('models/'.length))
-      .filter((rel) => existsSync(path.join(board, rel)) && !existsSync(path.join(src, rel)));
+    report.boardOnly.push(...publishedFiles(readRoster(boardRoster), models).slice(2)
+      .map((p) => p.slice('models/'.length)).filter((rel) => existsSync(path.join(board, rel)) && !existsSync(path.join(src, rel))).map((rel) => `file ${rel}`));
   }
   return report;
 }
@@ -162,6 +212,7 @@ export function main(argv: string[]): number {
         console.log(`board: hydrated models/board: ${String(r.added.length)} added, ${String(r.changed.length)} changed, ${String(r.unchanged)} unchanged`);
         for (const f of r.added) console.log(`  added    ${f}`);
         for (const f of r.changed) console.log(`  changed  ${f}`);
+        for (const f of r.kept) console.log(`  differs from the store, board's kept  ${f}`);
         for (const f of r.boardOnly) console.log(`  board-only (the store lacks it, kept)  ${f}`);
         return 0;
       }

@@ -2,7 +2,9 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { LimitError, LIMITS, formatRoster, hydrate, mergeRoster, publishSet, seed } from './board.ts';
+import { localFileFor } from '../models/shared/tools/static-server.ts';
+import { resolveModelFile } from '../models/shared/tools/model-files.ts';
+import { LimitError, LIMITS, formatRoster, hydrate, mergeRoster, publishSet, publishedFiles, seed } from './board.ts';
 
 let models: string;
 const write = (rel: string, body: string): void => {
@@ -76,5 +78,58 @@ describe('hydrate', () => {
     expect(report.added).toContain('assets/live-glb.js');
     expect(report.changed).toContain('assets/a-glb.js');
     expect(readFileSync(path.join(models, 'board/assets/mine-glb.js'), 'utf8')).toBe('x'.repeat(10));
+  });
+
+  it('keeps a board-only roster entry and biome, adds store-only ones', () => {
+    modelFiles('board', 'a', 'mine');
+    write('board/biomes.json', JSON.stringify({ biomes: [{ id: 0, name: 'mine' }] }));
+    write('pull/models/roster.json', roster('a', 'live'));
+    write('pull/models/biomes.json', JSON.stringify({ biomes: [{ id: 1, name: 'live' }] }));
+    const report = hydrate(path.join(models, 'pull'), models);
+    const ids = (JSON.parse(readFileSync(path.join(models, 'board/roster.json'), 'utf8')) as { models: { id: string }[] }).models.map((m) => m.id);
+    expect(ids).toEqual(['a', 'mine', 'live']);
+    const biomes = (JSON.parse(readFileSync(path.join(models, 'board/biomes.json'), 'utf8')) as { biomes: { id: number }[] }).biomes.map((b) => b.id);
+    expect(biomes).toEqual([0, 1]);
+    expect(report.boardOnly).toContain('roster mine');
+  });
+
+  it('keeps the board entry and its files when an id differs, and copies no golden', () => {
+    modelFiles('board', 'a');
+    write('assets/gold-glb.js', 'golden');
+    write('pull/models/roster.json', formatRoster({ models: [entry('a', { rarity: 'rare' })] }));
+    write('pull/models/assets/a-glb.js', 'store version');
+    write('pull/models/assets/gold-glb.js', 'golden');
+    const report = hydrate(path.join(models, 'pull'), models);
+    expect(report.kept).toEqual(['roster a']);
+    expect(readFileSync(path.join(models, 'board/assets/a-glb.js'), 'utf8')).toBe('x'.repeat(10));
+    expect(readFileSync(path.join(models, 'board/roster.json'), 'utf8')).not.toContain('rare');
+    expect(report.added).not.toContain('assets/gold-glb.js');
+  });
+});
+
+describe('files', () => {
+  it('leaves out files only the pipeline layer holds', () => {
+    modelFiles('starter', 'a');
+    write('assets/gold-glb.js', 'g');
+    const list = publishedFiles({ models: [entry('a'), { id: 'gold', js: 'assets/gold-glb.js' }] }, models);
+    expect(list).toContain('models/assets/a-glb.js');
+    expect(list).not.toContain('models/assets/gold-glb.js');
+  });
+});
+
+describe('model file resolution', () => {
+  it('answers board, then starter, then models/', () => {
+    write('x.json', 'root'); expect(resolveModelFile('x.json', models)).toBe(path.join(models, 'x.json'));
+    write('starter/x.json', 'starter'); expect(resolveModelFile('x.json', models)).toBe(path.join(models, 'starter/x.json'));
+    write('board/x.json', 'board'); expect(resolveModelFile('x.json', models)).toBe(path.join(models, 'board/x.json'));
+    expect(resolveModelFile('none.json', models)).toBeUndefined();
+  });
+
+  it('maps /models/<path> for the static server the same way and refuses traversal', () => {
+    write('models/starter/x.json', 's'); write('models/board/x.json', 'b'); write('models/y.json', 'y'); write('index.html', 'i');
+    expect(localFileFor(models, '/models/x.json')).toBe(path.join(models, 'models/board/x.json'));
+    expect(localFileFor(models, '/models/y.json')).toBe(path.join(models, 'models/y.json'));
+    expect(localFileFor(models, '/index.html')).toBe(path.join(models, 'index.html'));
+    expect(localFileFor(models, '/models/../../etc/passwd')).toBeUndefined();
   });
 });

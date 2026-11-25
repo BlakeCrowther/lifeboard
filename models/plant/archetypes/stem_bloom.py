@@ -20,7 +20,7 @@ Spec fields (all optional except size/palette/motion):
   shape.seed_ratio .035               seed radius / height
   palette.main [stem, leaf], palette.accent (head; the biome accent), palette.disc (default main[0]), palette.seed
   motion.sway {frames, cycles, amp_deg, lag_frames}, motion.tend {frames, lift_deg 8, stretch 0.12, open 0.15}
-  motion.medium  air|water (default: the biome's medium in models/biomes.json)
+  motion.medium  air|water (default: the biome's medium in biomes.json)
 Contract: origin at the soil point, +Z up, +X is the best side, meters."""
 
 import json
@@ -29,9 +29,11 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared", "blender"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared", "tools"))
 import bmesh
 import bpy
 import lib
+import model_files
 from mathutils import Vector
 
 STAGES = 5
@@ -272,9 +274,12 @@ def _medium(spec):
     m = spec.get("motion", {}).get("medium")
     if m:
         return m
-    p = os.path.join(os.path.dirname(__file__), "..", "..", "biomes.json")
     try:
-        return next(b["medium"] for b in json.load(open(p))["biomes"] if b["id"] == spec["biome"])
+        return next(
+            b["medium"]
+            for b in json.load(open(model_files.resolve("biomes.json")))["biomes"]
+            if b["id"] == spec["biome"]
+        )
     except Exception:
         return "air"
 

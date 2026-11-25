@@ -5,7 +5,7 @@ description: Kind: biome. Design the next Ecosystem biome and add it to models/b
 
 # Biome brief
 
-> Paths are relative to `models/` unless they start at the repo root (`src/`, `SPEC.md`); `biomes.json`, `biomes.archive.json` and `roster.json` are the board's, in `models/board/`. Run after weekly-visitor step 0c (hydrate), or do it yourself when run alone (`pnpm board seed`, then the live roster and biomes into `models/board`, see weekly-visitor 0c).
+> Paths are relative to `models/` unless they start at the repo root (`src/`, `SPEC.md`); `biomes.json`, `biomes.archive.json` and `roster.json` are the board's, in `models/board/`. Run after weekly-visitor step 0c (hydrate), or do it yourself when run alone (`pnpm board seed`, then weekly-visitor 0c's hydrate).
 
 Runs unattended when weekly-visitor calls it: decide, validate, report. Never ask the user.
 

@@ -237,10 +237,10 @@ def _medians(js: list[dict[str, Any]]) -> tuple[dict[str, float], float]:
 
 
 def _kind(cid: str) -> str | None:
-    """The model's kind, from its spec: <kind>/specs/[quarantined/|examples/]<id>.json (in the board's model dir, then
+    """The model's kind, from its spec: <kind>/specs/[quarantined/|examples/]<id>.json (in board/, starter/, then
     models/), else out/[dryrun/]<id>/spec.json."""
     for k in ("creature", "plant", "scenery"):
-        for base in (str(model_files.model_dir()), MODELS):
+        for base in (str(model_files.BOARD), str(model_files.STARTER), MODELS):
             for sub in ("", "quarantined", "examples"):
                 p = os.path.join(base, k, "specs", sub, cid + ".json")
                 if os.path.exists(p):

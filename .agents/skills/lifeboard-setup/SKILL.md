@@ -75,6 +75,7 @@ A brand-new board seeds a few starter tasks on first open that teach how points 
 3. The Mac must be awake at run time (the template says how). Changing the day later: re-run this step and update the existing task; don't add a second one.
 
 ## Repo hygiene
+- A copy of the repo made before models moved to `models/board/` moves its models over with `lifeboard-update` (`tools/board-legacy.ts`, PR lifeboard#30); setup does not.
 - `models/out/` (builds, QA renders, run ledgers, quarantine) is gitignored local work; `models/board/` (roster, assets, specs) is what ships and is untracked in the public template (a board's own copy commits it); `models/starter/` is the starter set seeded into it; `models/assets/` holds the golden assets.
 
 ## Sharing checklist

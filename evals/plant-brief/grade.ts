@@ -18,7 +18,7 @@ const rosterOf = (wd: string) => (readJson(join(wd, 'models/board/roster.json'))
 const biomeOf = (wd: string, id: number) => (readJson(join(wd, 'models/board/biomes.json')) as BiomesFile).biomes.find((b) => b.id === id);
 
 const grade: SkillEval<PlantCase, PlantSpec> = {
-  task: (c) => `Design a seed species for one garden plant. Biome id ${String(c.biome)}, rarity ${c.rarity}, habit "${c.habit}", calendar season ${c.season}, plot ${c.plot}, gen ${String(c.gen)}. Write models/plant/specs/<id>.json (include plot, gen, habit) and make check_spec.py pass.`,
+  task: (c) => `Design a seed species for one garden plant. Biome id ${String(c.biome)}, rarity ${c.rarity}, habit "${c.habit}", calendar season ${c.season}, plot ${c.plot}, gen ${String(c.gen)}. Write models/board/plant/specs/<id>.json (include plot, gen, habit) and make check_spec.py pass.`,
 
   place(wd, _c, output) {
     writeJson(join(specsDir(wd), `${output.id}.json`), output);

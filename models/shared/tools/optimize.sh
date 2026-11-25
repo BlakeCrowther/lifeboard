@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Ship optimization, shared by verify.sh (export-check) and model-ship. Usage: optimize.sh <in.glb> <out.glb> [texture_px=1024]
-# model-ship writes into the board dir: out = "$(python3 models/shared/tools/model_files.py board)/assets/<id>.glb" (never models/starter).
+# A shipped model's out path is in the board dir (`model_files.py board`), never models/starter.
 # Individual steps instead of `gltf-transform optimize`: optimize's prune/flatten drops leaf empties such as `mouth`
 # (CONTRACT-required). quantize + webp + resize only; no draco/meshopt (the Ecosystem page has no decoder).
 set -euo pipefail
