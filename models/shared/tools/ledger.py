@@ -301,7 +301,7 @@ def notes(run_id: str, cid: str | None = None) -> tuple[bool, str]:
         if not rows:
             continue
         tag = (
-            " (routed to the Ecosystem package (src/packages/ecosystem), not the model; plan ignores)"
+            " (routed to the Ecosystem package, src/packages/ecosystem, not the model; plan ignores)"
             if c == ROUTED
             else f" (median now {med[c]:g})"
             if c in med

@@ -1,6 +1,6 @@
 ---
 name: suggest
-description: Turn a plain-language wish ("I want something that tracks my water", "help me read more", "remind me to call my mom") into two or three concrete ways to build it inside lifeboard, each grounded in what the board already has (tasks, habits and their garden plots, lists, the Ecosystem, lessons, the weekly job), with at least one playful, gamified option when it fits. The user picks one and it hands off to building it. For people new to AI or to lifeboard; no jargon. Use when someone says "I want something that…", "could lifeboard do…", "how would I add…", or "suggest a way to…".
+description: Turn a plain-language wish ("I want something that tracks my water", "help me read more") into two or three concrete ways to build it inside lifeboard, each grounded in what the board already has (tasks, habits and their garden plots, lists, the Ecosystem, lessons, the weekly run), with at least one playful, gamified option when it fits. The user picks one and it hands off to building it. Plain words, no jargon. Use when someone says "I want something that…", "could lifeboard do…", "how would I add…", or "suggest a way to…".
 ---
 
 # Suggest a way to fit an idea into lifeboard
@@ -12,7 +12,7 @@ Restate it in one sentence. If one thing is genuinely unclear and changes the op
 
 ## 2. Know the pieces (read before proposing)
 Ground every option in what exists. Skim, don't recite:
-- `SPEC.md`: the game rules. **Garden** (one plot per habit; a plant grows a stage each week the habit hits its floor, dies the first week it doesn't; 3D plants made weekly), **Ecosystem** (the day's ring from tasks; phases, visitors, what overdue tasks do), **Lessons**, **Surprises**, **Weekly job**.
+- `SPEC.md`: the game rules. **Garden** (one plot per habit; a plant grows a stage each week the habit hits its floor, dies the first week it doesn't; 3D plants made weekly), **Ecosystem** (the day's ring from tasks; phases, visitors, what overdue tasks do), **Lessons**, **Surprises**, **Weekly run**.
 - `src/packages/README.md`: the packages. Habits and sessions (`habits`), tasks and repeats (`tasks`, `recurrence`), the game (`game`, rules in `src/packages/game/lib/rules.ts`), the Garden and Ecosystem renderers (`garden`, `ecosystem`), the board UI (`ui`: tabs Today, Plan, Lists, Life, Grow).
 - `src/packages/db/lib/schemas.ts`: what the board can store (tasks, habits, habit_sessions, list items, buy list, gift ideas, goals, logs, countdowns, settings documents). A new kind of data usually fits an existing collection before it needs a new one.
 - `.agents/skills/`: what Claude already does for the board (lessons from a book or video, weekly visitors and plants, setup).
@@ -39,7 +39,7 @@ For each option give:
 Rules:
 - At least one option should work **today with no code change** when that's possible (a habit, a repeating task, a list).
 - Offer a **gamified** option when it fits: points on the day's ring, a garden plant, an Ecosystem effect, a surprise. Skip it when the wish is somber or private and a game would feel wrong.
-- Respect real constraints: game numbers come from `SPEC.md`, a new mechanic changes `SPEC.md` and `rules.ts` together, models only come from the weekly job, the board only stores what the db schemas allow.
+- Respect real constraints: game numbers come from `SPEC.md`, a new mechanic changes `SPEC.md` and `rules.ts` together, models only come from the weekly run, the board only stores what the db schemas allow.
 - No jargon: say "your board's code", not "the ui package".
 
 ## 4. Let them pick, then hand off

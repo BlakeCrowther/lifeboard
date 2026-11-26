@@ -106,7 +106,7 @@ export function copyText(text: string): Promise<boolean> {
   return Promise.resolve(fallback());
 }
 
-/* Send to Duet: mark the task, then start Duet's hourly check right now with this task as its focus.
+/* Send to Duet: mark the task, then start Duet's scheduled run right now with this task as its focus.
    Duet is the owner's own scheduled agent; its trigger id lives in checks/profile.duet_trigger, and the button hides without it.
    If the page can't start it (connector not allowed), copy the task to paste into Duet instead. */
 const CLAUDE_CODE_REMOTE = 'Claude Code Remote';
