@@ -23,8 +23,10 @@ export interface Profile {
   pets: ProfilePet[];
   /** Duet's trigger id; '' hides Send to Duet */
   duetTrigger: string;
+  /** a demo board on synthetic data: the page shows a Demo badge and titles itself "Lifeboard Demo" */
+  demo: boolean;
 }
-export const DEFAULT_PROFILE: Profile = { name: '', place: 'Local conditions', placeName: '', pets: [], duetTrigger: '' };
+export const DEFAULT_PROFILE: Profile = { name: '', place: 'Local conditions', placeName: '', pets: [], duetTrigger: '', demo: false };
 
 const trimmed = (x: unknown): string => (typeof x === 'string' ? x.trim() : '');
 const fieldOf = (value: unknown, key: string): unknown => (value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined);
@@ -39,6 +41,7 @@ export function readProfile(value: unknown): Profile & { timeZone: string } {
     placeName: trimmed(fieldOf(v, 'place')),
     duetTrigger: trimmed(fieldOf(v, 'duet_trigger')),
     timeZone: trimmed(fieldOf(v, 'tz')),
+    demo: fieldOf(v, 'demo') === true,
     pets: (Array.isArray(pets) ? (pets as unknown[]) : [])
       .filter((x) => typeof fieldOf(x, 'name') === 'string' && trimmed(fieldOf(x, 'name')))
       .map((x) => {

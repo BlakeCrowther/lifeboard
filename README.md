@@ -4,6 +4,8 @@ A personal life dashboard that runs as a claude.ai Artifact: tasks, habits, list
 
 Your data lives in the artifact's own database, not in this repo. Claude can read and write it too, so you can say "add a dentist appointment for Friday" or "make lessons from this book" and it shows up on the board.
 
+This repo also publishes a **demo board** on synthetic data, marked "Demo" (the `demo-board` skill), so you can look before you set up your own.
+
 ## What's on the page
 
 | Tab | What it holds |

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DAILY_LAST_CALL_HOUR, habitRisk } from '../habit-risk.ts';
-import { buildBoardModel, type BoardReader } from '../board-model.ts';
+import { buildBoardModel, readProfile, type BoardReader } from '../board-model.ts';
 import { guessAisle } from '../list-kinds.ts';
 import { parseQuickAdd, ruleOfRepeat } from '../quick-add.ts';
 import { presetOf, ruleForPreset } from '../repeat-presets.ts';
@@ -53,6 +53,13 @@ describe('buildBoardModel', () => {
     expect(model.countdownsByKind.big.map((c) => [c.kind, c.title])).toEqual([['big trip', 'Trip']]);
     expect(model.countdownsByKind.glance).toEqual([{ id: 'c2', title: 'Rent', date: '2026-12-01', detail: 'transfer' }]);
     expect(model.calendarSynced).toBe(false);
+  });
+});
+
+describe('readProfile demo flag', () => {
+  it('is a demo only when demo is exactly true', () => {
+    expect(readProfile({ name: 'Sam', demo: true }).demo).toBe(true);
+    for (const value of [{ demo: 'true' }, { demo: 1 }, { demo: false }, {}, undefined, null]) expect(readProfile(value).demo).toBe(false);
   });
 });
 

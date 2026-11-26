@@ -6,6 +6,7 @@ One meaning per term, used the same way in code, docs and UI. Code names data af
 
 - **Board**: one person's lifeboard: the published artifact plus its database. Each person who clones the repo publishes their own.
 - **Live board**: the owner's own published board. The repo is the template; see "Owner workflow" in AGENTS.md.
+- **Demo board**: the board the public repo publishes, titled "Lifeboard Demo", on synthetic seed data (`demo/seed.json`). Its profile has `demo: true`, which shows a Demo badge. Made and refreshed with the `demo-board` skill.
 - **Profile**: `checks/profile` in the board's database (collection `checks`, doc `profile`): the owner's name, timezone, conditions place, pets and optional agent trigger. Anything owner-specific lives here, never in code.
 - **Starter tasks**: the few tasks a brand-new, empty board gets once, explaining how lifeboard scores things.
 - **Countdown** (`countdowns`): a dated event to count down to. In code, `countdownsByKind.big` and `.glance`.
