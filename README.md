@@ -24,7 +24,7 @@ You need a Claude account with Artifacts and Claude Code (desktop app or CLI). L
 
 **Just the board (no terminal skills needed):**
 1. Open this repo in Claude Code (a cloud session on it, or a local clone).
-2. Say: *"Run lifeboard-setup"*. It first makes **your own private copy** of the repo (on GitHub, or only on your computer), where your board and its 3D models live; later, *"run lifeboard-update"* brings in new versions without touching your models or your changes. Then it asks a few questions (your name, timezone, week start, how strict the day's ring is) and publishes the board as your own private artifact.
+2. Say: *"Run lifeboard-setup"*. It first makes **your own private copy** of the repo (on GitHub, or only on your computer), where your board and its 3D models live; later, *"run lifeboard-update"* brings in new versions without touching your models or your changes. Then it asks how much you want to decide: **do it all** (sensible defaults, no more questions), **a few choices**, or **everything**. Then it asks only those questions (your name, timezone, week start, how strict the day's ring is) and publishes the board as your own private artifact.
 3. Open the link it gives you. Pin it in claude.ai so it's one click away.
 
 **With the 3D models** (creatures and plants made each week): setup also checks Blender, ImageMagick and Node, offers to install what's missing with `./setup.sh` (macOS, Linux and Windows; also what a cloud environment's setup script can call), and registers the weekly job. See [models/README.md](models/README.md).

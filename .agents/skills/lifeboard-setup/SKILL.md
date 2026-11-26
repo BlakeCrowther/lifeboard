@@ -1,9 +1,38 @@
 ---
 name: lifeboard-setup
-description: Set up lifeboard for a new owner or a fresh clone, and health-check it later. Asks for name, timezone, week start and how strict the daily ring is, publishes the board as the user's own artifact, and optionally installs the 3D model toolchain (Blender, ImageMagick, Node) and the weekly job. Use when someone first opens this repo, says "set up lifeboard", moves to a new machine, or a model skill fails with a tooling error.
+description: Set up lifeboard for a new owner or a fresh clone, and health-check it later. Starts by asking how much to decide (do it all with defaults, a few choices, or everything), then makes the owner's own copy, asks only that level's questions (name, timezone, week start, commit lock, Ecosystem and Garden, tips, models), publishes the board as the user's own artifact, and optionally installs the 3D model toolchain (Blender, ImageMagick, Node) and the weekly job. Use when someone first opens this repo, says "set up lifeboard", moves to a new machine, or a model skill fails with a tooling error.
 ---
 
 # Lifeboard setup (fresh clone)
+
+## How much to decide (ask first, always)
+One question, with AskUserQuestion when available:
+- **Do it all (Recommended)**: sensible defaults, no more questions. Includes making your private copy, publishing your board and the weekly 3D run.
+- **A few choices**: the handful that matter most (marked "few" below).
+- **Let me choose everything**: every setting below.
+
+Then follow the steps, asking only the questions the chosen level includes; every other setting takes its default without asking. "Do it all" never asks anything after this question and never needs the user to type in a terminal: Claude runs every command. Remember the level for this run only.
+
+| Setting | Default | Asked at | Saved in | Step |
+|---|---|---|---|---|
+| Where your copy lives | GitHub, private, when `gh auth status` succeeds; otherwise this computer only | few, all | the copy itself | 0 |
+| Your first name | none (plain "Good morning.") | few, all | `checks/profile.name` | Your labels |
+| Timezone | the one this machine reports | all | `checks/profile.tz` | Your labels |
+| Place for the conditions card | none ("Local conditions") | all | `checks/profile.place` | Your labels |
+| Pets | none (pet filter hidden) | all | `checks/profile.pets` | Your labels |
+| Week start | Monday | few, all | `checks/week_start` | Weekly scheduled task |
+| Commit lock | right away (`0`) | all | `checks/ui_prefs.commitLock` | Ecosystem and Garden toggles |
+| Ecosystem and Garden | both on | all | `checks/ui_prefs.eco`, `.garden` | Ecosystem and Garden toggles |
+| Theme | auto | all | `checks/ui_prefs.theme` | (the page's display settings) |
+| Tips | on | all | `checks/ui_prefs.tips` | (the page's display settings) |
+| Lessons a day | the defaults in `RULES.lessons` | all | `checks/lesson_rules` | (lesson-make) |
+| Weekly 3D models | on: install the toolchain (`./setup.sh`) and register the weekly run | few, all | the scheduled task | 1, Weekly scheduled task |
+| When the weekly run happens | the night before the week starts, 22:43 local | all | the scheduled task | Weekly scheduled task |
+| Subagent model | Sonnet | all | this copy's `AGENTS.md` | Subagent model |
+
+Fixed, never asked: seasons, game rules and numbers (SPEC.md), what earns points.
+
+**Changing a setting later.** The owner can re-run setup (it skips what's done and asks the level again) or say "change <setting>" ("change my week start", "turn tips off", "move my weekly run to Saturday"): go straight to that row's step, ask just that question, write it where the table says, and stop.
 
 Order: 0 your own copy → 1 toolchain (`./setup.sh`) → 2 local preview → 3 Ecosystem/Garden toggles + commitment lock → 4 publishing → 5 runtime test hook → 6 weekly scheduled task. Run `./setup.sh` first; it says exactly what is missing:
 
