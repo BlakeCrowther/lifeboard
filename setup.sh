@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs the model-pipeline toolchain (Blender >= 5.3, ImageMagick, Node >= 24) and the
+# Installs the model-pipeline toolchain (Blender >= 5.3, ImageMagick, Node >= 22.18) and the
 # repo's JS deps plus the Chromium that `pnpm test:ui` needs (`pnpm bootstrap`), then checks
 # the toolchain and repo health. Works on macOS (Homebrew), Linux (apt or dnf; Blender from
 # download.blender.org) and Windows (Git Bash, winget). Idempotent: skips whatever is already
@@ -10,7 +10,10 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 BLENDER_SERIES=5.3
 BLENDER_MIN=$BLENDER_SERIES
 BLENDER_VERSION=5.3.0
-NODE_MIN=24 # the repo's tools run .ts files directly; package.json engines and CI agree
+NODE_MIN=22.18 # the repo's tools run .ts files directly (Node strips types by default from 22.18); package.json engines agree
+NODE_INSTALL=24 # what setup installs when node is missing or too old: the newest LTS line (CI runs it too)
+# true when node -v is at least NODE_MIN (major.minor)
+node_ok() { local v; v=$(node -v 2>/dev/null | sed 's/^v//'); [[ -n $v ]] || return 1; local maj=${v%%.*} rest=${v#*.}; local min=${rest%%.*}; local nmaj=${NODE_MIN%%.*} nmin=${NODE_MIN#*.}; (( maj > nmaj || (maj == nmaj && min >= nmin) )); }
 
 MODE=${1:-}
 
@@ -75,15 +78,36 @@ install_imagemagick() {
 
 install_node() {
   if have node; then
-    local major; major=$(node -v | sed 's/^v//; s/\..*//')
-    if (( major >= NODE_MIN )); then log "node ok"; return; fi
+    if node_ok; then log "node ok"; return; fi
     log "node $(node -v) is older than $NODE_MIN (the repo tools and export-check need >= $NODE_MIN)"
   fi
   case $OS in
     mac) brew install node ;;
     windows) winget install -e --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements ;;
-    linux) die "install Node >= $NODE_MIN (nvm, nodesource or your distro) and re-run" ;;
+    linux) install_node_linux ;;
   esac
+  node_ok || die "node is still older than $NODE_MIN after installing; put the new node first on PATH and re-run"
+}
+
+# Distro packages are often older than NODE_MIN, so Linux takes the official build from nodejs.org (any distro, x64 or
+# arm64), checked against nodejs.org's SHASUMS256.txt, into NODE_PREFIX with node/npm/npx/corepack linked into NODE_BIN.
+install_node_linux() {
+  local prefix=${NODE_PREFIX:-/opt/node} bin=${NODE_BIN:-/usr/local/bin} arch base sums file tmp
+  case "$(uname -m)" in x86_64) arch=x64 ;; aarch64|arm64) arch=arm64 ;; *) die "no official Node build for $(uname -m); install Node >= $NODE_MIN by hand" ;; esac
+  have curl || pkg_install curl
+  base="https://nodejs.org/dist/latest-v${NODE_INSTALL}.x"
+  sums=$(curl -fsSL "$base/SHASUMS256.txt") || die "can't reach nodejs.org; install Node >= $NODE_MIN by hand"
+  file=$(awk -v a="linux-$arch.tar.xz" '$2 ~ a"$" {print $2; exit}' <<<"$sums")
+  [[ -n $file ]] || die "no linux-$arch build listed at $base"
+  tmp=$(mktemp -d)
+  curl -fsSL "$base/$file" -o "$tmp/$file" || die "download failed: $base/$file"
+  (cd "$tmp" && grep " $file\$" <<<"$sums" | sha256sum -c --quiet -) || die "checksum mismatch for $file"
+  $SUDO mkdir -p "$prefix" "$bin"
+  $SUDO tar -xJf "$tmp/$file" -C "$prefix" --strip-components=1
+  for t in node npm npx corepack; do $SUDO ln -sf "$prefix/bin/$t" "$bin/$t"; done
+  rm -rf "$tmp"
+  hash -r
+  log "node $("$prefix/bin/node" -v) installed in $prefix"
 }
 
 if [[ $MODE != --check ]]; then
@@ -115,9 +139,9 @@ if have magick && magick -version >/dev/null 2>&1; then pass "imagemagick"; else
 
 # The repo's tools run .ts files directly, and export-check's optimizer (sharp) needs a recent Node: >= NODE_MIN.
 if have node; then
-  nv=$(node -v); nmajor=${nv#v}; nmajor=${nmajor%%.*}
-  if [[ "$nmajor" =~ ^[0-9]+$ ]] && (( nmajor >= NODE_MIN )); then pass "node $nv"
-  else fail "node >= $NODE_MIN (found $nv; the repo tools and export-check fail on older)" "./setup.sh, or put node >= $NODE_MIN first on PATH (nvm use $NODE_MIN)"; fi
+  nv=$(node -v)
+  if node_ok; then pass "node $nv"
+  else fail "node >= $NODE_MIN (found $nv; the repo tools and export-check fail on older)" "./setup.sh, or put node >= $NODE_MIN first on PATH (nvm use 22)"; fi
 else fail "node" "./setup.sh"; fi
 if npx -y @gltf-transform/cli@4 --version >/dev/null 2>&1; then pass "gltf-transform"; else fail "gltf-transform (npx @gltf-transform/cli@4)" "check network / npm"; fi
 

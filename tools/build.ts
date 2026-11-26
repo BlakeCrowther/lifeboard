@@ -1,7 +1,7 @@
 // Bundles the page: src/main.ts -> dist/app.js and src/capture-page.ts -> dist/capture.js (capture.html), ES modules
 // that share chunks in dist/chunks/ (the garden and ecosystem packages, loaded on demand). src/fake-db-page.ts ->
 // dist/fake-db.js is a classic script (local preview and UI smoke inject it before the page). `--watch` rebuilds on change.
-// Run directly: node tools/build.ts (Node 24+ strips types).
+// Run directly: node tools/build.ts (Node 22.18+ strips types).
 import { statSync } from 'node:fs';
 import { build, context, type BuildOptions } from 'esbuild';
 

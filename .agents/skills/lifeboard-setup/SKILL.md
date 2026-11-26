@@ -34,7 +34,7 @@ Then follow the steps, asking only the questions the chosen level includes; ever
 Fixed, never asked: seasons, game rules and numbers (SPEC.md), what earns points.
 
 **Re-running setup** is safe and changes only what is missing or what the owner changes now:
-- **Existing values are answers.** Before each step, read what the board and this copy already hold (`checks/profile`, `checks/ui_prefs`, `checks/week_start`, `checks/lesson_rules`, the "This board's settings" lines, the registered weekly task). A setting that is already set keeps its value; defaults only fill settings that are missing. "Do it all" on a re-run asks nothing and changes nothing already set. At "a few" or "everything", offer the current value as the first option ("Keep Sunday (current)").
+- **Existing values are answers.** Before each step, read what the board and this copy already hold (`checks/profile`, `checks/ui_prefs`, `checks/week_start`, `checks/lesson_rules`, the "This board's settings" lines, the registered weekly task). A setting that is already set keeps its value. A missing setting is filled with its default only when leaving it absent behaves differently from that default: an absent week start already means Monday, an absent commit lock means right away, absent tips mean on, an absent theme means auto and absent lesson rules mean the `RULES` defaults, so a re-run writes none of them. A missing `ui_prefs.eco` or `.garden` means each device keeps its own switch: never fill those on a re-run. "Do it all" on a re-run asks nothing and changes nothing already set. At "a few" or "everything", offer the current value as the first option ("Keep Sunday (current)").
 - **Writes touch only the fields asked.** Use ArtifactData `update` with `if_version` from the read (never `set` on a settings document that exists), so other fields (for example `checks/profile.duet_trigger`, or ui_prefs keys this step doesn't own) stay as they are.
 - **Never touched by setup:** tasks, habits, habit sessions, logs, lessons, goals, lists, `game_state` (the game start date and everything derived from it), visitors met, and the board's models.
 - **Publishing on a re-run:** when the board's artifact already exists, never do the first publish again. Run `pnpm board seed` (a no-op for a board with a roster), hydrate the board's models from the store first (weekly-visitor step 0c), and publish page files only when the code changed. Model files are only ever published by model-ship.
@@ -81,7 +81,7 @@ The demo board (seed data, "Demo" badge) is the public repo's own; a copy doesn'
 |---|---|---|
 | Blender ≥ 5.3 | Headless modeling, rigging, animation, baking, QA renders, glTF export (`blender -b`) | `./setup.sh` (free, GPL) |
 | ImageMagick | Contact sheets for the visual judge | `./setup.sh` |
-| Node ≥ 24 + `npx @gltf-transform/cli@4` | Runs the repo's `.ts` tools directly; validates + optimizes `.glb` | `./setup.sh` (gltf-transform fetched by npx) |
+| Node ≥ 22.18 + `npx @gltf-transform/cli@4` | Runs the repo's `.ts` tools directly; validates + optimizes `.glb` | `./setup.sh` (macOS brew, Windows winget, Linux the official Node 24 build from nodejs.org, any distro, x64 or arm64; gltf-transform fetched by npx) |
 | Scheduled tasks (cloud or desktop app) | Runs `weekly-visitor`: cloud = a fresh session per run in the lifeboard environment (setup script runs `./setup.sh`); Mac = desktop app, Mac must be awake | `.claude/scheduled/weekly-visitor.md` |
 
 ### Optional (interactive development only)
@@ -91,7 +91,7 @@ The demo board (seed data, "Demo" badge) is the public repo's own; a copy doesn'
 3. Restart Claude (⌘Q). Test: ask Claude for the Blender scene summary.
 
 ## Known gotchas
-- Node must be >= 24: the repo's tools run `.ts` files directly, and on an old node (18) export-check also fails with `SyntaxError: Unexpected token 'with'`. Put a newer node first on PATH (nvm) before verify.sh; `./setup.sh --check` fails on an older node.
+- Node must be >= 22.18: the repo's tools run `.ts` files directly (type stripping is on by default from 22.18); on an old node (18) export-check also fails with `SyntaxError: Unexpected token 'with'`. Put a newer node first on PATH (nvm) before verify.sh; `./setup.sh --check` fails on an older node.
 - **Blender MCP extension fails with `pydantic-core`/`rpds-py` build errors.** `uv` picked a too-new Python (3.15) with no wheels, then tried to compile with Rust. Fix: pin 3.12 in the extension folder (`./setup.sh --check` prints the exact command) and/or `uv python pin --global 3.12`. Reinstalling the extension wipes the folder pin.
 - **Rust "can't find crate for core" on Apple Silicon.** rustup default toolchain is x86_64. `rustup default stable-aarch64-apple-darwin`.
 - **Artifacts won't serve `.glb`.** Ship models as base64 JS (`assets/<id>-glb.js` in the board dir) and parse with `GLTFLoader.parseAsync`. `model-ship` does this.

@@ -27,7 +27,7 @@ You need a Claude account with Artifacts and Claude Code (the desktop app, claud
 2. Say *"run lifeboard-setup"* and choose **do it all**. It makes your own private copy of the repo, picks sensible settings, publishes your board as your own private artifact, and sets up the weekly run. (Choose **a few choices** or **everything** instead to set your name, timezone, week start and the rest yourself.)
 3. Open the link it gives you and pin it in claude.ai. From then on, start Claude Code sessions in your copy, not here.
 
-**Technical? Clone and run it locally first.** You need git, Node 24 or newer, pnpm (`corepack enable`) and python3; `pnpm verify` also runs the Python lint and doc checks when [uv](https://docs.astral.sh/uv/) is installed (it skips them otherwise).
+**Technical? Clone and run it locally first.** You need git, Node 22.18 or newer, pnpm (`corepack enable`) and python3; `pnpm verify` also runs the Python lint and doc checks when [uv](https://docs.astral.sh/uv/) is installed (it skips them otherwise).
 ```bash
 git clone https://github.com/BlakeCrowther/lifeboard && cd lifeboard
 pnpm bootstrap   # install dependencies and the headless browser for the UI check
