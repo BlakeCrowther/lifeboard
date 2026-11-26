@@ -5,12 +5,30 @@ description: Set up lifeboard for a new owner or a fresh clone, and health-check
 
 # Lifeboard setup (fresh clone)
 
-Order: 1 toolchain (`./setup.sh`) → 2 local preview → 3 Ecosystem/Garden toggles + commitment lock → 4 publishing → 5 runtime test hook → 6 weekly scheduled task. Run `./setup.sh` first; it says exactly what is missing:
+Order: 0 your own copy → 1 toolchain (`./setup.sh`) → 2 local preview → 3 Ecosystem/Garden toggles + commitment lock → 4 publishing → 5 runtime test hook → 6 weekly scheduled task. Run `./setup.sh` first; it says exactly what is missing:
 
 ```bash
 ./setup.sh                             # install what's missing (macOS brew, Linux apt/dnf, Windows winget), then check
 ./setup.sh --check                     # checks only, installs nothing
 ```
+
+## 0. Your own copy (first, once)
+A board runs from its own copy of this repo, never from the public template (AGENTS.md "Which repo publishes which board"). If `git remote get-url origin` is `github.com/BlakeCrowther/lifeboard`, make the copy before anything else:
+1. Ask where it lives (one question): **GitHub, private (Recommended)**: works for cloud sessions and the weekly cloud run; needs a GitHub account. **This computer only**: no GitHub; local runs only.
+2. GitHub:
+   ```bash
+   git fetch --tags origin main
+   git clone --branch <newest v* tag, or main if none> https://github.com/BlakeCrowther/lifeboard my-lifeboard && cd my-lifeboard
+   git switch -c main 2>/dev/null || git switch main
+   git remote rename origin upstream
+   gh api user/repos -f name=my-lifeboard -F private=true
+   git remote add origin https://github.com/<their login>/my-lifeboard && git push -u origin main
+   ```
+   (In a cloud session, attach the new repo with the session's repo tools before pushing.) This computer only: the same without `gh api` and the last line; keep `upstream`.
+3. From here on, work in the copy. Tell the user to start future sessions in it, and that `lifeboard-update` brings in upstream changes later.
+4. Seed the board's models: `pnpm board seed` (copies the starter set into `models/board/`), commit it (`git add models/board && git commit -m "chore: seed this board's models"`).
+
+The demo board (seed data, "Demo" badge) is the public repo's own; a copy doesn't need it.
 
 ## 1. Toolchain (model pipelines)
 ### Required
@@ -71,7 +89,7 @@ A brand-new board seeds a few starter tasks on first open that teach how points 
 ## Weekly scheduled task (the weekly check)
 `.claude/scheduled/weekly-visitor.md` holds the prompt and the cron shape (`0 <hour> * * <day>`). The weekly check makes the visitor and the garden plants that bloomed or died that week need (SPEC.md Weekly job).
 1. **Ask which day the week starts** (one question, with AskUserQuestion when available): the day habit streaks reset, garden plants grow, and the weekly check runs (early that morning, so the week that just closed is in). Options: "Monday (Recommended)", "Today (<weekday>)", "Sunday", or another day. Write it to the board: `ArtifactData` set `checks/week_start` = `{value: <0 Sun .. 6 Sat>, updated_at: <ms>}` on the lifeboard artifact (skip if it already holds that day). Ask the time only if they care (default 06:00).
-2. Check nothing is registered yet (scheduled-tasks list; or ask). Then, on their yes, register it with the cron for that day and hour (`0 <hour> * * <day>`, same day as `checks/week_start`), the prompt from the template and working directory = this repo (scheduled-tasks create, or the desktop app → Scheduled). Never register without that yes.
+2. Check nothing is registered yet (scheduled-tasks list; or ask). Then, on their yes, register it with the cron for that day and hour (`0 <hour> * * <day>`, same day as `checks/week_start`), the prompt from the template and working directory = this board's copy, never the public template (cloud: create the task in claude.ai with the copy's repo and the environment attached; Mac: desktop app → Scheduled). Never register without that yes.
 3. The Mac must be awake at run time (the template says how). Changing the day later: re-run this step and update the existing task; don't add a second one.
 
 ## Repo hygiene
