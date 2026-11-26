@@ -11,6 +11,7 @@ BLENDER_SERIES=5.3
 BLENDER_MIN=$BLENDER_SERIES
 BLENDER_VERSION=5.3.0
 NODE_MIN=22.18 # the repo's tools run .ts files directly (Node strips types by default from 22.18); package.json engines agree
+NODE_INSTALL=24 # what setup installs when node is missing or too old: the newest LTS line (CI runs it too)
 # true when node -v is at least NODE_MIN (major.minor)
 node_ok() { local v; v=$(node -v 2>/dev/null | sed 's/^v//'); [[ -n $v ]] || return 1; local maj=${v%%.*} rest=${v#*.}; local min=${rest%%.*}; local nmaj=${NODE_MIN%%.*} nmin=${NODE_MIN#*.}; (( maj > nmaj || (maj == nmaj && min >= nmin) )); }
 
@@ -83,8 +84,30 @@ install_node() {
   case $OS in
     mac) brew install node ;;
     windows) winget install -e --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements ;;
-    linux) die "install Node >= $NODE_MIN (nvm, nodesource or your distro) and re-run" ;;
+    linux) install_node_linux ;;
   esac
+  node_ok || die "node is still older than $NODE_MIN after installing; put the new node first on PATH and re-run"
+}
+
+# Distro packages are often older than NODE_MIN, so Linux takes the official build from nodejs.org (any distro, x64 or
+# arm64), checked against nodejs.org's SHASUMS256.txt, into NODE_PREFIX with node/npm/npx/corepack linked into NODE_BIN.
+install_node_linux() {
+  local prefix=${NODE_PREFIX:-/opt/node} bin=${NODE_BIN:-/usr/local/bin} arch base sums file tmp
+  case "$(uname -m)" in x86_64) arch=x64 ;; aarch64|arm64) arch=arm64 ;; *) die "no official Node build for $(uname -m); install Node >= $NODE_MIN by hand" ;; esac
+  have curl || pkg_install curl
+  base="https://nodejs.org/dist/latest-v${NODE_INSTALL}.x"
+  sums=$(curl -fsSL "$base/SHASUMS256.txt") || die "can't reach nodejs.org; install Node >= $NODE_MIN by hand"
+  file=$(awk -v a="linux-$arch.tar.xz" '$2 ~ a"$" {print $2; exit}' <<<"$sums")
+  [[ -n $file ]] || die "no linux-$arch build listed at $base"
+  tmp=$(mktemp -d)
+  curl -fsSL "$base/$file" -o "$tmp/$file" || die "download failed: $base/$file"
+  (cd "$tmp" && grep " $file\$" <<<"$sums" | sha256sum -c --quiet -) || die "checksum mismatch for $file"
+  $SUDO mkdir -p "$prefix" "$bin"
+  $SUDO tar -xJf "$tmp/$file" -C "$prefix" --strip-components=1
+  for t in node npm npx corepack; do $SUDO ln -sf "$prefix/bin/$t" "$bin/$t"; done
+  rm -rf "$tmp"
+  hash -r
+  log "node $("$prefix/bin/node" -v) installed in $prefix"
 }
 
 if [[ $MODE != --check ]]; then

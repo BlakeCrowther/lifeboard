@@ -81,7 +81,7 @@ The demo board (seed data, "Demo" badge) is the public repo's own; a copy doesn'
 |---|---|---|
 | Blender ≥ 5.3 | Headless modeling, rigging, animation, baking, QA renders, glTF export (`blender -b`) | `./setup.sh` (free, GPL) |
 | ImageMagick | Contact sheets for the visual judge | `./setup.sh` |
-| Node ≥ 22.18 + `npx @gltf-transform/cli@4` | Runs the repo's `.ts` tools directly; validates + optimizes `.glb` | `./setup.sh` (gltf-transform fetched by npx) |
+| Node ≥ 22.18 + `npx @gltf-transform/cli@4` | Runs the repo's `.ts` tools directly; validates + optimizes `.glb` | `./setup.sh` (macOS brew, Windows winget, Linux the official Node 24 build from nodejs.org, any distro, x64 or arm64; gltf-transform fetched by npx) |
 | Scheduled tasks (cloud or desktop app) | Runs `weekly-visitor`: cloud = a fresh session per run in the lifeboard environment (setup script runs `./setup.sh`); Mac = desktop app, Mac must be awake | `.claude/scheduled/weekly-visitor.md` |
 
 ### Optional (interactive development only)
