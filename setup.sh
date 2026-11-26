@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs the model-pipeline toolchain (Blender >= 5.3, ImageMagick, Node >= 24) and the
+# Installs the model-pipeline toolchain (Blender >= 5.3, ImageMagick, Node >= 22.18) and the
 # repo's JS deps plus the Chromium that `pnpm test:ui` needs (`pnpm bootstrap`), then checks
 # the toolchain and repo health. Works on macOS (Homebrew), Linux (apt or dnf; Blender from
 # download.blender.org) and Windows (Git Bash, winget). Idempotent: skips whatever is already
@@ -10,7 +10,9 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 BLENDER_SERIES=5.3
 BLENDER_MIN=$BLENDER_SERIES
 BLENDER_VERSION=5.3.0
-NODE_MIN=24 # the repo's tools run .ts files directly; package.json engines and CI agree
+NODE_MIN=22.18 # the repo's tools run .ts files directly (Node strips types by default from 22.18); package.json engines agree
+# true when node -v is at least NODE_MIN (major.minor)
+node_ok() { local v; v=$(node -v 2>/dev/null | sed 's/^v//'); [[ -n $v ]] || return 1; local maj=${v%%.*} rest=${v#*.}; local min=${rest%%.*}; local nmaj=${NODE_MIN%%.*} nmin=${NODE_MIN#*.}; (( maj > nmaj || (maj == nmaj && min >= nmin) )); }
 
 MODE=${1:-}
 
@@ -75,8 +77,7 @@ install_imagemagick() {
 
 install_node() {
   if have node; then
-    local major; major=$(node -v | sed 's/^v//; s/\..*//')
-    if (( major >= NODE_MIN )); then log "node ok"; return; fi
+    if node_ok; then log "node ok"; return; fi
     log "node $(node -v) is older than $NODE_MIN (the repo tools and export-check need >= $NODE_MIN)"
   fi
   case $OS in
@@ -115,9 +116,9 @@ if have magick && magick -version >/dev/null 2>&1; then pass "imagemagick"; else
 
 # The repo's tools run .ts files directly, and export-check's optimizer (sharp) needs a recent Node: >= NODE_MIN.
 if have node; then
-  nv=$(node -v); nmajor=${nv#v}; nmajor=${nmajor%%.*}
-  if [[ "$nmajor" =~ ^[0-9]+$ ]] && (( nmajor >= NODE_MIN )); then pass "node $nv"
-  else fail "node >= $NODE_MIN (found $nv; the repo tools and export-check fail on older)" "./setup.sh, or put node >= $NODE_MIN first on PATH (nvm use $NODE_MIN)"; fi
+  nv=$(node -v)
+  if node_ok; then pass "node $nv"
+  else fail "node >= $NODE_MIN (found $nv; the repo tools and export-check fail on older)" "./setup.sh, or put node >= $NODE_MIN first on PATH (nvm use 22)"; fi
 else fail "node" "./setup.sh"; fi
 if npx -y @gltf-transform/cli@4 --version >/dev/null 2>&1; then pass "gltf-transform"; else fail "gltf-transform (npx @gltf-transform/cli@4)" "check network / npm"; fi
 
