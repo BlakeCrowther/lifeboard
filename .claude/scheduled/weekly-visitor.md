@@ -16,8 +16,8 @@ Unattended: do not ask questions; decide, log, report.
 Start a run ledger first: python3 models/shared/tools/ledger.py start <YYYY>-w<WW> --rounds 4 --minutes 30
 (the ledger enforces the budget; every build uses build.py --run <run_id>; every judge is recorded).
 Ship on a full PASS; when the budget runs out without one, ship the best attempt below the bar (weekly-visitor fallback 2).
-Commit and publish per AGENTS.md and the model-ship skill: one branch for the whole run, republish the existing lifeboard artifact URL only.
-Then open a PR to main, wait for its verify check, and squash-merge it when it passes (model-ship step 4), so main matches the live board for next week. Never merge a red check; fix the cause on the branch.
+Commit and publish per AGENTS.md and the model-ship skill: one branch for the whole run, publish the model files only (model-ship step 5, never the page) to the existing lifeboard artifact URL.
+Then open a PR to main, wait for its verify check, and squash-merge it when it passes (model-ship step 4), so main holds the board's models (`models/board/`) for next week. Never merge a red check; fix the cause on the branch.
 Progress: keep the session's task list current so the owner can follow along. One task per agent: "This week's visitor" and one per plot ("<plot> plant, gen <n>"), plus "Publish and merge". In each task's status say the stage (brief, build, grow/animate, verify, judges, ship), the ledger's rounds and minutes used, "queued for a build slot" while waiting, and what is left. Mark each completed with its outcome (passed, below bar, quarantined, no visitor). Same no-spoiler rule: never a species, name or look.
 End with the retro (AGENTS.md "Improve as you go"): fix what this run tripped on in the skill/gate that owns it, same commit.
 Final message: the weekly-visitor report (visitor or no-visitor reason, plants made by plot, gates, ledger status, retro fixes, PR link). No spoilers: never name or describe a visitor or plant; the board reveals them.

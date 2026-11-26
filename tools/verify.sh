@@ -10,6 +10,7 @@ run() { # name, cmd...
 skip() { rows+=("SKIP  $1 ($2)"); }
 
 run "no stray JavaScript (check:no-js)" pnpm -s check:no-js
+run "public repo tracks no board models (check:public-board)" pnpm -s check:public-board
 run "game rules vs SPEC.md" pnpm -s spec-check
 run "sim runs (balance report)" pnpm -s sim 20 8
 if [ -d node_modules/typescript ]; then

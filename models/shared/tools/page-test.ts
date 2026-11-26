@@ -9,11 +9,12 @@
    Browser: playwright's Chromium, or CHROMIUM_PATH. Sim time per frame is capped, so a slow renderer needs --secs. */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Browser, Page } from 'playwright';
+import { publishedPath, resolveModelFile } from './model-files.ts';
+import { createStaticServer } from './static-server.ts';
 
 interface Check { gate: string; check: string; pass: boolean; detail: string }
 interface Snap { state: string; loop: string | null; feeding: boolean; pos: number[]; box: number[][]; ground: number; quat: number[]; site?: { p: number[]; n: number[] } | null }
@@ -46,18 +47,13 @@ try { ({ chromium } = await import('playwright')); } catch { console.error('page
 if (spawnSync('node', ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', 'tools/build.ts'], { cwd: REPO, stdio: 'ignore' }).status !== 0) { console.error('build failed: run pnpm build'); process.exit(1); }
 
 const spec = JSON.parse(fs.readFileSync(specPath, 'utf8')) as Spec;
-const entry = { id, kind: 'creature', spec: path.relative(MODELS, path.resolve(specPath)), glb: '', js: '', biome: spec.biome ?? 0,
+const entry = { id, kind: 'creature', spec: publishedPath(specPath), glb: '', js: '', biome: spec.biome ?? 0,
   rarity: spec.rarity ?? 'common', locomotion: spec.locomotion ?? 'swim', ...(spec.rest ? { rest: spec.rest } : {}), golden: false };
-const roster = JSON.parse(fs.readFileSync(path.join(MODELS, 'roster.json'), 'utf8')) as Roster;
+const roster = JSON.parse(fs.readFileSync(resolveModelFile('roster.json') ?? '', 'utf8')) as Roster;
 roster.models = [...roster.models.filter((m) => m.id !== id), entry];
 const b64 = fs.readFileSync(glb).toString('base64');
 
-const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json' };
-const srv = http.createServer((q, r) => {
-  const f = path.join(REPO, decodeURIComponent(new URL(q.url ?? '/', 'http://x').pathname));
-  if (!f.startsWith(REPO) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); r.end(); return; }
-  r.writeHead(200, { 'content-type': TYPES[path.extname(f)] ?? 'application/octet-stream' }); fs.createReadStream(f).pipe(r);
-});
+const srv = createStaticServer(REPO);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const checks: Check[] = [], add = (check: string, pass: unknown, detail: string) => checks.push({ gate: 'page-test', check, pass: !!pass, detail });
 

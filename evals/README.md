@@ -33,7 +33,7 @@ Runner choice: `claude plugin eval` targets plugins, takes `case.yaml` plus mark
 ```
 evals/
   run.ts  lib.ts         runner and shared helpers
-  fixtures/world/        frozen sandbox: models/{biomes,roster,biomes.archive}.json, two specs (check_biome.py reads LOOKS from the real src/packages/ecosystem/lib/frames.ts, copied in)
+  fixtures/world/        frozen sandbox: models/board/{biomes,roster,biomes.archive}.json, two specs (check_biome.py reads LOOKS from the real src/packages/ecosystem/lib/frames.ts, copied in)
   <skill>/
     grade.ts             task(), place(), collect(), checks() (script), rubric() (LLM)
     cases/*.json         fixed inputs

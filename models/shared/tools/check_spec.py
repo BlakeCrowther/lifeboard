@@ -7,6 +7,9 @@ import re
 import sys
 from typing import Any
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import model_files  # where the board's roster, biomes and specs live
+
 RARITY = {"creature": {"common", "rare", "exotic"}, "plant": {"common", "rare", "exotic"}, "scenery": {"common"}}
 TRIS = {"common": 8000, "rare": 12000, "exotic": 20000}
 
@@ -20,9 +23,6 @@ def hsv(hexc: str) -> tuple[float, float, float]:
 def main(path: str) -> dict[str, Any]:
     s = json.load(open(path))
     fails = []
-    root = os.path.dirname(os.path.abspath(path))
-    while root != "/" and not os.path.exists(os.path.join(root, "roster.json")):
-        root = os.path.dirname(root)
     kind = s.get("kind", "creature")
     if kind not in RARITY:
         return {"gate": "spec-check", "pass": False, "fails": [f"kind {kind} must be creature|plant|scenery"]}
@@ -46,8 +46,8 @@ def main(path: str) -> dict[str, Any]:
         fails.append(f"rarity must be one of {sorted(RARITY[kind])} for kind {kind}")
     if kind == "creature" and s["locomotion"] not in {"swim", "walk", "fly", "drift", "rooted", "crawl"}:
         fails.append("locomotion")
-    bpath = os.path.join(root, "biomes.json")
-    if os.path.exists(bpath):
+    bpath = model_files.resolve("biomes.json")
+    if bpath:
         bs = {b["id"]: b for b in json.load(open(bpath))["biomes"]}
         b = bs.get(s["biome"])
         if b is None:
@@ -70,7 +70,7 @@ def main(path: str) -> dict[str, Any]:
         if S > 0.15 and not 0.45 <= S <= 0.95:
             fails.append(f"{c} saturation {S:.2f} outside 0.45-0.95 (neutrals <0.15 allowed)")
     if kind == "plant":
-        return _plant(s, fails, root)
+        return _plant(s, fails)
     if kind == "scenery":
         return _scenery(s, fails)
     idle = s["motion"].get("idle", {})
@@ -105,13 +105,13 @@ def main(path: str) -> dict[str, Any]:
         fails.append("tris over rarity budget")
     fails += _rest(s)
     # uniqueness vs. roster: idle length/cycles combo should differ from shipped creatures
-    roster = os.path.join(root, "roster.json")
-    if os.path.exists(roster):
+    roster = model_files.resolve("roster.json")
+    if roster:
         for c in json.load(open(roster))["models"]:
             if c["id"] == s["id"] or c.get("kind", "creature") != "creature":
                 continue
-            p = os.path.join(root, c["spec"])
-            if os.path.exists(p):
+            p = model_files.resolve(c["spec"])
+            if p:
                 o = json.load(open(p))["motion"]["idle"]
                 if (o.get("frames"), o.get("cycles")) == (idle.get("frames"), idle.get("cycles")):
                     fails.append(f"idle loop identical to {c['id']}; vary frames or cycles")
@@ -162,11 +162,11 @@ def _rest(s: dict[str, Any]) -> list[str]:
 LIBRARY_REASON_MIN = 20  # characters: a real sentence, not "ok"
 
 
-def _plant(s: dict[str, Any], fails: list[str], root: str) -> dict[str, Any]:
+def _plant(s: dict[str, Any], fails: list[str]) -> dict[str, Any]:
     """Plant contract (models/plant/CONTRACT.md): per-stage sway loops + a tend reaction, and the species' own
     generator (archetype == id, models/plant/archetypes/<id>.py, copied from a growth form named in `based_on`).
     Building straight on a library growth form needs notes.why_library_form: why that form, as is, is the species."""
-    arch_dir = os.path.join(root, "plant", "archetypes")
+    arch_dir = os.path.join(model_files.MODELS, "plant", "archetypes")
     if s["archetype"] == s["id"]:
         if not os.path.exists(os.path.join(arch_dir, s["id"] + ".py")):
             fails.append(

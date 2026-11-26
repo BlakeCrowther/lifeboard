@@ -1,21 +1,21 @@
 ---
 name: creature-brief
-description: Kind: creature. Design the next visitor as a creature spec (models/creature/specs/<id>.json, kind "creature") from the current biome, rarity and roster. Step 1 of the creature pipeline (weekly-visitor); validated by shared check_spec.py (spec-check). Also use to brief a specific creature by hand.
+description: Kind: creature. Design the next visitor as a creature spec (models/board/creature/specs/<id>.json, kind "creature") from the current biome, rarity and roster. Step 1 of the creature pipeline (weekly-visitor); validated by shared check_spec.py (spec-check). Also use to brief a specific creature by hand.
 ---
 
 # Creature brief
 
-> Paths: `out/`, `assets/`, `roster.json`, `<kind>/specs/` are relative to `models/`.
+> Paths: `out/` is relative to `models/`; shipped-model paths (`assets/`, `roster.json`, `biomes.json`, `<kind>/specs/`) are relative to the board dir `models/board/` (`models/README.md` "Layout"; `pnpm board seed` creates it when missing). Pipeline files (archetypes, calibration, `<kind>/specs/examples/`, `<kind>/specs/quarantined/`, goldens) keep their `models/` paths.
 
-Terms (creature, body plan, archetype, safe/novel path, golden): see `models/README.md` "Terms". Output: `models/creature/specs/<id>.json` that passes `python3 models/shared/tools/check_spec.py`. Read `models/STYLE.md` and `models/creature/CONTRACT.md` first; `creature/specs/examples/` holds reference specs (clownfish = streamlined swimmer).
+Terms (creature, body plan, archetype, safe/novel path, golden): see `models/README.md` "Terms". Output: `models/board/creature/specs/<id>.json` that passes `python3 models/shared/tools/check_spec.py`. Read `models/STYLE.md` and `models/creature/CONTRACT.md` first; `creature/specs/examples/` holds reference specs (clownfish = streamlined swimmer).
 
 ## Inputs
 - Biome and rarity: from the caller (weekly-visitor passes them from the game state). Default `biome` = current, `rarity` = common.
-- `models/roster.json`: never repeat a species; avoid the same archetype twice in a row when the library has ≥ 2.
+- `models/board/roster.json`: never repeat a species; avoid the same archetype twice in a row when the library has ≥ 2.
 - `models/creature/archetypes/`: proven generators (safe path).
 
 ## Steps
-1. **Pick a species** that fits the biome in `models/biomes.json`: its `medium` (water / land / air), real ecology, `examples`, and above all its `look` and the file's `identity_rules`. The creature must be *unmistakably from this biome*:
+1. **Pick a species** that fits the biome in `models/board/biomes.json`: its `medium` (water / land / air), real ecology, `examples`, and above all its `look` and the file's `identity_rules`. The creature must be *unmistakably from this biome*:
    - Body plan and silhouette echo `look.shape`; colors come from or sit next to `look.palette`, following `look.creatures`; idle feel follows `look.motion`.
    - Never use a motif another biome lists in its `look.owns`.
    - **Swap test**: compare against every roster creature from *other* biomes. If this design would pass as theirs after a recolor, change at least two of: body plan, silhouette, pattern type, hue family, size class, motion.

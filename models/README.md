@@ -12,18 +12,22 @@ Autonomous pipelines that design, build, animate, verify and ship 3D models for 
 - **Gates**: the six checks every model must pass to ship, listed under "Gates" below.
 - **Golden**: a kind's reference model (`golden` in `<kind>/qa_calibration.json`). Its judge-panel medians (`golden_medians`) anchor the judges and set the kind's `pass_rule.bar`.
 - **Polish round**: after a judge-panel pass, `ledger.py plan` takes on a lowest-median criterion, the run rebuilds and re-judges, and `ledger.py best` ships the better-scoring passing build.
-- **Roster**: `roster.json`, every shipped model. **Quarantine**: `out/quarantine/<id>/`, failed attempts kept for inspection; the spec moves to `<kind>/specs/quarantined/<id>.json` so nothing treats it as live.
+- **Roster**: `roster.json` in the model dir, every shipped model of one board. **Quarantine**: `out/quarantine/<id>/`, failed attempts kept for inspection; the spec moves to `<kind>/specs/quarantined/<id>.json` so nothing treats it as live.
 
 ```
 models/
-  README.md  STYLE.md (shared style lock)  biomes.json  roster.json (every shipped model, with kind)
-  assets/    shipped <id>.glb + <id>-glb.js            out/  local work dir (gitignored): builds, QA, runs/, quarantine
+  README.md  STYLE.md (shared style lock)  out/  local work dir (gitignored): builds, QA, runs/, quarantine
+  board/     ONE board's models, laid out as published: roster.json biomes.json assets/ <kind>/specs/ (absent in the public repo; a board's own copy of the repo commits it; `pnpm board seed` creates it)
+  starter/   the starter set, same layout, committed in the public repo (a fresh board shows it until `board/` has a roster.json)
+  assets/    golden assets only (<id>.glb + <id>-glb.js): clownfish, mermaids_cup, eelgrass_tuft
   shared/blender/  lib.py  build.py  qa_structural.py (shared gates)  qa_render.py
   shared/tools/    verify.sh  check_spec.py  optimize.sh  ledger.py  judge_verdict.py  check_judge_rule.py  capture_ecosystem.ts  watch_creatures.ts (creature behaviour over time, headless)  preflight.sh
   creature/  CONTRACT.md  archetypes/  specs/  qa.py (creature gates)  qa_calibration.json (golden + judge-panel pass_rule)  calibration/ (golden sheet)
   plant/     CONTRACT.md  archetypes/stem_bloom.py  specs/mermaids_cup.json  qa.py (plant gates)  qa_calibration.json  calibration/
   scenery/   CONTRACT.md  archetypes/{clump,solid,tangle}.py  specs/  qa.py (scenery gates)  qa_calibration.json  calibration/
 ```
+
+**Layout.** Published paths never change: the page fetches `models/roster.json`, `models/biomes.json`, `models/assets/x-glb.js` and specs. On disk those come from layers. The model dir in use is `models/board/` once it has a `roster.json`, else `models/starter/`; a request for `/models/<path>` (local preview, tests) is answered by the first existing of `models/board/<path>`, `models/starter/<path>`, `models/<path>` (the last holds goldens and pipeline files: archetypes, `<kind>/specs/examples/`, `<kind>/specs/quarantined/`, calibration). Code reads through `shared/tools/model-files.ts` and `model_files.py`; a model that ships writes into `board/` and never into `starter/`. `pnpm board` handles a board's files: `seed` (copy starter into board when board has no roster), `files`, `hydrate <dir>` (copy files pulled from the store), `merge-roster <live-roster.json>`, `publish-set` (the file map of a model-only publish, with a check against the artifact's version limits). The page publishes separately from models (AGENTS.md "Publish"); `pnpm verify` fails if the public repo tracks anything in `board/`.
 
 Every spec has `kind` (`creature` default | `plant`). Shared code dispatches on it: `build.py` loads `models/<kind>/archetypes/<archetype>.py`; `qa_structural.py` runs the shared gates (tris, materials, texture, NaN, armature, weights, eye meta, rest-pose bbox) and then `models/<kind>/qa.py` (creature: body-plan axes/symmetry, mouth, idle/feed/reach; plant: soil origin, stage nodes, sway/tend); `check_spec.py` and `verify.sh` likewise.
 
@@ -56,9 +60,9 @@ Judge-panel criteria, floor, bar and panel size per kind live only in `<kind>/qa
 ## Docs
 - `creature/CONTRACT.md`, `plant/CONTRACT.md`: what each kind's file must contain so the runtime can use it (axes, scale, node names, animation names, loop rules, budgets). Shared rules live in the creature contract + `STYLE.md`; the plant contract refers to them.
 - `STYLE.md`: the art-direction lock: what is fixed vs. what is free to vary (all kinds).
-- `roster.json`: shipped models, `{"models": [{id, kind, spec, glb, js, ...}]}` (the runtime reads this; paths relative to `models/`).
+- `roster.json`: shipped models, `{"models": [{id, kind, spec, glb, js, ...}]}` (the runtime reads this; paths relative to `models/` as published, to `models/board/` on disk).
 - `biomes.json`: the biomes a run can target (medium, ecology, examples). `biomes.archive.json` and `roster.archive.json`: biomes and models retired by `game-reset` "fresh"; `biome-brief` and `check_biome.py` read the biome archive so a new biome does not repeat an old one.
-- `<kind>/specs/`: one design spec per model (`specs/examples/` = reference specs; `specs/quarantined/` = specs of models that failed every retry, not live) (input to build/animate, also the judge's reference).
+- `<kind>/specs/`: one design spec per model, in the board dir (`models/board/<kind>/specs/`); `models/<kind>/specs/examples/` = reference specs; `models/<kind>/specs/quarantined/` = specs of models that failed every retry, not live (input to build/animate, also the judge's reference).
 
 Creature pipeline detail follows.
 

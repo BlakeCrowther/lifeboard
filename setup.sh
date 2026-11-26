@@ -62,13 +62,14 @@ install_blender() {
 
 install_imagemagick() {
   # verify.sh calls `magick montage ...` and `magick in.png -op out.png`; ImageMagick 6 (apt) has no `magick`, so shim both forms.
-  if have magick; then log "imagemagick ok"; return; fi
+  # a stale shim can exist yet fail on `magick in.png ...`, so check that it runs, not only that it is on PATH
+  if have magick && magick -version >/dev/null 2>&1; then log "imagemagick ok"; return; fi
   case $OS in
     mac) brew install imagemagick ;;
     windows) winget install -e --id ImageMagick.ImageMagick --accept-source-agreements --accept-package-agreements ;;
     linux)
       have montage || pkg_install imagemagick
-      have magick || { printf '#!/bin/sh\ncase "$1" in montage|convert|identify|composite|mogrify|compare|display) exec "$@";; *) exec convert "$@";; esac\n' | $SUDO tee /usr/local/bin/magick >/dev/null; $SUDO chmod +x /usr/local/bin/magick; } ;;
+      { have magick && magick -version >/dev/null 2>&1; } || { printf '#!/bin/sh\ncase "$1" in montage|convert|identify|composite|mogrify|compare|display) exec "$@";; *) exec convert "$@";; esac\n' | $SUDO tee /usr/local/bin/magick >/dev/null; $SUDO chmod +x /usr/local/bin/magick; } ;;
   esac
 }
 
@@ -110,7 +111,7 @@ if have blender; then
   if blender_ok; then pass "blender $v"; else fail "blender >= $BLENDER_MIN (found ${v:-none})" "./setup.sh"; fi
 else fail "blender not found" "./setup.sh"; fi
 
-if have magick; then pass "imagemagick"; else fail "imagemagick" "./setup.sh"; fi
+if have magick && magick -version >/dev/null 2>&1; then pass "imagemagick"; else fail "imagemagick" "./setup.sh"; fi
 
 # export-check's optimizer (sharp) needs Node >= NODE_MIN.
 if have node; then
@@ -136,7 +137,7 @@ if command -v rustup >/dev/null; then
 fi
 
 # Local preview (lifeboard-setup "Local preview")
-if [[ -f "$REPO/.claude/launch.json" ]] && grep -q '"port": 8765' "$REPO/.claude/launch.json"; then pass "preview config .claude/launch.json (http.server 8765)"
+if [[ -f "$REPO/.claude/launch.json" ]] && grep -q '"port": 8765' "$REPO/.claude/launch.json"; then pass "preview config .claude/launch.json (pnpm dev, port 8765)"
 else fail "preview config .claude/launch.json missing" "restore it from git (serves the repo root on 8765)"; fi
 if [[ -f "$REPO/mockdata.js" ]]; then pass "mockdata.js (optional, personal, gitignored)"
 else echo "  skip  mockdata.js not present (optional: create your own window.MOCK={...}, see lifeboard-setup)"; fi

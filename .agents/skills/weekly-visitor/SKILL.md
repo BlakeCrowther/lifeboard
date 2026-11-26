@@ -5,7 +5,7 @@ description: Kind: creature (orchestrator). Runs the weekly autonomous Ecosystem
 
 # Weekly visitor
 
-> Paths: `out/`, `assets/`, `roster.json`, `<kind>/specs/` are relative to `models/`.
+> Paths: `out/` is relative to `models/`; shipped-model paths (`assets/`, `roster.json`, `biomes.json`, `<kind>/specs/`) are relative to the board dir `models/board/` (`models/README.md` "Layout"; `pnpm board seed` creates it when missing). Pipeline files (archetypes, calibration, `<kind>/specs/examples/`, `<kind>/specs/quarantined/`, goldens) keep their `models/` paths.
 
 Runs unattended. Do not ask the user anything; decide, log, and report.
 
@@ -14,8 +14,11 @@ Runs unattended. Do not ask the user anything; decide, log, and report.
 ## 0. Preflight
 `./setup.sh --check`. If anything required fails, there's no visitor this week. Report the failing line and point to the lifeboard-setup skill.
 
-## 0a. Live drift check
-`pnpm build`, then pull the files `pnpm live-diff --list` names from the live artifact (Artifact `read` with `paths`, `out_dir` under the scratchpad) and run `pnpm live-diff <dir>`. Exit 0: live matches `main`. Exit 1 on a clean `main` checkout: live is stale (a merge never got published); publish it (AGENTS.md "Publish", pre-approved) and say so in the report. If a differing file is one `main` never had (live-only edit), port it first or stop and report; never overwrite it.
+## 0a. Live drift check (page files only)
+`pnpm build`, then pull the files `pnpm live-diff --list` names (page files: `index.html`, `dist/app.js`, `dist/chunks/*`) from the live artifact (Artifact `read` with `paths`, `out_dir` under the scratchpad) and run `pnpm live-diff <dir>`. Model files are not part of this check (`--models` lists them; the store holding models the repo lacks is expected). Exit 0: live matches `main`. Exit 1 on a clean `main` checkout: live is stale (a merge never got published); publish the page files (AGENTS.md "Publish", pre-approved) and say so in the report. If a differing file is one `main` never had (live-only edit), port it first or stop and report; never overwrite it.
+
+## 0c. Hydrate
+The board's models live in its store and in `models/board/`; a fresh checkout or a cloud session has only the starter set, so the briefs, the duplicate checks and "what exists" would be wrong without this. Run `pnpm board seed` (a no-op when the board already has a roster). Then `Artifact read` the live `models/roster.json` and `models/biomes.json` into a scratch dir (`out_dir`), then the paths `pnpm -s board files --roster <dir>/models/roster.json` lists into the same dir, then `pnpm board hydrate <dir>`. It copies what the store has into `models/board/`, prints what was added or changed, and never deletes: board files the store lacks are reported (a model not yet published; model-ship publishes it). season-seeds, scenery-make and biome-brief run after this step, or do it themselves when run alone.
 
 ## 0b. Start the run ledger
 `python3 models/shared/tools/ledger.py start <run_id> --rounds 4 --minutes 30` (run_id e.g. `2026-w47`, dry run `dry-<id>-<date>`). The ledger, not you, counts the budget: never track builds or minutes in your head. `ledger.py status <run_id>` whenever you need the numbers (and in the final report).
@@ -29,7 +32,7 @@ Read the game state from the lifeboard artifact db (see AGENTS.md / `src/package
 The most rare earned this week wins. If the game says no visitor (for example the Ecosystem is bleached), skip and report why.
 
 ## 1b. New biome?
-If `models/biomes.json` has no entry for `biome`, or `phase == phases - 1` (final phase) and there is no entry for `biome + 1`: run **biome-brief** for that id first (it validates with `check_biome.py`). It doesn't count toward the build budget. If it fails twice, report it and brief this week's creature for the current biome as usual. A biome brief needs no visitor: run it even when the Ecosystem is bleached.
+If `models/board/biomes.json` has no entry for `biome`, or `phase == phases - 1` (final phase) and there is no entry for `biome + 1`: run **biome-brief** for that id first (it validates with `check_biome.py`). It doesn't count toward the build budget. If it fails twice, report it and brief this week's creature for the current biome as usual. A biome brief needs no visitor: run it even when the Ecosystem is bleached.
 
 ## 1b2. Biome scenery
 Right after 1b (and every week): if the current biome (or the one biome-brief just made) lists `scenery` ids or a `neglect.blight` id with no roster entry of kind `scenery`, run **scenery-make** for them. Own ledger per piece; it doesn't spend the visitor's budget. A biome with no `scenery` uses its `scene` builder and needs nothing.
@@ -54,7 +57,7 @@ Retry loop, driven by `report.json.fix_notes` (fix the cause: a trait the judges
 ## 3. Fallbacks (in order)
 1. Still failing → if the first attempt was **novel**, keep the species idea and simplify the new archetype once (fewer parts, proven rig pieces from lib.py) before giving up on it. Only then brief a **safe-path** variant: proven archetype, new species/palette/params, and a species the archetype can genuinely express (not a recolor of a past miss). Run build → animate → verify again (2 retries).
 2. Budget spent and still no PASS → **never empty-handed**: ship the best attempt anyway. `ledger.py best <run_id> <id> --below-bar` names the highest-mean judged build (it refuses while budget remains or when a build passed); restore it into `out/<id>/` if it isn't the latest, set `report.json` `"pass": false, "shipped_below_bar": true` and run model-ship. Every automated gate (spec, shape, motion, export, page-test) must still pass on that build: they guard a model that loads and behaves, the judges only grade looks.
-3. No build passed the automated gates at all (nothing loadable to show) → no visitor this week. Move `out/<id>` to `out/quarantine/<id>/` and the spec to `creature/specs/quarantined/<id>.json` (`git mv` when tracked), so no later brief or check treats it as live (dry run: move `out/dryrun/<id>/`, spec included, to `out/dryrun/quarantine/<id>/`).
+3. No build passed the automated gates at all (nothing loadable to show) → no visitor this week. Move `out/<id>` to `out/quarantine/<id>/` and the spec (from `models/board/creature/specs/`) to `models/creature/specs/quarantined/<id>.json`, so no later brief or check treats it as live (dry run: move `out/dryrun/<id>/`, spec included, to `out/dryrun/quarantine/<id>/`).
 
 ## 3b. Polish rounds
 model-verify "Polish rounds" (shared by every kind).
@@ -74,7 +77,7 @@ Keep it short. The surprise is the point.
 Tests the whole pipeline on a simulated week without touching anything live.
 - Get events with `pnpm -s sim 1 28 --visitors=steady:1000`. Pass one event, e.g. `{"week":11,"biome":2,"rarity":"rare"}`, in place of step 1.
 - Run steps 2–3 fully: real Blender, real gates, retries and fallbacks.
-- **Skip ship.** No roster edit, no commit, no publish. All dry-run work goes in `models/out/dryrun/<id>/` (spec as `spec.json`, build outdir = that folder: `build.py out/dryrun/<id>/spec.json out/dryrun/<id>`), not `creature/specs/` or `out/<id>/`, unless a human promotes it. Verify with `verify.sh <id> out/dryrun/<id>/<id>.glb`. Dry-run quarantine: `out/dryrun/quarantine/<id>/`.
+- **Skip ship.** No roster edit, no commit, no publish. All dry-run work goes in `models/out/dryrun/<id>/` (spec as `spec.json`, build outdir = that folder: `build.py out/dryrun/<id>/spec.json out/dryrun/<id>`), not `board/creature/specs/` or `out/<id>/`, unless a human promotes it. Verify with `verify.sh <id> out/dryrun/<id>/<id>.glb`. Dry-run quarantine: `out/dryrun/quarantine/<id>/`.
 - page-test runs if the Ecosystem page has the `?visitor=` hook; otherwise mark it `"skipped: no runtime hook"` (the dry run still counts as PASS on the first five gates).
 - Report like a normal run, plus timings per step and every fix note, so the pipeline itself can be improved.
 

@@ -25,4 +25,4 @@ The style lock keeps every model in one *world*; `biomes.json` `look` + `identit
 Species, body plan, proportions within anatomy, color choices inside the palette range, pattern design, idle personality (lazy hover vs. busy flicker), feed technique.
 
 ## Golden references
-`assets/` models marked `"golden": true` in `roster.json` are rendered next to every new model **of the same kind** in the QA side-by-side. Start: `clownfish`. Each medium (water / land / air) should get its own golden once one exists. Promote a creature to golden only when a human likes it.
+Models marked `"golden": true` in `roster.json` are rendered next to every new model **of the same kind** in the QA side-by-side. Start: `clownfish`. Each medium (water / land / air) should get its own golden once one exists. Goldens keep their assets in `models/assets/` (the only models there), so they resolve whatever a board's roster holds. Promote a creature to golden only when a human likes it.

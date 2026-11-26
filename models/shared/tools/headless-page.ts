@@ -1,12 +1,14 @@
-/* Shared by capture_ecosystem.ts and watch_creatures.ts: builds dist/, serves the repo (python3 http.server on a free port),
+/* Shared by capture_ecosystem.ts and watch_creatures.ts: builds dist/, serves the repo (static-server.ts on a free port),
    starts headless Chrome with DevTools, and opens one page driven over the Chrome DevTools Protocol.
    Chrome: $CHROME, else playwright's Chromium, else /Applications/Google Chrome.app. Page exceptions and console errors
    collect in `errors`. `fail` prints `<prefix> FAIL: <msg>`, kills the children and exits with `failCode`. */
-import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
+import { createStaticServer } from './static-server.ts';
 
 export const MODELS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const REPO = path.dirname(MODELS);
@@ -46,7 +48,7 @@ async function playwrightChromium(): Promise<string | null> {
 }
 
 export async function openHeadlessPage(opts: { prefix: string; failCode: number; width: number; height: number; chromeArgs?: string[] }): Promise<HeadlessPage> {
-  const kids: ChildProcess[] = [];
+  const kids: { kill: () => unknown }[] = [];
   const fail = (msg: string): never => {
     console.error(`${opts.prefix} FAIL: ${msg}`);
     kids.forEach((k) => k.kill());
@@ -56,14 +58,10 @@ export async function openHeadlessPage(opts: { prefix: string; failCode: number;
   if (spawnSync('node', ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', 'tools/build.ts'], { cwd: REPO, stdio: 'ignore' }).status !== 0) fail('build failed: run pnpm build');
   const chromePath = process.env['CHROME'] ?? (await playwrightChromium()) ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
-  const srv = spawn('python3', ['-u', '-m', 'http.server', '0', '--bind', '127.0.0.1'], { cwd: REPO });
-  kids.push(srv);
-  const port = await new Promise<number>((res, rej) => {
-    let buf = '';
-    const t = setTimeout(() => { rej(new Error('server did not start')); }, 10000);
-    const on = (d: Buffer) => { buf += d.toString(); const m = /port (\d+)/.exec(buf); if (m) { clearTimeout(t); res(Number(m[1])); } };
-    srv.stdout.on('data', on); srv.stderr.on('data', on);
-  }).catch((e: unknown) => fail(e instanceof Error ? e.message : String(e)));
+  const srv = createStaticServer(REPO);
+  kids.push({ kill: () => { srv.closeAllConnections(); srv.close(); } });
+  await new Promise<void>((res) => srv.listen(0, '127.0.0.1', res));
+  const port = (srv.address() as AddressInfo).port;
 
   const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'lb-headless-'));
   kids.push(spawn(chromePath, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${prof}`, `--window-size=${String(opts.width)},${String(opts.height)}`,

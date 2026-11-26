@@ -12,12 +12,12 @@ interface CreatureSpec {
 }
 
 const TRIS_CAP: Record<string, number> = { common: 8000, rare: 9000, exotic: 16000 };
-const specsDir = (wd: string) => join(wd, 'models/creature/specs');
-const rosterOf = (wd: string): RosterModel[] => (readJson(join(wd, 'models/roster.json')) as RosterFile).models;
-const biomesOf = (wd: string) => (readJson(join(wd, 'models/biomes.json')) as BiomesFile).biomes;
+const specsDir = (wd: string) => join(wd, 'models/board/creature/specs');
+const rosterOf = (wd: string): RosterModel[] => (readJson(join(wd, 'models/board/roster.json')) as RosterFile).models;
+const biomesOf = (wd: string) => (readJson(join(wd, 'models/board/biomes.json')) as BiomesFile).biomes;
 
 const grade: SkillEval<CreatureCase, CreatureSpec> = {
-  task: (c) => `Brief the next visitor. Biome id ${String(c.biome)}, rarity ${c.rarity}. Write models/creature/specs/<id>.json and make check_spec.py pass.`,
+  task: (c) => `Brief the next visitor. Biome id ${String(c.biome)}, rarity ${c.rarity}. Write models/board/creature/specs/<id>.json and make check_spec.py pass.`,
 
   place(wd, _c, output) {
     writeJson(join(specsDir(wd), `${output.id}.json`), output);
@@ -26,7 +26,7 @@ const grade: SkillEval<CreatureCase, CreatureSpec> = {
   collect(wd) {
     const known = new Set(rosterOf(wd).map((m) => m.id + '.json').concat(['pronghorn.json', 'gulf_pipefish.json']));
     const fresh = readdirSync(specsDir(wd)).filter((f) => f.endsWith('.json') && !known.has(f));
-    if (fresh.length !== 1) throw new Error(`expected exactly one new spec in models/creature/specs, found ${String(fresh.length)}`);
+    if (fresh.length !== 1) throw new Error(`expected exactly one new spec in models/board/creature/specs, found ${String(fresh.length)}`);
     const only = fresh[0];
     if (only === undefined) throw new Error('no new spec');
     return readJson(join(specsDir(wd), only)) as CreatureSpec;
@@ -34,7 +34,7 @@ const grade: SkillEval<CreatureCase, CreatureSpec> = {
 
   checks(wd, c, s): Check[] {
     const out: Check[] = [];
-    const path = join('models/creature/specs', `${s.id}.json`);
+    const path = join('models/board/creature/specs', `${s.id}.json`);
     const sc = existsSync(join(wd, path)) ? py(wd, 'models/shared/tools/check_spec.py', [path]) : { status: 1, out: 'spec file missing' };
     out.push(ok('spec-check', sc.status === 0, sc.out.replace(/\s+/g, ' ').slice(0, 300)));
     const roster = rosterOf(wd);
@@ -43,7 +43,7 @@ const grade: SkillEval<CreatureCase, CreatureSpec> = {
     out.push(ok('rarity-matches-case', s.rarity === c.rarity, `rarity ${String(s.rarity)}, case says ${c.rarity}`));
     out.push(ok('new-species', !roster.some((m) => m.id === s.id) && !roster.some((m) => (m.name ?? '').toLowerCase() === (s.name ?? '').toLowerCase()), `${s.id} already in roster`));
     const last = [...roster].reverse().find((m) => m.kind === 'creature');
-    const lastArch = last ? (readJson(join(wd, 'models', last.spec)) as CreatureSpec).archetype : null;
+    const lastArch = last ? (readJson(join(wd, 'models/board', last.spec)) as CreatureSpec).archetype : null;
     out.push(ok('archetype-not-repeated', !lastArch || s.archetype !== lastArch, `same archetype as ${String(last?.id)}: ${String(lastArch)}`));
     const archDir = join(wd, 'models/creature/archetypes');
     const archs = new Set<string | undefined>(readdirSync(archDir).map((f) => f.replace(/\.py$/, '')));
@@ -65,7 +65,7 @@ const grade: SkillEval<CreatureCase, CreatureSpec> = {
 
   rubric(wd, c) {
     const biome = biomesOf(wd).find((b) => b.id === c.biome);
-    const others = rosterOf(wd).filter((m) => m.kind === 'creature').map((m) => readJson(join(wd, 'models', m.spec)) as CreatureSpec);
+    const others = rosterOf(wd).filter((m) => m.kind === 'creature').map((m) => readJson(join(wd, 'models/board', m.spec)) as CreatureSpec);
     return {
       context: [
         `Brief: next Ecosystem visitor, biome ${String(c.biome)}, rarity ${c.rarity}.`,

@@ -50,4 +50,4 @@ Reply with ONLY: {"reads_as":n,"style_match":n,"artifacts":n,"sway_readable":n,"
 ```
 
 ## Shipping
-`assets/<id>.glb` + `assets/<id>-glb.js` setting `window.LB_SCENERY['<id>']` (base64). Roster: `{id, kind: "scenery", name, spec, glb, js, biome, rarity, pass_through, golden, added}`.
+`assets/<id>.glb` + `assets/<id>-glb.js` (in the board dir `models/board/`) setting `window.LB_SCENERY['<id>']` (base64). Roster: `{id, kind: "scenery", name, spec, glb, js, biome, rarity, pass_through, golden, added}`.

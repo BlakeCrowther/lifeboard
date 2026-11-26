@@ -8,7 +8,7 @@ interface BiomeCase extends Case { worldBiomes: number }
 /* The new biome, how many biomes the file now holds, and whether an old one was rewritten. */
 interface BiomeOutput { entry: Biome; count: number; priorChanged: boolean }
 
-const biomesPath = (wd: string) => join(wd, 'models/biomes.json');
+const biomesPath = (wd: string) => join(wd, 'models/board/biomes.json');
 const LOOKS = ['reef', 'kelp', 'tidepool', 'mangrove', 'deep', 'meadow', 'canopy', 'jungle'];
 
 const grade: SkillEval<BiomeCase, BiomeOutput> = {
@@ -23,7 +23,7 @@ const grade: SkillEval<BiomeCase, BiomeOutput> = {
   collect(wd, c) {
     const f = readJson(biomesPath(wd)) as BiomesFile;
     const n = c.worldBiomes;
-    const before = (readJson(join(EVALS, 'fixtures/world/models/biomes.json')) as BiomesFile).biomes.slice(0, n);
+    const before = (readJson(join(EVALS, 'fixtures/world/models/board/biomes.json')) as BiomesFile).biomes.slice(0, n);
     const entry = f.biomes[n];
     if (!entry) throw new Error(`biomes.json still has ${String(f.biomes.length)} biomes; nothing appended`);
     return { entry, count: f.biomes.length, priorChanged: JSON.stringify(before) !== JSON.stringify(f.biomes.slice(0, n)) };
@@ -58,7 +58,7 @@ const grade: SkillEval<BiomeCase, BiomeOutput> = {
 
   rubric(wd, c) {
     const f = readJson(biomesPath(wd)) as BiomesFile;
-    const archive = (readJson(join(wd, 'models/biomes.archive.json')) as BiomesFile).biomes;
+    const archive = (readJson(join(wd, 'models/board/biomes.archive.json')) as BiomesFile).biomes;
     const neighbours = f.biomes.filter((b) => b.id < c.worldBiomes).slice(-2);
     return {
       context: [

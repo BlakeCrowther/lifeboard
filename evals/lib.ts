@@ -67,19 +67,19 @@ export function skillText(name: string): string {
    live reference files the skills read (STYLE, CONTRACTs, archetypes, graders). Paths in the skill text resolve inside it. */
 export function prepareWorkdir(wd: string, c: Case) {
   cpSync(join(EVALS, 'fixtures', 'world'), wd, { recursive: true });
-  const bp = join(wd, 'models/biomes.json');
+  const bp = join(wd, 'models/board/biomes.json');
   const b = readJson(bp) as BiomesFile;
   const n = c.worldBiomes ?? b.biomes.length;
   b.biomes = b.biomes.slice(0, n);
   writeJson(bp, b);
-  const rp = join(wd, 'models/roster.json');
+  const rp = join(wd, 'models/board/roster.json');
   const r = readJson(rp) as RosterFile;
   r.models = r.models.filter((m) => (m.biome ?? 0) < n);
   writeJson(rp, r);
   for (const rel of [
     'models/STYLE.md', 'models/README.md', 'models/creature/CONTRACT.md', 'models/plant/CONTRACT.md',
     'models/creature/archetypes', 'models/plant/archetypes', 'models/creature/specs/examples',
-    'models/shared/tools/check_spec.py', 'models/shared/tools/check_biome.py', 'SPEC.md', 'src/packages/db',
+    'models/shared/tools/check_spec.py', 'models/shared/tools/check_biome.py', 'models/shared/tools/model_files.py', 'SPEC.md', 'src/packages/db',
     'src/packages/ecosystem/lib/frames.ts',
   ]) {
     const from = join(REPO, rel);

@@ -7,13 +7,13 @@ description: Shared step, any kind. Independently verify a model .glb before it 
 
 Shared step. `verify.sh` runs the shared gates and then the kind's `models/<kind>/qa.py` (spec.kind, default creature). Kind-specific lines below are marked; plants: see `models/plant/CONTRACT.md` (stages, sway, tend).
 
-> Paths: `out/`, `assets/`, `roster.json`, `<kind>/specs/` are relative to `models/`.
+> Paths: `out/` is relative to `models/`; shipped-model paths (`assets/`, `roster.json`, `biomes.json`, `<kind>/specs/`) are relative to the board dir `models/board/` (`models/README.md` "Layout"; `pnpm board seed` creates it when missing). Pipeline files (archetypes, calibration, `<kind>/specs/examples/`, `<kind>/specs/quarantined/`, goldens) keep their `models/` paths.
 
 Verification is adversarial: assume the build is wrong until every gate proves otherwise. The agent that built the creature must not grade its own visuals.
 
 ## The four code checks: automated
 ```bash
-models/shared/tools/verify.sh <id> [glb] [spec]   # glb default out/<id>/<id>.glb, must be directly in out/<id>/ or out/dryrun/<id>/ (else exit 2); spec searched in <kind>/specs/, <kind>/specs/examples/, <glb dir>/spec.json, out/dryrun/<id>/
+models/shared/tools/verify.sh <id> [glb] [spec]   # glb default out/<id>/<id>.glb, must be directly in out/<id>/ or out/dryrun/<id>/ (else exit 2); spec searched in the board's <kind>/specs/, models/<kind>/specs/, <kind>/specs/examples/, <glb dir>/spec.json, out/dryrun/<id>/
 # writes <glb dir>/qa/{spec-check,shape-motion-check,export-check}.json + renders + contact.png   (dry run: verify.sh <id> out/dryrun/<id>/<id>.glb)
 ```
 - spec-check: design file (schema, palette ranges, loop uniqueness vs. roster).
