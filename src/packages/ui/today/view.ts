@@ -15,6 +15,7 @@ import { ecosystemOn } from '../shared/prefs.ts';
 import { upNextCard } from '../shared/schedule.ts';
 import { fold } from '../shared/sections.ts';
 import { model, profile, viewState } from '../shared/state.ts';
+import { tipEcosystem, tipRow } from '../shared/tips.ts';
 import { taskRow, type TaskRowOptions } from '../shared/task-row.ts';
 import { bucketsOf, effectiveDateOf, stateOf } from '../shared/tasks.ts';
 import { ruleShortLabel } from '../shared/writes.ts';
@@ -131,6 +132,6 @@ export function viewToday(): string {
     { key: 'sug', count: suggested.length, label: 'suggested', target: 'suggested' },
   ];
   return `<div class="daystrip"><h2 class="sr" id="ltitle">${greeting()}${hiName}. ${longDate(today)}</h2><span class="greet" aria-hidden="true">${greeting()}${hiName}.</span><span class="d">${dayLabel(today)}</span><span class="sep">·</span>${daySummaryHtml()}</div>
-    <div class="today"><div class="col a">${upNext}${weekRings(due + suggestions + tomorrow + week + more, tiles)}</div><div class="col b">${ecosystemOn() ? `<div class="les-wrap">${lessonCard()}<div class="eco-slot"></div></div>` : ''}${garden || habitRings(hs, habitsDone, habitsTotal, daysLeft)}${glance}</div></div>`;
+    <div class="today"><div class="col a">${upNext}${weekRings(due + suggestions + tomorrow + week + more, tiles)}</div><div class="col b">${ecosystemOn() ? `<div class="les-wrap">${lessonCard()}<div class="eco-slot"></div>${tipRow(tipEcosystem())}</div>` : ''}${garden || habitRings(hs, habitsDone, habitsTotal, daysLeft)}${glance}</div></div>`;
 }
 
